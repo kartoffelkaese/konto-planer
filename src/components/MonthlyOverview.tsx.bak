@@ -1,0 +1,84 @@
+import { Transaction } from '@/types'
+import { isTransactionDueInSalaryMonth, getSalaryMonthRange } from '@/lib/dateUtils'
+
+interface MonthlyOverviewProps {
+  transactions: Transaction[]
+}
+
+export default function MonthlyOverview({ transactions }: MonthlyOverviewProps) {
+  const salaryDay = 23 // TODO: Aus den Einstellungen laden
+  const { startDate, endDate } = getSalaryMonthRange(salaryDay)
+
+  const totals = transactions.reduce((acc, transaction) => {
+    const isCurrentMonth = isTransactionDueInSalaryMonth(transaction.date, salaryDay)
+    
+    // Aktuelle Monatseinnahmen
+    if (isCurrentMonth && transaction.amount > 0) {
+      acc.currentIncome += transaction.amount
+    }
+    
+    // Aktuelle Monatsausgaben
+    if (isCurrentMonth && transaction.amount < 0) {
+      if (transaction.isConfirmed) {
+        acc.currentExpenses += Math.abs(transaction.amount)
+      } else {
+        acc.pendingExpenses += Math.abs(transaction.amount)
+      }
+    }
+
+    // Gesamtausgaben (bestätigt und ausstehend)
+    if (transaction.amount < 0 && !transaction.isConfirmed) {
+      acc.totalPendingExpenses += Math.abs(transaction.amount)
+    }
+
+    // Verfügbarer Betrag
+    if (transaction.isConfirmed) {
+      acc.available += transaction.amount
+    }
+
+    return acc
+  }, {
+    currentIncome: 0,
+    currentExpenses: 0,
+    pendingExpenses: 0,
+    totalPendingExpenses: 0,
+    available: 0
+  })
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-green-100 rounded-lg px-4 py-2">
+          <h3 className="text-sm font-medium text-green-800">Einnahmen (aktueller Monat)</h3>
+          <p className="text-xl font-bold text-green-600">
+            {totals.currentIncome.toFixed(2)} €
+          </p>
+        </div>
+        <div className="bg-red-100 rounded-lg px-4 py-2">
+          <h3 className="text-sm font-medium text-red-800">Ausgaben (aktueller Monat)</h3>
+          <div>
+            <p className="text-xl font-bold text-red-600">
+              {totals.currentExpenses.toFixed(2)} €
+            </p>
+            {(totals.pendingExpenses > 0 || totals.totalPendingExpenses > 0) && (
+              <p className="text-xs text-red-800">
+                Nicht bestätigt: {totals.totalPendingExpenses.toFixed(2)} €
+                {totals.pendingExpenses > 0 && totals.pendingExpenses !== totals.totalPendingExpenses && (
+                  <span className="ml-1">
+                    (davon {totals.pendingExpenses.toFixed(2)} € diesen Monat)
+                  </span>
+                )}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="bg-blue-100 rounded-lg px-4 py-2">
+          <h3 className="text-sm font-medium text-blue-800">Verfügbar (Gesamt)</h3>
+          <p className="text-xl font-bold text-blue-600">
+            {totals.available.toFixed(2)} €
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+} 

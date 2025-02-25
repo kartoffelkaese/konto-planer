@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Konto-Planer
 
-## Getting Started
+Eine moderne Web-Anwendung zur Verwaltung von Finanzen, entwickelt mit Next.js und TypeScript.
 
-First, run the development server:
+## Funktionen
 
+- 📊 Monatliche Übersicht über Einnahmen und Ausgaben
+- 💰 Verwaltung von einmaligen und wiederkehrenden Transaktionen
+- 📅 Automatische Berechnung der monatlichen Belastung
+- ✅ Bestätigung von Transaktionen und Statusverfolgung
+- 📱 Responsive Design für Desktop und Mobile
+
+## Installation
+
+1. Repository klonen:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/[username]/konto-planer.git
+cd konto-planer
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Abhängigkeiten installieren:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Entwicklungsserver starten:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Die Anwendung ist dann unter `http://localhost:3000` erreichbar.
 
-## Learn More
+## Technologien
 
-To learn more about Next.js, take a look at the following resources:
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+- Heroicons
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Entwicklung
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `npm run dev`: Startet den Entwicklungsserver
+- `npm run build`: Erstellt eine Produktionsversion
+- `npm run start`: Startet die Produktionsversion
+- `npm run lint`: Führt den Linter aus
 
-## Deploy on Vercel
+## Lizenz
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT

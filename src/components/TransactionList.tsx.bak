@@ -1,0 +1,120 @@
+import Link from 'next/link'
+import { Transaction } from '@/types'
+import { isTransactionPending } from '@/lib/dateUtils'
+
+interface TransactionListProps {
+  transactions: Transaction[]
+  onTransactionChange: () => void
+  lastElementRef: (node: HTMLElement | null) => void
+}
+
+export default function TransactionList({ 
+  transactions, 
+  onTransactionChange,
+  lastElementRef 
+}: TransactionListProps) {
+  const handleToggleConfirmation = async (transaction: Transaction) => {
+    try {
+      const updatedTransaction = {
+        ...transaction,
+        isConfirmed: !transaction.isConfirmed,
+        lastConfirmedDate: !transaction.isConfirmed ? new Date().toISOString() : null
+      }
+      
+      const response = await fetch(`/api/transactions/${transaction.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedTransaction),
+      })
+
+      if (!response.ok) {
+        throw new Error('Fehler beim Aktualisieren der Transaktion')
+      }
+
+      onTransactionChange()
+    } catch (err) {
+      console.error('Fehler beim Aktualisieren der Transaktion:', err)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="overflow-x-auto">
+        <table className="min-w-full">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left p-4">Datum</th>
+              <th className="text-left p-4">Beschreibung</th>
+              <th className="text-right p-4">Betrag</th>
+              <th className="text-center p-4">Status</th>
+              <th className="text-right p-4">Aktionen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center p-4 text-gray-500">
+                  Keine Transaktionen vorhanden
+                </td>
+              </tr>
+            ) : (
+              transactions.map((transaction, index) => (
+                <tr 
+                  key={transaction.id} 
+                  ref={index === transactions.length - 1 ? lastElementRef : null}
+                  className="border-b hover:bg-gray-50"
+                >
+                  <td className="p-4">
+                    {new Date(transaction.date).toLocaleDateString()}
+                  </td>
+                  <td className="p-4">
+                    {transaction.description}
+                    {transaction.isRecurring && (
+                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        {transaction.recurringInterval}
+                      </span>
+                    )}
+                  </td>
+                  <td className={`p-4 text-right ${
+                    transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {transaction.amount.toFixed(2)} €
+                  </td>
+                  <td className="p-4 text-center">
+                    <button
+                      onClick={() => handleToggleConfirmation(transaction)}
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        transaction.isConfirmed
+                          ? 'bg-green-100 text-green-800'
+                          : isTransactionPending(transaction)
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {transaction.isConfirmed 
+                        ? 'Bestätigt' 
+                        : isTransactionPending(transaction)
+                          ? 'Ausstehend'
+                          : 'Nicht bestätigt'
+                      }
+                    </button>
+                  </td>
+                  <td className="p-4 text-right">
+                    <Link
+                      href={`/transactions/${transaction.id}/edit`}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      Bearbeiten
+                    </Link>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+} 

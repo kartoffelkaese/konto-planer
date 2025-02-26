@@ -2,6 +2,13 @@
 
 Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [1.2.2] - 2024-03-XX
+
+### Verbessert
+- Bestätigungsprozess für Transaktionen überarbeitet
+- Transaktionsdatum bleibt bei Bestätigung unverändert
+- Korrekte Buchführung auch bei nachträglicher Bestätigung
+
 ## [1.2.1] - 2025-02-26
 
 ### Hinzugefügt

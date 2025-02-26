@@ -36,19 +36,35 @@ export async function PATCH(
     const body = await request.json()
     console.log('Update transaction body:', body)
     
+    // Konvertiere das Datum in ein Date-Objekt
+    const updateData = {
+      ...body,
+      date: body.date ? new Date(body.date) : undefined,
+      lastConfirmedDate: body.lastConfirmedDate ? new Date(body.lastConfirmedDate) : null,
+      // Stelle sicher, dass amount als Decimal gespeichert wird
+      amount: typeof body.amount === 'number' ? body.amount : parseFloat(body.amount)
+    }
+
+    // Entferne undefined Werte
+    Object.keys(updateData).forEach(key => 
+      updateData[key] === undefined && delete updateData[key]
+    )
+
+    console.log('Update data:', updateData)
+
     const transaction = await prisma.transaction.update({
       where: { id: params.id },
-      data: {
-        ...body,
-        lastConfirmedDate: body.lastConfirmedDate ? new Date(body.lastConfirmedDate) : null
-      }
+      data: updateData
     })
+
     console.log('Updated transaction:', transaction)
     return NextResponse.json(transaction)
   } catch (error) {
     console.error('Error updating transaction:', error)
+    // Detailliertere Fehlermeldung
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error },
+      { error: 'Internal Server Error', details: errorMessage },
       { status: 500 }
     )
   }

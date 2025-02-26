@@ -8,6 +8,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [salaryDay, setSalaryDay] = useState(1)
+  const [accountName, setAccountName] = useState("Mein Konto")
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
@@ -25,6 +26,7 @@ export default function SettingsPage() {
       }
       const data = await response.json()
       setSalaryDay(data.salaryDay)
+      setAccountName(data.accountName || "Mein Konto")
     } catch (err) {
       console.error('Error loading settings:', err)
       setError('Fehler beim Laden der Einstellungen')
@@ -45,6 +47,7 @@ export default function SettingsPage() {
         },
         body: JSON.stringify({
           salaryDay,
+          accountName,
         }),
       })
 
@@ -88,6 +91,23 @@ export default function SettingsPage() {
 
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
           <div className="space-y-6">
+            <div>
+              <label htmlFor="accountName" className="block text-sm font-medium text-gray-700">
+                Kontobezeichnung
+              </label>
+              <div className="mt-1">
+                <input
+                  type="text"
+                  id="accountName"
+                  value={accountName}
+                  onChange={(e) => setAccountName(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="z.B. Girokonto"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
             <div>
               <label htmlFor="salaryDay" className="block text-sm font-medium text-gray-700">
                 Tag des Gehaltseingangs

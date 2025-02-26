@@ -2,12 +2,17 @@
 
 Eine moderne Web-Anwendung zur Verwaltung von Finanzen, entwickelt mit Next.js und TypeScript.
 
+![Version](https://img.shields.io/badge/version-1.2.1-blue)
+![License](https://img.shields.io/badge/license-GPL--3.0-green)
+
 ## Funktionen
 
 - 📊 Monatliche Übersicht über Einnahmen und Ausgaben
 - 💰 Verwaltung von einmaligen und wiederkehrenden Transaktionen
 - 📅 Automatische Berechnung der monatlichen Belastung
 - ✅ Bestätigung von Transaktionen und Statusverfolgung
+- 🔄 Versionierung von wiederkehrenden Zahlungen
+- 🏪 Händlerverwaltung für bessere Kategorisierung
 - 📱 Responsive Design für Desktop und Mobile
 
 ## Installation
@@ -35,6 +40,8 @@ Die Anwendung ist dann unter `http://localhost:3000` erreichbar.
 - Next.js 14
 - TypeScript
 - Tailwind CSS
+- Prisma
+- MySQL
 - Heroicons
 
 ## Entwicklung
@@ -44,6 +51,10 @@ Die Anwendung ist dann unter `http://localhost:3000` erreichbar.
 - `npm run start`: Startet die Produktionsversion
 - `npm run lint`: Führt den Linter aus
 
+## Changelog
+
+Siehe [CHANGELOG.md](CHANGELOG.md) für eine detaillierte Auflistung aller Änderungen.
+
 ## Lizenz
 
-MIT
+Dieses Projekt ist unter der GNU General Public License v3.0 lizenziert - siehe die [LICENSE](LICENSE) Datei für Details.

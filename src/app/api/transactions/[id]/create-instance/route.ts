@@ -31,15 +31,33 @@ export async function POST(
     const lastDate = originalTransaction.lastConfirmedDate || originalTransaction.date
     const nextDueDate = getNextDueDate(lastDate, originalTransaction.recurringInterval || 'monthly')
 
+    // Finde die höchste Version für diese wiederkehrende Zahlung
+    const latestVersion = await prisma.transaction.findFirst({
+      where: {
+        OR: [
+          { id: originalTransaction.id },
+          { parentTransactionId: originalTransaction.id }
+        ]
+      },
+      orderBy: {
+        version: 'desc'
+      }
+    })
+
+    const nextVersion = latestVersion ? latestVersion.version + 1 : 1
+
     // Erstelle eine neue Instanz der Transaktion
     const newTransaction = await prisma.transaction.create({
       data: {
         description: originalTransaction.description,
+        merchant: originalTransaction.merchant,
         amount: originalTransaction.amount,
         date: nextDueDate,
         isConfirmed: false,
         isRecurring: false, // Die neue Instanz ist keine wiederkehrende Zahlung
-        userId: originalTransaction.userId
+        userId: originalTransaction.userId,
+        version: nextVersion,
+        parentTransactionId: originalTransaction.id
       }
     })
 

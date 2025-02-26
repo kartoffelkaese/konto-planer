@@ -8,8 +8,24 @@ interface TransactionsResponse {
 }
 
 const api = axios.create({
-  baseURL: '/api'
+  baseURL: '/api',
+  timeout: 10000, // 10 Sekunden Timeout
+  headers: {
+    'Content-Type': 'application/json'
+  }
 })
+
+// Füge einen Interceptor hinzu, um Fehler zu behandeln
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('API Error:', error)
+    if (error.code === 'ECONNABORTED') {
+      return Promise.reject(new Error('Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es erneut.'))
+    }
+    return Promise.reject(error)
+  }
+)
 
 export const getTransactions = async (): Promise<TransactionsResponse> => {
   const response = await api.get('/transactions')

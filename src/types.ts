@@ -1,11 +1,12 @@
 export interface Transaction {
   id: string
   description: string
+  merchant: string
   amount: number
-  date: Date
+  date: string
   isConfirmed: boolean
   isRecurring: boolean
-  recurringInterval?: 'monthly' | 'quarterly' | 'yearly'
-  lastConfirmedDate?: Date
-  createdAt: Date
+  recurringInterval?: string
+  lastConfirmedDate?: string | null
+  createdAt: string
 } 

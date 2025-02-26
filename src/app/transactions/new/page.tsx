@@ -10,6 +10,7 @@ export default function NewTransactionPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
+    merchant: '',
     description: '',
     amount: '',
     type: 'expense', // 'income' oder 'expense'
@@ -30,9 +31,10 @@ export default function NewTransactionPage() {
         : -Math.abs(parseFloat(formData.amount))
 
       await createTransaction({
+        merchant: formData.merchant,
         description: formData.description,
         amount,
-        date: new Date(formData.date),
+        date: formData.date,
         isConfirmed: false,
         isRecurring: formData.isRecurring,
         recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined
@@ -68,6 +70,22 @@ export default function NewTransactionPage() {
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
           <div className="space-y-6">
             <div>
+              <label htmlFor="merchant" className="block text-sm font-medium text-gray-700">
+                Händler
+              </label>
+              <input
+                type="text"
+                id="merchant"
+                value={formData.merchant}
+                onChange={(e) => setFormData({ ...formData, merchant: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="z.B. Amazon, Lidl, etc."
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-700">
                 Beschreibung
               </label>
@@ -77,7 +95,6 @@ export default function NewTransactionPage() {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
                 disabled={loading}
               />
             </div>

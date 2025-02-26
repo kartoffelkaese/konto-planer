@@ -15,6 +15,7 @@ export default function EditTransactionForm({ id }: EditTransactionFormProps) {
   const [error, setError] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [formData, setFormData] = useState({
+    merchant: '',
     description: '',
     amount: '',
     type: 'expense',
@@ -31,6 +32,7 @@ export default function EditTransactionForm({ id }: EditTransactionFormProps) {
     try {
       const transaction = await getTransaction(id)
       setFormData({
+        merchant: transaction.merchant || '',
         description: transaction.description,
         amount: Math.abs(transaction.amount).toString(),
         type: transaction.amount >= 0 ? 'income' : 'expense',
@@ -71,9 +73,10 @@ export default function EditTransactionForm({ id }: EditTransactionFormProps) {
         : -Math.abs(parseFloat(formData.amount))
 
       await updateTransaction(id, {
+        merchant: formData.merchant,
         description: formData.description,
         amount,
-        date: new Date(formData.date),
+        date: new Date(formData.date).toISOString(),
         isRecurring: formData.isRecurring,
         recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined
       })
@@ -147,6 +150,22 @@ export default function EditTransactionForm({ id }: EditTransactionFormProps) {
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
           <div className="space-y-6">
             <div>
+              <label htmlFor="merchant" className="block text-sm font-medium text-gray-700">
+                Händler
+              </label>
+              <input
+                type="text"
+                id="merchant"
+                value={formData.merchant}
+                onChange={(e) => setFormData({ ...formData, merchant: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="z.B. Amazon, Lidl, etc."
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-700">
                 Beschreibung
               </label>
@@ -156,7 +175,6 @@ export default function EditTransactionForm({ id }: EditTransactionFormProps) {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
                 disabled={loading}
               />
             </div>

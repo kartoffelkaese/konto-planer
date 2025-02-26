@@ -21,14 +21,18 @@ export async function PATCH(request: NextRequest) {
           id: userId,
           email: 'temp@example.com',
           passwordHash: 'temp',
-          salaryDay: body.salaryDay
+          salaryDay: body.salaryDay,
+          accountName: body.accountName
         }
       })
     } else {
       // Aktualisiere den bestehenden Benutzer
       user = await prisma.user.update({
         where: { id: userId },
-        data: { salaryDay: body.salaryDay }
+        data: { 
+          salaryDay: body.salaryDay,
+          accountName: body.accountName
+        }
       })
     }
 

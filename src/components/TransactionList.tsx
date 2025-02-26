@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { Transaction } from '@/types'
 import { isTransactionPending, formatDate } from '@/lib/dateUtils'
-import { PencilIcon, CheckIcon, MinusCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
+import { PencilIcon, CheckIcon, MinusCircleIcon, ClockIcon, CalendarIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
 
 interface TransactionListProps {
   transactions: Transaction[]
@@ -14,12 +15,16 @@ export default function TransactionList({
   onTransactionChange,
   lastElementRef 
 }: TransactionListProps) {
+  const [editingDate, setEditingDate] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
+
   const handleToggleConfirmation = async (transaction: Transaction) => {
     try {
       const updatedTransaction = {
         ...transaction,
         isConfirmed: !transaction.isConfirmed,
-        lastConfirmedDate: !transaction.isConfirmed ? new Date().toISOString() : null
+        lastConfirmedDate: !transaction.isConfirmed ? selectedDate : null,
+        date: selectedDate // Setze auch das Transaktionsdatum
       }
       
       const response = await fetch(`/api/transactions/${transaction.id}`, {
@@ -34,6 +39,34 @@ export default function TransactionList({
         throw new Error('Fehler beim Aktualisieren der Transaktion')
       }
 
+      setEditingDate(null)
+      onTransactionChange()
+    } catch (err) {
+      console.error('Fehler beim Aktualisieren der Transaktion:', err)
+    }
+  }
+
+  const handleUpdateDate = async (transaction: Transaction, newDate: string) => {
+    try {
+      const updatedTransaction = {
+        ...transaction,
+        date: newDate,
+        lastConfirmedDate: transaction.isConfirmed ? newDate : transaction.lastConfirmedDate
+      }
+      
+      const response = await fetch(`/api/transactions/${transaction.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedTransaction),
+      })
+
+      if (!response.ok) {
+        throw new Error('Fehler beim Aktualisieren der Transaktion')
+      }
+
+      setEditingDate(null)
       onTransactionChange()
     } catch (err) {
       console.error('Fehler beim Aktualisieren der Transaktion:', err)
@@ -47,6 +80,7 @@ export default function TransactionList({
           <thead>
             <tr className="border-b">
               <th className="text-left p-4">Datum</th>
+              <th className="text-left p-4">Händler</th>
               <th className="text-left p-4">Beschreibung</th>
               <th className="text-right p-4">Betrag</th>
               <th className="text-center p-4">Status</th>
@@ -56,7 +90,7 @@ export default function TransactionList({
           <tbody>
             {transactions.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center p-4 text-gray-500">
+                <td colSpan={6} className="text-center p-4 text-gray-500">
                   Keine Transaktionen vorhanden
                 </td>
               </tr>
@@ -68,21 +102,65 @@ export default function TransactionList({
                   className="border-b hover:bg-gray-50"
                 >
                   <td className="p-4">
-                    {formatDate(transaction.date)}
+                    {editingDate === transaction.id ? (
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="date"
+                          value={selectedDate}
+                          onChange={(e) => setSelectedDate(e.target.value)}
+                          className="border rounded px-2 py-1 text-sm"
+                        />
+                        <button
+                          onClick={() => handleUpdateDate(transaction, selectedDate)}
+                          className="text-green-600 hover:text-green-700"
+                        >
+                          <CheckIcon className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setEditingDate(null)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <MinusCircleIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <span>{formatDate(transaction.date)}</span>
+                        <button
+                          onClick={() => {
+                            setEditingDate(transaction.id)
+                            setSelectedDate(new Date(transaction.date).toISOString().split('T')[0])
+                          }}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          <CalendarIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                  <td className="p-4 text-gray-600">
+                    {transaction.merchant || "-"}
                   </td>
                   <td className="p-4">
-                    {transaction.description}
-                    {transaction.isRecurring && (
-                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                        {transaction.recurringInterval === 'monthly' 
-                          ? 'Monatlich'
-                          : transaction.recurringInterval === 'quarterly'
-                            ? 'Vierteljährlich'
-                            : transaction.recurringInterval === 'yearly'
-                              ? 'Jährlich'
-                              : transaction.recurringInterval}
-                      </span>
-                    )}
+                    <div className="flex items-center">
+                      <span className="flex-grow">{transaction.description}</span>
+                      {transaction.isRecurring && (
+                        <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {transaction.recurringInterval === 'monthly' 
+                            ? 'Monatlich'
+                            : transaction.recurringInterval === 'quarterly'
+                              ? 'Vierteljährlich'
+                              : transaction.recurringInterval === 'yearly'
+                                ? 'Jährlich'
+                                : transaction.recurringInterval}
+                        </span>
+                      )}
+                      {(transaction.isRecurring || transaction.parentTransactionId) && (
+                        <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          v{transaction.version}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className={`p-4 text-right ${
                     transaction.amount > 0 ? 'text-green-600' : 'text-red-600'

@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
         const existingInstance = await prisma.transaction.findFirst({
           where: {
             description: transaction.description,
+            merchant: transaction.merchant,
             amount: transaction.amount,
             date: {
               gte: startDate,
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
           const newTransaction = await prisma.transaction.create({
             data: {
               description: transaction.description,
+              merchant: transaction.merchant,
               amount: transaction.amount,
               date: nextDueDate,
               isConfirmed: false,

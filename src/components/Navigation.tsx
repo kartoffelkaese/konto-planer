@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { APP_VERSION } from '@/lib/version'
 
 export default function Navigation() {
   const pathname = usePathname()
@@ -17,6 +18,7 @@ export default function Navigation() {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <h1 className="text-xl font-bold text-gray-800">Konto-Planer</h1>
+              <span className="ml-2 text-xs text-gray-500">v{APP_VERSION}</span>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               <Link

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Transaction } from '@/types'
+import { Transaction } from '@/types/index'
 import { getTransactions, createRecurringInstance, createPendingInstances } from '@/lib/api'
 import { isTransactionDueInSalaryMonth, getNextDueDate, formatDate } from '@/lib/dateUtils'
 import { PencilIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
@@ -11,6 +11,7 @@ export default function RecurringTransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [salaryDay, setSalaryDay] = useState(23) // TODO: Aus den Einstellungen laden
 
   useEffect(() => {
@@ -21,10 +22,12 @@ export default function RecurringTransactionsPage() {
     try {
       const response = await getTransactions()
       // Nur wiederkehrende Transaktionen filtern
-      const recurringTransactions = response.transactions.filter(t => t.isRecurring).map(t => ({
-        ...t,
-        amount: Number(t.amount)
-      }))
+      const recurringTransactions = response.transactions
+        .filter(t => t.isRecurring)
+        .map(t => ({
+          ...t,
+          amount: Number(t.amount)
+        }))
       setTransactions(recurringTransactions)
       setError(null)
     } catch (err) {
@@ -40,8 +43,13 @@ export default function RecurringTransactionsPage() {
       await createRecurringInstance(transaction.id)
       // Nach dem Erstellen neu laden
       await loadTransactions()
+      setSuccessMessage(`Neue Zahlung für "${transaction.merchant}" wurde erstellt`)
+      // Nach 3 Sekunden ausblenden
+      setTimeout(() => setSuccessMessage(null), 3000)
     } catch (err) {
       console.error('Fehler beim Erstellen der nächsten Instanz:', err)
+      setError('Fehler beim Erstellen der nächsten Zahlung')
+      setTimeout(() => setError(null), 3000)
     }
   }
 
@@ -127,6 +135,17 @@ export default function RecurringTransactionsPage() {
   return (
     <main className="p-8">
       <div className="max-w-6xl mx-auto">
+        {successMessage && (
+          <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg shadow-md transition-opacity">
+            {successMessage}
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg shadow-md transition-opacity">
+            {error}
+          </div>
+        )}
+        
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold">Wiederkehrende Zahlungen</h2>
           <div className="space-x-4">
@@ -180,6 +199,7 @@ export default function RecurringTransactionsPage() {
             <table className="min-w-full">
               <thead>
                 <tr className="border-b">
+                  <th className="text-left p-4">Händler</th>
                   <th className="text-left p-4">Beschreibung</th>
                   <th className="text-right p-4">Betrag</th>
                   <th className="text-center p-4">Intervall</th>
@@ -191,7 +211,7 @@ export default function RecurringTransactionsPage() {
               <tbody>
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center p-4 text-gray-500">
+                    <td colSpan={7} className="text-center p-4 text-gray-500">
                       Keine wiederkehrenden Zahlungen vorhanden
                     </td>
                   </tr>
@@ -199,7 +219,10 @@ export default function RecurringTransactionsPage() {
                   sortedTransactions.map((transaction) => (
                     <tr key={transaction.id} className="border-b hover:bg-gray-50">
                       <td className="p-4">
-                        {transaction.description}
+                        {transaction.merchant}
+                      </td>
+                      <td className="p-4">
+                        {transaction.description || "-"}
                       </td>
                       <td className={`p-4 text-right ${
                         transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
@@ -233,14 +256,12 @@ export default function RecurringTransactionsPage() {
                             className="inline-flex items-center px-2 py-1 text-sm rounded border border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors"
                           >
                             <PencilIcon className="h-4 w-4 mr-1" />
-                            Bearbeiten
                           </Link>
                           <button
                             onClick={() => handleCreateNextInstance(transaction)}
                             className="inline-flex items-center px-2 py-1 text-sm rounded border border-green-600 text-green-600 hover:bg-green-50 transition-colors"
                           >
                             <ArrowPathIcon className="h-4 w-4 mr-1" />
-                            Nächste Zahlung
                           </button>
                         </div>
                       </td>

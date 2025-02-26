@@ -26,7 +26,8 @@ export default function RecurringTransactionsPage() {
         .filter(t => t.isRecurring)
         .map(t => ({
           ...t,
-          amount: Number(t.amount)
+          amount: Number(t.amount),
+          version: t.version || 1
         }))
       setTransactions(recurringTransactions)
       setError(null)
@@ -230,9 +231,14 @@ export default function RecurringTransactionsPage() {
                         {transaction.amount.toFixed(2)} €
                       </td>
                       <td className="p-4 text-center">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {getIntervalText(transaction.recurringInterval || '')}
-                        </span>
+                        <div className="flex items-center justify-center space-x-2">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {getIntervalText(transaction.recurringInterval || '')}
+                          </span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            v{transaction.version}
+                          </span>
+                        </div>
                       </td>
                       <td className="p-4 text-center">
                         {transaction.lastConfirmedDate 

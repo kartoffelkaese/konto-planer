@@ -110,7 +110,15 @@ export default function Navigation() {
                     role="menuitem"
                     onClick={() => setShowUserMenu(false)}
                   >
-                    Einstellungen
+                    Kontoeinstellungen
+                  </Link>
+                  <Link
+                    href="/settings/merchants"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
+                    role="menuitem"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    Händler verwalten
                   </Link>
                   <button
                     onClick={handleSignOut}

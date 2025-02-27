@@ -21,6 +21,7 @@ model User {
   accountName  String?       @default("Mein Konto")
   createdAt    DateTime      @default(now())
   transactions Transaction[]
+  merchants    Merchant[]
 
   @@map("users")
 }
@@ -30,6 +31,8 @@ model Transaction {
   userId              String
   description         String?
   merchant            String
+  merchantId          String?
+  merchantRef         Merchant?     @relation(fields: [merchantId], references: [id])
   amount              Decimal       @db.Decimal(10, 2)
   date                DateTime
   isConfirmed         Boolean       @default(false)
@@ -44,4 +47,18 @@ model Transaction {
   user                User          @relation(fields: [userId], references: [id])
 
   @@map("transactions")
+}
+
+model Merchant {
+  id           String        @id @default(uuid())
+  userId       String
+  name         String
+  description  String?
+  category     String?
+  createdAt    DateTime      @default(now())
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+
+  @@map("merchants")
+  @@unique([userId, name])
 }

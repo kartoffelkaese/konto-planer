@@ -4,11 +4,13 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
+  const resolvedParams = await Promise.resolve(params)
+  
   try {
     const transaction = await prisma.transaction.findUnique({
-      where: { id: params.id }
+      where: { id: resolvedParams.id }
     })
 
     if (!transaction) {
@@ -30,8 +32,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
+  const resolvedParams = await Promise.resolve(params)
+  
   try {
     const body = await request.json()
     console.log('Update transaction body:', body)
@@ -53,7 +57,7 @@ export async function PATCH(
     console.log('Update data:', updateData)
 
     const transaction = await prisma.transaction.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: updateData
     })
 
@@ -72,11 +76,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
+  const resolvedParams = await Promise.resolve(params)
+  
   try {
     await prisma.transaction.delete({
-      where: { id: params.id }
+      where: { id: resolvedParams.id }
     })
     return new NextResponse(null, { status: 204 })
   } catch (error) {

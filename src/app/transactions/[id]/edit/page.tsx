@@ -4,11 +4,13 @@ import { notFound } from 'next/navigation'
 export default async function EditTransactionPage({
   params
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }> | { id: string }
 }) {
-  if (!params?.id) {
+  const resolvedParams = await Promise.resolve(params)
+  
+  if (!resolvedParams?.id) {
     notFound()
   }
   
-  return <EditTransactionForm id={params.id} />
+  return <EditTransactionForm id={resolvedParams.id} />
 } 

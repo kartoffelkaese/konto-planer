@@ -1,66 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getTransaction, updateTransaction, deleteTransaction } from '@/lib/api'
+import { createTransaction } from '@/lib/api'
 
-interface EditTransactionFormProps {
-  id: string
-}
-
-export default function EditTransactionForm({ id }: EditTransactionFormProps) {
+export default function NewTransactionPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [formData, setFormData] = useState({
     merchant: '',
     description: '',
     amount: '',
-    type: 'expense',
+    type: 'expense', // 'income' oder 'expense'
     date: new Date().toISOString().split('T')[0],
     isRecurring: false,
-    recurringInterval: 'monthly'
+    recurringInterval: 'monthly',
+    isConfirmed: false // Neue Option für sofortige Bestätigung
   })
-
-  useEffect(() => {
-    loadTransaction()
-  }, [id])
-
-  const loadTransaction = async () => {
-    try {
-      const transaction = await getTransaction(id)
-      setFormData({
-        merchant: transaction.merchant || '',
-        description: transaction.description,
-        amount: Math.abs(transaction.amount).toString(),
-        type: transaction.amount >= 0 ? 'income' : 'expense',
-        date: new Date(transaction.date).toISOString().split('T')[0],
-        isRecurring: transaction.isRecurring,
-        recurringInterval: transaction.recurringInterval || 'monthly'
-      })
-      setError(null)
-    } catch (err) {
-      console.error('Error loading transaction:', err)
-      setError('Fehler beim Laden der Transaktion')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleDelete = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      await deleteTransaction(id)
-      router.push('/transactions')
-    } catch (err) {
-      console.error('Error deleting transaction:', err)
-      setError('Fehler beim Löschen der Transaktion')
-      setLoading(false)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,44 +26,35 @@ export default function EditTransactionForm({ id }: EditTransactionFormProps) {
     setError(null)
 
     try {
-      const amount = formData.type === 'income'
+      // Konvertiere den Betrag basierend auf dem Typ
+      const amount = formData.type === 'income' 
         ? Math.abs(parseFloat(formData.amount))
         : -Math.abs(parseFloat(formData.amount))
 
-      await updateTransaction(id, {
+      await createTransaction({
         merchant: formData.merchant,
         description: formData.description,
         amount,
-        date: new Date(formData.date).toISOString(),
+        date: formData.date,
+        isConfirmed: formData.isConfirmed,
         isRecurring: formData.isRecurring,
-        recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined
+        recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined,
+        lastConfirmedDate: formData.isConfirmed ? formData.date : undefined
       })
       router.push('/transactions')
     } catch (err) {
-      console.error('Error updating transaction:', err)
-      setError('Fehler beim Aktualisieren der Transaktion')
+      console.error('Error creating transaction:', err)
+      setError('Fehler beim Erstellen der Transaktion')
     } finally {
       setLoading(false)
     }
   }
 
-  if (loading) {
-    return <div className="p-8 flex items-center justify-center">Laden...</div>
-  }
-
-  if (error) {
-    return (
-      <div className="p-8 flex items-center justify-center text-red-600">
-        {error}
-      </div>
-    )
-  }
-
   return (
-    <main className="p-8">
+    <main className="min-h-screen p-8">
       <div className="max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">Transaktion bearbeiten</h1>
+          <h1 className="text-4xl font-bold">Neue Transaktion</h1>
           <Link
             href="/transactions"
             className="text-gray-600 hover:text-gray-800"
@@ -117,33 +66,6 @@ export default function EditTransactionForm({ id }: EditTransactionFormProps) {
         {error && (
           <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
             {error}
-          </div>
-        )}
-
-        {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
-              <h3 className="text-lg font-semibold mb-4">Transaktion löschen</h3>
-              <p className="text-gray-600 mb-6">
-                Möchten Sie diese Transaktion wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
-              </p>
-              <div className="flex justify-end space-x-4">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
-                  disabled={loading}
-                >
-                  Abbrechen
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50"
-                  disabled={loading}
-                >
-                  {loading ? 'Wird gelöscht...' : 'Löschen'}
-                </button>
-              </div>
-            </div>
           </div>
         )}
 
@@ -262,30 +184,34 @@ export default function EditTransactionForm({ id }: EditTransactionFormProps) {
               </div>
             )}
 
-            <div className="flex justify-between space-x-4">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="isConfirmed"
+                checked={formData.isConfirmed}
+                onChange={(e) => setFormData({ ...formData, isConfirmed: e.target.checked })}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                disabled={loading}
+              />
+              <label htmlFor="isConfirmed" className="ml-2 block text-sm text-gray-700">
+                Transaktion sofort bestätigen
+              </label>
+            </div>
+
+            <div className="flex justify-end space-x-4">
+              <Link
+                href="/transactions"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              >
+                Abbrechen
+              </Link>
               <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50"
+                type="submit"
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
                 disabled={loading}
               >
-                Löschen
+                {loading ? 'Speichern...' : 'Speichern'}
               </button>
-              <div className="flex space-x-4">
-                <Link
-                  href="/transactions"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
-                >
-                  Abbrechen
-                </Link>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
-                  disabled={loading}
-                >
-                  {loading ? 'Speichern...' : 'Speichern'}
-                </button>
-              </div>
             </div>
           </div>
         </form>

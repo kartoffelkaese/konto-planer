@@ -7,6 +7,8 @@ import { getTransactions, createRecurringInstance, createPendingInstances } from
 import { isTransactionDueInSalaryMonth, getNextDueDate, formatDate } from '@/lib/dateUtils'
 import { formatCurrency, formatNumber } from '@/lib/formatters'
 import { PencilIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import Modal from '@/components/Modal'
+import TransactionForm from '@/components/TransactionForm'
 
 export default function RecurringTransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -14,6 +16,7 @@ export default function RecurringTransactionsPage() {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [salaryDay, setSalaryDay] = useState(23) // TODO: Aus den Einstellungen laden
+  const [showNewTransactionModal, setShowNewTransactionModal] = useState(false)
 
   useEffect(() => {
     loadTransactions()
@@ -63,6 +66,11 @@ export default function RecurringTransactionsPage() {
     } catch (err) {
       console.error('Fehler beim Erstellen der ausstehenden Transaktionen:', err)
     }
+  }
+
+  const handleNewTransactionSuccess = () => {
+    setShowNewTransactionModal(false)
+    loadTransactions()
   }
 
   const getIntervalText = (interval: string) => {
@@ -151,12 +159,12 @@ export default function RecurringTransactionsPage() {
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold">Wiederkehrende Zahlungen</h2>
           <div className="space-x-4">
-            <Link
-              href="/transactions/new"
+            <button
+              onClick={() => setShowNewTransactionModal(true)}
               className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
             >
               Neue wiederkehrende Zahlung
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -279,6 +287,19 @@ export default function RecurringTransactionsPage() {
             </table>
           </div>
         </div>
+
+        {/* Neue wiederkehrende Transaktion Modal */}
+        <Modal
+          isOpen={showNewTransactionModal}
+          onClose={() => setShowNewTransactionModal(false)}
+          title="Neue wiederkehrende Zahlung"
+        >
+          <TransactionForm
+            onSuccess={handleNewTransactionSuccess}
+            onCancel={() => setShowNewTransactionModal(false)}
+            defaultIsRecurring={true}
+          />
+        </Modal>
       </div>
     </main>
   )

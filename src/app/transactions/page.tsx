@@ -7,8 +7,9 @@ import { getTransactions, updateTransaction, createRecurringInstance, createPend
 import { isTransactionDueInSalaryMonth, getSalaryMonthRange } from '@/lib/dateUtils'
 import TransactionList from '@/components/TransactionList'
 import MonthlyOverview from '@/components/MonthlyOverview'
-import NewTransactionModal from '@/components/NewTransactionModal'
-import EditTransactionModal from '@/components/EditTransactionModal'
+import Modal from '@/components/Modal'
+import TransactionForm from '@/components/TransactionForm'
+import EditTransactionForm from '@/components/EditTransactionForm'
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -18,11 +19,13 @@ export default function TransactionsPage() {
   const [accountName, setAccountName] = useState('Mein Konto')
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
-  const [isNewModalOpen, setIsNewModalOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
   const observer = useRef<IntersectionObserver | null>(null)
   const loadingRef = useRef<HTMLDivElement>(null)
+
+  // Modal states
+  const [showNewTransactionModal, setShowNewTransactionModal] = useState(false)
+  const [showEditTransactionModal, setShowEditTransactionModal] = useState(false)
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
 
   useEffect(() => {
     loadSettings()
@@ -120,9 +123,20 @@ export default function TransactionsPage() {
     }
   }
 
-  const handleEditTransaction = (transactionId: string) => {
-    setSelectedTransactionId(transactionId)
-    setIsEditModalOpen(true)
+  const handleEditTransaction = (id: string) => {
+    setSelectedTransactionId(id)
+    setShowEditTransactionModal(true)
+  }
+
+  const handleEditSuccess = () => {
+    setShowEditTransactionModal(false)
+    setSelectedTransactionId(null)
+    loadTransactions(1)
+  }
+
+  const handleNewTransactionSuccess = () => {
+    setShowNewTransactionModal(false)
+    loadTransactions(1)
   }
 
   const calculateTotals = () => {
@@ -243,7 +257,7 @@ export default function TransactionsPage() {
             </div>
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
               <button
-                onClick={handleCreatePending}
+                onClick={() => handleCreatePending()}
                 className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
               >
                 <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -252,7 +266,7 @@ export default function TransactionsPage() {
                 Ausstehende Zahlungen erstellen
               </button>
               <button
-                onClick={() => setIsNewModalOpen(true)}
+                onClick={() => setShowNewTransactionModal(true)}
                 className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-150"
               >
                 <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -263,22 +277,13 @@ export default function TransactionsPage() {
             </div>
           </div>
 
-          <MonthlyOverview
-            currentIncome={totals.currentIncome}
-            currentExpenses={totals.currentExpenses}
-            pendingExpenses={totals.pendingExpenses}
-            available={totals.available}
-          />
+          <MonthlyOverview transactions={transactions} />
         </div>
 
         <div className="bg-white rounded-xl shadow-sm">
           <TransactionList 
             transactions={transactions} 
             onTransactionChange={() => loadTransactions(1)}
-            onToggleConfirmation={handleToggleConfirmation}
-            onCreateInstance={handleCreateInstance}
-            onEdit={handleEditTransaction}
-            isTransactionPending={isTransactionPending}
             lastElementRef={lastElementRef}
           />
           {loading && (
@@ -295,25 +300,32 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <NewTransactionModal
-        isOpen={isNewModalOpen}
-        onClose={() => {
-          setIsNewModalOpen(false)
-          loadTransactions(1)
-        }}
-      />
-
-      {selectedTransactionId && (
-        <EditTransactionModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false)
-            setSelectedTransactionId(null)
-            loadTransactions(1)
-          }}
-          transactionId={selectedTransactionId}
+      {/* Neue Transaktion Modal */}
+      <Modal
+        isOpen={showNewTransactionModal}
+        onClose={() => setShowNewTransactionModal(false)}
+        title="Neue Transaktion"
+      >
+        <TransactionForm
+          onSuccess={handleNewTransactionSuccess}
+          onCancel={() => setShowNewTransactionModal(false)}
         />
-      )}
+      </Modal>
+
+      {/* Transaktion bearbeiten Modal */}
+      <Modal
+        isOpen={showEditTransactionModal}
+        onClose={() => setShowEditTransactionModal(false)}
+        title="Transaktion bearbeiten"
+      >
+        {selectedTransactionId && (
+          <EditTransactionForm
+            id={selectedTransactionId}
+            onSuccess={handleEditSuccess}
+            onCancel={() => setShowEditTransactionModal(false)}
+          />
+        )}
+      </Modal>
     </main>
   )
 } 

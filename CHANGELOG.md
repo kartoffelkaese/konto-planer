@@ -78,4 +78,16 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 ### Verbesserungen
 - Kompakteres Design der Monatsübersicht
 - Optimierte Darstellung der Beträge neben den Beschriftungen
-- Verbesserte Platznutzung in der Benutzeroberfläche 
+- Verbesserte Platznutzung in der Benutzeroberfläche
+
+## [1.4.0]
+
+### Hinzugefügt
+- Moderne Modal-Dialoge für Transaktionsbearbeitung
+- Verbesserte Benutzerinteraktion durch In-Page-Bearbeitung
+- Optimierte Darstellung der Bearbeitungsformulare
+
+### Verbessert
+- Überarbeitete Benutzeroberfläche für Transaktionsbearbeitung
+- Effizienterer Workflow durch Modal-Dialoge
+- Reduzierte Seitenneuladezeiten durch In-Page-Updates 

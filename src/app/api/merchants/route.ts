@@ -65,8 +65,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
-    const { name, description, category } = await request.json()
-    console.log('Empfangene Daten:', { name, description, category })
+    const { name, category } = await request.json()
+    console.log('Empfangene Daten:', { name, category })
 
     if (!name) {
       return NextResponse.json(
@@ -93,7 +93,6 @@ export async function POST(request: Request) {
       data: {
         userId: user.id,
         name,
-        description,
         category
       }
     })

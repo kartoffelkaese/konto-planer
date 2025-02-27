@@ -7,7 +7,6 @@ import Modal from '@/components/Modal'
 interface Merchant {
   id: string
   name: string
-  description?: string | null
   category?: string | null
   createdAt: string
 }
@@ -22,7 +21,6 @@ export default function MerchantsPage() {
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null)
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
     category: ''
   })
 
@@ -66,7 +64,7 @@ export default function MerchantsPage() {
 
       await loadMerchants()
       setShowAddModal(false)
-      setFormData({ name: '', description: '', category: '' })
+      setFormData({ name: '', category: '' })
     } catch (err) {
       console.error('Error creating merchant:', err)
       setError(err instanceof Error ? err.message : 'Fehler beim Erstellen des Händlers')
@@ -95,7 +93,7 @@ export default function MerchantsPage() {
       await loadMerchants()
       setShowEditModal(false)
       setSelectedMerchant(null)
-      setFormData({ name: '', description: '', category: '' })
+      setFormData({ name: '', category: '' })
     } catch (err) {
       console.error('Error updating merchant:', err)
       setError(err instanceof Error ? err.message : 'Fehler beim Aktualisieren des Händlers')
@@ -159,9 +157,6 @@ export default function MerchantsPage() {
               <li key={merchant.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50">
                 <div>
                   <h3 className="text-sm font-medium text-gray-900">{merchant.name}</h3>
-                  {merchant.description && (
-                    <p className="mt-1 text-sm text-gray-500">{merchant.description}</p>
-                  )}
                   {merchant.category && (
                     <span className="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {merchant.category}
@@ -174,7 +169,6 @@ export default function MerchantsPage() {
                       setSelectedMerchant(merchant)
                       setFormData({
                         name: merchant.name,
-                        description: merchant.description || '',
                         category: merchant.category || ''
                       })
                       setShowEditModal(true)
@@ -204,7 +198,7 @@ export default function MerchantsPage() {
         isOpen={showAddModal}
         onClose={() => {
           setShowAddModal(false)
-          setFormData({ name: '', description: '', category: '' })
+          setFormData({ name: '', category: '' })
           setError(null)
         }}
         title="Händler hinzufügen"
@@ -225,18 +219,6 @@ export default function MerchantsPage() {
             />
           </div>
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-              Beschreibung
-            </label>
-            <input
-              type="text"
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-          <div>
             <label htmlFor="category" className="block text-sm font-medium text-gray-700">
               Kategorie
             </label>
@@ -253,7 +235,7 @@ export default function MerchantsPage() {
               type="button"
               onClick={() => {
                 setShowAddModal(false)
-                setFormData({ name: '', description: '', category: '' })
+                setFormData({ name: '', category: '' })
                 setError(null)
               }}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
@@ -276,7 +258,7 @@ export default function MerchantsPage() {
         onClose={() => {
           setShowEditModal(false)
           setSelectedMerchant(null)
-          setFormData({ name: '', description: '', category: '' })
+          setFormData({ name: '', category: '' })
           setError(null)
         }}
         title="Händler bearbeiten"
@@ -297,18 +279,6 @@ export default function MerchantsPage() {
             />
           </div>
           <div>
-            <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700">
-              Beschreibung
-            </label>
-            <input
-              type="text"
-              id="edit-description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
-          <div>
             <label htmlFor="edit-category" className="block text-sm font-medium text-gray-700">
               Kategorie
             </label>
@@ -326,7 +296,7 @@ export default function MerchantsPage() {
               onClick={() => {
                 setShowEditModal(false)
                 setSelectedMerchant(null)
-                setFormData({ name: '', description: '', category: '' })
+                setFormData({ name: '', category: '' })
                 setError(null)
               }}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"

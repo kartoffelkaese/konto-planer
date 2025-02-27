@@ -7,14 +7,20 @@ import { useState } from 'react'
 
 interface TransactionListProps {
   transactions: Transaction[]
-  onTransactionChange: () => void
-  lastElementRef: (node: HTMLElement | null) => void
+  onToggleConfirmation: (transaction: Transaction) => Promise<void>
+  onCreateInstance: (transaction: Transaction) => Promise<void>
+  onEdit: (transactionId: string) => void
+  isTransactionPending: (transaction: Transaction) => boolean
+  lastElementRef?: (node: HTMLElement | null) => void
 }
 
-export default function TransactionList({ 
-  transactions, 
-  onTransactionChange,
-  lastElementRef 
+export default function TransactionList({
+  transactions,
+  onToggleConfirmation,
+  onCreateInstance,
+  onEdit,
+  isTransactionPending,
+  lastElementRef
 }: TransactionListProps) {
   const [editingDate, setEditingDate] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
@@ -40,7 +46,7 @@ export default function TransactionList({
       }
 
       setEditingDate(null)
-      onTransactionChange()
+      onToggleConfirmation(transaction)
     } catch (err) {
       console.error('Fehler beim Aktualisieren der Transaktion:', err)
     }
@@ -67,10 +73,25 @@ export default function TransactionList({
       }
 
       setEditingDate(null)
-      onTransactionChange()
+      onToggleConfirmation(transaction)
     } catch (err) {
       console.error('Fehler beim Aktualisieren der Transaktion:', err)
     }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('de-DE', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+  }
+
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString('de-DE', {
+      style: 'currency',
+      currency: 'EUR'
+    })
   }
 
   return (
@@ -116,7 +137,7 @@ export default function TransactionList({
                 <tr 
                   key={transaction.id} 
                   ref={index === transactions.length - 1 ? lastElementRef : null}
-                  className="hover:bg-gray-50 transition-colors duration-150"
+                  className={transaction.isConfirmed ? 'bg-white' : 'bg-gray-50'}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {editingDate === transaction.id ? (
@@ -182,37 +203,32 @@ export default function TransactionList({
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                     <button
                       onClick={() => handleToggleConfirmation(transaction)}
-                      className={`inline-flex items-center px-3 py-1.5 text-sm rounded-lg border ${
+                      className={`px-2 py-1 text-xs font-semibold rounded ${
                         transaction.isConfirmed
-                          ? 'border-green-600 text-green-600 hover:bg-green-50'
-                          : isTransactionPending(transaction)
-                            ? 'border-yellow-600 text-yellow-600 hover:bg-yellow-50'
-                            : 'border-gray-600 text-gray-600 hover:bg-gray-50'
-                      } transition-colors duration-150`}
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                          : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                      }`}
                     >
-                      {transaction.isConfirmed ? (
-                        <CheckIcon className="h-4 w-4 mr-1.5" />
-                      ) : isTransactionPending(transaction) ? (
-                        <ClockIcon className="h-4 w-4 mr-1.5" />
-                      ) : (
-                        <MinusCircleIcon className="h-4 w-4 mr-1.5" />
-                      )}
-                      {transaction.isConfirmed 
-                        ? 'Bestätigt' 
-                        : isTransactionPending(transaction)
-                          ? 'Ausstehend'
-                          : 'Nicht bestätigt'
-                      }
+                      {transaction.isConfirmed ? 'Bestätigt' : 'Ausstehend'}
                     </button>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                    <Link
-                      href={`/transactions/${transaction.id}/edit`}
-                      className="inline-flex items-center px-3 py-1.5 text-sm rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors duration-150"
-                    >
-                      <PencilIcon className="h-4 w-4 mr-1.5" />
-                      Bearbeiten
-                    </Link>
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={() => onEdit(transaction.id)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        Bearbeiten
+                      </button>
+                      {transaction.isRecurring && isTransactionPending(transaction) && (
+                        <button
+                          onClick={() => onCreateInstance(transaction)}
+                          className="text-green-600 hover:text-green-900"
+                        >
+                          Instanz erstellen
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))

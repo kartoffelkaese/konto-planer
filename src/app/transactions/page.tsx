@@ -7,6 +7,8 @@ import { getTransactions, updateTransaction, createRecurringInstance, createPend
 import { isTransactionDueInSalaryMonth, getSalaryMonthRange } from '@/lib/dateUtils'
 import TransactionList from '@/components/TransactionList'
 import MonthlyOverview from '@/components/MonthlyOverview'
+import NewTransactionModal from '@/components/NewTransactionModal'
+import EditTransactionModal from '@/components/EditTransactionModal'
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -16,6 +18,9 @@ export default function TransactionsPage() {
   const [accountName, setAccountName] = useState('Mein Konto')
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
   const observer = useRef<IntersectionObserver | null>(null)
   const loadingRef = useRef<HTMLDivElement>(null)
 
@@ -113,6 +118,11 @@ export default function TransactionsPage() {
     } catch (err) {
       console.error('Fehler beim Erstellen der ausstehenden Transaktionen:', err)
     }
+  }
+
+  const handleEditTransaction = (transactionId: string) => {
+    setSelectedTransactionId(transactionId)
+    setIsEditModalOpen(true)
   }
 
   const calculateTotals = () => {
@@ -241,25 +251,34 @@ export default function TransactionsPage() {
                 </svg>
                 Ausstehende Zahlungen erstellen
               </button>
-              <Link
-                href="/transactions/new"
+              <button
+                onClick={() => setIsNewModalOpen(true)}
                 className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-150"
               >
                 <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
                 </svg>
                 Neue Transaktion
-              </Link>
+              </button>
             </div>
           </div>
 
-          <MonthlyOverview transactions={transactions} />
+          <MonthlyOverview
+            currentIncome={totals.currentIncome}
+            currentExpenses={totals.currentExpenses}
+            pendingExpenses={totals.pendingExpenses}
+            available={totals.available}
+          />
         </div>
 
         <div className="bg-white rounded-xl shadow-sm">
           <TransactionList 
             transactions={transactions} 
             onTransactionChange={() => loadTransactions(1)}
+            onToggleConfirmation={handleToggleConfirmation}
+            onCreateInstance={handleCreateInstance}
+            onEdit={handleEditTransaction}
+            isTransactionPending={isTransactionPending}
             lastElementRef={lastElementRef}
           />
           {loading && (
@@ -275,6 +294,26 @@ export default function TransactionsPage() {
           )}
         </div>
       </div>
+
+      <NewTransactionModal
+        isOpen={isNewModalOpen}
+        onClose={() => {
+          setIsNewModalOpen(false)
+          loadTransactions(1)
+        }}
+      />
+
+      {selectedTransactionId && (
+        <EditTransactionModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false)
+            setSelectedTransactionId(null)
+            loadTransactions(1)
+          }}
+          transactionId={selectedTransactionId}
+        />
+      )}
     </main>
   )
 } 

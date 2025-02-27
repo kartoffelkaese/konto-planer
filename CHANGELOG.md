@@ -66,4 +66,11 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 - Grundlegende Funktionen zur Finanzverwaltung
 - Erfassung von Einnahmen und Ausgaben
 - Monatliche Übersicht
-- Benutzerverwaltung mit Kontoeinstellungen 
+- Benutzerverwaltung mit Kontoeinstellungen
+
+## Version 1.3.1
+
+### Verbesserungen
+- Kompakteres Design der Monatsübersicht
+- Optimierte Darstellung der Beträge neben den Beschriftungen
+- Verbesserte Platznutzung in der Benutzeroberfläche 

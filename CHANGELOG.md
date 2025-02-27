@@ -68,6 +68,11 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 - Monatliche Übersicht
 - Benutzerverwaltung mit Kontoeinstellungen
 
+## Version 1.3.2
+
+### Verbesserungen
+- Optimiertes Design der Kontobezeichnung auf der Transaktionsseite
+
 ## Version 1.3.1
 
 ### Verbesserungen

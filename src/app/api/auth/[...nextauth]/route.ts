@@ -15,28 +15,36 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Passwort', type: 'password' }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Bitte E-Mail und Passwort eingeben')
-        }
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error('Bitte E-Mail und Passwort eingeben')
+          }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        })
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email.toLowerCase() }
+          })
 
-        if (!user || !user.passwordHash) {
-          throw new Error('Benutzer nicht gefunden')
-        }
+          if (!user || !user.passwordHash) {
+            console.log('Benutzer nicht gefunden oder kein Passwort-Hash:', credentials.email)
+            throw new Error('Ungültige Anmeldedaten')
+          }
 
-        const isValid = await bcrypt.compare(credentials.password, user.passwordHash)
+          const isValid = await bcrypt.compare(credentials.password, user.passwordHash)
 
-        if (!isValid) {
-          throw new Error('Falsches Passwort')
-        }
+          if (!isValid) {
+            console.log('Ungültiges Passwort für Benutzer:', credentials.email)
+            throw new Error('Ungültige Anmeldedaten')
+          }
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.accountName
+          console.log('Erfolgreiche Anmeldung für:', credentials.email)
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.accountName
+          }
+        } catch (error) {
+          console.error('Authentifizierungsfehler:', error)
+          throw error
         }
       }
     })
@@ -46,7 +54,8 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/auth/login',
-    newUser: '/auth/register'
+    newUser: '/auth/register',
+    error: '/auth/error'
   },
   callbacks: {
     async session({ session, token }) {
@@ -55,7 +64,8 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     }
-  }
+  },
+  debug: process.env.NODE_ENV === 'development'
 }
 
 const handler = NextAuth(authOptions)

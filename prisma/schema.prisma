@@ -14,34 +14,34 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(uuid())
-  email      String   @unique
+  id           String        @id @default(uuid())
+  email        String        @unique
   passwordHash String
-  salaryDay  Int
-  accountName String? @default("Mein Konto")
-  createdAt DateTime @default(now())
+  salaryDay    Int
+  accountName  String?       @default("Mein Konto")
+  createdAt    DateTime      @default(now())
   transactions Transaction[]
 
   @@map("users")
 }
 
 model Transaction {
-  id          String   @id @default(uuid())
-  userId      String
-  description String?
-  merchant    String
-  amount      Decimal  @db.Decimal(10, 2)
-  date        DateTime
-  isConfirmed Boolean  @default(false)
-  isRecurring Boolean  @default(false)
-  recurringInterval String?
-  lastConfirmedDate DateTime?
-  version     Int      @default(1)
+  id                  String        @id @default(uuid())
+  userId              String
+  description         String?
+  merchant            String
+  amount              Decimal       @db.Decimal(10, 2)
+  date                DateTime
+  isConfirmed         Boolean       @default(false)
+  isRecurring         Boolean       @default(false)
+  recurringInterval   String?
+  lastConfirmedDate   DateTime?
+  version             Int           @default(1)
   parentTransactionId String?
-  parentTransaction Transaction? @relation("RecurringInstances", fields: [parentTransactionId], references: [id])
-  childTransactions Transaction[] @relation("RecurringInstances")
-  createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id])
+  parentTransaction   Transaction?  @relation("RecurringInstances", fields: [parentTransactionId], references: [id])
+  childTransactions   Transaction[] @relation("RecurringInstances")
+  createdAt           DateTime      @default(now())
+  user                User          @relation(fields: [userId], references: [id])
 
   @@map("transactions")
 }

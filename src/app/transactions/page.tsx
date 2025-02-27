@@ -12,11 +12,30 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [salaryDay, setSalaryDay] = useState(23) // TODO: Aus den Einstellungen laden
+  const [salaryDay, setSalaryDay] = useState(23)
+  const [accountName, setAccountName] = useState('Mein Konto')
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const observer = useRef<IntersectionObserver | null>(null)
   const loadingRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    loadSettings()
+    loadTransactions(1)
+  }, [])
+
+  const loadSettings = async () => {
+    try {
+      const response = await fetch('/api/users/settings')
+      if (response.ok) {
+        const data = await response.json()
+        setSalaryDay(data.salaryDay)
+        setAccountName(data.accountName || 'Mein Konto')
+      }
+    } catch (err) {
+      console.error('Error loading settings:', err)
+    }
+  }
 
   const loadTransactions = async (pageNum: number, append = false) => {
     try {
@@ -51,10 +70,6 @@ export default function TransactionsPage() {
     
     if (node) observer.current.observe(node)
   }, [loading, hasMore])
-
-  useEffect(() => {
-    loadTransactions(1)
-  }, [])
 
   useEffect(() => {
     if (page > 1) {
@@ -116,7 +131,12 @@ export default function TransactionsPage() {
             acc.currentExpenses += amount
             
             // Prüfen ob die Transaktion im aktuellen Gehaltsmonat fällig ist
-            if (isTransactionDueInSalaryMonth(transaction, salaryDay) && !transaction.isConfirmed) {
+            if (isTransactionDueInSalaryMonth({
+              date: new Date(transaction.date),
+              isRecurring: transaction.isRecurring,
+              recurringInterval: transaction.recurringInterval,
+              lastConfirmedDate: transaction.lastConfirmedDate ? new Date(transaction.lastConfirmedDate) : undefined
+            }, salaryDay) && !transaction.isConfirmed) {
               acc.pendingExpenses += amount
             }
           }
@@ -157,7 +177,12 @@ export default function TransactionsPage() {
 
   const isTransactionPending = (transaction: Transaction) => {
     return transaction.isRecurring && 
-           isTransactionDueInSalaryMonth(transaction, salaryDay) && 
+           isTransactionDueInSalaryMonth({
+             date: new Date(transaction.date),
+             isRecurring: transaction.isRecurring,
+             recurringInterval: transaction.recurringInterval,
+             lastConfirmedDate: transaction.lastConfirmedDate ? new Date(transaction.lastConfirmedDate) : undefined
+           }, salaryDay) && 
            !transaction.isConfirmed
   }
 
@@ -196,7 +221,12 @@ export default function TransactionsPage() {
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Transaktionen</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-gray-900">Transaktionen</h1>
+                <span className="px-2 py-0.5 text-[10px] bg-gray-100 text-gray-600 rounded-full">
+                  {accountName}
+                </span>
+              </div>
               <p className="mt-1 text-sm text-gray-500">
                 Verwalten Sie Ihre Ein- und Ausgaben
               </p>

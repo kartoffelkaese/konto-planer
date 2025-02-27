@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "0.1.0",
+  "version": "1.3.2x",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -1,11 +1,11 @@
-import { NextAuthOptions } from 'next-auth'
-import { PrismaAdapter } from '@auth/prisma-adapter'
+import NextAuth, { AuthOptions, Session } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-import NextAuth from 'next-auth/next'
+import { JWT } from 'next-auth/jwt'
 
-export const authOptions: NextAuthOptions = {
+export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
@@ -50,7 +50,7 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   session: {
-    strategy: 'jwt'
+    strategy: 'jwt' as const
   },
   pages: {
     signIn: '/auth/login',
@@ -58,7 +58,7 @@ export const authOptions: NextAuthOptions = {
     error: '/auth/error'
   },
   callbacks: {
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
         session.user.id = token.sub as string
       }
@@ -69,4 +69,6 @@ export const authOptions: NextAuthOptions = {
 }
 
 const handler = NextAuth(authOptions)
+
+// Exportiere die Handler-Funktionen für die API-Route
 export { handler as GET, handler as POST } 

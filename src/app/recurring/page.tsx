@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Transaction } from '@/types/index'
 import { getTransactions, createRecurringInstance, createPendingInstances } from '@/lib/api'
 import { isTransactionDueInSalaryMonth, getNextDueDate, formatDate } from '@/lib/dateUtils'
+import { formatCurrency, formatNumber } from '@/lib/formatters'
 import { PencilIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 
 export default function RecurringTransactionsPage() {
@@ -165,31 +166,31 @@ export default function RecurringTransactionsPage() {
             <div className="p-2 bg-blue-50 rounded-lg">
               <p className="text-xs text-blue-800 mb-1">Monatlich</p>
               <p className="text-lg font-semibold text-blue-600">
-                {Math.abs(totals.monthly.total).toFixed(2)} €
+                {formatCurrency(Math.abs(totals.monthly.total))}
               </p>
             </div>
             <div className="p-2 bg-blue-50 rounded-lg">
               <p className="text-xs text-blue-800 mb-1">Vierteljährlich</p>
               <p className="text-lg font-semibold text-blue-600">
-                {Math.abs(totals.quarterly.total).toFixed(2)} €
+                {formatCurrency(Math.abs(totals.quarterly.total))}
                 <span className="text-xs ml-1">
-                  ({Math.abs(totals.quarterly.perMonth).toFixed(2)} €/M)
+                  ({formatCurrency(Math.abs(totals.quarterly.perMonth))}/M)
                 </span>
               </p>
             </div>
             <div className="p-2 bg-blue-50 rounded-lg">
               <p className="text-xs text-blue-800 mb-1">Jährlich</p>
               <p className="text-lg font-semibold text-blue-600">
-                {Math.abs(totals.yearly.total).toFixed(2)} €
+                {formatCurrency(Math.abs(totals.yearly.total))}
                 <span className="text-xs ml-1">
-                  ({Math.abs(totals.yearly.perMonth).toFixed(2)} €/M)
+                  ({formatCurrency(Math.abs(totals.yearly.perMonth))}/M)
                 </span>
               </p>
             </div>
             <div className="p-2 bg-blue-100 rounded-lg">
               <p className="text-xs text-blue-800 mb-1">Gesamt pro Monat</p>
               <p className="text-lg font-semibold text-blue-600">
-                {Math.abs(totalMonthly).toFixed(2)} €
+                {formatCurrency(Math.abs(totalMonthly))}
               </p>
             </div>
           </div>
@@ -228,7 +229,7 @@ export default function RecurringTransactionsPage() {
                       <td className={`p-4 text-right ${
                         transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
-                        {transaction.amount.toFixed(2)} €
+                        {formatCurrency(transaction.amount)}
                       </td>
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center space-x-2">

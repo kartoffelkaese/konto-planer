@@ -1,5 +1,6 @@
 import { Transaction } from '@/types'
 import { isTransactionDueInSalaryMonth, getSalaryMonthRange } from '@/lib/dateUtils'
+import { formatCurrency } from '@/lib/formatters'
 
 interface MonthlyOverviewProps {
   transactions: Transaction[]
@@ -52,38 +53,74 @@ export default function MonthlyOverview({ transactions }: MonthlyOverviewProps) 
   })
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 mb-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-green-100 rounded-lg px-4 py-2">
-          <h3 className="text-sm font-medium text-green-800">Einnahmen (aktueller Monat)</h3>
-          <p className="text-xl font-bold text-green-600">
-            {totals.currentIncome.toFixed(2)} €
-          </p>
-        </div>
-        <div className="bg-red-100 rounded-lg px-4 py-2">
-          <h3 className="text-sm font-medium text-red-800">Ausgaben (aktueller Monat)</h3>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 shadow-sm">
+        <div className="flex items-center space-x-3">
+          <div className="flex-shrink-0">
+            <div className="p-2 bg-green-200 rounded-lg">
+              <svg className="w-6 h-6 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </div>
+          </div>
           <div>
-            <p className="text-xl font-bold text-red-600">
-              {totals.currentExpenses.toFixed(2)} €
+            <h3 className="text-sm font-medium text-green-800">Einnahmen</h3>
+            <p className="text-xs text-green-600">Aktueller Monat</p>
+          </div>
+        </div>
+        <p className="mt-4 text-2xl font-bold text-green-700">
+          {formatCurrency(totals.currentIncome)}
+        </p>
+      </div>
+
+      <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 shadow-sm">
+        <div className="flex items-center space-x-3">
+          <div className="flex-shrink-0">
+            <div className="p-2 bg-red-200 rounded-lg">
+              <svg className="w-6 h-6 text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+              </svg>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-red-800">Ausgaben</h3>
+            <p className="text-xs text-red-600">Aktueller Monat</p>
+          </div>
+        </div>
+        <p className="mt-4 text-2xl font-bold text-red-700">
+          {formatCurrency(totals.currentExpenses)}
+        </p>
+        {(totals.pendingExpenses > 0 || totals.totalPendingExpenses > 0) && (
+          <div className="mt-2 p-2 bg-red-200 bg-opacity-50 rounded-lg">
+            <p className="text-sm text-red-800 font-medium">
+              Nicht bestätigt: {formatCurrency(totals.totalPendingExpenses)}
             </p>
-            {(totals.pendingExpenses > 0 || totals.totalPendingExpenses > 0) && (
-              <p className="text-xs text-red-800">
-                Nicht bestätigt: {totals.totalPendingExpenses.toFixed(2)} €
-                {totals.pendingExpenses > 0 && totals.pendingExpenses !== totals.totalPendingExpenses && (
-                  <span className="ml-1">
-                    (davon {totals.pendingExpenses.toFixed(2)} € diesen Monat)
-                  </span>
-                )}
+            {totals.pendingExpenses > 0 && totals.pendingExpenses !== totals.totalPendingExpenses && (
+              <p className="mt-1 text-xs text-red-700">
+                Davon diesen Monat: {formatCurrency(totals.pendingExpenses)}
               </p>
             )}
           </div>
+        )}
+      </div>
+
+      <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 shadow-sm">
+        <div className="flex items-center space-x-3">
+          <div className="flex-shrink-0">
+            <div className="p-2 bg-blue-200 rounded-lg">
+              <svg className="w-6 h-6 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+              </svg>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-blue-800">Verfügbar</h3>
+            <p className="text-xs text-blue-600">Inkl. nicht bestätigt</p>
+          </div>
         </div>
-        <div className="bg-blue-100 rounded-lg px-4 py-2">
-          <h3 className="text-sm font-medium text-blue-800">Verfügbar (inkl. nicht bestätigt)</h3>
-          <p className="text-xl font-bold text-blue-600">
-            {totals.available.toFixed(2)} €
-          </p>
-        </div>
+        <p className="mt-4 text-2xl font-bold text-blue-700">
+          {formatCurrency(totals.available)}
+        </p>
       </div>
     </div>
   )

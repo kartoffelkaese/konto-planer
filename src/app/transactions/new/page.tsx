@@ -16,7 +16,8 @@ export default function NewTransactionPage() {
     type: 'expense', // 'income' oder 'expense'
     date: new Date().toISOString().split('T')[0],
     isRecurring: false,
-    recurringInterval: 'monthly'
+    recurringInterval: 'monthly',
+    isConfirmed: false // Neue Option für sofortige Bestätigung
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -35,9 +36,10 @@ export default function NewTransactionPage() {
         description: formData.description,
         amount,
         date: formData.date,
-        isConfirmed: false,
+        isConfirmed: formData.isConfirmed,
         isRecurring: formData.isRecurring,
-        recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined
+        recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined,
+        lastConfirmedDate: formData.isConfirmed ? formData.date : undefined
       })
       router.push('/transactions')
     } catch (err) {
@@ -181,6 +183,20 @@ export default function NewTransactionPage() {
                 </select>
               </div>
             )}
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="isConfirmed"
+                checked={formData.isConfirmed}
+                onChange={(e) => setFormData({ ...formData, isConfirmed: e.target.checked })}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                disabled={loading}
+              />
+              <label htmlFor="isConfirmed" className="ml-2 block text-sm text-gray-700">
+                Transaktion sofort bestätigen
+              </label>
+            </div>
 
             <div className="flex justify-end space-x-4">
               <Link

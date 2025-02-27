@@ -1,46 +1,48 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
 export async function PATCH(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { error: 'Nicht autorisiert' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
     
-    // Später mit echter Benutzer-ID ersetzen
-    const userId = 'temp-user-id'
-
-    // Prüfe, ob der Benutzer existiert
-    let user = await prisma.user.findUnique({
-      where: { id: userId }
+    // Benutzer anhand der E-Mail-Adresse finden
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
     })
 
     if (!user) {
-      // Wenn kein Benutzer existiert, erstelle einen temporären Benutzer
-      user = await prisma.user.create({
-        data: {
-          id: userId,
-          email: 'temp@example.com',
-          passwordHash: 'temp',
-          salaryDay: body.salaryDay,
-          accountName: body.accountName
-        }
-      })
-    } else {
-      // Aktualisiere den bestehenden Benutzer
-      user = await prisma.user.update({
-        where: { id: userId },
-        data: { 
-          salaryDay: body.salaryDay,
-          accountName: body.accountName
-        }
-      })
+      return NextResponse.json(
+        { error: 'Benutzer nicht gefunden' },
+        { status: 404 }
+      )
     }
 
-    return NextResponse.json(user)
+    // Aktualisiere den Benutzer
+    const updatedUser = await prisma.user.update({
+      where: { email: session.user.email },
+      data: { 
+        salaryDay: body.salaryDay,
+        accountName: body.accountName
+      }
+    })
+
+    return NextResponse.json(updatedUser)
   } catch (error) {
     console.error('Error updating user settings:', error)
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Interner Serverfehler' },
       { status: 500 }
     )
   }
@@ -48,16 +50,22 @@ export async function PATCH(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Später mit echter Benutzer-ID ersetzen
-    const userId = 'temp-user-id'
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { error: 'Nicht autorisiert' },
+        { status: 401 }
+      )
+    }
 
     const user = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { email: session.user.email }
     })
 
     if (!user) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { error: 'Benutzer nicht gefunden' },
         { status: 404 }
       )
     }
@@ -66,7 +74,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching user settings:', error)
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Interner Serverfehler' },
       { status: 500 }
     )
   }

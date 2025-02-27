@@ -9,13 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.7.4",
     "@heroicons/react": "^2.2.0",
     "@prisma/client": "^6.4.1",
     "@tanstack/react-query": "^5.66.9",
     "axios": "^1.7.9",
+    "bcryptjs": "^3.0.2",
     "dayjs": "^1.11.13",
     "mysql2": "^3.12.0",
     "next": "15.1.7",
+    "next-auth": "^4.24.11",
     "prisma": "^6.4.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

@@ -2,14 +2,26 @@
 
 Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
-## [1.2.2] - 2024-03-XX
+## [1.3.0]
+
+### Hinzugefügt
+- Möglichkeit zur Änderung der E-Mail-Adresse im Benutzerprofil
+- Sicherheitsüberprüfung durch Passwortbestätigung bei E-Mail-Änderung
+- Automatische Session-Aktualisierung nach E-Mail-Änderung
+
+### Verbessert
+- Benutzerfreundlichere Darstellung der Versionsnummer
+- Überarbeitete Benutzereinstellungen mit separaten Bereichen
+- Verbesserte Fehlerbehandlung und Validierung
+
+## [1.2.2]
 
 ### Verbessert
 - Bestätigungsprozess für Transaktionen überarbeitet
 - Transaktionsdatum bleibt bei Bestätigung unverändert
 - Korrekte Buchführung auch bei nachträglicher Bestätigung
 
-## [1.2.1] - 2025-02-26
+## [1.2.1]
 
 ### Hinzugefügt
 - Versionierung von wiederkehrenden Zahlungen
@@ -26,7 +38,7 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 - Korrektur der Berechnung des verfügbaren Betrags unter Berücksichtigung nicht bestätigter Ausgaben
 - Verbessertes Handling von Datumsänderungen bei Transaktionen
 
-## [1.2.0] - 2025-02-25
+## [1.2.0]
 
 ### Hinzugefügt
 - Bestätigung von Transaktionen
@@ -37,7 +49,7 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 - Benutzeroberfläche für wiederkehrende Zahlungen
 - Navigation und Layout-Struktur
 
-## [1.1.0] - 2025-02-24
+## [1.1.0]
 
 ### Hinzugefügt
 - Wiederkehrende Zahlungen
@@ -48,7 +60,7 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 - Responsives Design für mobile Geräte
 - Filterfunktionen für Transaktionen
 
-## [1.0.0] - 2025-02-24
+## [1.0.0]
 
 ### Erste Veröffentlichung
 - Grundlegende Funktionen zur Finanzverwaltung

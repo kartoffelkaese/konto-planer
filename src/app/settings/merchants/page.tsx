@@ -48,6 +48,10 @@ export default function MerchantsPage() {
     name: '',
     categoryId: ''
   })
+  const [filters, setFilters] = useState({
+    search: '',
+    categoryId: ''
+  })
 
   useEffect(() => {
     loadMerchants()
@@ -163,6 +167,12 @@ export default function MerchantsPage() {
     }
   }
 
+  const filteredMerchants = merchants.filter(merchant => {
+    const matchesSearch = merchant.name.toLowerCase().includes(filters.search.toLowerCase())
+    const matchesCategory = !filters.categoryId || merchant.categoryId === filters.categoryId
+    return matchesSearch && matchesCategory
+  })
+
   if (loading) {
     return <div className="p-8 flex items-center justify-center">Laden...</div>
   }
@@ -186,14 +196,55 @@ export default function MerchantsPage() {
         </div>
       )}
 
+      {/* Filter-Bereich */}
+      <div className="mb-6 bg-white p-4 rounded-lg shadow-sm space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+              Suche
+            </label>
+            <input
+              type="text"
+              id="search"
+              value={filters.search}
+              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              placeholder="Nach Namen suchen..."
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="categoryFilter" className="block text-sm font-medium text-gray-700 mb-1">
+              Kategorie
+            </label>
+            <select
+              id="categoryFilter"
+              value={filters.categoryId}
+              onChange={(e) => setFilters(prev => ({ ...prev, categoryId: e.target.value }))}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            >
+              <option value="">Alle Kategorien</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white shadow sm:rounded-lg">
         {merchants.length === 0 ? (
           <div className="px-6 py-8 text-center text-gray-500">
             Keine Händler vorhanden
           </div>
+        ) : filteredMerchants.length === 0 ? (
+          <div className="px-6 py-8 text-center text-gray-500">
+            Keine Händler gefunden
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-            {merchants.map((merchant) => (
+            {filteredMerchants.map((merchant) => (
               <div
                 key={merchant.id}
                 className="relative bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
@@ -271,6 +322,7 @@ export default function MerchantsPage() {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
+              autoFocus
             />
           </div>
           <div>
@@ -337,6 +389,7 @@ export default function MerchantsPage() {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               required
+              autoFocus
             />
           </div>
           <div>

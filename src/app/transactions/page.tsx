@@ -15,10 +15,25 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [salaryDay, setSalaryDay] = useState(23)
+  const [salaryDay, setSalaryDay] = useState<number | null>(null)
   const [accountName, setAccountName] = useState('Mein Konto')
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
+  const [totals, setTotals] = useState<{
+    currentIncome: number
+    currentExpenses: number
+    totalIncome: number
+    totalExpenses: number
+    totalPendingExpenses: number
+    available: number
+  }>({
+    currentIncome: 0,
+    currentExpenses: 0,
+    totalIncome: 0,
+    totalExpenses: 0,
+    totalPendingExpenses: 0,
+    available: 0
+  })
   const observer = useRef<IntersectionObserver | null>(null)
   const loadingRef = useRef<HTMLDivElement>(null)
 
@@ -28,9 +43,17 @@ export default function TransactionsPage() {
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
 
   useEffect(() => {
-    loadSettings()
-    loadTransactions(1)
+    const init = async () => {
+      await loadSettings()
+      loadTransactions(1)
+    }
+    init()
   }, [])
+
+  useEffect(() => {
+    if (salaryDay === null) return
+    loadTotals()
+  }, [salaryDay])
 
   const loadSettings = async () => {
     try {
@@ -45,6 +68,19 @@ export default function TransactionsPage() {
     }
   }
 
+  const loadTotals = async () => {
+    if (salaryDay === null) return
+    try {
+      const response = await fetch(`/api/transactions/totals?salaryDay=${salaryDay}`)
+      if (response.ok) {
+        const data = await response.json()
+        setTotals(data)
+      }
+    } catch (err) {
+      console.error('Error loading totals:', err)
+    }
+  }
+
   const loadTransactions = async (pageNum: number, append = false) => {
     try {
       setLoading(true)
@@ -54,9 +90,17 @@ export default function TransactionsPage() {
         amount: Number(t.amount)
       }))
       
-      setTransactions(prev => append ? [...prev, ...data] : data)
+      setTransactions(prev => {
+        if (!append) return data
+        // Erstelle ein Set aus den IDs der vorhandenen Transaktionen
+        const existingIds = new Set(prev.map(t => t.id))
+        // Filtere neue Transaktionen, die noch nicht im State sind
+        const newTransactions = data.filter(t => !existingIds.has(t.id))
+        return [...prev, ...newTransactions]
+      })
       setHasMore(response.hasMore)
       setError(null)
+      setPage(pageNum)
     } catch (err) {
       setError('Fehler beim Laden der Transaktionen')
       console.error(err)
@@ -72,18 +116,12 @@ export default function TransactionsPage() {
     
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
-        setPage(prevPage => prevPage + 1)
+        loadTransactions(page + 1, true)
       }
     })
     
     if (node) observer.current.observe(node)
-  }, [loading, hasMore])
-
-  useEffect(() => {
-    if (page > 1) {
-      loadTransactions(page, true)
-    }
-  }, [page])
+  }, [loading, hasMore, page])
 
   const handleToggleConfirmation = async (transaction: Transaction) => {
     try {
@@ -132,74 +170,17 @@ export default function TransactionsPage() {
     setShowEditTransactionModal(false)
     setSelectedTransactionId(null)
     loadTransactions(1)
+    loadTotals()
   }
 
   const handleNewTransactionSuccess = () => {
     setShowNewTransactionModal(false)
     loadTransactions(1)
-  }
-
-  const calculateTotals = () => {
-    const { startDate, endDate } = getSalaryMonthRange(salaryDay)
-
-    const totals = transactions.reduce(
-      (acc, transaction) => {
-        const transactionDate = new Date(transaction.date)
-        const amount = Math.abs(transaction.amount)
-
-        // Für den aktuellen Gehaltsmonat nur Transaktionen im Zeitraum
-        if (transactionDate >= startDate && transactionDate <= endDate) {
-          if (transaction.amount > 0) {
-            acc.currentIncome += transaction.amount
-          } else {
-            acc.currentExpenses += amount
-            
-            // Prüfen ob die Transaktion im aktuellen Gehaltsmonat fällig ist
-            if (isTransactionDueInSalaryMonth({
-              date: new Date(transaction.date),
-              isRecurring: transaction.isRecurring,
-              recurringInterval: transaction.recurringInterval,
-              lastConfirmedDate: transaction.lastConfirmedDate ? new Date(transaction.lastConfirmedDate) : undefined
-            }, salaryDay) && !transaction.isConfirmed) {
-              acc.pendingExpenses += amount
-            }
-          }
-        }
-
-        // Für das verfügbare Budget:
-        // 1. Alle bestätigten Einnahmen
-        if (transaction.isConfirmed && transaction.amount > 0) {
-          acc.totalIncome += transaction.amount
-        }
-        // 2. Alle bestätigten Ausgaben
-        if (transaction.isConfirmed && transaction.amount < 0) {
-          acc.totalExpenses += amount
-        }
-        // 3. Alle noch nicht bestätigten Ausgaben
-        if (!transaction.isConfirmed && transaction.amount < 0) {
-          acc.totalPendingExpenses += amount
-        }
-        
-        return acc
-      },
-      { 
-        currentIncome: 0,
-        currentExpenses: 0,
-        pendingExpenses: 0,
-        totalIncome: 0,
-        totalExpenses: 0,
-        totalPendingExpenses: 0
-      }
-    )
-
-    return {
-      ...totals,
-      // Verfügbar = Einnahmen - (bestätigte Ausgaben + ausstehende Ausgaben)
-      available: totals.totalIncome - (totals.totalExpenses + totals.totalPendingExpenses)
-    }
+    loadTotals()
   }
 
   const isTransactionPending = (transaction: Transaction) => {
+    if (salaryDay === null) return false
     return transaction.isRecurring && 
            isTransactionDueInSalaryMonth({
              date: new Date(transaction.date),
@@ -236,8 +217,6 @@ export default function TransactionsPage() {
       </div>
     )
   }
-
-  const totals = calculateTotals()
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -277,7 +256,14 @@ export default function TransactionsPage() {
             </div>
           </div>
 
-          <MonthlyOverview transactions={transactions} />
+          <MonthlyOverview 
+            currentIncome={totals.currentIncome}
+            currentExpenses={totals.currentExpenses}
+            totalIncome={totals.totalIncome}
+            totalExpenses={totals.totalExpenses}
+            totalPendingExpenses={totals.totalPendingExpenses}
+            available={totals.available}
+          />
         </div>
 
         <div className="bg-white rounded-xl shadow-sm">
@@ -305,6 +291,7 @@ export default function TransactionsPage() {
         isOpen={showNewTransactionModal}
         onClose={() => setShowNewTransactionModal(false)}
         title="Neue Transaktion"
+        maxWidth="md"
       >
         <TransactionForm
           onSuccess={handleNewTransactionSuccess}
@@ -317,6 +304,7 @@ export default function TransactionsPage() {
         isOpen={showEditTransactionModal}
         onClose={() => setShowEditTransactionModal(false)}
         title="Transaktion bearbeiten"
+        maxWidth="md"
       >
         {selectedTransactionId && (
           <EditTransactionForm

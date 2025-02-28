@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       data: {
         userId: user.id,
         name,
-        categoryId
+        ...(categoryId ? { categoryId } : {})
       },
       include: {
         category: true

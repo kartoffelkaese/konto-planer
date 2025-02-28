@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
 export async function GET(
   request: NextRequest,
@@ -34,41 +36,46 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
-  const resolvedParams = await Promise.resolve(params)
-  
   try {
+    const resolvedParams = await Promise.resolve(params)
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
+    }
+
     const body = await request.json()
     console.log('Update transaction body:', body)
-    
-    // Konvertiere das Datum in ein Date-Objekt
+
+    // Formatiere die Daten
     const updateData = {
       ...body,
       date: body.date ? new Date(body.date) : undefined,
-      lastConfirmedDate: body.lastConfirmedDate ? new Date(body.lastConfirmedDate) : null,
-      // Stelle sicher, dass amount als Decimal gespeichert wird
-      amount: typeof body.amount === 'number' ? body.amount : parseFloat(body.amount)
+      lastConfirmedDate: body.lastConfirmedDate ? new Date(body.lastConfirmedDate) : null
     }
-
-    // Entferne undefined Werte
-    Object.keys(updateData).forEach(key => 
-      updateData[key] === undefined && delete updateData[key]
-    )
-
     console.log('Update data:', updateData)
 
-    const transaction = await prisma.transaction.update({
+    // Aktualisiere die Transaktion
+    const updatedTransaction = await prisma.transaction.update({
       where: { id: resolvedParams.id },
       data: updateData
     })
+    console.log('Updated transaction:', updatedTransaction)
 
-    console.log('Updated transaction:', transaction)
-    return NextResponse.json(transaction)
+    // Wenn eine Instanz bestätigt wurde, aktualisiere auch die ursprüngliche wiederkehrende Transaktion
+    if (updateData.isConfirmed && updateData.lastConfirmedDate && updatedTransaction.parentTransactionId) {
+      await prisma.transaction.update({
+        where: { id: updatedTransaction.parentTransactionId },
+        data: {
+          lastConfirmedDate: updateData.lastConfirmedDate
+        }
+      })
+    }
+
+    return NextResponse.json(updatedTransaction)
   } catch (error) {
     console.error('Error updating transaction:', error)
-    // Detailliertere Fehlermeldung
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Internal Server Error', details: errorMessage },
+      { error: 'Fehler beim Aktualisieren der Transaktion' },
       { status: 500 }
     )
   }

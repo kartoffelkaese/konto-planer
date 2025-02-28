@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Transaction } from '@/types/index'
-import { getTransactions, createRecurringInstance, createPendingInstances } from '@/lib/api'
+import { getRecurringTransactions, createRecurringInstance, createPendingInstances } from '@/lib/api'
 import { isTransactionDueInSalaryMonth, getNextDueDate, formatDate } from '@/lib/dateUtils'
 import { formatCurrency, formatNumber } from '@/lib/formatters'
 import { PencilIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
 import TransactionForm from '@/components/TransactionForm'
+import EditTransactionForm from '@/components/EditTransactionForm'
 
 export default function RecurringTransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -17,6 +18,8 @@ export default function RecurringTransactionsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [salaryDay, setSalaryDay] = useState(23) // TODO: Aus den Einstellungen laden
   const [showNewTransactionModal, setShowNewTransactionModal] = useState(false)
+  const [showEditTransactionModal, setShowEditTransactionModal] = useState(false)
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
 
   useEffect(() => {
     loadTransactions()
@@ -24,15 +27,13 @@ export default function RecurringTransactionsPage() {
 
   const loadTransactions = async () => {
     try {
-      const response = await getTransactions()
-      // Nur wiederkehrende Transaktionen filtern
-      const recurringTransactions = response.transactions
-        .filter(t => t.isRecurring)
-        .map(t => ({
-          ...t,
-          amount: Number(t.amount),
-          version: t.version || 1
-        }))
+      const transactions = await getRecurringTransactions()
+      // Konvertiere die Beträge in Zahlen
+      const recurringTransactions = transactions.map(t => ({
+        ...t,
+        amount: Number(t.amount),
+        version: t.version || 1
+      }))
       setTransactions(recurringTransactions)
       setError(null)
     } catch (err) {
@@ -45,12 +46,14 @@ export default function RecurringTransactionsPage() {
 
   const handleCreateNextInstance = async (transaction: Transaction) => {
     try {
-      await createRecurringInstance(transaction.id)
-      // Nach dem Erstellen neu laden
-      await loadTransactions()
+      console.log('Erstelle neue Instanz für Transaktion:', transaction)
+      const newTransaction = await createRecurringInstance(transaction.id)
+      console.log('Neue Transaktion erstellt:', newTransaction)
       setSuccessMessage(`Neue Zahlung für "${transaction.merchant}" wurde erstellt`)
       // Nach 3 Sekunden ausblenden
       setTimeout(() => setSuccessMessage(null), 3000)
+      // Zur Transaktionsseite weiterleiten
+      window.location.href = '/transactions'
     } catch (err) {
       console.error('Fehler beim Erstellen der nächsten Instanz:', err)
       setError('Fehler beim Erstellen der nächsten Zahlung')
@@ -66,6 +69,12 @@ export default function RecurringTransactionsPage() {
     } catch (err) {
       console.error('Fehler beim Erstellen der ausstehenden Transaktionen:', err)
     }
+  }
+
+  const handleEditSuccess = () => {
+    setShowEditTransactionModal(false)
+    setSelectedTransactionId(null)
+    loadTransactions()
   }
 
   const handleNewTransactionSuccess = () => {
@@ -266,12 +275,15 @@ export default function RecurringTransactionsPage() {
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <Link
-                            href={`/transactions/${transaction.id}/edit`}
+                          <button
+                            onClick={() => {
+                              setSelectedTransactionId(transaction.id)
+                              setShowEditTransactionModal(true)
+                            }}
                             className="inline-flex items-center px-2 py-1 text-sm rounded border border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors"
                           >
                             <PencilIcon className="h-4 w-4 mr-1" />
-                          </Link>
+                          </button>
                           <button
                             onClick={() => handleCreateNextInstance(transaction)}
                             className="inline-flex items-center px-2 py-1 text-sm rounded border border-green-600 text-green-600 hover:bg-green-50 transition-colors"
@@ -293,12 +305,35 @@ export default function RecurringTransactionsPage() {
           isOpen={showNewTransactionModal}
           onClose={() => setShowNewTransactionModal(false)}
           title="Neue wiederkehrende Zahlung"
+          maxWidth="md"
         >
           <TransactionForm
             onSuccess={handleNewTransactionSuccess}
             onCancel={() => setShowNewTransactionModal(false)}
             defaultIsRecurring={true}
           />
+        </Modal>
+
+        {/* Transaktion bearbeiten Modal */}
+        <Modal
+          isOpen={showEditTransactionModal}
+          onClose={() => {
+            setShowEditTransactionModal(false)
+            setSelectedTransactionId(null)
+          }}
+          title="Transaktion bearbeiten"
+          maxWidth="md"
+        >
+          {selectedTransactionId && (
+            <EditTransactionForm
+              id={selectedTransactionId}
+              onSuccess={handleEditSuccess}
+              onCancel={() => {
+                setShowEditTransactionModal(false)
+                setSelectedTransactionId(null)
+              }}
+            />
+          )}
         </Modal>
       </div>
     </main>

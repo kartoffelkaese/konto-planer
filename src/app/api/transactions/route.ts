@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
+    const limit = parseInt(searchParams.get('limit') || '20')
     const skip = (page - 1) * limit
 
     const user = await prisma.user.findUnique({
@@ -26,30 +26,29 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
-    const transactions = await prisma.transaction.findMany({
-      where: {
-        userId: user.id,
-        parentTransactionId: null
-      },
-      orderBy: {
-        date: 'desc'
-      },
-      skip,
-      take: limit
-    })
-
-    const total = await prisma.transaction.count({
-      where: {
-        userId: user.id,
-        parentTransactionId: null
-      }
-    })
+    const [transactions, total] = await Promise.all([
+      prisma.transaction.findMany({
+        where: {
+          userId: user.id
+        },
+        orderBy: {
+          date: 'desc'
+        },
+        skip,
+        take: limit
+      }),
+      prisma.transaction.count({
+        where: {
+          userId: user.id
+        }
+      })
+    ])
 
     return NextResponse.json({
       transactions,
       total,
       page,
-      totalPages: Math.ceil(total / limit)
+      hasMore: skip + transactions.length < total
     })
   } catch (error) {
     console.error('Error fetching transactions:', error)

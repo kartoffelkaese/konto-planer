@@ -1,57 +1,22 @@
-import { Transaction } from '@/types'
-import { isTransactionDueInSalaryMonth, getSalaryMonthRange } from '@/lib/dateUtils'
 import { formatCurrency } from '@/lib/formatters'
 
 interface MonthlyOverviewProps {
-  transactions: Transaction[]
+  currentIncome: number
+  currentExpenses: number
+  totalIncome: number
+  totalExpenses: number
+  totalPendingExpenses: number
+  available: number
 }
 
-export default function MonthlyOverview({ transactions }: MonthlyOverviewProps) {
-  const salaryDay = 23 // TODO: Aus den Einstellungen laden
-  const { startDate, endDate } = getSalaryMonthRange(salaryDay)
-
-  const totals = transactions.reduce((acc, transaction) => {
-    const transactionDate = new Date(transaction.date)
-    
-    // Für den aktuellen Gehaltsmonat
-    if (transactionDate >= startDate && transactionDate <= endDate) {
-      if (transaction.amount > 0) {
-        acc.currentIncome += transaction.amount
-      } else {
-        const amount = Math.abs(transaction.amount)
-        if (transaction.isConfirmed) {
-          acc.currentExpenses += amount
-        } else {
-          acc.pendingExpenses += amount
-        }
-      }
-    }
-
-    // Gesamtausgaben (bestätigt und ausstehend)
-    if (transaction.amount < 0 && !transaction.isConfirmed) {
-      acc.totalPendingExpenses += Math.abs(transaction.amount)
-    }
-
-    // Verfügbarer Betrag (inkl. nicht bestätigter Ausgaben)
-    if (transaction.amount > 0) {
-      // Einnahmen nur wenn bestätigt
-      if (transaction.isConfirmed) {
-        acc.available += transaction.amount
-      }
-    } else {
-      // Ausgaben immer abziehen, egal ob bestätigt oder nicht
-      acc.available += transaction.amount
-    }
-
-    return acc
-  }, {
-    currentIncome: 0,
-    currentExpenses: 0,
-    pendingExpenses: 0,
-    totalPendingExpenses: 0,
-    available: 0
-  })
-
+export default function MonthlyOverview({
+  currentIncome,
+  currentExpenses,
+  totalIncome,
+  totalExpenses,
+  totalPendingExpenses,
+  available
+}: MonthlyOverviewProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 shadow-sm">
@@ -70,7 +35,7 @@ export default function MonthlyOverview({ transactions }: MonthlyOverviewProps) 
             </div>
           </div>
           <p className="text-lg font-bold text-green-700">
-            {formatCurrency(totals.currentIncome)}
+            {formatCurrency(currentIncome)}
           </p>
         </div>
       </div>
@@ -92,11 +57,11 @@ export default function MonthlyOverview({ transactions }: MonthlyOverviewProps) 
           </div>
           <div className="text-right">
             <p className="text-lg font-bold text-red-700">
-              {formatCurrency(totals.currentExpenses)}
+              {formatCurrency(currentExpenses)}
             </p>
-            {(totals.pendingExpenses > 0 || totals.totalPendingExpenses > 0) && (
+            {totalPendingExpenses > 0 && (
               <p className="text-xs text-red-600">
-                Nicht bestätigt: {formatCurrency(totals.totalPendingExpenses)}
+                Nicht bestätigt: {formatCurrency(totalPendingExpenses)}
               </p>
             )}
           </div>
@@ -119,7 +84,7 @@ export default function MonthlyOverview({ transactions }: MonthlyOverviewProps) 
             </div>
           </div>
           <p className="text-lg font-bold text-blue-700">
-            {formatCurrency(totals.available)}
+            {formatCurrency(available)}
           </p>
         </div>
       </div>

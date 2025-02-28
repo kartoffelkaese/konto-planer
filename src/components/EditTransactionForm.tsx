@@ -34,7 +34,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
       const transaction = await getTransaction(id)
       setFormData({
         merchant: transaction.merchant || '',
-        description: transaction.description,
+        description: transaction.description || '',
         amount: Math.abs(transaction.amount).toString(),
         type: transaction.amount >= 0 ? 'income' : 'expense',
         date: new Date(transaction.date).toISOString().split('T')[0],
@@ -153,6 +153,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
             placeholder="z.B. Amazon, Lidl, etc."
             required
             disabled={loading}
+            autoFocus
           />
         </div>
 

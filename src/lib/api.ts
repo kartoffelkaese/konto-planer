@@ -83,11 +83,23 @@ export const deleteTransaction = async (id: string): Promise<void> => {
 }
 
 export const createRecurringInstance = async (transactionId: string): Promise<Transaction> => {
-  const response = await api.post(`/transactions/${transactionId}/create-instance`)
-  return response.data
+  console.log('createRecurringInstance aufgerufen mit ID:', transactionId)
+  try {
+    const response = await api.post(`/transactions/${transactionId}/create-instance`)
+    console.log('API Antwort:', response.data)
+    return response.data
+  } catch (error) {
+    console.error('Fehler in createRecurringInstance:', error)
+    throw error
+  }
 }
 
 export const createPendingInstances = async (): Promise<Transaction[]> => {
   const response = await api.post('/transactions/create-pending')
+  return response.data
+}
+
+export const getRecurringTransactions = async (): Promise<Transaction[]> => {
+  const response = await api.get('/transactions/recurring')
   return response.data
 } 

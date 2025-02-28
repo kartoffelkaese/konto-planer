@@ -2,6 +2,20 @@
 
 Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [2.0.0]
+
+### Hinzugefügt
+- Neue Kategorieverwaltung mit visueller Farbauswahl
+- Verbesserte Händlerverwaltung mit Kategoriezuordnung
+- Grid-Layout für bessere Übersichtlichkeit
+- Automatische Kontrastanpassung für Kategorie-Labels
+
+### Verbessert
+- Komplett überarbeitetes UI-Design für Kategorien und Händler
+- Optimierte Darstellung der Kategorie-Tags mit automatischer Textfarbanpassung
+- Responsives Grid-Layout für verschiedene Bildschirmgrößen
+- Modernere Benutzeroberfläche mit verbesserter Zugänglichkeit
+
 ## [1.3.0]
 
 ### Hinzugefügt

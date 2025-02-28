@@ -1,8 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createTransaction } from '@/lib/api'
+
+interface Merchant {
+  id: string
+  name: string
+  description?: string | null
+  category?: {
+    id: string
+    name: string
+  } | null
+}
 
 interface TransactionFormProps {
   onSuccess?: () => void
@@ -18,8 +28,10 @@ export default function TransactionForm({
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [merchants, setMerchants] = useState<Merchant[]>([])
   const [formData, setFormData] = useState({
     merchant: '',
+    merchantId: '',
     description: '',
     amount: '',
     type: 'expense',
@@ -27,6 +39,24 @@ export default function TransactionForm({
     isRecurring: defaultIsRecurring,
     recurringInterval: 'monthly'
   })
+
+  useEffect(() => {
+    loadMerchants()
+  }, [])
+
+  const loadMerchants = async () => {
+    try {
+      const response = await fetch('/api/merchants')
+      if (!response.ok) {
+        throw new Error('Fehler beim Laden der Händler')
+      }
+      const data = await response.json()
+      setMerchants(data)
+    } catch (err) {
+      console.error('Error loading merchants:', err)
+      setError('Fehler beim Laden der Händler')
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,8 +68,11 @@ export default function TransactionForm({
         ? Math.abs(parseFloat(formData.amount))
         : -Math.abs(parseFloat(formData.amount))
 
+      const selectedMerchant = merchants.find(m => m.id === formData.merchantId)
+
       await createTransaction({
-        merchant: formData.merchant,
+        merchant: selectedMerchant?.name || formData.merchant,
+        merchantId: formData.merchantId || undefined,
         description: formData.description,
         amount,
         date: new Date(formData.date).toISOString(),
@@ -73,16 +106,43 @@ export default function TransactionForm({
         <label htmlFor="merchant" className="block text-sm font-medium text-gray-700">
           Händler
         </label>
-        <input
-          type="text"
-          id="merchant"
-          value={formData.merchant}
-          onChange={(e) => setFormData({ ...formData, merchant: e.target.value })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-          placeholder="z.B. Amazon, Lidl, etc."
-          required
-          disabled={loading}
-        />
+        <div className="mt-1">
+          {merchants.length > 0 ? (
+            <select
+              id="merchantId"
+              value={formData.merchantId}
+              onChange={(e) => {
+                const merchant = merchants.find(m => m.id === e.target.value)
+                setFormData({
+                  ...formData,
+                  merchantId: e.target.value,
+                  merchant: merchant ? merchant.name : ''
+                })
+              }}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            >
+              <option value="">Händler auswählen oder neu eingeben</option>
+              {merchants.map((merchant) => (
+                <option key={merchant.id} value={merchant.id}>
+                  {merchant.name}
+                  {merchant.category ? ` (${merchant.category.name})` : ''}
+                </option>
+              ))}
+            </select>
+          ) : null}
+          {(!merchants.length || !formData.merchantId) && (
+            <input
+              type="text"
+              id="merchant"
+              value={formData.merchant}
+              onChange={(e) => setFormData({ ...formData, merchant: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              placeholder="z.B. Amazon, Lidl, etc."
+              required
+              disabled={loading}
+            />
+          )}
+        </div>
       </div>
 
       <div>

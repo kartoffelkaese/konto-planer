@@ -2,7 +2,7 @@
 
 Eine moderne Web-Anwendung zur Verwaltung von Finanzen, entwickelt mit Next.js und TypeScript.
 
-![Version](https://img.shields.io/badge/version-1.4.0-purple.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-purple.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green)
 
 ## Funktionen
@@ -39,7 +39,7 @@ Die Anwendung ist dann unter `http://localhost:3000` erreichbar.
 
 ## Technologien
 
-- Next.js 14
+- Next.js 15
 - TypeScript
 - Tailwind CSS
 - Prisma

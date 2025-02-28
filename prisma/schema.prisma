@@ -22,6 +22,7 @@ model User {
   createdAt    DateTime      @default(now())
   transactions Transaction[]
   merchants    Merchant[]
+  categories   Category[]
 
   @@map("users")
 }
@@ -53,11 +54,25 @@ model Merchant {
   id           String        @id @default(uuid())
   userId       String
   name         String
-  category     String?
+  categoryId   String?
+  category     Category?     @relation(fields: [categoryId], references: [id])
   createdAt    DateTime      @default(now())
   user         User          @relation(fields: [userId], references: [id])
   transactions Transaction[]
 
   @@map("merchants")
+  @@unique([userId, name])
+}
+
+model Category {
+  id        String     @id @default(uuid())
+  userId    String
+  name      String
+  color     String     @default("#A7C7E7")
+  createdAt DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id])
+  merchants Merchant[]
+
+  @@map("categories")
   @@unique([userId, name])
 }

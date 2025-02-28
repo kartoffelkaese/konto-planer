@@ -8,7 +8,10 @@ interface Merchant {
   id: string
   name: string
   description?: string | null
-  category?: string | null
+  category?: {
+    id: string
+    name: string
+  } | null
 }
 
 interface TransactionFormProps {
@@ -122,7 +125,7 @@ export default function TransactionForm({
               {merchants.map((merchant) => (
                 <option key={merchant.id} value={merchant.id}>
                   {merchant.name}
-                  {merchant.category ? ` (${merchant.category})` : ''}
+                  {merchant.category ? ` (${merchant.category.name})` : ''}
                 </option>
               ))}
             </select>

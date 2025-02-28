@@ -120,6 +120,14 @@ export default function Navigation() {
                   >
                     Händler verwalten
                   </Link>
+                  <Link
+                    href="/settings/categories"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
+                    role="menuitem"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    Kategorien verwalten
+                  </Link>
                   <button
                     onClick={handleSignOut}
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"

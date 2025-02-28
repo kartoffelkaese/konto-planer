@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { Transaction } from '@/types'
+import { Transaction, CreateTransactionData } from '@/types'
 
 interface TransactionsResponse {
   transactions: Transaction[]
@@ -40,10 +40,6 @@ export const getTransactions = async (page: number = 1, limit: number = 20): Pro
 export const getTransaction = async (id: string): Promise<Transaction> => {
   const response = await api.get(`/transactions/${id}`)
   return response.data
-}
-
-type CreateTransactionData = Omit<Transaction, 'id' | 'createdAt' | 'version'> & {
-  version?: number
 }
 
 export const createTransaction = async (data: CreateTransactionData): Promise<Transaction> => {

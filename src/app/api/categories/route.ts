@@ -27,20 +27,22 @@ export async function GET() {
       return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
-    const merchants = await prisma.merchant.findMany({
+    const categories = await prisma.category.findMany({
       where: { userId: user.id },
       orderBy: { name: 'asc' },
       include: {
-        category: true
+        _count: {
+          select: { merchants: true }
+        }
       }
     })
-    console.log('Merchants:', merchants)
+    console.log('Categories:', categories)
 
-    return NextResponse.json(merchants)
+    return NextResponse.json(categories)
   } catch (error) {
-    console.error('Detaillierter Fehler beim Laden der Händler:', error)
+    console.error('Detaillierter Fehler beim Laden der Kategorien:', error)
     return NextResponse.json(
-      { error: 'Fehler beim Laden der Händler' },
+      { error: 'Fehler beim Laden der Kategorien' },
       { status: 500 }
     )
   }
@@ -68,8 +70,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
-    const { name, categoryId } = await request.json()
-    console.log('Empfangene Daten:', { name, categoryId })
+    const { name, color } = await request.json()
+    console.log('Empfangene Daten:', { name, color })
 
     if (!name) {
       return NextResponse.json(
@@ -78,37 +80,34 @@ export async function POST(request: Request) {
       )
     }
 
-    const existingMerchant = await prisma.merchant.findFirst({
+    const existingCategory = await prisma.category.findFirst({
       where: {
         userId: user.id,
         name: name
       }
     })
 
-    if (existingMerchant) {
+    if (existingCategory) {
       return NextResponse.json(
-        { error: 'Ein Händler mit diesem Namen existiert bereits' },
+        { error: 'Eine Kategorie mit diesem Namen existiert bereits' },
         { status: 400 }
       )
     }
 
-    const merchant = await prisma.merchant.create({
+    const category = await prisma.category.create({
       data: {
         userId: user.id,
         name,
-        categoryId
-      },
-      include: {
-        category: true
+        color: color || '#A7C7E7' // Verwende die übergebene Farbe oder die Standardfarbe
       }
     })
-    console.log('Erstellter Händler:', merchant)
+    console.log('Erstellte Kategorie:', category)
 
-    return NextResponse.json(merchant)
+    return NextResponse.json(category)
   } catch (error) {
-    console.error('Detaillierter Fehler beim Erstellen des Händlers:', error)
+    console.error('Detaillierter Fehler beim Erstellen der Kategorie:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Fehler beim Erstellen des Händlers' },
+      { error: error instanceof Error ? error.message : 'Fehler beim Erstellen der Kategorie' },
       { status: 500 }
     )
   }

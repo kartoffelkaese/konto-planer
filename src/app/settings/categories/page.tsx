@@ -4,71 +4,94 @@ import { useState, useEffect } from 'react'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
 
-// Funktion zur Berechnung der Textfarbe basierend auf der Hintergrundfarbe
-function getContrastColor(hexcolor: string) {
-  // Entferne das #-Zeichen, falls vorhanden
-  const hex = hexcolor.replace('#', '')
-  
-  // Konvertiere zu RGB
-  const r = parseInt(hex.substr(0, 2), 16)
-  const g = parseInt(hex.substr(2, 2), 16)
-  const b = parseInt(hex.substr(4, 2), 16)
-  
-  // Berechne die relative Helligkeit
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000
-  
-  // Wenn die Helligkeit über 128 liegt, verwende schwarzen Text, sonst weißen
-  return brightness > 128 ? '#000000' : '#FFFFFF'
+const PRESET_COLORS = [
+  '#FF6B6B', // Rot
+  '#4ECDC4', // Türkis
+  '#45B7D1', // Hellblau
+  '#96CEB4', // Mintgrün
+  '#FFEEAD', // Hellgelb
+  '#FFD93D', // Gelb
+  '#FF9F1C', // Orange
+  '#A8E6CF', // Pastellgrün
+  '#DCD6F7', // Lavendel
+  '#F4BFBF', // Rosa
+  '#95DAC1', // Mintblau
+  '#B6E2D3', // Hellmint
+]
+
+interface ColorPickerProps {
+  value: string
+  onChange: (color: string) => void
+  id: string
+}
+
+function ColorPicker({ value, onChange, id }: ColorPickerProps) {
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-6 gap-2">
+        {PRESET_COLORS.map((color) => (
+          <button
+            key={color}
+            type="button"
+            className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
+              value === color ? 'border-blue-500 shadow-lg scale-110' : 'border-white shadow-sm'
+            }`}
+            style={{ backgroundColor: color }}
+            onClick={() => onChange(color)}
+          />
+        ))}
+      </div>
+      <div className="flex items-center space-x-3">
+        <div className="flex-1">
+          <input
+            type="color"
+            id={id}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="sr-only"
+          />
+          <label
+            htmlFor={id}
+            className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 cursor-pointer"
+          >
+            Andere Farbe wählen
+          </label>
+        </div>
+        <div 
+          className="w-10 h-10 rounded-full border-2 border-white shadow-md" 
+          style={{ backgroundColor: value }}
+        />
+      </div>
+    </div>
+  )
 }
 
 interface Category {
   id: string
   name: string
   color: string
-}
-
-interface Merchant {
-  id: string
-  name: string
-  categoryId?: string | null
-  category?: Category | null
   createdAt: string
+  _count: {
+    merchants: number
+  }
 }
 
-export default function MerchantsPage() {
-  const [merchants, setMerchants] = useState<Merchant[]>([])
+export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [formData, setFormData] = useState({
     name: '',
-    categoryId: ''
+    color: '#A7C7E7'
   })
 
   useEffect(() => {
-    loadMerchants()
     loadCategories()
   }, [])
-
-  const loadMerchants = async () => {
-    try {
-      const response = await fetch('/api/merchants')
-      if (!response.ok) {
-        throw new Error('Fehler beim Laden der Händler')
-      }
-      const data = await response.json()
-      setMerchants(data)
-    } catch (err) {
-      console.error('Error loading merchants:', err)
-      setError('Fehler beim Laden der Händler')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const loadCategories = async () => {
     try {
@@ -81,6 +104,8 @@ export default function MerchantsPage() {
     } catch (err) {
       console.error('Error loading categories:', err)
       setError('Fehler beim Laden der Kategorien')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -89,7 +114,7 @@ export default function MerchantsPage() {
     setError(null)
 
     try {
-      const response = await fetch('/api/merchants', {
+      const response = await fetch('/api/categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,25 +124,25 @@ export default function MerchantsPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Fehler beim Erstellen des Händlers')
+        throw new Error(data.error || 'Fehler beim Erstellen der Kategorie')
       }
 
-      await loadMerchants()
+      await loadCategories()
       setShowAddModal(false)
-      setFormData({ name: '', categoryId: '' })
+      setFormData({ name: '', color: '#A7C7E7' })
     } catch (err) {
-      console.error('Error creating merchant:', err)
-      setError(err instanceof Error ? err.message : 'Fehler beim Erstellen des Händlers')
+      console.error('Error creating category:', err)
+      setError(err instanceof Error ? err.message : 'Fehler beim Erstellen der Kategorie')
     }
   }
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedMerchant) return
+    if (!selectedCategory) return
     setError(null)
 
     try {
-      const response = await fetch(`/api/merchants/${selectedMerchant.id}`, {
+      const response = await fetch(`/api/categories/${selectedCategory.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -127,39 +152,39 @@ export default function MerchantsPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Fehler beim Aktualisieren des Händlers')
+        throw new Error(data.error || 'Fehler beim Aktualisieren der Kategorie')
       }
 
-      await loadMerchants()
+      await loadCategories()
       setShowEditModal(false)
-      setSelectedMerchant(null)
-      setFormData({ name: '', categoryId: '' })
+      setSelectedCategory(null)
+      setFormData({ name: '', color: '#A7C7E7' })
     } catch (err) {
-      console.error('Error updating merchant:', err)
-      setError(err instanceof Error ? err.message : 'Fehler beim Aktualisieren des Händlers')
+      console.error('Error updating category:', err)
+      setError(err instanceof Error ? err.message : 'Fehler beim Aktualisieren der Kategorie')
     }
   }
 
   const handleDelete = async () => {
-    if (!selectedMerchant) return
+    if (!selectedCategory) return
     setError(null)
 
     try {
-      const response = await fetch(`/api/merchants/${selectedMerchant.id}`, {
+      const response = await fetch(`/api/categories/${selectedCategory.id}`, {
         method: 'DELETE',
       })
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Fehler beim Löschen des Händlers')
+        throw new Error(data.error || 'Fehler beim Löschen der Kategorie')
       }
 
-      await loadMerchants()
+      await loadCategories()
       setShowDeleteModal(false)
-      setSelectedMerchant(null)
+      setSelectedCategory(null)
     } catch (err) {
-      console.error('Error deleting merchant:', err)
-      setError(err instanceof Error ? err.message : 'Fehler beim Löschen des Händlers')
+      console.error('Error deleting category:', err)
+      setError(err instanceof Error ? err.message : 'Fehler beim Löschen der Kategorie')
     }
   }
 
@@ -170,13 +195,13 @@ export default function MerchantsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Händler verwalten</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Kategorien verwalten</h1>
         <button
           onClick={() => setShowAddModal(true)}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
-          Händler hinzufügen
+          Kategorie hinzufügen
         </button>
       </div>
 
@@ -187,43 +212,40 @@ export default function MerchantsPage() {
       )}
 
       <div className="bg-white shadow sm:rounded-lg">
-        {merchants.length === 0 ? (
+        {categories.length === 0 ? (
           <div className="px-6 py-8 text-center text-gray-500">
-            Keine Händler vorhanden
+            Keine Kategorien vorhanden
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-            {merchants.map((merchant) => (
-              <div
-                key={merchant.id}
+            {categories.map((category) => (
+              <div 
+                key={category.id} 
                 className="relative bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
               >
                 <div className="p-4">
                   <div className="flex items-center space-x-3 mb-3">
-                    <h3 className="text-lg font-medium text-gray-900">{merchant.name}</h3>
+                    <div 
+                      className="w-8 h-8 rounded-full border-2 border-white shadow-sm" 
+                      style={{ backgroundColor: category.color }}
+                    />
+                    <h3 className="text-lg font-medium text-gray-900">{category.name}</h3>
                   </div>
                   
-                  {merchant.category && (
-                    <div className="space-y-2">
-                      <div 
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-                        style={{ 
-                          backgroundColor: merchant.category.color,
-                          color: getContrastColor(merchant.category.color)
-                        }}
-                      >
-                        {merchant.category.name}
-                      </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <span className="flex-1">Zugewiesene Händler</span>
+                      <span className="font-medium">{category._count.merchants}</span>
                     </div>
-                  )}
+                  </div>
 
                   <div className="absolute top-3 right-3 flex items-center space-x-2">
                     <button
                       onClick={() => {
-                        setSelectedMerchant(merchant)
+                        setSelectedCategory(category)
                         setFormData({
-                          name: merchant.name,
-                          categoryId: merchant.categoryId || ''
+                          name: category.name,
+                          color: category.color
                         })
                         setShowEditModal(true)
                       }}
@@ -233,7 +255,7 @@ export default function MerchantsPage() {
                     </button>
                     <button
                       onClick={() => {
-                        setSelectedMerchant(merchant)
+                        setSelectedCategory(category)
                         setShowDeleteModal(true)
                       }}
                       className="p-1 text-red-400 hover:text-red-500 rounded-full hover:bg-gray-100"
@@ -248,15 +270,15 @@ export default function MerchantsPage() {
         )}
       </div>
 
-      {/* Händler hinzufügen Modal */}
+      {/* Kategorie hinzufügen Modal */}
       <Modal
         isOpen={showAddModal}
         onClose={() => {
           setShowAddModal(false)
-          setFormData({ name: '', categoryId: '' })
+          setFormData({ name: '', color: '#A7C7E7' })
           setError(null)
         }}
-        title="Händler hinzufügen"
+        title="Kategorie hinzufügen"
         maxWidth="md"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -274,29 +296,21 @@ export default function MerchantsPage() {
             />
           </div>
           <div>
-            <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">
-              Kategorie
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Farbe
             </label>
-            <select
-              id="categoryId"
-              value={formData.categoryId}
-              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="">Keine Kategorie</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+            <ColorPicker
+              id="color"
+              value={formData.color}
+              onChange={(color) => setFormData({ ...formData, color })}
+            />
           </div>
           <div className="flex justify-end space-x-4 pt-4">
             <button
               type="button"
               onClick={() => {
                 setShowAddModal(false)
-                setFormData({ name: '', categoryId: '' })
+                setFormData({ name: '', color: '#A7C7E7' })
                 setError(null)
               }}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
@@ -313,16 +327,16 @@ export default function MerchantsPage() {
         </form>
       </Modal>
 
-      {/* Händler bearbeiten Modal */}
+      {/* Kategorie bearbeiten Modal */}
       <Modal
         isOpen={showEditModal}
         onClose={() => {
           setShowEditModal(false)
-          setSelectedMerchant(null)
-          setFormData({ name: '', categoryId: '' })
+          setSelectedCategory(null)
+          setFormData({ name: '', color: '#A7C7E7' })
           setError(null)
         }}
-        title="Händler bearbeiten"
+        title="Kategorie bearbeiten"
         maxWidth="md"
       >
         <form onSubmit={handleEdit} className="space-y-4">
@@ -340,30 +354,22 @@ export default function MerchantsPage() {
             />
           </div>
           <div>
-            <label htmlFor="edit-categoryId" className="block text-sm font-medium text-gray-700">
-              Kategorie
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Farbe
             </label>
-            <select
-              id="edit-categoryId"
-              value={formData.categoryId}
-              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            >
-              <option value="">Keine Kategorie</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+            <ColorPicker
+              id="edit-color"
+              value={formData.color}
+              onChange={(color) => setFormData({ ...formData, color })}
+            />
           </div>
           <div className="flex justify-end space-x-4 pt-4">
             <button
               type="button"
               onClick={() => {
                 setShowEditModal(false)
-                setSelectedMerchant(null)
-                setFormData({ name: '', categoryId: '' })
+                setSelectedCategory(null)
+                setFormData({ name: '', color: '#A7C7E7' })
                 setError(null)
               }}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
@@ -380,28 +386,33 @@ export default function MerchantsPage() {
         </form>
       </Modal>
 
-      {/* Händler löschen Modal */}
+      {/* Kategorie löschen Modal */}
       <Modal
         isOpen={showDeleteModal}
         onClose={() => {
           setShowDeleteModal(false)
-          setSelectedMerchant(null)
+          setSelectedCategory(null)
           setError(null)
         }}
-        title="Händler löschen"
+        title="Kategorie löschen"
         maxWidth="sm"
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-500">
-            Sind Sie sicher, dass Sie den Händler &quot;{selectedMerchant?.name}&quot; löschen möchten?
-            Diese Aktion kann nicht rückgängig gemacht werden.
+            Sind Sie sicher, dass Sie die Kategorie &quot;{selectedCategory?.name}&quot; löschen möchten?
+            {selectedCategory?._count.merchants > 0 && (
+              <>
+                <br /><br />
+                Diese Kategorie wird bei {selectedCategory._count.merchants} {selectedCategory._count.merchants === 1 ? 'Händler' : 'Händlern'} entfernt.
+              </>
+            )}
           </p>
           <div className="flex justify-end space-x-4 pt-4">
             <button
               type="button"
               onClick={() => {
                 setShowDeleteModal(false)
-                setSelectedMerchant(null)
+                setSelectedCategory(null)
                 setError(null)
               }}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"

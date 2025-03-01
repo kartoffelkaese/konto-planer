@@ -2,6 +2,23 @@
 
 Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [2.2.0]
+
+### Verbessert
+- Überarbeitete Finanzübersicht mit vier Hauptkategorien:
+  - Einnahmen (aktueller Monat)
+  - Kontostand (alle bestätigten Transaktionen)
+  - Ausstehend (nicht bestätigte Ausgaben)
+  - Verfügbar (Gesamtübersicht)
+- Verbesserte Berechnung des Kontostands basierend auf allen bestätigten Transaktionen
+- Deutsche Bezeichnungen für bessere Verständlichkeit
+
+## [2.1.0]
+
+### Verbessert
+- Korrektur der Summenberechnung für wiederkehrende Transaktionen
+- Einbeziehung aller Transaktionen in die Gesamtberechnung
+
 ## [2.0.0]
 
 ### Hinzugefügt

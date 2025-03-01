@@ -88,6 +88,9 @@ export default function CategoriesPage() {
     name: '',
     color: '#A7C7E7'
   })
+  const [filters, setFilters] = useState({
+    search: ''
+  })
 
   useEffect(() => {
     loadCategories()
@@ -188,6 +191,11 @@ export default function CategoriesPage() {
     }
   }
 
+  const filteredCategories = categories.filter(category => {
+    const matchesSearch = category.name.toLowerCase().includes(filters.search.toLowerCase())
+    return matchesSearch
+  })
+
   if (loading) {
     return <div className="p-8 flex items-center justify-center">Laden...</div>
   }
@@ -211,14 +219,35 @@ export default function CategoriesPage() {
         </div>
       )}
 
+      {/* Filter-Bereich */}
+      <div className="mb-6 bg-white p-4 rounded-lg shadow-sm">
+        <div>
+          <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+            Suche
+          </label>
+          <input
+            type="text"
+            id="search"
+            value={filters.search}
+            onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+            placeholder="Nach Namen suchen..."
+            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          />
+        </div>
+      </div>
+
       <div className="bg-white shadow sm:rounded-lg">
         {categories.length === 0 ? (
           <div className="px-6 py-8 text-center text-gray-500">
             Keine Kategorien vorhanden
           </div>
+        ) : filteredCategories.length === 0 ? (
+          <div className="px-6 py-8 text-center text-gray-500">
+            Keine Kategorien gefunden
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-            {categories.map((category) => (
+            {filteredCategories.map((category) => (
               <div 
                 key={category.id} 
                 className="relative bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"

@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@auth/core": "^0.38.0",
+    "@auth/core": "0.34.2",
     "@auth/prisma-adapter": "^2.8.0",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",

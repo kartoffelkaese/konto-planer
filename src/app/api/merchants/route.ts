@@ -8,33 +8,33 @@ import { prisma } from '@/lib/prisma'
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    console.log('Session:', session)
 
     if (!session) {
-      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-    }
-
-    if (!session.user?.email) {
-      return NextResponse.json({ error: 'Keine E-Mail-Adresse gefunden' }, { status: 401 })
+      return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
+        status: 401,
+      })
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: {
+        email: session.user?.email!,
+      },
     })
-    console.log('User:', user)
 
     if (!user) {
-      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
+      return new Response(JSON.stringify({ error: 'Benutzer nicht gefunden' }), {
+        status: 404,
+      })
     }
 
     const merchants = await prisma.merchant.findMany({
-      where: { userId: user.id },
-      orderBy: { name: 'asc' },
+      where: {
+        userId: user.id,
+      },
       include: {
-        category: true
-      }
+        category: true,
+      },
     })
-    console.log('Merchants:', merchants)
 
     return NextResponse.json(merchants)
   } catch (error) {
@@ -49,32 +49,33 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    console.log('Session bei POST:', session)
 
     if (!session) {
-      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-    }
-
-    if (!session.user?.email) {
-      return NextResponse.json({ error: 'Keine E-Mail-Adresse gefunden' }, { status: 401 })
+      return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
+        status: 401,
+      })
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: {
+        email: session.user?.email!,
+      },
     })
-    console.log('User bei POST:', user)
 
     if (!user) {
-      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
+      return new Response(JSON.stringify({ error: 'Benutzer nicht gefunden' }), {
+        status: 404,
+      })
     }
 
     const { name, categoryId } = await request.json()
-    console.log('Empfangene Daten:', { name, categoryId })
 
     if (!name) {
-      return NextResponse.json(
-        { error: 'Name ist erforderlich' },
-        { status: 400 }
+      return new Response(
+        JSON.stringify({ error: 'Name ist ein Pflichtfeld' }),
+        {
+          status: 400,
+        }
       )
     }
 
@@ -94,15 +95,14 @@ export async function POST(request: Request) {
 
     const merchant = await prisma.merchant.create({
       data: {
-        userId: user.id,
         name,
-        ...(categoryId ? { categoryId } : {})
+        categoryId,
+        userId: user.id,
       },
       include: {
-        category: true
+        category: true,
       }
     })
-    console.log('Erstellter Händler:', merchant)
 
     return NextResponse.json(merchant)
   } catch (error) {

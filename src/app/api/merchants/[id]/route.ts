@@ -49,117 +49,101 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  try {
-    const session = await getServerSession(authOptions)
-    console.log('Session bei PATCH:', session)
+  const session = await getServerSession(authOptions)
 
-    if (!session) {
-      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-    }
-
-    if (!session.user?.email) {
-      return NextResponse.json({ error: 'Keine E-Mail-Adresse gefunden' }, { status: 401 })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+  if (!session) {
+    return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
+      status: 401,
     })
-    console.log('User bei PATCH:', user)
+  }
 
-    if (!user) {
-      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
-    }
+  const user = await prisma.user.findUnique({
+    where: {
+      email: session.user?.email!,
+    },
+  })
 
-    const { name, categoryId } = await request.json()
-    console.log('Empfangene Daten:', { name, categoryId })
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Benutzer nicht gefunden' }), {
+      status: 404,
+    })
+  }
 
-    if (!name) {
-      return NextResponse.json(
-        { error: 'Name ist erforderlich' },
-        { status: 400 }
-      )
-    }
+  const { name, categoryId } = await request.json()
 
-    const existingMerchant = await prisma.merchant.findFirst({
-      where: {
-        userId: user.id,
-        name: name,
-        NOT: {
-          id: params.id
-        }
+  if (!name) {
+    return new Response(
+      JSON.stringify({ error: 'Name ist ein Pflichtfeld' }),
+      {
+        status: 400,
       }
-    })
-
-    if (existingMerchant) {
-      return NextResponse.json(
-        { error: 'Ein Händler mit diesem Namen existiert bereits' },
-        { status: 400 }
-      )
-    }
-
-    const merchant = await prisma.merchant.update({
-      where: {
-        id: params.id,
-        userId: user.id
-      },
-      data: {
-        name,
-        categoryId
-      },
-      include: {
-        category: true
-      }
-    })
-    console.log('Aktualisierter Händler:', merchant)
-
-    return NextResponse.json(merchant)
-  } catch (error) {
-    console.error('Detaillierter Fehler beim Aktualisieren des Händlers:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Fehler beim Aktualisieren des Händlers' },
-      { status: 500 }
     )
   }
+
+  const existingMerchant = await prisma.merchant.findFirst({
+    where: {
+      userId: user.id,
+      name: name,
+      NOT: {
+        id: params.id
+      }
+    }
+  })
+
+  if (existingMerchant) {
+    return NextResponse.json(
+      { error: 'Ein Händler mit diesem Namen existiert bereits' },
+      { status: 400 }
+    )
+  }
+
+  const merchant = await prisma.merchant.update({
+    where: {
+      id: params.id,
+      userId: user.id,
+    },
+    data: {
+      name,
+      categoryId,
+    },
+    include: {
+      category: true,
+    },
+  })
+
+  return NextResponse.json(merchant)
 }
 
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  try {
-    const session = await getServerSession(authOptions)
-    console.log('Session bei DELETE:', session)
+  const session = await getServerSession(authOptions)
 
-    if (!session) {
-      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-    }
-
-    if (!session.user?.email) {
-      return NextResponse.json({ error: 'Keine E-Mail-Adresse gefunden' }, { status: 401 })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+  if (!session) {
+    return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
+      status: 401,
     })
-    console.log('User bei DELETE:', user)
-
-    if (!user) {
-      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
-    }
-
-    await prisma.merchant.delete({
-      where: {
-        id: params.id,
-        userId: user.id
-      }
-    })
-
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Detaillierter Fehler beim Löschen des Händlers:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Fehler beim Löschen des Händlers' },
-      { status: 500 }
-    )
   }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email: session.user?.email!,
+    },
+  })
+
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Benutzer nicht gefunden' }), {
+      status: 404,
+    })
+  }
+
+  await prisma.merchant.delete({
+    where: {
+      id: params.id,
+      userId: user.id,
+    },
+  })
+
+  return new Response(null, { status: 204 })
 } 

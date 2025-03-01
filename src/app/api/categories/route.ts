@@ -6,109 +6,93 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { prisma } from '@/lib/prisma'
 
 export async function GET() {
-  try {
-    const session = await getServerSession(authOptions)
-    console.log('Session:', session)
+  const session = await getServerSession(authOptions)
 
-    if (!session) {
-      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-    }
-
-    if (!session.user?.email) {
-      return NextResponse.json({ error: 'Keine E-Mail-Adresse gefunden' }, { status: 401 })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+  if (!session) {
+    return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
+      status: 401,
     })
-    console.log('User:', user)
-
-    if (!user) {
-      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
-    }
-
-    const categories = await prisma.category.findMany({
-      where: { userId: user.id },
-      orderBy: { name: 'asc' },
-      include: {
-        _count: {
-          select: { merchants: true }
-        }
-      }
-    })
-    console.log('Categories:', categories)
-
-    return NextResponse.json(categories)
-  } catch (error) {
-    console.error('Detaillierter Fehler beim Laden der Kategorien:', error)
-    return NextResponse.json(
-      { error: 'Fehler beim Laden der Kategorien' },
-      { status: 500 }
-    )
   }
+
+  const user = await prisma.user.findUnique({
+    where: {
+      email: session.user?.email!,
+    },
+  })
+
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Benutzer nicht gefunden' }), {
+      status: 404,
+    })
+  }
+
+  const categories = await prisma.category.findMany({
+    where: {
+      userId: user.id,
+    },
+    include: {
+      _count: {
+        select: { merchants: true }
+      }
+    }
+  })
+
+  return NextResponse.json(categories)
 }
 
 export async function POST(request: Request) {
-  try {
-    const session = await getServerSession(authOptions)
-    console.log('Session bei POST:', session)
+  const session = await getServerSession(authOptions)
 
-    if (!session) {
-      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-    }
-
-    if (!session.user?.email) {
-      return NextResponse.json({ error: 'Keine E-Mail-Adresse gefunden' }, { status: 401 })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+  if (!session) {
+    return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
+      status: 401,
     })
-    console.log('User bei POST:', user)
+  }
 
-    if (!user) {
-      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
-    }
+  const user = await prisma.user.findUnique({
+    where: {
+      email: session.user?.email!,
+    },
+  })
 
-    const { name, color } = await request.json()
-    console.log('Empfangene Daten:', { name, color })
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Benutzer nicht gefunden' }), {
+      status: 404,
+    })
+  }
 
-    if (!name) {
-      return NextResponse.json(
-        { error: 'Name ist erforderlich' },
-        { status: 400 }
-      )
-    }
+  const { name, color } = await request.json()
 
-    const existingCategory = await prisma.category.findFirst({
-      where: {
-        userId: user.id,
-        name: name
+  if (!name || !color) {
+    return new Response(
+      JSON.stringify({ error: 'Name und Farbe sind Pflichtfelder' }),
+      {
+        status: 400,
       }
-    })
-
-    if (existingCategory) {
-      return NextResponse.json(
-        { error: 'Eine Kategorie mit diesem Namen existiert bereits' },
-        { status: 400 }
-      )
-    }
-
-    const category = await prisma.category.create({
-      data: {
-        userId: user.id,
-        name,
-        color: color || '#A7C7E7' // Verwende die übergebene Farbe oder die Standardfarbe
-      }
-    })
-    console.log('Erstellte Kategorie:', category)
-
-    return NextResponse.json(category)
-  } catch (error) {
-    console.error('Detaillierter Fehler beim Erstellen der Kategorie:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Fehler beim Erstellen der Kategorie' },
-      { status: 500 }
     )
   }
+
+  const existingCategory = await prisma.category.findFirst({
+    where: {
+      userId: user.id,
+      name: name,
+    },
+  })
+
+  if (existingCategory) {
+    return new Response(
+      JSON.stringify({ error: 'Eine Kategorie mit diesem Namen existiert bereits' }),
+      { status: 400 }
+    )
+  }
+
+  const category = await prisma.category.create({
+    data: {
+      name,
+      color,
+      userId: user.id,
+    },
+  })
+
+  return NextResponse.json(category)
 } 

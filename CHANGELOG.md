@@ -2,6 +2,13 @@
 
 Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
+## [2.2.1]
+
+### Verbessert
+- Entfernung von Debug-Logs für bessere Performance und Übersichtlichkeit
+- Beibehaltung wichtiger Sicherheits- und Fehler-Logs
+- Optimierung der API-Routen und Fehlerbehandlung
+
 ## [2.2.0]
 
 ### Verbessert

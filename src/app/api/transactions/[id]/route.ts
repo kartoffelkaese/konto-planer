@@ -44,32 +44,15 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    console.log('Update transaction body:', body)
-
-    // Formatiere die Daten
     const updateData = {
       ...body,
-      date: body.date ? new Date(body.date) : undefined,
-      lastConfirmedDate: body.lastConfirmedDate ? new Date(body.lastConfirmedDate) : null
+      date: new Date(body.date)
     }
-    console.log('Update data:', updateData)
 
-    // Aktualisiere die Transaktion
     const updatedTransaction = await prisma.transaction.update({
       where: { id: resolvedParams.id },
       data: updateData
     })
-    console.log('Updated transaction:', updatedTransaction)
-
-    // Wenn eine Instanz bestätigt wurde, aktualisiere auch die ursprüngliche wiederkehrende Transaktion
-    if (updateData.isConfirmed && updateData.lastConfirmedDate && updatedTransaction.parentTransactionId) {
-      await prisma.transaction.update({
-        where: { id: updatedTransaction.parentTransactionId },
-        data: {
-          lastConfirmedDate: updateData.lastConfirmedDate
-        }
-      })
-    }
 
     return NextResponse.json(updatedTransaction)
   } catch (error) {

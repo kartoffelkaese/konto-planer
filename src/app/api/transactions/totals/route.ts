@@ -25,12 +25,6 @@ export async function GET(request: Request) {
 
     const { startDate, endDate } = getSalaryMonthRange(salaryDay)
 
-    console.log('Berechnungszeitraum:', {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      salaryDay
-    })
-
     // Aktuelle Monatssummen
     const currentMonthTransactions = await prisma.transaction.findMany({
       where: {
@@ -58,28 +52,6 @@ export async function GET(request: Request) {
       }
     })
 
-    console.log('Transaktionen:', {
-      currentMonth: currentMonthTransactions.map(t => ({
-        id: t.id,
-        description: t.description,
-        amount: Number(t.amount),
-        date: t.date,
-        isConfirmed: t.isConfirmed
-      })),
-      confirmed: confirmedTransactions.map(t => ({
-        id: t.id,
-        description: t.description,
-        amount: Number(t.amount),
-        date: t.date
-      })),
-      pending: pendingTransactions.map(t => ({
-        id: t.id,
-        description: t.description,
-        amount: Number(t.amount),
-        date: t.date
-      }))
-    })
-
     // Berechne die Summen
     const currentIncome = currentMonthTransactions
       .reduce((sum, t) => Number(t.amount) > 0 ? sum + Number(t.amount) : sum, 0)
@@ -93,15 +65,6 @@ export async function GET(request: Request) {
       .reduce((sum, t) => Number(t.amount) < 0 ? sum + Math.abs(Number(t.amount)) : sum, 0)
 
     const available = totalIncome - (totalExpenses + totalPendingExpenses)
-
-    console.log('Berechnete Summen:', {
-      currentIncome,
-      currentExpenses,
-      totalIncome,
-      totalExpenses,
-      totalPendingExpenses,
-      available
-    })
 
     const totals = {
       currentIncome,

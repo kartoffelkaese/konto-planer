@@ -21,22 +21,24 @@ export const authOptions: AuthOptions = {
           }
 
           const user = await prisma.user.findUnique({
-            where: { email: credentials.email.toLowerCase() }
+            where: { email: credentials.email }
           })
 
-          if (!user || !user.passwordHash) {
-            console.log('Benutzer nicht gefunden oder kein Passwort-Hash:', credentials.email)
-            throw new Error('Ungültige Anmeldedaten')
+          if (!user?.passwordHash) {
+            console.error('Benutzer nicht gefunden oder kein Passwort-Hash:', credentials.email)
+            return null
           }
 
-          const isValid = await bcrypt.compare(credentials.password, user.passwordHash)
+          const isValid = await bcrypt.compare(
+            credentials.password,
+            user.passwordHash
+          )
 
           if (!isValid) {
-            console.log('Ungültiges Passwort für Benutzer:', credentials.email)
-            throw new Error('Ungültige Anmeldedaten')
+            console.error('Ungültiges Passwort für Benutzer:', credentials.email)
+            return null
           }
 
-          console.log('Erfolgreiche Anmeldung für:', credentials.email)
           return {
             id: user.id,
             email: user.email,

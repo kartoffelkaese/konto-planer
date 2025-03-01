@@ -34,21 +34,10 @@ export async function POST(request: NextRequest) {
     const { startDate, endDate } = getSalaryMonthRange(salaryDay)
     const newTransactions = []
 
-    console.log('Erstelle ausstehende Zahlungen für Zeitraum:', { startDate, endDate })
-    console.log('Gefundene wiederkehrende Transaktionen:', recurringTransactions.length)
-
     // Für jede wiederkehrende Transaktion
     for (const transaction of recurringTransactions) {
       const lastDate = transaction.lastConfirmedDate || transaction.date
       const nextDueDate = getNextDueDate(lastDate, transaction.recurringInterval || 'monthly')
-
-      console.log('Prüfe Transaktion:', {
-        id: transaction.id,
-        description: transaction.description,
-        lastDate,
-        nextDueDate,
-        inRange: nextDueDate >= startDate && nextDueDate <= endDate
-      })
 
       // Prüfe, ob das nächste Fälligkeitsdatum im aktuellen Gehaltsmonat liegt
       if (nextDueDate >= startDate && nextDueDate <= endDate) {
@@ -68,8 +57,6 @@ export async function POST(request: NextRequest) {
           }
         })
 
-        console.log('Existierende Instanz gefunden:', !!existingInstance)
-
         // Wenn keine Instanz existiert, erstelle eine neue
         if (!existingInstance) {
           const newTransaction = await prisma.transaction.create({
@@ -85,12 +72,10 @@ export async function POST(request: NextRequest) {
             }
           })
           newTransactions.push(newTransaction)
-          console.log('Neue Transaktion erstellt:', newTransaction.id)
         }
       }
     }
 
-    console.log('Insgesamt neue Transaktionen erstellt:', newTransactions.length)
     return NextResponse.json(newTransactions)
   } catch (error) {
     console.error('Error creating pending transactions:', error)

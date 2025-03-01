@@ -2,7 +2,7 @@
 
 Eine moderne Web-Anwendung zur Verwaltung von Finanzen, entwickelt mit Next.js und TypeScript.
 
-![Version](https://img.shields.io/badge/version-2.2.0-purple.svg)
+![Version](https://img.shields.io/badge/version-2.2.1-purple.svg)
 ![License](https://img.shields.io/badge/license-GPL--3.0-green)
 
 ## Funktionen

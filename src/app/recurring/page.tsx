@@ -46,9 +46,7 @@ export default function RecurringTransactionsPage() {
 
   const handleCreateNextInstance = async (transaction: Transaction) => {
     try {
-      console.log('Erstelle neue Instanz für Transaktion:', transaction)
       const newTransaction = await createRecurringInstance(transaction.id)
-      console.log('Neue Transaktion erstellt:', newTransaction)
       setSuccessMessage(`Neue Zahlung für "${transaction.merchant}" wurde erstellt`)
       // Nach 3 Sekunden ausblenden
       setTimeout(() => setSuccessMessage(null), 3000)

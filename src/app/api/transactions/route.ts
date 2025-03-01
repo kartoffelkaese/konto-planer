@@ -31,6 +31,13 @@ export async function GET(request: Request) {
         where: {
           userId: user.id
         },
+        include: {
+          merchantRef: {
+            include: {
+              category: true
+            }
+          }
+        },
         orderBy: [
           {
             date: 'desc'
@@ -48,6 +55,10 @@ export async function GET(request: Request) {
         }
       })
     ])
+
+    console.log('Geladene Transaktionen:', JSON.stringify(transactions, null, 2))
+    console.log('Erste Transaktion MerchantRef:', transactions[0]?.merchantRef)
+    console.log('Erste Transaktion MerchantRef Category:', transactions[0]?.merchantRef?.category)
 
     return NextResponse.json({
       transactions,
@@ -94,11 +105,19 @@ export async function POST(request: Request) {
       data: {
         userId: user.id,
         merchant,
+        merchantId,
         description,
         amount,
         date: new Date(date),
         isRecurring: isRecurring || false,
         recurringInterval: isRecurring ? recurringInterval : null
+      },
+      include: {
+        merchantRef: {
+          include: {
+            category: true
+          }
+        }
       }
     })
 

@@ -8,6 +8,7 @@ import { PencilIcon, CheckIcon, MinusCircleIcon, ClockIcon, CalendarIcon } from 
 import { useState } from 'react'
 import Modal from '@/components/Modal'
 import EditTransactionForm from '@/components/EditTransactionForm'
+import { getContrastColor } from '@/lib/colorUtils'
 
 interface TransactionListProps {
   transactions: Transaction[]
@@ -24,6 +25,7 @@ export default function TransactionList({
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const handleToggleConfirmation = async (transaction: Transaction) => {
     try {
@@ -46,7 +48,7 @@ export default function TransactionList({
       }
 
       setEditingDate(null)
-      onTransactionChange()
+      await onTransactionChange()
     } catch (err) {
       console.error('Fehler beim Aktualisieren der Transaktion:', err)
     }
@@ -73,7 +75,7 @@ export default function TransactionList({
       }
 
       setEditingDate(null)
-      onTransactionChange()
+      await onTransactionChange()
     } catch (err) {
       console.error('Fehler beim Aktualisieren der Transaktion:', err)
     }
@@ -84,10 +86,55 @@ export default function TransactionList({
     setShowEditModal(true)
   }
 
-  const handleEditSuccess = () => {
+  const handleEditSuccess = async () => {
     setShowEditModal(false)
     setSelectedTransactionId(null)
-    onTransactionChange()
+    await onTransactionChange()
+  }
+
+  const handleConfirmTransaction = async (id: string) => {
+    try {
+      const response = await fetch(`/api/transactions/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          isConfirmed: true,
+          lastConfirmedDate: new Date().toISOString()
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Fehler beim Bestätigen der Transaktion')
+      }
+
+      await onTransactionChange()
+    } catch (err) {
+      console.error('Error confirming transaction:', err)
+      setError('Fehler beim Bestätigen der Transaktion')
+    }
+  }
+
+  const handleDeleteTransaction = async (id: string) => {
+    if (!confirm('Möchten Sie diese Transaktion wirklich löschen?')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/transactions/${id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Fehler beim Löschen der Transaktion')
+      }
+
+      await onTransactionChange()
+    } catch (err) {
+      console.error('Error deleting transaction:', err)
+      setError('Fehler beim Löschen der Transaktion')
+    }
   }
 
   return (
@@ -102,6 +149,9 @@ export default function TransactionList({
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Händler
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Kategorie
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Beschreibung
@@ -175,6 +225,19 @@ export default function TransactionList({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {transaction.merchant || "—"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {transaction.merchantRef?.category ? (
+                        <div 
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          style={{ 
+                            backgroundColor: transaction.merchantRef.category.color || '#E5E7EB',
+                            color: transaction.merchantRef.category.color ? getContrastColor(transaction.merchantRef.category.color) : '#374151'
+                          }}
+                        >
+                          {transaction.merchantRef.category.name}
+                        </div>
+                      ) : "—"}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       <div className="flex items-center">

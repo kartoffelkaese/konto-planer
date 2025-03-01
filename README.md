@@ -1,62 +1,73 @@
 # Konto-Planer
 
-Eine moderne Web-Anwendung zur Verwaltung von Finanzen, entwickelt mit Next.js und TypeScript.
+Eine moderne Web-Anwendung zur Verwaltung von Einnahmen und Ausgaben, mit Fokus auf wiederkehrende Zahlungen und Kategorisierung.
 
-![Version](https://img.shields.io/badge/version-2.2.1-purple.svg)
-![License](https://img.shields.io/badge/license-GPL--3.0-green)
+## Version
 
-## Funktionen
+Aktuelle Version: 2.3.0
 
-- 📊 Monatliche Übersicht über Einnahmen und Ausgaben
-- 💰 Verwaltung von einmaligen und wiederkehrenden Transaktionen
-- 📅 Automatische Berechnung der monatlichen Belastung
-- ✅ Bestätigung von Transaktionen und Statusverfolgung
-- 🔄 Versionierung von wiederkehrenden Zahlungen
-- 🏪 Händlerverwaltung für bessere Kategorisierung
+## Features
+
+- 📊 Übersichtliche Darstellung von Einnahmen und Ausgaben
+- 🔄 Verwaltung von wiederkehrenden Zahlungen
+- 📅 Automatische Erstellung ausstehender Zahlungen
+- 🏷️ Kategorisierung von Händlern und Transaktionen
+- 💰 Echtzeit-Aktualisierung des Kontostands
 - 📱 Responsive Design für Desktop und Mobile
-- 🔐 Erweiterte Benutzereinstellungen und Sicherheitsfunktionen
-- 🎯 Moderne Modal-Dialoge für bessere Benutzerinteraktion
+- 🔒 Sichere Authentifizierung
+- 🎨 Modernes und intuitives Interface
+
+## Neue Features in Version 2.3.0
+
+- ⚡️ Automatische Aktualisierung der Transaktionsübersicht nach jeder Änderung
+- 🔄 Verbessertes Handling von Transaktionsänderungen
+- 🐛 Verbesserte Fehlerbehandlung
+- 🎨 Optimierte Darstellung von Kategorien in der Transaktionsliste
+
+## Technologien
+
+- Next.js 14
+- React 18
+- TypeScript
+- Prisma
+- MySQL
+- TailwindCSS
+- NextAuth.js
 
 ## Installation
 
-1. Repository klonen:
+1. Repository klonen
 ```bash
-git clone https://github.com/[username]/konto-planer.git
-cd konto-planer
+git clone [repository-url]
 ```
 
-2. Abhängigkeiten installieren:
+2. Abhängigkeiten installieren
 ```bash
 npm install
 ```
 
-3. Entwicklungsserver starten:
+3. Umgebungsvariablen konfigurieren
+```bash
+cp .env.example .env
+```
+
+4. Datenbank-Migrationen ausführen
+```bash
+npx prisma migrate dev
+```
+
+5. Entwicklungsserver starten
 ```bash
 npm run dev
 ```
 
-Die Anwendung ist dann unter `http://localhost:3000` erreichbar.
-
-## Technologien
-
-- Next.js 15
-- TypeScript
-- Tailwind CSS
-- Prisma
-- MySQL
-- Heroicons
-
 ## Entwicklung
 
-- `npm run dev`: Startet den Entwicklungsserver
-- `npm run build`: Erstellt eine Produktionsversion
-- `npm run start`: Startet die Produktionsversion
-- `npm run lint`: Führt den Linter aus
-
-## Changelog
-
-Siehe [CHANGELOG.md](CHANGELOG.md) für eine detaillierte Auflistung aller Änderungen.
+- `npm run dev` - Startet den Entwicklungsserver
+- `npm run build` - Erstellt eine Production-Build
+- `npm run start` - Startet die Production-Version
+- `npm run lint` - Führt den Linter aus
 
 ## Lizenz
 
-Dieses Projekt ist unter der GNU General Public License v3.0 lizenziert - siehe die [LICENSE](LICENSE) Datei für Details.
+Privat - Alle Rechte vorbehalten

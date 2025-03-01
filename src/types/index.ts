@@ -1,22 +1,31 @@
+export interface Category {
+  id: string
+  name: string
+  color: string
+}
+
+export interface Merchant {
+  id: string
+  name: string
+  categoryId?: string | null
+  category?: Category | null
+  createdAt: string
+}
+
 export interface Transaction {
   id: string
   userId: string
-  description?: string | null
   merchant: string
   merchantId?: string | null
-  merchantRef?: {
-    id: string
-    name: string
-    description?: string | null
-    category?: string | null
-  } | null
+  merchantRef?: Merchant | null
+  description: string
   amount: number
   date: string
   isConfirmed: boolean
   isRecurring: boolean
   recurringInterval?: string | null
   lastConfirmedDate?: string | null
-  version: number
+  version?: number
   parentTransactionId?: string | null
   createdAt: string
 }

@@ -1,44 +1,69 @@
 # Changelog
 
-Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
+Alle wichtigen Änderungen am Projekt werden in dieser Datei dokumentiert.
 
-## [2.2.1]
-
-### Verbessert
-- Entfernung von Debug-Logs für bessere Performance und Übersichtlichkeit
-- Beibehaltung wichtiger Sicherheits- und Fehler-Logs
-- Optimierung der API-Routen und Fehlerbehandlung
-
-## [2.2.0]
-
-### Verbessert
-- Überarbeitete Finanzübersicht mit vier Hauptkategorien:
-  - Einnahmen (aktueller Monat)
-  - Kontostand (alle bestätigten Transaktionen)
-  - Ausstehend (nicht bestätigte Ausgaben)
-  - Verfügbar (Gesamtübersicht)
-- Verbesserte Berechnung des Kontostands basierend auf allen bestätigten Transaktionen
-- Deutsche Bezeichnungen für bessere Verständlichkeit
-
-## [2.1.0]
-
-### Verbessert
-- Korrektur der Summenberechnung für wiederkehrende Transaktionen
-- Einbeziehung aller Transaktionen in die Gesamtberechnung
-
-## [2.0.0]
+## [2.3.0] - 2024-03-XX
 
 ### Hinzugefügt
-- Neue Kategorieverwaltung mit visueller Farbauswahl
-- Verbesserte Händlerverwaltung mit Kategoriezuordnung
-- Grid-Layout für bessere Übersichtlichkeit
-- Automatische Kontrastanpassung für Kategorie-Labels
+- Automatische Aktualisierung der Transaktionsübersicht nach jeder Änderung
+- Echtzeit-Aktualisierung des Kontostands bei Transaktionsänderungen
 
 ### Verbessert
-- Komplett überarbeitetes UI-Design für Kategorien und Händler
-- Optimierte Darstellung der Kategorie-Tags mit automatischer Textfarbanpassung
-- Responsives Grid-Layout für verschiedene Bildschirmgrößen
-- Modernere Benutzeroberfläche mit verbesserter Zugänglichkeit
+- Optimiertes Handling von Transaktionsänderungen
+- Verbesserte Darstellung von Kategorien in der Transaktionsliste
+- Bessere Fehlerbehandlung bei API-Aufrufen
+
+### Behoben
+- Problem mit nicht aktualisierten Summen nach Transaktionsänderungen
+- Fehler bei der Anzeige von Kategoriefarben
+
+## [2.2.1] - 2024-03-XX
+
+### Verbessert
+- Optimierte Darstellung der Händlerverwaltung
+- Verbesserte Navigation auf mobilen Geräten
+
+### Behoben
+- Fehler bei der Verknüpfung von Transaktionen mit Händlern
+- Problem mit der Anzeige von wiederkehrenden Zahlungen
+
+## [2.2.0] - 2024-03-XX
+
+### Hinzugefügt
+- Kategorieverwaltung für Händler
+- Farbliche Kennzeichnung von Kategorien
+- Verbessertes Handling von wiederkehrenden Zahlungen
+
+### Verbessert
+- Überarbeitetes UI/UX-Design
+- Optimierte Ladezeiten
+
+### Behoben
+- Verschiedene kleinere Bugfixes
+
+## [2.1.0] - 2024-02-XX
+
+### Hinzugefügt
+- Händlerverwaltung
+- Automatische Erstellung ausstehender Zahlungen
+- Bestätigungssystem für Transaktionen
+
+### Verbessert
+- Performance-Optimierungen
+- Bessere mobile Ansicht
+
+## [2.0.0] - 2024-02-XX
+
+### Hinzugefügt
+- Komplette Neuimplementierung mit Next.js 14
+- Neue Benutzeroberfläche mit TailwindCSS
+- Verbesserte Authentifizierung mit NextAuth.js
+- Prisma als ORM für bessere Datenbankintegration
+
+### Geändert
+- Migration von Express.js zu Next.js
+- Überarbeitete Datenbankstruktur
+- Moderneres UI/UX-Design
 
 ## [1.3.0]
 

@@ -152,12 +152,18 @@ export default function TransactionsPage() {
     }
   }
 
+  const handleTransactionChange = useCallback(async () => {
+    await loadTotals()
+    await loadTransactions(page)
+  }, [page, salaryDay])
+
   const handleCreatePending = async () => {
     try {
       await createPendingInstances()
-      loadTransactions(1)
+      await handleTransactionChange()
     } catch (err) {
-      console.error('Fehler beim Erstellen der ausstehenden Transaktionen:', err)
+      console.error('Error creating pending instances:', err)
+      setError('Fehler beim Erstellen der ausstehenden Zahlungen')
     }
   }
 
@@ -166,17 +172,15 @@ export default function TransactionsPage() {
     setShowEditTransactionModal(true)
   }
 
-  const handleEditSuccess = () => {
+  const handleEditTransactionSuccess = async () => {
     setShowEditTransactionModal(false)
     setSelectedTransactionId(null)
-    loadTransactions(1)
-    loadTotals()
+    await handleTransactionChange()
   }
 
-  const handleNewTransactionSuccess = () => {
+  const handleNewTransactionSuccess = async () => {
     setShowNewTransactionModal(false)
-    loadTransactions(1)
-    loadTotals()
+    await handleTransactionChange()
   }
 
   const isTransactionPending = (transaction: Transaction) => {
@@ -269,7 +273,7 @@ export default function TransactionsPage() {
         <div className="bg-white rounded-xl shadow-sm">
           <TransactionList 
             transactions={transactions} 
-            onTransactionChange={() => loadTransactions(1)}
+            onTransactionChange={handleTransactionChange}
             lastElementRef={lastElementRef}
           />
           {loading && (
@@ -309,7 +313,7 @@ export default function TransactionsPage() {
         {selectedTransactionId && (
           <EditTransactionForm
             id={selectedTransactionId}
-            onSuccess={handleEditSuccess}
+            onSuccess={handleEditTransactionSuccess}
             onCancel={() => setShowEditTransactionModal(false)}
           />
         )}

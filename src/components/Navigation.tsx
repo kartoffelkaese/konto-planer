@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useState } from 'react'
-import { APP_VERSION } from '@/lib/version'
+const APP_VERSION = '2.3.0'
 
 export default function Navigation() {
   const pathname = usePathname()

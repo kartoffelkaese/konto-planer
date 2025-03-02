@@ -4,7 +4,7 @@ Eine moderne Web-Anwendung zur Verwaltung von Einnahmen und Ausgaben, mit Fokus 
 
 ## Version
 
-Aktuelle Version: 2.3.0
+Aktuelle Version: 2.4.0
 
 ## Features
 
@@ -16,13 +16,6 @@ Aktuelle Version: 2.3.0
 - 📱 Responsive Design für Desktop und Mobile
 - 🔒 Sichere Authentifizierung
 - 🎨 Modernes und intuitives Interface
-
-## Neue Features in Version 2.3.0
-
-- ⚡️ Automatische Aktualisierung der Transaktionsübersicht nach jeder Änderung
-- 🔄 Verbessertes Handling von Transaktionsänderungen
-- 🐛 Verbesserte Fehlerbehandlung
-- 🎨 Optimierte Darstellung von Kategorien in der Transaktionsliste
 
 ## Technologien
 

@@ -2,7 +2,24 @@
 
 Alle wichtigen Änderungen am Projekt werden in dieser Datei dokumentiert.
 
-## [2.3.0] - 2024-03-XX
+## [2.4.0]
+
+### Hinzugefügt
+- Spezielle Tablet-Ansicht für Transaktionen zwischen Desktop und Mobile
+- Optimierte Darstellung für mittlere Bildschirmgrößen
+- Verbesserte Datenpräsentation in der Tablet-Ansicht
+
+### Verbessert
+- Angepasstes Layout für verschiedene Bildschirmgrößen
+- Optimierte Performance durch verbesserte Datenladezeiten
+- Überarbeitete Responsive-Design-Breakpoints
+- Kompaktere Darstellung der Transaktionsliste auf Tablets
+
+### Geändert
+- Neue Breakpoints für Desktop (>1024px), Tablet (768px-1024px) und Mobile (<768px)
+- Reorganisation der Spalten für bessere Lesbarkeit auf Tablets 
+
+## [2.3.0]
 
 ### Hinzugefügt
 - Automatische Aktualisierung der Transaktionsübersicht nach jeder Änderung
@@ -153,4 +170,4 @@ Alle wichtigen Änderungen am Projekt werden in dieser Datei dokumentiert.
 ### Verbessert
 - Überarbeitete Benutzeroberfläche für Transaktionsbearbeitung
 - Effizienterer Workflow durch Modal-Dialoge
-- Reduzierte Seitenneuladezeiten durch In-Page-Updates 
+- Reduzierte Seitenneuladezeiten durch In-Page-Updates

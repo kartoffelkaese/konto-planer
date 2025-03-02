@@ -61,6 +61,67 @@ npx prisma migrate dev
 npm run dev
 ```
 
+## PM2 Deployment
+
+### Installation
+
+1. Installieren Sie PM2 global:
+```bash
+npm install -g pm2
+```
+
+2. Bauen Sie die Anwendung:
+```bash
+npm run build
+```
+
+### PM2 Befehle
+
+- Starten der Anwendung:
+```bash
+npm run pm2:start
+```
+
+- Stoppen der Anwendung:
+```bash
+npm run pm2:stop
+```
+
+- Neustarten der Anwendung:
+```bash
+npm run pm2:restart
+```
+
+- Logs anzeigen:
+```bash
+npm run pm2:logs
+```
+
+- Monitoring:
+```bash
+npm run pm2:monitor
+```
+
+### Automatischer Start nach Systemneustart
+
+1. Generieren Sie den Startup-Befehl:
+```bash
+pm2 startup
+```
+
+2. Speichern Sie die aktuelle Prozessliste:
+```bash
+pm2 save
+```
+
+### Konfiguration
+
+Die PM2-Konfiguration befindet sich in `ecosystem.config.js`. Hier können Sie:
+- Anzahl der Instanzen anpassen
+- Umgebungsvariablen setzen
+- Ressourcenlimits konfigurieren
+- Monitoring-Optionen einstellen
+
 ## Entwicklung
 
 - `npm run dev` - Startet den Entwicklungsserver

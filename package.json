@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "pm2:start": "pm2 start ecosystem.config.js --env production",
+    "pm2:stop": "pm2 stop konto-planer",
+    "pm2:restart": "pm2 restart konto-planer",
+    "pm2:logs": "pm2 logs konto-planer",
+    "pm2:monitor": "pm2 monit konto-planer"
   },
   "dependencies": {
     "@auth/core": "0.34.2",

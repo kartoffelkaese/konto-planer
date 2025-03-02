@@ -82,10 +82,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Transaktion nicht gefunden' }, { status: 404 })
     }
 
-    console.log('Bestehende Transaktion gefunden:', existingTransaction.id)
-
     const updateData = await request.json()
-    console.log('Update-Daten erhalten:', updateData)
 
     // Nur die erlaubten Felder für das Update extrahieren
     const allowedUpdateFields = {

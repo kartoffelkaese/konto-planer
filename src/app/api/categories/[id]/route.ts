@@ -3,13 +3,13 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
-) {
+): Promise<Response> {
   try {
     const session = await getServerSession(authOptions)
     console.log('Session:', session)
@@ -56,9 +56,9 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> | { id: string } }
-) {
+  request: Request,
+  { params }: { params: { id: string } }
+): Promise<Response> {
   console.log('Session bei PATCH:', await getServerSession(authOptions))
   const session = await getServerSession(authOptions)
 
@@ -80,15 +80,13 @@ export async function PATCH(
     const { name, color } = await request.json()
     console.log('Empfangene Daten:', { name, color })
 
-    const resolvedParams = await Promise.resolve(context.params)
-
     // Prüfe, ob der Name bereits existiert (außer für die aktuelle Kategorie)
     const existingCategory = await prisma.category.findFirst({
       where: {
         userId: user.id,
         name: name,
         NOT: {
-          id: resolvedParams.id
+          id: params.id
         }
       }
     })
@@ -102,7 +100,7 @@ export async function PATCH(
 
     const category = await prisma.category.update({
       where: {
-        id: resolvedParams.id,
+        id: params.id,
         userId: user.id
       },
       data: {
@@ -125,7 +123,7 @@ export async function PATCH(
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
-) {
+): Promise<Response> {
   try {
     const session = await getServerSession(authOptions)
     console.log('Session bei DELETE:', session)

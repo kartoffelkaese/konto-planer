@@ -220,7 +220,8 @@ export default function RecurringTransactionsPage() {
 
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="overflow-x-auto">
-            <table className="min-w-full">
+            {/* Desktop-Ansicht */}
+            <table className="min-w-full hidden md:table">
               <thead>
                 <tr className="border-b">
                   <th className="text-left p-4">Händler</th>
@@ -263,21 +264,96 @@ export default function RecurringTransactionsPage() {
                         {formatDate(getNextPaymentDate(transaction))}
                       </td>
                       <td className="p-4 text-right">
-                        <button
-                          onClick={() => {
-                            setSelectedTransactionId(transaction.id)
-                            setShowEditTransactionModal(true)
-                          }}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <PencilIcon className="h-5 w-5" />
-                        </button>
+                        <div className="flex items-center justify-end space-x-2">
+                          <button
+                            onClick={() => handleCreateNextInstance(transaction)}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <ArrowPathIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedTransactionId(transaction.id)
+                              setShowEditTransactionModal(true)
+                            }}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <PencilIcon className="h-5 w-5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
+
+            {/* Mobile-Ansicht */}
+            <div className="md:hidden space-y-4">
+              {transactions.length === 0 ? (
+                <div className="text-center py-8 text-sm text-gray-500">
+                  Keine wiederkehrenden Zahlungen vorhanden
+                </div>
+              ) : (
+                sortedTransactions.map((transaction) => (
+                  <div key={transaction.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <div className="font-medium text-gray-900">{transaction.description}</div>
+                        <div className="text-sm text-gray-600">{transaction.merchant}</div>
+                      </div>
+                      <div className={`text-right font-medium ${
+                        transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {formatCurrency(transaction.amount)}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {transaction.recurringInterval === 'monthly' && 'Monatlich'}
+                        {transaction.recurringInterval === 'quarterly' && 'Vierteljährlich'}
+                        {transaction.recurringInterval === 'yearly' && 'Jährlich'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
+                      <div>
+                        <div className="text-xs text-gray-500">Letzte Bestätigung</div>
+                        <div>{transaction.lastConfirmedDate
+                          ? formatDate(new Date(transaction.lastConfirmedDate))
+                          : '-'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-500">Nächste Zahlung</div>
+                        <div>{formatDate(getNextPaymentDate(transaction))}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={() => handleCreateNextInstance(transaction)}
+                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors duration-150"
+                      >
+                        <ArrowPathIcon className="h-4 w-4 mr-1" />
+                        Neue Instanz
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedTransactionId(transaction.id)
+                          setShowEditTransactionModal(true)
+                        }}
+                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors duration-150"
+                      >
+                        <PencilIcon className="h-4 w-4 mr-1" />
+                        Bearbeiten
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>

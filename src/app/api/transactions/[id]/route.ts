@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 
 interface UpdateData {
   description?: string
@@ -82,10 +82,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Transaktion nicht gefunden' }, { status: 404 })
     }
 
-    console.log('Bestehende Transaktion gefunden:', existingTransaction.id)
-
     const updateData = await request.json()
-    console.log('Update-Daten erhalten:', updateData)
 
     // Nur die erlaubten Felder für das Update extrahieren
     const allowedUpdateFields = {

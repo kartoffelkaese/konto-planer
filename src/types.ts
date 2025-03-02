@@ -9,4 +9,12 @@ export interface Transaction {
   recurringInterval?: string
   lastConfirmedDate?: string | null
   createdAt: string
+  merchantRef?: {
+    category?: {
+      name: string
+      color: string
+    }
+  }
+  version?: number
+  userId?: string
 } 

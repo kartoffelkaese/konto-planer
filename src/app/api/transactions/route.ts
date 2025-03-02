@@ -56,10 +56,6 @@ export async function GET(request: Request) {
       })
     ])
 
-    console.log('Geladene Transaktionen:', JSON.stringify(transactions, null, 2))
-    console.log('Erste Transaktion MerchantRef:', transactions[0]?.merchantRef)
-    console.log('Erste Transaktion MerchantRef Category:', transactions[0]?.merchantRef?.category)
-
     return NextResponse.json({
       transactions,
       total,

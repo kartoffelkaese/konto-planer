@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useState } from 'react'
 const APP_VERSION = '2.3.0'
@@ -10,13 +10,21 @@ export default function Navigation() {
   const pathname = usePathname()
   const { data: session, status } = useSession()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const router = useRouter()
 
   const isActive = (path: string) => {
     return pathname === path
   }
 
   const handleSignOut = async () => {
-    await signOut({ redirect: true, callbackUrl: '/auth/login' })
+    try {
+      const data = await signOut({ 
+        redirect: false
+      })
+      router.push('/auth/login')
+    } catch (error) {
+      console.error('Fehler beim Logout:', error)
+    }
   }
 
   // Wenn nicht eingeloggt und nicht auf Login/Register-Seite, zeige keine Navigation

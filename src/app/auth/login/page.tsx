@@ -11,6 +11,15 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  const getErrorMessage = (error: string) => {
+    switch (error) {
+      case 'CredentialsSignin':
+        return 'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.'
+      default:
+        return error
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
@@ -21,14 +30,20 @@ export default function LoginPage() {
     const password = formData.get('password') as string
 
     try {
+      const searchParams = new URLSearchParams(window.location.search)
+      searchParams.delete('email')
+      searchParams.delete('password')
+      window.history.replaceState({}, '', `${window.location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`)
+
       const result = await signIn('credentials', {
         email,
         password,
-        redirect: false
+        redirect: false,
+        callbackUrl: '/transactions'
       })
 
       if (result?.error) {
-        setError(result.error)
+        setError(getErrorMessage(result.error))
       } else {
         router.push('/transactions')
         router.refresh()

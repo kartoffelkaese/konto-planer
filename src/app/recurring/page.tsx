@@ -150,29 +150,36 @@ export default function RecurringTransactionsPage() {
   const totalMonthly = totals.monthly.perMonth + totals.quarterly.perMonth + totals.yearly.perMonth
 
   return (
-    <main className="p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {successMessage && (
           <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg shadow-md transition-opacity">
             {successMessage}
           </div>
         )}
+
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg shadow-md transition-opacity">
+          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
             {error}
           </div>
         )}
-        
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold">Wiederkehrende Zahlungen</h2>
-          <div className="space-x-4">
-            <button
-              onClick={() => setShowNewTransactionModal(true)}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-            >
-              Neue wiederkehrende Zahlung
-            </button>
+
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Wiederkehrende Zahlungen</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Verwalten Sie Ihre regelmäßigen Ein- und Ausgaben
+            </p>
           </div>
+          <button
+            onClick={() => setShowNewTransactionModal(true)}
+            className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
+          >
+            <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+            Neue wiederkehrende Zahlung
+          </button>
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-4 mb-8">
@@ -234,61 +241,37 @@ export default function RecurringTransactionsPage() {
                   </tr>
                 ) : (
                   sortedTransactions.map((transaction) => (
-                    <tr key={transaction.id} className="border-b hover:bg-gray-50">
-                      <td className="p-4">
-                        {transaction.merchant}
-                      </td>
-                      <td className="p-4">
-                        {transaction.description || "-"}
-                      </td>
+                    <tr key={transaction.id} className="border-b last:border-b-0">
+                      <td className="p-4">{transaction.merchant}</td>
+                      <td className="p-4">{transaction.description}</td>
                       <td className={`p-4 text-right ${
                         transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {formatCurrency(transaction.amount)}
                       </td>
                       <td className="p-4 text-center">
-                        <div className="flex items-center justify-center space-x-2">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {getIntervalText(transaction.recurringInterval || '')}
-                          </span>
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                            v{transaction.version}
-                          </span>
-                        </div>
+                        {transaction.recurringInterval === 'monthly' && 'Monatlich'}
+                        {transaction.recurringInterval === 'quarterly' && 'Vierteljährlich'}
+                        {transaction.recurringInterval === 'yearly' && 'Jährlich'}
                       </td>
                       <td className="p-4 text-center">
-                        {transaction.lastConfirmedDate 
-                          ? formatDate(transaction.lastConfirmedDate)
-                          : 'Nie'}
+                        {transaction.lastConfirmedDate
+                          ? formatDate(new Date(transaction.lastConfirmedDate))
+                          : '-'}
                       </td>
                       <td className="p-4 text-center">
-                        {transaction.lastConfirmedDate && transaction.recurringInterval
-                          ? formatDate(
-                              getNextDueDate(
-                                new Date(transaction.lastConfirmedDate),
-                                transaction.recurringInterval
-                              )
-                            )
-                          : 'Sofort fällig'}
+                        {formatDate(getNextPaymentDate(transaction))}
                       </td>
                       <td className="p-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => {
-                              setSelectedTransactionId(transaction.id)
-                              setShowEditTransactionModal(true)
-                            }}
-                            className="inline-flex items-center px-2 py-1 text-sm rounded border border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors"
-                          >
-                            <PencilIcon className="h-4 w-4 mr-1" />
-                          </button>
-                          <button
-                            onClick={() => handleCreateNextInstance(transaction)}
-                            className="inline-flex items-center px-2 py-1 text-sm rounded border border-green-600 text-green-600 hover:bg-green-50 transition-colors"
-                          >
-                            <ArrowPathIcon className="h-4 w-4 mr-1" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => {
+                            setSelectedTransactionId(transaction.id)
+                            setShowEditTransactionModal(true)
+                          }}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          <PencilIcon className="h-5 w-5" />
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -297,43 +280,37 @@ export default function RecurringTransactionsPage() {
             </table>
           </div>
         </div>
-
-        {/* Neue wiederkehrende Transaktion Modal */}
-        <Modal
-          isOpen={showNewTransactionModal}
-          onClose={() => setShowNewTransactionModal(false)}
-          title="Neue wiederkehrende Zahlung"
-          maxWidth="md"
-        >
-          <TransactionForm
-            onSuccess={handleNewTransactionSuccess}
-            onCancel={() => setShowNewTransactionModal(false)}
-            defaultIsRecurring={true}
-          />
-        </Modal>
-
-        {/* Transaktion bearbeiten Modal */}
-        <Modal
-          isOpen={showEditTransactionModal}
-          onClose={() => {
-            setShowEditTransactionModal(false)
-            setSelectedTransactionId(null)
-          }}
-          title="Transaktion bearbeiten"
-          maxWidth="md"
-        >
-          {selectedTransactionId && (
-            <EditTransactionForm
-              id={selectedTransactionId}
-              onSuccess={handleEditSuccess}
-              onCancel={() => {
-                setShowEditTransactionModal(false)
-                setSelectedTransactionId(null)
-              }}
-            />
-          )}
-        </Modal>
       </div>
-    </main>
+
+      {/* Neue Transaktion Modal */}
+      <Modal
+        isOpen={showNewTransactionModal}
+        onClose={() => setShowNewTransactionModal(false)}
+        title="Neue wiederkehrende Zahlung"
+        maxWidth="md"
+      >
+        <TransactionForm
+          onSuccess={handleNewTransactionSuccess}
+          onCancel={() => setShowNewTransactionModal(false)}
+          defaultIsRecurring={true}
+        />
+      </Modal>
+
+      {/* Bearbeiten Modal */}
+      <Modal
+        isOpen={showEditTransactionModal}
+        onClose={() => setShowEditTransactionModal(false)}
+        title="Wiederkehrende Zahlung bearbeiten"
+        maxWidth="md"
+      >
+        {selectedTransactionId && (
+          <EditTransactionForm
+            id={selectedTransactionId}
+            onSuccess={handleEditSuccess}
+            onCancel={() => setShowEditTransactionModal(false)}
+          />
+        )}
+      </Modal>
+    </div>
   )
 } 

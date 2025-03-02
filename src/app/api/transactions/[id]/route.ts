@@ -46,11 +46,14 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
+  const resolvedParams = await Promise.resolve(context.params)
+  console.log('PATCH Route aufgerufen mit ID:', resolvedParams.id)
   const session = await getServerSession(authOptions)
 
   if (!session?.user?.email) {
+    console.log('Keine Benutzer-Session gefunden')
     return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
   }
 
@@ -60,22 +63,29 @@ export async function PATCH(
     })
 
     if (!user) {
+      console.log('Benutzer nicht gefunden für Email:', session.user.email)
       return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
     }
+
+    console.log('Benutzer gefunden:', user.id)
 
     // Überprüfe, ob die Transaktion existiert und dem Benutzer gehört
     const existingTransaction = await prisma.transaction.findFirst({
       where: {
-        id: params.id,
+        id: resolvedParams.id,
         userId: user.id
       }
     })
 
     if (!existingTransaction) {
+      console.log('Transaktion nicht gefunden für ID:', resolvedParams.id)
       return NextResponse.json({ error: 'Transaktion nicht gefunden' }, { status: 404 })
     }
 
-    const updateData: UpdateData = await request.json()
+    console.log('Bestehende Transaktion gefunden:', existingTransaction.id)
+
+    const updateData = await request.json()
+    console.log('Update-Daten erhalten:', updateData)
 
     // Nur die erlaubten Felder für das Update extrahieren
     const allowedUpdateFields = {
@@ -94,9 +104,10 @@ export async function PATCH(
     const cleanedUpdateFields = Object.fromEntries(
       Object.entries(allowedUpdateFields).filter(([_, value]) => value !== undefined)
     )
+    console.log('Bereinigte Update-Felder:', cleanedUpdateFields)
 
     const updatedTransaction = await prisma.transaction.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: cleanedUpdateFields,
       include: {
         merchantRef: {
@@ -107,9 +118,10 @@ export async function PATCH(
       }
     })
 
+    console.log('Transaktion erfolgreich aktualisiert:', updatedTransaction.id)
     return NextResponse.json(updatedTransaction)
   } catch (error) {
-    console.error('Error updating transaction:', error)
+    console.error('Fehler beim Aktualisieren der Transaktion:', error)
     return NextResponse.json(
       { error: 'Fehler beim Aktualisieren der Transaktion' },
       { status: 500 }

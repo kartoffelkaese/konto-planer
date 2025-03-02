@@ -1,6 +1,7 @@
 'use server'
 
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { prisma } from '@/lib/prisma'
@@ -55,46 +56,39 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
+  console.log('Session bei PATCH:', await getServerSession(authOptions))
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
+  }
+
   try {
-    const session = await getServerSession(authOptions)
-    console.log('Session bei PATCH:', session)
-
-    if (!session) {
-      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-    }
-
-    if (!session.user?.email) {
-      return NextResponse.json({ error: 'Keine E-Mail-Adresse gefunden' }, { status: 401 })
-    }
-
     const user = await prisma.user.findUnique({
       where: { email: session.user.email }
     })
-    console.log('User bei PATCH:', user)
 
     if (!user) {
       return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
+    console.log('User bei PATCH:', user)
+
     const { name, color } = await request.json()
     console.log('Empfangene Daten:', { name, color })
 
-    if (!name) {
-      return NextResponse.json(
-        { error: 'Name ist erforderlich' },
-        { status: 400 }
-      )
-    }
+    const resolvedParams = await Promise.resolve(context.params)
 
+    // Prüfe, ob der Name bereits existiert (außer für die aktuelle Kategorie)
     const existingCategory = await prisma.category.findFirst({
       where: {
         userId: user.id,
         name: name,
         NOT: {
-          id: params.id
+          id: resolvedParams.id
         }
       }
     })
@@ -108,21 +102,21 @@ export async function PATCH(
 
     const category = await prisma.category.update({
       where: {
-        id: params.id,
+        id: resolvedParams.id,
         userId: user.id
       },
       data: {
         name,
-        color: color || '#808080'
+        color
       }
     })
-    console.log('Aktualisierte Kategorie:', category)
 
+    console.log('Aktualisierte Kategorie:', category)
     return NextResponse.json(category)
   } catch (error) {
-    console.error('Detaillierter Fehler beim Aktualisieren der Kategorie:', error)
+    console.error('Error updating category:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Fehler beim Aktualisieren der Kategorie' },
+      { error: 'Fehler beim Aktualisieren der Kategorie' },
       { status: 500 }
     )
   }

@@ -88,22 +88,6 @@ export default function MerchantsPage() {
     }
   }
 
-  const linkTransactions = async () => {
-    try {
-      const response = await fetch('/api/transactions/link-merchants', {
-        method: 'POST'
-      })
-      if (!response.ok) {
-        throw new Error('Fehler beim Verknüpfen der Transaktionen')
-      }
-      const data = await response.json()
-      alert(`${data.updated} Transaktionen verknüpft, ${data.errors} Fehler`)
-    } catch (err) {
-      console.error('Error linking transactions:', err)
-      setError('Fehler beim Verknüpfen der Transaktionen')
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -197,21 +181,13 @@ export default function MerchantsPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Händler verwalten</h1>
-        <div className="space-x-4">
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Händler hinzufügen
-          </button>
-          <button
-            onClick={linkTransactions}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Transaktionen verknüpfen
-          </button>
-        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <PlusIcon className="h-5 w-5 mr-2" />
+          Händler hinzufügen
+        </button>
       </div>
 
       {error && (

@@ -14,8 +14,14 @@ export const authOptions: AuthOptions = {
         email: { label: 'E-Mail', type: 'email' },
         password: { label: 'Passwort', type: 'password' }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         try {
+          // Sicherheitscheck: Keine Anmeldedaten in der URL erlauben
+          const referer = req.headers?.referer
+          if (referer && (referer.includes('email=') || referer.includes('password='))) {
+            return null
+          }
+
           if (!credentials?.email || !credentials?.password) {
             throw new Error('Bitte E-Mail und Passwort eingeben')
           }
@@ -25,7 +31,6 @@ export const authOptions: AuthOptions = {
           })
 
           if (!user?.passwordHash) {
-            console.error('Benutzer nicht gefunden oder kein Passwort-Hash:', credentials.email)
             return null
           }
 
@@ -35,7 +40,6 @@ export const authOptions: AuthOptions = {
           )
 
           if (!isValid) {
-            console.error('Ungültiges Passwort für Benutzer:', credentials.email)
             return null
           }
 
@@ -45,7 +49,6 @@ export const authOptions: AuthOptions = {
             name: user.accountName
           }
         } catch (error) {
-          console.error('Authentifizierungsfehler:', error)
           throw error
         }
       }
@@ -65,9 +68,20 @@ export const authOptions: AuthOptions = {
         session.user.id = token.sub as string
       }
       return session
+    },
+    async redirect({ url, baseUrl }) {
+      // Wenn es ein Signout ist, immer zur Login-Seite
+      if (url.includes('signout')) {
+        return `${baseUrl}/auth/login`
+      }
+      // Sonst normale Redirect-Logik
+      return url.startsWith(baseUrl) ? url : baseUrl
     }
   },
-  debug: process.env.NODE_ENV === 'development'
+  events: {
+    async signOut() {}
+  },
+  debug: false
 }
 
 const handler = NextAuth(authOptions)

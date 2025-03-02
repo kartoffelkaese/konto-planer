@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useState } from 'react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
-const APP_VERSION = '2.3.0'
+import { APP_VERSION } from '@/lib/version'
 
 export default function Navigation() {
   const pathname = usePathname()

@@ -218,7 +218,7 @@ export default function RecurringTransactionsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white rounded-lg shadow-md p-4 mb-8">
           <div className="overflow-x-auto">
             {/* Desktop-Ansicht */}
             <table className="min-w-full hidden md:table">
@@ -267,6 +267,7 @@ export default function RecurringTransactionsPage() {
                         <div className="flex items-center justify-end space-x-2">
                           <button
                             onClick={() => handleCreateNextInstance(transaction)}
+                            title="Nächste Zahlung erstellen"
                             className="text-blue-600 hover:text-blue-800"
                           >
                             <ArrowPathIcon className="h-5 w-5" />
@@ -276,6 +277,7 @@ export default function RecurringTransactionsPage() {
                               setSelectedTransactionId(transaction.id)
                               setShowEditTransactionModal(true)
                             }}
+                            title="Zahlung bearbeiten"
                             className="text-blue-600 hover:text-blue-800"
                           >
                             <PencilIcon className="h-5 w-5" />

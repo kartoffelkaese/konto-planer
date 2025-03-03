@@ -1,28 +1,28 @@
 import { Transaction } from '@/types'
 import { isTransactionDueInSalaryMonth, getSalaryMonthRange } from '@/lib/dateUtils'
 
-interface MonthlyOverviewProps {
+interface MonatsUebersichtProps {
   transactions: Transaction[]
 }
 
-export default function MonthlyOverview({ transactions }: MonthlyOverviewProps) {
+export default function MonatsUebersicht({ transactions }: MonatsUebersichtProps) {
   const salaryDay = 23 // TODO: Aus den Einstellungen laden
   const { startDate, endDate } = getSalaryMonthRange(salaryDay)
 
   const totals = transactions.reduce((acc, transaction) => {
-    const isCurrentMonth = isTransactionDueInSalaryMonth(transaction.date, salaryDay)
+    const transactionDate = new Date(transaction.date)
     
-    // Aktuelle Monatseinnahmen
-    if (isCurrentMonth && transaction.amount > 0) {
-      acc.currentIncome += transaction.amount
-    }
-    
-    // Aktuelle Monatsausgaben
-    if (isCurrentMonth && transaction.amount < 0) {
-      if (transaction.isConfirmed) {
-        acc.currentExpenses += Math.abs(transaction.amount)
+    // Für den aktuellen Gehaltsmonat
+    if (transactionDate >= startDate && transactionDate <= endDate) {
+      if (transaction.amount > 0) {
+        acc.currentIncome += transaction.amount
       } else {
-        acc.pendingExpenses += Math.abs(transaction.amount)
+        const amount = Math.abs(transaction.amount)
+        if (transaction.isConfirmed) {
+          acc.currentExpenses += amount
+        } else {
+          acc.pendingExpenses += amount
+        }
       }
     }
 
@@ -31,8 +31,14 @@ export default function MonthlyOverview({ transactions }: MonthlyOverviewProps) 
       acc.totalPendingExpenses += Math.abs(transaction.amount)
     }
 
-    // Verfügbarer Betrag
-    if (transaction.isConfirmed) {
+    // Verfügbarer Betrag (inkl. nicht bestätigter Ausgaben)
+    if (transaction.amount > 0) {
+      // Einnahmen nur wenn bestätigt
+      if (transaction.isConfirmed) {
+        acc.available += transaction.amount
+      }
+    } else {
+      // Ausgaben immer abziehen, egal ob bestätigt oder nicht
       acc.available += transaction.amount
     }
 
@@ -46,7 +52,7 @@ export default function MonthlyOverview({ transactions }: MonthlyOverviewProps) 
   })
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 mb-4">
+    <div className="bg-white rounded-lg shadow-md p-4 mb-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-green-100 rounded-lg px-4 py-2">
           <h3 className="text-sm font-medium text-green-800">Einnahmen (aktueller Monat)</h3>
@@ -73,7 +79,7 @@ export default function MonthlyOverview({ transactions }: MonthlyOverviewProps) 
           </div>
         </div>
         <div className="bg-blue-100 rounded-lg px-4 py-2">
-          <h3 className="text-sm font-medium text-blue-800">Verfügbar (Gesamt)</h3>
+          <h3 className="text-sm font-medium text-blue-800">Verfügbar (inkl. nicht bestätigt)</h3>
           <p className="text-xl font-bold text-blue-600">
             {totals.available.toFixed(2)} €
           </p>

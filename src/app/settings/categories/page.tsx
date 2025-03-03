@@ -220,7 +220,7 @@ export default function CategoriesPage() {
       )}
 
       {/* Filter-Bereich */}
-      <div className="mb-6 bg-white p-4 rounded-lg shadow-sm">
+      <div className="bg-white rounded-lg shadow-md p-4 mb-8">
         <div>
           <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
             Suche
@@ -236,7 +236,7 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      <div className="bg-white shadow sm:rounded-lg">
+      <div className="bg-white rounded-lg shadow-md p-4 mb-8">
         {categories.length === 0 ? (
           <div className="px-6 py-8 text-center text-gray-500">
             Keine Kategorien vorhanden

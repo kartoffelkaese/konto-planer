@@ -49,3 +49,8 @@ a {
 button {
   color: rgb(33, 33, 33);
 }
+
+/* Einheitliches Padding für Input-Felder */
+input, select, textarea {
+  padding: 0.25rem;
+}

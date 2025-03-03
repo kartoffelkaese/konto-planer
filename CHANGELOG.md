@@ -2,6 +2,18 @@
 
 Alle wichtigen Änderungen am Projekt werden in dieser Datei dokumentiert.
 
+## [2.4.2]
+
+### Verbessert
+- Einheitliches Padding (0.25rem) für alle Input-Felder, Select-Boxen und Textareas
+- Konsistentere Benutzeroberfläche durch standardisierte Eingabefelder
+
+## [2.4.1]
+
+### Verbessert
+- Optimierte Darstellung der Eingabefelder
+- Verbesserte Benutzerfreundlichkeit durch einheitliche Abstände
+
 ## [2.4.0]
 
 ### Hinzugefügt

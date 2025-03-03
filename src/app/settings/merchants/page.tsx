@@ -197,7 +197,7 @@ export default function MerchantsPage() {
       )}
 
       {/* Filter-Bereich */}
-      <div className="mb-6 bg-white p-4 rounded-lg shadow-sm space-y-4">
+      <div className="bg-white rounded-lg shadow-md p-4 mb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
@@ -233,7 +233,7 @@ export default function MerchantsPage() {
         </div>
       </div>
 
-      <div className="bg-white shadow sm:rounded-lg">
+      <div className="bg-white rounded-lg shadow-md p-4 mb-8">
         {merchants.length === 0 ? (
           <div className="px-6 py-8 text-center text-gray-500">
             Keine Händler vorhanden

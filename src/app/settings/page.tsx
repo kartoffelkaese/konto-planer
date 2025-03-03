@@ -145,7 +145,7 @@ export default function SettingsPage() {
 
         <div className="space-y-6">
           {/* E-Mail-Änderung */}
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg shadow-md p-4 mb-8">
             <h2 className="text-lg font-medium text-gray-900 mb-4">E-Mail-Adresse</h2>
             
             {emailError && (
@@ -233,7 +233,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Allgemeine Einstellungen */}
-          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
+          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-4 mb-8">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Allgemeine Einstellungen</h2>
             
             <div className="space-y-6">

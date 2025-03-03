@@ -223,45 +223,51 @@ export default function TransactionsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-gray-900">Transaktionen</h1>
-                <span className="px-2 py-0.5 text-[10px] bg-gray-100 text-gray-600 rounded-full">
-                  {accountName}
-                </span>
-              </div>
-              <p className="mt-1 text-sm text-gray-500">
-                Verwalten Sie Ihre Ein- und Ausgaben
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-              <button
-                onClick={() => handleCreatePending()}
-                className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
-              >
-                <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                </svg>
-                <span className="hidden sm:inline">Ausstehende Zahlungen erstellen</span>
-                <span className="sm:hidden">Ausstehend</span>
-              </button>
-              <button
-                onClick={() => setShowNewTransactionModal(true)}
-                className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-150"
-              >
-                <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-                <span className="hidden sm:inline">Neue Transaktion</span>
-                <span className="sm:hidden">Neu</span>
-              </button>
-            </div>
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+            {error}
           </div>
+        )}
 
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-gray-900">Transaktionen</h1>
+              <span className="px-2 py-0.5 text-[10px] bg-gray-100 text-gray-600 rounded-full">
+                {accountName}
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-gray-500">
+              Verwalten Sie Ihre Ein- und Ausgaben
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+            <button
+              onClick={() => handleCreatePending()}
+              className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
+            >
+              <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
+              </svg>
+              <span className="hidden sm:inline">Ausstehende Zahlungen erstellen</span>
+              <span className="sm:hidden">Ausstehend</span>
+            </button>
+            <button
+              onClick={() => setShowNewTransactionModal(true)}
+              className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-150"
+            >
+              <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              <span className="hidden sm:inline">Neue Transaktion</span>
+              <span className="sm:hidden">Neu</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-4 mb-8">
           <MonthlyOverview 
             currentIncome={totals.currentIncome}
             currentExpenses={totals.currentExpenses}
@@ -272,7 +278,7 @@ export default function TransactionsPage() {
           />
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm">
+        <div className="bg-white rounded-lg shadow-md p-4 mb-8">
           <TransactionList 
             transactions={transactions} 
             onTransactionChange={handleTransactionChange}
@@ -320,6 +326,6 @@ export default function TransactionsPage() {
           />
         )}
       </Modal>
-    </main>
+    </div>
   )
 } 

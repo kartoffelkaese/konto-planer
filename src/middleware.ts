@@ -3,13 +3,13 @@ import { NextResponse } from 'next/server'
 
 export default withAuth(
   function middleware(req) {
-    // Wenn keine Session vorhanden ist und nicht auf einer Auth-Seite
-    if (!req.nextauth.token && !req.nextUrl.pathname.startsWith('/auth/')) {
-      return NextResponse.redirect(new URL('/auth/login', req.url))
+    // Wenn keine Session vorhanden ist und nicht auf einer Auth-Seite oder der Landing Page
+    if (!req.nextauth.token && !req.nextUrl.pathname.startsWith('/auth/') && req.nextUrl.pathname !== '/') {
+      return NextResponse.redirect(new URL('/', req.url))
     }
 
-    // Wenn Session vorhanden und auf Auth-Seite
-    if (req.nextauth.token && req.nextUrl.pathname.startsWith('/auth/')) {
+    // Wenn Session vorhanden und auf Auth-Seite oder Landing Page
+    if (req.nextauth.token && (req.nextUrl.pathname.startsWith('/auth/') || req.nextUrl.pathname === '/')) {
       return NextResponse.redirect(new URL('/transactions', req.url))
     }
 
@@ -18,8 +18,8 @@ export default withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        // Erlaube Zugriff auf /auth/* ohne Token
-        if (req.nextUrl.pathname.startsWith('/auth/')) {
+        // Erlaube Zugriff auf /auth/* und / ohne Token
+        if (req.nextUrl.pathname.startsWith('/auth/') || req.nextUrl.pathname === '/') {
           return true
         }
         // Für alle anderen Routen wird ein Token benötigt

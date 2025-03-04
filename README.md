@@ -4,7 +4,7 @@ Eine moderne Web-Anwendung zur Verwaltung von Einnahmen und Ausgaben, mit Fokus 
 
 ## Version
 
-Aktuelle Version: 2.4.2
+Aktuelle Version: 2.5.0
 
 ## Features
 

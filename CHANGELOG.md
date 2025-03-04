@@ -2,6 +2,22 @@
 
 Alle wichtigen Änderungen am Projekt werden in dieser Datei dokumentiert.
 
+## [2.5.0]
+
+### Hinzugefügt
+- Neue Landing Page mit Feature-Übersicht
+- Verbesserte Navigation für nicht eingeloggte Benutzer
+- Einheitliches Design für alle Seiten
+
+### Verbessert
+- Überarbeitetes UI/UX-Design
+- Optimierte Benutzerführung
+- Konsistentere Navigation
+
+### Geändert
+- Angepasste Middleware für neue Landing Page
+- Überarbeitete Routing-Logik
+
 ## [2.4.2]
 
 ### Verbessert

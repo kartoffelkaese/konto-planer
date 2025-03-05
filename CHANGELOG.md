@@ -2,6 +2,15 @@
 
 Alle wichtigen Änderungen am Projekt werden in dieser Datei dokumentiert.
 
+## [2.5.1]
+
+### Sicherheit
+- Kritische Sicherheitsverbesserung: Anmeldedaten werden nicht mehr über URL-Parameter übertragen
+- Implementierung zusätzlicher Sicherheitschecks im Authentifizierungsprozess
+- Nur POST-Anfragen für Anmeldungen erlaubt
+- Verbesserte Fehlerbehandlung
+- Designänderungen
+
 ## [2.5.0]
 
 ### Hinzugefügt

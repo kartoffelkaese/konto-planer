@@ -30,11 +30,6 @@ function LoginForm() {
     const password = formData.get('password') as string
 
     try {
-      const searchParams = new URLSearchParams(window.location.search)
-      searchParams.delete('email')
-      searchParams.delete('password')
-      window.history.replaceState({}, '', `${window.location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`)
-
       const result = await signIn('credentials', {
         email,
         password,

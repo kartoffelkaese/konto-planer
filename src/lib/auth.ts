@@ -19,6 +19,13 @@ export const authOptions: AuthOptions = {
           // Sicherheitscheck: Keine Anmeldedaten in der URL erlauben
           const referer = req.headers?.referer
           if (referer && (referer.includes('email=') || referer.includes('password='))) {
+            console.warn('Sicherheitswarnung: Anmeldeversuch mit Anmeldedaten in der URL')
+            return null
+          }
+
+          // Sicherheitscheck: Nur POST-Anfragen erlauben
+          if (req.method !== 'POST') {
+            console.warn('Sicherheitswarnung: Anmeldeversuch mit nicht-POST Methode')
             return null
           }
 
@@ -49,7 +56,8 @@ export const authOptions: AuthOptions = {
             name: user.accountName
           }
         } catch (error) {
-          throw error
+          console.error('Auth error:', error)
+          return null
         }
       }
     })

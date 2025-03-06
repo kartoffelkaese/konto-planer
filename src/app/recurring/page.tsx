@@ -6,7 +6,7 @@ import { Transaction } from '@/types/index'
 import { getRecurringTransactions, createRecurringInstance, createPendingInstances } from '@/lib/api'
 import { isTransactionDueInSalaryMonth, getNextDueDate, formatDate } from '@/lib/dateUtils'
 import { formatCurrency, formatNumber } from '@/lib/formatters'
-import { PencilIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import { PencilIcon, ArrowPathIcon, TrashIcon } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
 import TransactionForm from '@/components/TransactionForm'
 import EditTransactionForm from '@/components/EditTransactionForm'
@@ -185,33 +185,33 @@ export default function RecurringTransactionsPage() {
         <div className="bg-white rounded-lg shadow-md p-4 mb-8">
           <h3 className="text-sm font-semibold mb-3">Monatliche Belastung</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <p className="text-xs text-blue-800 mb-1">Monatlich</p>
-              <p className="text-lg font-semibold text-blue-600">
+            <div className="p-2 bg-green-50 rounded-lg">
+              <p className="text-xs text-green-800 mb-1">Monatlich</p>
+              <p className="text-lg font-semibold text-green-600">
                 {formatCurrency(Math.abs(totals.monthly.total))}
               </p>
             </div>
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <p className="text-xs text-blue-800 mb-1">Vierteljährlich</p>
-              <p className="text-lg font-semibold text-blue-600">
+            <div className="p-2 bg-yellow-50 rounded-lg">
+              <p className="text-xs text-yellow-800 mb-1">Vierteljährlich</p>
+              <p className="text-lg font-semibold text-yellow-600">
                 {formatCurrency(Math.abs(totals.quarterly.total))}
                 <span className="text-xs ml-1">
                   ({formatCurrency(Math.abs(totals.quarterly.perMonth))}/M)
                 </span>
               </p>
             </div>
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <p className="text-xs text-blue-800 mb-1">Jährlich</p>
-              <p className="text-lg font-semibold text-blue-600">
+            <div className="p-2 bg-indigo-50 rounded-lg">
+              <p className="text-xs text-indigo-800 mb-1">Jährlich</p>
+              <p className="text-lg font-semibold text-indigo-600">
                 {formatCurrency(Math.abs(totals.yearly.total))}
                 <span className="text-xs ml-1">
                   ({formatCurrency(Math.abs(totals.yearly.perMonth))}/M)
                 </span>
               </p>
             </div>
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <p className="text-xs text-blue-800 mb-1">Gesamt pro Monat</p>
-              <p className="text-lg font-semibold text-blue-600">
+            <div className="p-2 bg-purple-50 rounded-lg">
+              <p className="text-xs text-purple-800 mb-1">Gesamt pro Monat</p>
+              <p className="text-lg font-semibold text-purple-600">
                 {formatCurrency(Math.abs(totalMonthly))}
               </p>
             </div>
@@ -236,31 +236,39 @@ export default function RecurringTransactionsPage() {
               <tbody>
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center p-4 text-gray-500">
+                    <td colSpan={7} className="text-center p-4 text-sm text-gray-500">
                       Keine wiederkehrenden Zahlungen vorhanden
                     </td>
                   </tr>
                 ) : (
                   sortedTransactions.map((transaction) => (
                     <tr key={transaction.id} className="border-b last:border-b-0">
-                      <td className="p-4">{transaction.merchant}</td>
-                      <td className="p-4">{transaction.description}</td>
-                      <td className={`p-4 text-right ${
+                      <td className="p-4 text-sm text-gray-900">{transaction.merchant}</td>
+                      <td className="p-4 text-sm text-gray-900">{transaction.description}</td>
+                      <td className={`p-4 text-sm text-right ${
                         transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {formatCurrency(transaction.amount)}
                       </td>
-                      <td className="p-4 text-center">
-                        {transaction.recurringInterval === 'monthly' && 'Monatlich'}
-                        {transaction.recurringInterval === 'quarterly' && 'Vierteljährlich'}
-                        {transaction.recurringInterval === 'yearly' && 'Jährlich'}
+                      <td className="p-4 text-sm text-center text-gray-900">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          transaction.recurringInterval === 'monthly' 
+                            ? 'bg-green-100 text-green-800' 
+                            : transaction.recurringInterval === 'quarterly'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-indigo-100 text-indigo-800'
+                        }`}>
+                          {transaction.recurringInterval === 'monthly' && 'Monatlich'}
+                          {transaction.recurringInterval === 'quarterly' && 'Vierteljährlich'}
+                          {transaction.recurringInterval === 'yearly' && 'Jährlich'}
+                        </span>
                       </td>
-                      <td className="p-4 text-center">
+                      <td className="p-4 text-sm text-center text-gray-900">
                         {transaction.lastConfirmedDate
                           ? formatDate(new Date(transaction.lastConfirmedDate))
                           : '-'}
                       </td>
-                      <td className="p-4 text-center">
+                      <td className="p-4 text-sm text-center text-gray-900">
                         {formatDate(getNextPaymentDate(transaction))}
                       </td>
                       <td className="p-4 text-right">
@@ -299,20 +307,53 @@ export default function RecurringTransactionsPage() {
               ) : (
                 sortedTransactions.map((transaction) => (
                   <div key={transaction.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <div className="font-medium text-gray-900">{transaction.description}</div>
-                        <div className="text-sm text-gray-600">{transaction.merchant}</div>
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="p-1.5 bg-indigo-200 rounded-lg">
+                          <svg className="w-4 h-4 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
                       </div>
-                      <div className={`text-right font-medium ${
-                        transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {formatCurrency(transaction.amount)}
+                      <div>
+                        <h3 className="text-sm font-medium text-gray-900">{transaction.description}</h3>
+                        <p className="text-xs text-gray-500">{transaction.merchant}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className={`text-sm font-medium ${
+                          transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {formatCurrency(transaction.amount)}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {transaction.recurringInterval === 'monthly' && 'Monatlich'}
+                          {transaction.recurringInterval === 'quarterly' && 'Vierteljährlich'}
+                          {transaction.recurringInterval === 'yearly' && 'Jährlich'}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => {
+                            setSelectedTransactionId(transaction.id)
+                            setShowEditTransactionModal(true)
+                          }}
+                          className="p-1 text-indigo-600 hover:text-indigo-900"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
 
                     <div className="flex flex-wrap gap-2 mb-3">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        transaction.recurringInterval === 'monthly' 
+                          ? 'bg-green-100 text-green-800' 
+                          : transaction.recurringInterval === 'quarterly'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-indigo-100 text-indigo-800'
+                      }`}>
                         {transaction.recurringInterval === 'monthly' && 'Monatlich'}
                         {transaction.recurringInterval === 'quarterly' && 'Vierteljährlich'}
                         {transaction.recurringInterval === 'yearly' && 'Jährlich'}

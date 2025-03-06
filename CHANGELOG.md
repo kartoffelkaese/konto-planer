@@ -2,6 +2,14 @@
 
 Alle wichtigen Änderungen am Projekt werden in dieser Datei dokumentiert.
 
+## [2.5.3]
+### Geändert
+- Verbesserte Farbkodierung für wiederkehrende Zahlungen
+  - Monatlich: Grün
+  - Vierteljährlich: Gelb
+  - Jährlich: Indigo
+  - Gesamt pro Monat: Violett
+
 ## [2.5.2]
 
 ### Verbessert

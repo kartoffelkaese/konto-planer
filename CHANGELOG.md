@@ -2,6 +2,11 @@
 
 Alle wichtigen Änderungen am Projekt werden in dieser Datei dokumentiert.
 
+## [2.5.4] - 2024-03-19
+### Verbessert
+- Optimierte Implementierung des Infinite Scrollings für bessere Performance und Zuverlässigkeit
+- Verbesserte Ladeanimation und Benutzerführung beim Nachladen von Transaktionen
+
 ## [2.5.3]
 ### Geändert
 - Verbesserte Farbkodierung für wiederkehrende Zahlungen

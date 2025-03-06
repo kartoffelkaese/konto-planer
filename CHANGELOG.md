@@ -2,6 +2,16 @@
 
 Alle wichtigen Änderungen am Projekt werden in dieser Datei dokumentiert.
 
+## [2.5.2]
+
+### Verbessert
+- Versionsnummer in der Navigation ist jetzt mit der CHANGELOG.md verlinkt
+- Verbesserte Benutzerführung durch klickbare Versionsnummer
+- Optimierte Navigation für bessere Benutzerinteraktion
+- Responsives Design der Transaktionsliste für mobile Geräte
+- Verbesserte mobile Ansicht mit optimierter Darstellung der Transaktionsdetails
+- Angepasste Breakpoints für bessere Darstellung auf verschiedenen Bildschirmgrößen
+
 ## [2.5.1]
 
 ### Sicherheit

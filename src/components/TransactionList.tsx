@@ -139,12 +139,14 @@ export default function TransactionList({
 
   return (
     <div className="overflow-hidden">
-      <div className="overflow-x-auto">
+      {/* Desktop Ansicht */}
+      <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead>
             <tr className="border-b">
               <th className="text-left p-4">Datum</th>
               <th className="text-left p-4">Händler</th>
+              <th className="text-left p-4">Kategorie</th>
               <th className="text-left p-4">Beschreibung</th>
               <th className="text-right p-4">Betrag</th>
               <th className="text-center p-4">Status</th>
@@ -154,7 +156,7 @@ export default function TransactionList({
           <tbody className="bg-white divide-y divide-gray-200">
             {transactions.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
                   <div className="flex flex-col items-center justify-center">
                     <svg className="h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -186,6 +188,21 @@ export default function TransactionList({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {transaction.merchant}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {transaction.merchantRef?.category ? (
+                      <span 
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        style={{
+                          backgroundColor: transaction.merchantRef.category.color,
+                          color: getContrastColor(transaction.merchantRef.category.color)
+                        }}
+                      >
+                        {transaction.merchantRef.category.name}
+                      </span>
+                    ) : (
+                      <span className="text-gray-500">-</span>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900">
                     {transaction.description}
@@ -224,6 +241,81 @@ export default function TransactionList({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Ansicht */}
+      <div className="md:hidden space-y-4">
+        {transactions.length === 0 ? (
+          <div className="text-center py-8 text-sm text-gray-500">
+            Keine Transaktionen vorhanden
+          </div>
+        ) : (
+          transactions.map((transaction, index) => (
+            <div 
+              key={transaction.id} 
+              ref={index === transactions.length - 1 ? lastElementRef : undefined}
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+            >
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <div className="font-medium text-gray-900">{transaction.description}</div>
+                  <div className="text-sm text-gray-600">{transaction.merchant}</div>
+                  {transaction.merchantRef?.category && (
+                    <div className="mt-1">
+                      <span 
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        style={{
+                          backgroundColor: transaction.merchantRef.category.color,
+                          color: getContrastColor(transaction.merchantRef.category.color)
+                        }}
+                      >
+                        {transaction.merchantRef.category.name}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className={`text-right font-medium ${
+                  transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {transaction.amount >= 0 ? '+' : ''}{transaction.amount.toFixed(2)} €
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-sm text-gray-500">
+                <div className="flex items-center">
+                  <CalendarIcon className="h-4 w-4 mr-1" />
+                  {new Date(transaction.date).toLocaleDateString('de-DE', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                  })}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handleToggleConfirmation(transaction)}
+                    title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
+                    className={`inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full ${
+                      transaction.isConfirmed
+                        ? 'bg-green-100 text-green-800 border-green-200'
+                        : isTransactionPending(transaction)
+                        ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
+                        : 'bg-gray-100 text-gray-800 border-gray-200'
+                    }`}
+                  >
+                    {transaction.isConfirmed ? 'Bestätigt' : isTransactionPending(transaction) ? 'Ausstehend' : 'Offen'}
+                  </button>
+                  <button
+                    onClick={() => handleEditClick(transaction.id)}
+                    title="Transaktion bearbeiten"
+                    className="text-blue-600 hover:text-blue-900"
+                  >
+                    <PencilIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Bearbeiten Modal */}

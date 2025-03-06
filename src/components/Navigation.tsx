@@ -39,7 +39,14 @@ export default function Navigation() {
               <div className="flex-shrink-0 flex items-center">
                 <div className="relative">
                   <h1 className="text-2xl font-bold text-gray-900">Konto-Planer</h1>
-                  <span className="absolute bottom-0.5 left-full ml-2 text-[10px] text-gray-400">v{APP_VERSION}</span>
+                  <a 
+                    href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="absolute bottom-0.5 left-full ml-2 text-[10px] text-gray-400 hover:text-gray-600 transition-colors duration-150"
+                  >
+                    v{APP_VERSION}
+                  </a>
                 </div>
               </div>
             </div>
@@ -57,7 +64,14 @@ export default function Navigation() {
             <div className="flex-shrink-0 flex items-center">
               <div className="relative">
                 <h1 className="text-2xl font-bold text-gray-900">Konto-Planer</h1>
-                <span className="absolute bottom-0.5 left-full ml-2 text-[10px] text-gray-400">v{APP_VERSION}</span>
+                <a 
+                  href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="absolute bottom-0.5 left-full ml-2 text-[10px] text-gray-400 hover:text-gray-600 transition-colors duration-150"
+                >
+                  v{APP_VERSION}
+                </a>
               </div>
             </div>
             <div className="hidden sm:ml-10 sm:flex sm:space-x-4">

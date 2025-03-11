@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
 import { formatCurrency } from '@/lib/formatters'
+import { formatDate } from '@/lib/dateUtils'
 
 interface MonthlyOverviewProps {
   currentIncome: number

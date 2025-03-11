@@ -1,51 +1,96 @@
 import { Transaction } from '@/types'
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
+import timezone from 'dayjs/plugin/timezone'
+import localizedFormat from 'dayjs/plugin/localizedFormat'
+import isBetween from 'dayjs/plugin/isBetween'
 
-export function getSalaryMonthRange(salaryDay: number) {
-  const today = new Date()
-  const currentDay = today.getDate()
-  const currentMonth = today.getMonth()
-  const currentYear = today.getFullYear()
+// Plugins initialisieren
+dayjs.extend(utc)
+dayjs.extend(timezone)
+dayjs.extend(localizedFormat)
+dayjs.extend(isBetween)
 
-  let startDate: Date
-  let endDate: Date
+// Setze die Standard-Zeitzone auf 'Europe/Berlin'
+const DEFAULT_TIMEZONE = 'Europe/Berlin'
 
-  if (currentDay >= salaryDay) {
-    // Wir sind nach dem Gehaltseingangstag
-    startDate = new Date(currentYear, currentMonth, salaryDay)
-    endDate = new Date(currentYear, currentMonth + 1, salaryDay)
-  } else {
-    // Wir sind vor dem Gehaltseingangstag
-    startDate = new Date(currentYear, currentMonth - 1, salaryDay)
-    endDate = new Date(currentYear, currentMonth, salaryDay)
-  }
-
-  return { startDate, endDate }
+/**
+ * Konvertiert ein Datum in einen ISO-String mit der korrekten Zeitzone
+ */
+export function toISOString(date: Date | string): string {
+  return dayjs(date).tz(DEFAULT_TIMEZONE).toISOString()
 }
 
-export function getNextDueDate(lastConfirmedDate: Date, interval: string): Date {
-  const date = new Date(lastConfirmedDate)
+/**
+ * Konvertiert ein Datum in ein dayjs-Objekt mit der korrekten Zeitzone
+ */
+export function toDate(date: Date | string): Date {
+  return dayjs(date).tz(DEFAULT_TIMEZONE).toDate()
+}
+
+/**
+ * Formatiert ein Datum für die Anzeige
+ */
+export function formatDate(date: Date | string): string {
+  return dayjs(date).tz(DEFAULT_TIMEZONE).format('DD.MM.YYYY')
+}
+
+/**
+ * Formatiert ein Datum für Input-Felder
+ */
+export function formatDateForInput(date: Date | string): string {
+  return dayjs(date).tz(DEFAULT_TIMEZONE).format('YYYY-MM-DD')
+}
+
+/**
+ * Berechnet das nächste Fälligkeitsdatum
+ */
+export function getNextDueDate(lastConfirmedDate: Date | string, interval: string): Date {
+  const date = dayjs(lastConfirmedDate).tz(DEFAULT_TIMEZONE)
   
   switch (interval) {
     case 'monthly':
-      date.setMonth(date.getMonth() + 1)
-      break
+      return date.add(1, 'month').toDate()
     case 'quarterly':
-      date.setMonth(date.getMonth() + 3)
-      break
+      return date.add(3, 'month').toDate()
     case 'yearly':
-      date.setFullYear(date.getFullYear() + 1)
-      break
+      return date.add(1, 'year').toDate()
+    default:
+      return date.toDate()
   }
-
-  return date
 }
 
+/**
+ * Berechnet den Gehaltsmonatszeitraum
+ */
+export function getSalaryMonthRange(salaryDay: number) {
+  const now = dayjs().tz(DEFAULT_TIMEZONE)
+  const currentDay = now.date()
+  
+  let startDate: dayjs.Dayjs
+  if (currentDay >= salaryDay) {
+    startDate = now.date(salaryDay)
+  } else {
+    startDate = now.subtract(1, 'month').date(salaryDay)
+  }
+  
+  const endDate = startDate.add(1, 'month').subtract(1, 'day')
+  
+  return {
+    startDate: startDate.toDate(),
+    endDate: endDate.toDate()
+  }
+}
+
+/**
+ * Prüft ob eine Transaktion im aktuellen Gehaltsmonat fällig ist
+ */
 export function isTransactionDueInSalaryMonth(
   transaction: {
-    date: Date
+    date: Date | string
     isRecurring: boolean
-    recurringInterval?: string
-    lastConfirmedDate?: Date
+    recurringInterval?: string | null
+    lastConfirmedDate?: Date | string | null
   },
   salaryDay: number
 ): boolean {
@@ -54,24 +99,46 @@ export function isTransactionDueInSalaryMonth(
 
   const { startDate, endDate } = getSalaryMonthRange(salaryDay)
   const nextDueDate = getNextDueDate(
-    new Date(transaction.lastConfirmedDate),
+    transaction.lastConfirmedDate,
     transaction.recurringInterval
   )
 
-  return nextDueDate >= startDate && nextDueDate <= endDate
+  return dayjs(nextDueDate).isBetween(startDate, endDate, 'day', '[]')
 }
 
+/**
+ * Prüft ob eine Transaktion ausstehend ist
+ */
 export function isTransactionPending(transaction: Transaction): boolean {
   return transaction.isRecurring && 
          isTransactionDueInSalaryMonth(transaction, 23) && // TODO: salaryDay aus den Einstellungen laden
          !transaction.isConfirmed
 }
 
-export function formatDate(date: Date | string): string {
-  const d = new Date(date)
-  return new Intl.DateTimeFormat('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  }).format(d)
+/**
+ * Gibt das aktuelle Datum in der korrekten Zeitzone zurück
+ */
+export function getCurrentDate(): Date {
+  return dayjs().tz(DEFAULT_TIMEZONE).toDate()
+}
+
+/**
+ * Gibt das aktuelle Datum als ISO-String zurück
+ */
+export function getCurrentDateISO(): string {
+  return dayjs().tz(DEFAULT_TIMEZONE).toISOString()
+}
+
+/**
+ * Prüft ob ein Datum in der Vergangenheit liegt
+ */
+export function isInPast(date: Date | string): boolean {
+  return dayjs(date).tz(DEFAULT_TIMEZONE).isBefore(getCurrentDate())
+}
+
+/**
+ * Prüft ob ein Datum heute ist
+ */
+export function isToday(date: Date | string): boolean {
+  return dayjs(date).tz(DEFAULT_TIMEZONE).isSame(getCurrentDate(), 'day')
 } 

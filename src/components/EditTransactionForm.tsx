@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getTransaction, updateTransaction, deleteTransaction } from '@/lib/api'
+import { formatDateForInput } from '@/lib/dateUtils'
 
 interface EditTransactionFormProps {
   id: string
@@ -20,9 +21,10 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
     description: '',
     amount: '',
     type: 'expense',
-    date: new Date().toISOString().split('T')[0],
+    date: formatDateForInput(new Date()),
     isRecurring: false,
-    recurringInterval: 'monthly'
+    recurringInterval: 'monthly',
+    isConfirmed: false
   })
 
   useEffect(() => {
@@ -37,9 +39,10 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
         description: transaction.description || '',
         amount: Math.abs(transaction.amount).toString(),
         type: transaction.amount >= 0 ? 'income' : 'expense',
-        date: new Date(transaction.date).toISOString().split('T')[0],
+        date: formatDateForInput(transaction.date),
         isRecurring: transaction.isRecurring,
-        recurringInterval: transaction.recurringInterval || 'monthly'
+        recurringInterval: transaction.recurringInterval || 'monthly',
+        isConfirmed: transaction.isConfirmed
       })
       setError(null)
     } catch (err) {

@@ -191,11 +191,7 @@ export default function TransactionList({
                         onClick={() => handleEditClick(transaction.id)}
                         className="text-gray-600 hover:text-gray-900"
                       >
-                        {new Date(transaction.date).toLocaleDateString('de-DE', {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit'
-                        })}
+                        {formatDate(transaction.date)}
                       </button>
                     </div>
                   </td>
@@ -297,11 +293,7 @@ export default function TransactionList({
               <div className="flex items-center justify-between text-sm text-gray-500">
                 <div className="flex items-center">
                   <CalendarIcon className="h-4 w-4 mr-1" />
-                  {new Date(transaction.date).toLocaleDateString('de-DE', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit'
-                  })}
+                  {formatDate(transaction.date)}
                 </div>
                 <div className="flex items-center space-x-2">
                   <button

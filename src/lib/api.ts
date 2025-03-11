@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { Transaction, CreateTransactionData } from '@/types'
+import { toISOString } from '@/lib/dateUtils'
 
 interface TransactionsResponse {
   transactions: Transaction[]
@@ -52,8 +53,8 @@ export const createTransaction = async (data: CreateTransactionData): Promise<Tr
   const formattedData = {
     ...data,
     amount: typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount,
-    date: new Date(data.date).toISOString(),
-    lastConfirmedDate: data.lastConfirmedDate ? new Date(data.lastConfirmedDate).toISOString() : null,
+    date: toISOString(data.date),
+    lastConfirmedDate: data.lastConfirmedDate ? toISOString(data.lastConfirmedDate) : null,
     isConfirmed: data.isConfirmed ?? false,
     isRecurring: data.isRecurring ?? false,
     description: data.description || null
@@ -70,8 +71,8 @@ export const updateTransaction = async (id: string, data: Partial<Transaction>):
     amount: data.amount !== undefined 
       ? (typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount)
       : undefined,
-    date: data.date ? new Date(data.date).toISOString() : undefined,
-    lastConfirmedDate: data.lastConfirmedDate ? new Date(data.lastConfirmedDate).toISOString() : null
+    date: data.date ? toISOString(data.date) : undefined,
+    lastConfirmedDate: data.lastConfirmedDate ? toISOString(data.lastConfirmedDate) : null
   }
 
   const response = await api.patch(`/transactions/${id}`, formattedData)

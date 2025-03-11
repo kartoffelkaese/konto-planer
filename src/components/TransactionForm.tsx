@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createTransaction } from '@/lib/api'
+import { formatDateForInput } from '@/lib/dateUtils'
 
 interface Merchant {
   id: string
@@ -35,7 +36,7 @@ export default function TransactionForm({
     description: '',
     amount: '',
     type: 'expense',
-    date: new Date().toISOString().split('T')[0],
+    date: formatDateForInput(new Date()),
     isRecurring: defaultIsRecurring,
     recurringInterval: 'monthly'
   })

@@ -2,6 +2,7 @@ export interface Category {
   id: string
   name: string
   color: string
+  createdAt: string
 }
 
 export interface Merchant {
@@ -37,6 +38,7 @@ export interface CreateTransactionData {
   description?: string
   amount: number
   date: string
+  isConfirmed?: boolean
   isRecurring?: boolean
   recurringInterval?: string
   lastConfirmedDate?: string

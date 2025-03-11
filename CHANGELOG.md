@@ -2,6 +2,13 @@
 
 Alle wichtigen Änderungen am Projekt werden in dieser Datei dokumentiert.
 
+## [2.7.1]
+- Tastaturnavigation
+- API Doku
+
+## [2.7.0]
+- Datumseingaben vereinheitlicht
+
 ## [2.6.0]
 - Recurring-Funktion für Buchungen wiederhergestellt
 - Nicht benötigte Dateien entfernt.

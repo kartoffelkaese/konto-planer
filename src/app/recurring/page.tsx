@@ -28,12 +28,13 @@ export default function RecurringTransactionsPage() {
   const loadTransactions = async () => {
     try {
       const transactions = await getRecurringTransactions()
-      // Konvertiere die Beträge in Zahlen
+      // Konvertiere die Beträge in Zahlen und stelle sicher, dass alle erforderlichen Felder vorhanden sind
       const recurringTransactions = transactions.map(t => ({
         ...t,
         amount: Number(t.amount),
-        version: t.version || 1
-      }))
+        version: t.version || 1,
+        userId: t.userId || '', // Stelle sicher, dass userId immer einen Wert hat
+      })) as Transaction[]
       setTransactions(recurringTransactions)
       setError(null)
     } catch (err) {
@@ -94,11 +95,25 @@ export default function RecurringTransactionsPage() {
   }
 
   const getNextPaymentDate = (transaction: Transaction): Date => {
-    if (!transaction.lastConfirmedDate || !transaction.recurringInterval) {
-      // Wenn keine letzte Bestätigung oder kein Intervall, dann das Transaktionsdatum verwenden
+    if (!transaction.lastConfirmedDate) {
+      // Wenn keine letzte Bestätigung vorhanden ist, das ursprüngliche Datum verwenden
       return new Date(transaction.date)
     }
-    return getNextDueDate(new Date(transaction.lastConfirmedDate), transaction.recurringInterval)
+
+    // Berechne das nächste Fälligkeitsdatum basierend auf der letzten Bestätigung
+    const nextDate = getNextDueDate(
+      new Date(transaction.lastConfirmedDate),
+      transaction.recurringInterval || 'monthly'
+    )
+
+    // Wenn das nächste Datum in der Vergangenheit liegt, berechne das nächste gültige Datum
+    const today = new Date()
+    while (nextDate < today) {
+      const newDate = getNextDueDate(nextDate, transaction.recurringInterval || 'monthly')
+      nextDate.setTime(newDate.getTime())
+    }
+
+    return nextDate
   }
 
   if (loading) {

@@ -2,6 +2,10 @@
 
 Alle wichtigen Änderungen am Projekt werden in dieser Datei dokumentiert.
 
+## [2.6.0]
+- Recurring-Funktion für Buchungen wiederhergestellt
+- Nicht benötigte Dateien entfernt.
+
 ## [2.5.4]
 ### Verbessert
 - Optimierte Implementierung des Infinite Scrollings für bessere Performance und Zuverlässigkeit

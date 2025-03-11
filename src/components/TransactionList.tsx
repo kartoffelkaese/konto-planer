@@ -29,22 +29,35 @@ export default function TransactionList({
 
   const handleToggleConfirmation = async (transaction: Transaction) => {
     try {
+      const currentDate = new Date().toISOString();
       const updatedTransaction = {
         ...transaction,
         isConfirmed: !transaction.isConfirmed,
-        lastConfirmedDate: !transaction.isConfirmed ? transaction.date : null,
+        lastConfirmedDate: !transaction.isConfirmed ? currentDate : null,
       }
       
       const response = await fetch(`/api/transactions/${transaction.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedTransaction),
       })
 
       if (!response.ok) {
         throw new Error('Fehler beim Aktualisieren der Transaktion')
+      }
+
+      if (transaction.parentTransactionId) {
+        const parentResponse = await fetch(`/api/transactions/${transaction.parentTransactionId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            lastConfirmedDate: currentDate
+          }),
+        })
+
+        if (!parentResponse.ok) {
+          console.error('Fehler beim Aktualisieren der Eltern-Transaktion')
+        }
       }
 
       setEditingDate(null)

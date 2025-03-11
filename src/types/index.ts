@@ -27,6 +27,7 @@ export interface Transaction {
   lastConfirmedDate?: string | null
   version?: number
   parentTransactionId?: string | null
+  childTransactions?: Transaction[]
   createdAt: string
 }
 

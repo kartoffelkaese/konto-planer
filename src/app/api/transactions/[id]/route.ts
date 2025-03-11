@@ -115,6 +115,16 @@ export async function PATCH(
       }
     })
 
+    // Wenn die Transaktion bestätigt wurde und eine Eltern-Transaktion hat
+    if (cleanedUpdateFields.isConfirmed && existingTransaction.parentTransactionId) {
+      await prisma.transaction.update({
+        where: { id: existingTransaction.parentTransactionId },
+        data: {
+          lastConfirmedDate: cleanedUpdateFields.lastConfirmedDate
+        }
+      })
+    }
+
     console.log('Transaktion erfolgreich aktualisiert:', updatedTransaction.id)
     return NextResponse.json(updatedTransaction)
   } catch (error) {

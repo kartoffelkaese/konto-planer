@@ -52,7 +52,7 @@ function ColorPicker({ value, onChange, id }: ColorPickerProps) {
           />
           <label
             htmlFor={id}
-            className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 cursor-pointer"
+            className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 cursor-pointer"
           >
             Andere Farbe wählen
           </label>
@@ -236,7 +236,7 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-4 mb-8">
+      <div className="rounded-lg shadow-md p-4 mb-8 bg-white">
         {categories.length === 0 ? (
           <div className="px-6 py-8 text-center text-gray-500">
             Keine Kategorien vorhanden
@@ -250,7 +250,7 @@ export default function CategoriesPage() {
             {filteredCategories.map((category) => (
               <div 
                 key={category.id} 
-                className="relative bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+                className="relative border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
               >
                 <div className="p-4">
                   <div className="flex items-center space-x-3 mb-3">

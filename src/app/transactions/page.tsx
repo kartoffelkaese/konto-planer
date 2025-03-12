@@ -237,15 +237,15 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div id="transaction-page" className="min-h-screen bg-gray-100">
+      <div id="transaction-container" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+          <div id="error-message" className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
             {error}
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
+        <div id="page-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-gray-900">Transaktionen</h1>
@@ -257,7 +257,7 @@ export default function TransactionsPage() {
               Verwalten Sie Ihre Ein- und Ausgaben
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+          <div id="action-buttons" className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
             <button
               onClick={() => handleCreatePending()}
               className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
@@ -281,7 +281,7 @@ export default function TransactionsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-4 mb-8">
+        <div id="monthly-overview-section" className="rounded-lg shadow-md p-4 mb-8 bg-white">
           <MonthlyOverview 
             currentIncome={totals.currentIncome}
             currentExpenses={totals.currentExpenses}
@@ -292,7 +292,7 @@ export default function TransactionsPage() {
           />
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-4 mb-8">
+        <div id="transaction-list-section" className="rounded-lg shadow-md p-4 mb-8 bg-white">
           <TransactionList 
             transactions={transactions} 
             onTransactionChange={handleTransactionChange}

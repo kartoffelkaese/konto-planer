@@ -165,21 +165,21 @@ export default function RecurringTransactionsPage() {
   const totalMonthly = totals.monthly.perMonth + totals.quarterly.perMonth + totals.yearly.perMonth
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div id="recurring-page" className="min-h-screen bg-gray-50">
+      <div id="recurring-container" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {successMessage && (
-          <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg shadow-md transition-opacity">
+          <div id="success-message" className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg shadow-md transition-opacity">
             {successMessage}
           </div>
         )}
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+          <div id="error-message" className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
             {error}
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
+        <div id="page-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Wiederkehrende Zahlungen</h1>
             <p className="mt-1 text-sm text-gray-500">
@@ -197,16 +197,16 @@ export default function RecurringTransactionsPage() {
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-4 mb-8">
+        <div id="monthly-summary" className="rounded-lg shadow-md p-4 mb-8 bg-white">
           <h3 className="text-sm font-semibold mb-3">Monatliche Belastung</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="p-2 bg-green-50 rounded-lg">
+          <div id="summary-grid" className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div id="monthly-total" className="p-2 bg-green-50 rounded-lg">
               <p className="text-xs text-green-800 mb-1">Monatlich</p>
               <p className="text-lg font-semibold text-green-600">
                 {formatCurrency(Math.abs(totals.monthly.total))}
               </p>
             </div>
-            <div className="p-2 bg-yellow-50 rounded-lg">
+            <div id="quarterly-total" className="p-2 bg-yellow-50 rounded-lg">
               <p className="text-xs text-yellow-800 mb-1">Vierteljährlich</p>
               <p className="text-lg font-semibold text-yellow-600">
                 {formatCurrency(Math.abs(totals.quarterly.total))}
@@ -215,7 +215,7 @@ export default function RecurringTransactionsPage() {
                 </span>
               </p>
             </div>
-            <div className="p-2 bg-indigo-50 rounded-lg">
+            <div id="yearly-total" className="p-2 bg-indigo-50 rounded-lg">
               <p className="text-xs text-indigo-800 mb-1">Jährlich</p>
               <p className="text-lg font-semibold text-indigo-600">
                 {formatCurrency(Math.abs(totals.yearly.total))}
@@ -224,7 +224,7 @@ export default function RecurringTransactionsPage() {
                 </span>
               </p>
             </div>
-            <div className="p-2 bg-purple-50 rounded-lg">
+            <div id="total-monthly" className="p-2 bg-purple-50 rounded-lg">
               <p className="text-xs text-purple-800 mb-1">Gesamt pro Monat</p>
               <p className="text-lg font-semibold text-purple-600">
                 {formatCurrency(Math.abs(totalMonthly))}
@@ -233,7 +233,7 @@ export default function RecurringTransactionsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-4 mb-8">
+        <div id="transactions-table" className="rounded-lg shadow-md p-4 mb-8 bg-white">
           <div className="overflow-x-auto">
             {/* Desktop-Ansicht */}
             <table className="min-w-full hidden md:table">
@@ -321,7 +321,7 @@ export default function RecurringTransactionsPage() {
                 </div>
               ) : (
                 sortedTransactions.map((transaction) => (
-                  <div key={transaction.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                  <div key={transaction.id} className="rounded-lg shadow-sm border border-gray-200 p-4">
                     <div className="flex items-center space-x-3">
                       <div className="flex-shrink-0">
                         <div className="p-1.5 bg-indigo-200 rounded-lg">
@@ -341,11 +341,6 @@ export default function RecurringTransactionsPage() {
                           transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
                         }`}>
                           {formatCurrency(transaction.amount)}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {transaction.recurringInterval === 'monthly' && 'Monatlich'}
-                          {transaction.recurringInterval === 'quarterly' && 'Vierteljährlich'}
-                          {transaction.recurringInterval === 'yearly' && 'Jährlich'}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">

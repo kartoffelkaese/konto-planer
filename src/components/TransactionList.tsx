@@ -263,7 +263,7 @@ export default function TransactionList({
             <div
               key={transaction.id}
               ref={index === transactions.length - 1 ? lastElementRef : undefined}
-              className="bg-white rounded-lg shadow p-4"
+              className="rounded-lg shadow p-4"
             >
               <div className="flex justify-between items-start mb-3">
                 <div>

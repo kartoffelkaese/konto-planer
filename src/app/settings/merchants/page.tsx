@@ -233,7 +233,7 @@ export default function MerchantsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-4 mb-8">
+      <div className="rounded-lg shadow-md p-4 mb-8 bg-white">
         {merchants.length === 0 ? (
           <div className="px-6 py-8 text-center text-gray-500">
             Keine Händler vorhanden
@@ -247,7 +247,7 @@ export default function MerchantsPage() {
             {filteredMerchants.map((merchant) => (
               <div
                 key={merchant.id}
-                className="relative bg-white border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+                className="relative border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
               >
                 <div className="p-4">
                   <div className="flex items-center space-x-3 mb-3">

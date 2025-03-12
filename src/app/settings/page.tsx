@@ -119,9 +119,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="min-h-screen p-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+    <main id="settings-page" className="min-h-screen p-8">
+      <div id="settings-container" className="max-w-2xl mx-auto">
+        <div id="page-header" className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold">Einstellungen</h1>
           <Link
             href="/transactions"
@@ -132,20 +132,20 @@ export default function SettingsPage() {
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+          <div id="error-message" className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
+          <div id="success-message" className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
             Einstellungen wurden erfolgreich gespeichert
           </div>
         )}
 
-        <div className="space-y-6">
+        <div id="settings-sections" className="space-y-6">
           {/* E-Mail-Änderung */}
-          <div className="bg-white rounded-lg shadow-md p-4 mb-8">
+          <div id="email-settings" className="rounded-lg shadow-md p-4 mb-8 bg-white">
             <h2 className="text-lg font-medium text-gray-900 mb-4">E-Mail-Adresse</h2>
             
             {emailError && (
@@ -233,7 +233,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Allgemeine Einstellungen */}
-          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-4 mb-8">
+          <form id="general-settings" onSubmit={handleSubmit} className="rounded-lg shadow-md p-4 mb-8 bg-white">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Allgemeine Einstellungen</h2>
             
             <div className="space-y-6">

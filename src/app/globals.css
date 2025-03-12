@@ -30,11 +30,6 @@ body {
   color: rgb(45, 45, 45);
 }
 
-/* Hellerer Hintergrund für besseren Kontrast */
-.bg-white {
-  background-color: rgb(255, 255, 255);
-}
-
 /* Verbesserte Lesbarkeit für Tabellen */
 table {
   color: rgb(33, 33, 33);

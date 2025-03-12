@@ -52,15 +52,15 @@ function LoginForm() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full">
-        <div className="text-center">
+    <main id="login-page" className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+      <div id="login-container" className="max-w-md w-full">
+        <div id="login-header" className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Konto-Planer</h1>
           <h2 className="text-2xl font-semibold text-gray-700 mb-8">
             Willkommen zurück
           </h2>
           {searchParams.get('registered') === 'true' && (
-            <div className="mb-4 p-4 bg-green-50 rounded-lg">
+            <div id="registration-success" className="mb-4 p-4 bg-green-50 rounded-lg">
               <p className="text-green-700">
                 Registrierung erfolgreich! Sie können sich jetzt anmelden.
               </p>
@@ -68,15 +68,15 @@ function LoginForm() {
           )}
         </div>
         
-        <div className="bg-white p-8 rounded-xl shadow-lg">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+        <div id="login-form-container" className="p-8 rounded-xl shadow-lg bg-white">
+          <form id="login-form" className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="rounded-lg bg-red-50 p-4 text-center">
+              <div id="error-message" className="rounded-lg bg-red-50 p-4 text-center">
                 <div className="text-sm text-red-700">{error}</div>
               </div>
             )}
             
-            <div className="space-y-4">
+            <div id="form-fields" className="space-y-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                   E-Mail
@@ -129,7 +129,7 @@ function LoginForm() {
           </form>
         </div>
 
-        <div className="mt-6 text-center">
+        <div id="register-link" className="mt-6 text-center">
           <Link
             href="/auth/register"
             className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200"

@@ -69,7 +69,7 @@ export default function NewTransactionPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
+        <form onSubmit={handleSubmit} className="rounded-lg shadow-md p-6">
           <div className="space-y-6">
             <div>
               <label htmlFor="merchant" className="block text-sm font-medium text-gray-700">

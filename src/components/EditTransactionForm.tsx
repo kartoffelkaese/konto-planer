@@ -117,7 +117,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
 
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+          <div className="p-6 rounded-lg shadow-xl max-w-md w-full">
             <h3 className="text-lg font-semibold mb-4">Transaktion löschen</h3>
             <p className="text-gray-600 mb-6">
               Möchten Sie diese Transaktion wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.

@@ -65,11 +65,11 @@ export default function Navigation() {
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-40 bg-white shadow-lg transform transition-all duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
-      } md:translate-x-0 w-[var(--sidebar-width)] flex flex-col`}>
-        <div className="flex-1">
+      } md:translate-x-0 ${isOpen ? 'w-64' : 'w-[var(--sidebar-width)]'} flex flex-col`}>
+        <div className="flex-1 overflow-y-auto">
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-4 border-b">
-            {!isCollapsed && (
+            {(isOpen || !isCollapsed) && (
               <Link href="/" className="text-xl font-bold text-blue-600">
                 KontoPlaner
               </Link>
@@ -107,7 +107,7 @@ export default function Navigation() {
                     }`}
                     aria-hidden="true"
                   />
-                  {!isCollapsed && (
+                  {(isOpen || !isCollapsed) && (
                     <span className="ml-3">{item.name}</span>
                   )}
                 </Link>
@@ -122,7 +122,7 @@ export default function Navigation() {
               className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 transition-colors duration-150"
             >
               <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
-              {!isCollapsed && (
+              {(isOpen || !isCollapsed) && (
                 <span className="ml-3">Ausloggen</span>
               )}
             </button>
@@ -130,8 +130,8 @@ export default function Navigation() {
         </div>
 
         {/* Version */}
-        <div className={`px-4 py-2 ${!isCollapsed ? 'border-t' : ''}`}>
-          {!isCollapsed && (
+        <div className={`px-4 py-2 ${(isOpen || !isCollapsed) ? 'border-t' : ''}`}>
+          {(isOpen || !isCollapsed) && (
             <a
               href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md"
               target="_blank"

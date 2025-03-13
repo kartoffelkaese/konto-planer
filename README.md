@@ -55,44 +55,6 @@ Eine moderne Webanwendung zur Verwaltung Ihrer persönlichen Finanzen, entwickel
 
 ## Installation
 
-1. Repository klonen:
-   ```bash
-   git clone https://github.com/yourusername/konto-planer.git
-   cd konto-planer
-   ```
-
-2. Abhängigkeiten installieren:
-   ```bash
-   npm install
-   ```
-
-3. Umgebungsvariablen konfigurieren:
-   ```bash
-   cp .env.example .env.local
-   ```
-   Bearbeiten Sie die `.env.local` Datei mit Ihren Konfigurationen.
-
-4. Datenbank initialisieren:
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
-
-5. Entwicklungsserver starten:
-   ```bash
-   npm run dev
-   ```
-
-## Umgebungsvariablen
-
-Erstellen Sie eine `.env.local` Datei mit folgenden Variablen:
-
-```env
-DATABASE_URL="mysql://user:password@localhost:3306/konto_planer"
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key"
-```
-
 ## Lizenz
 
 Dieses Projekt ist unter der GPL-3.0 Lizenz lizenziert. Siehe [LICENSE](LICENSE) für Details.
@@ -100,7 +62,3 @@ Dieses Projekt ist unter der GPL-3.0 Lizenz lizenziert. Siehe [LICENSE](LICENSE)
 ## Changelog
 
 Alle Änderungen werden in der [CHANGELOG.md](CHANGELOG.md) dokumentiert.
-
-## Beitragen
-
-Beiträge sind willkommen! Bitte lesen Sie unsere [CONTRIBUTING.md](CONTRIBUTING.md) für Details zu unserem Code of Conduct und dem Prozess für Pull Requests.

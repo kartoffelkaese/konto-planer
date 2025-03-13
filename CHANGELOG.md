@@ -1,9 +1,10 @@
 # Changelog
 
-Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
+## [2.10.1]
 
-Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
-und dieses Projekt adhäriert zu [Semantic Versioning](https://semver.org/lang/de/).
+### Geändert
+- Verbesserte mobile Navigation mit vollständiger Menübreite und Beschriftungen
+- Optimierte Benutzerführung im mobilen Menü durch bessere Sichtbarkeit der Navigationselemente
 
 ## [2.10.0]
 

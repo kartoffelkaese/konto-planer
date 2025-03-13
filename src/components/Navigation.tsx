@@ -13,9 +13,11 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   TagIcon,
-  BuildingStorefrontIcon
+  BuildingStorefrontIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
 import { APP_VERSION } from '@/lib/version'
+import { signOut } from 'next-auth/react'
 
 export default function Navigation() {
   const pathname = usePathname()
@@ -112,10 +114,23 @@ export default function Navigation() {
               )
             })}
           </nav>
+
+          {/* Logout Button */}
+          <div className="px-2 py-2">
+            <button
+              onClick={() => signOut()}
+              className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 transition-colors duration-150"
+            >
+              <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
+              {!isCollapsed && (
+                <span className="ml-3">Ausloggen</span>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Version */}
-        <div className="px-4 py-2 border-t">
+        <div className={`px-4 py-2 ${!isCollapsed ? 'border-t' : ''}`}>
           {!isCollapsed && (
             <a
               href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md"

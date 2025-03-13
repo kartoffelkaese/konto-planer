@@ -5,6 +5,19 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
 und dieses Projekt adhäriert zu [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.9.0]
+
+### Geändert
+- Weißer Hintergrund für das Löschbestätigungs-Modal
+- Verbesserte Landing Page für nicht eingeloggte Benutzer
+
+### Hinzugefügt
+- Feature-Übersicht auf der Landing Page
+- Call-to-Action Buttons für Anmeldung und Registrierung
+
+### Behoben
+- Verbesserte Benutzerführung durch klare Handlungsaufforderungen
+
 ## [2.8.0]
 
 ### Geändert

@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
+import BackupManager from '@/components/BackupManager'
+import DeleteAccount from '@/components/DeleteAccount'
 
 export default function SettingsPage() {
   const { data: session, update: updateSession } = useSession()
@@ -119,178 +121,184 @@ export default function SettingsPage() {
   }
 
   return (
-    <main id="settings-page" className="min-h-screen p-8">
-      <div id="settings-container" className="max-w-2xl mx-auto">
-        <div id="page-header" className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Einstellungen</h1>
-          <Link
-            href="/transactions"
-            className="text-gray-600 hover:text-gray-800"
-          >
-            Zurück zur Übersicht
-          </Link>
-        </div>
-
-        {error && (
-          <div id="error-message" className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
-            {error}
+    <div className="p-6">
+      <main id="settings-page" className="min-h-screen">
+        <div id="settings-container" className="max-w-2xl mx-auto">
+          <div id="page-header" className="flex justify-between items-center mb-8">
+            <h1 className="text-4xl font-bold">Einstellungen</h1>
           </div>
-        )}
 
-        {success && (
-          <div id="success-message" className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
-            Einstellungen wurden erfolgreich gespeichert
-          </div>
-        )}
+          {error && (
+            <div id="error-message" className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+              {error}
+            </div>
+          )}
 
-        <div id="settings-sections" className="space-y-6">
-          {/* E-Mail-Änderung */}
-          <div id="email-settings" className="rounded-lg shadow-md p-4 mb-8 bg-white">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">E-Mail-Adresse</h2>
-            
-            {emailError && (
-              <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
-                {emailError}
-              </div>
-            )}
+          {success && (
+            <div id="success-message" className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
+              Einstellungen wurden erfolgreich gespeichert
+            </div>
+          )}
 
-            {emailSuccess && (
-              <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
-                E-Mail-Adresse wurde erfolgreich aktualisiert
-              </div>
-            )}
-
-            {!showEmailForm ? (
-              <div className="flex items-center justify-between">
+          <div id="settings-sections" className="space-y-6">
+            {/* Allgemeine Einstellungen */}
+            <form id="general-settings" onSubmit={handleSubmit} className="rounded-lg shadow-md p-4 bg-white">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">Allgemeine Einstellungen</h2>
+              
+              <div className="space-y-6">
                 <div>
-                  <p className="text-sm text-gray-600">Aktuelle E-Mail-Adresse</p>
-                  <p className="font-medium">{session?.user?.email}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowEmailForm(true)}
-                  className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700"
-                >
-                  Ändern
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleEmailChange} className="space-y-4">
-                <div>
-                  <label htmlFor="newEmail" className="block text-sm font-medium text-gray-700">
-                    Neue E-Mail-Adresse
+                  <label htmlFor="accountName" className="block text-sm font-medium text-gray-700">
+                    Kontobezeichnung
                   </label>
-                  <input
-                    type="email"
-                    id="newEmail"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    required
-                    disabled={emailLoading}
-                  />
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      id="accountName"
+                      value={accountName}
+                      onChange={(e) => setAccountName(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="z.B. Girokonto"
+                      disabled={loading}
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    Aktuelles Passwort
+                  <label htmlFor="salaryDay" className="block text-sm font-medium text-gray-700">
+                    Tag des Gehaltseingangs
                   </label>
-                  <input
-                    type="password"
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    required
-                    disabled={emailLoading}
-                  />
+                  <div className="mt-1">
+                    <select
+                      id="salaryDay"
+                      value={salaryDay}
+                      onChange={(e) => setSalaryDay(parseInt(e.target.value))}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      disabled={loading}
+                    >
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                        <option key={day} value={day}>
+                          {day}. des Monats
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500">
+                    Der Gehaltsmonat läuft dann vom {salaryDay}. bis zum {salaryDay}. des Folgemonats
+                  </p>
                 </div>
 
-                <div className="flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowEmailForm(false)
-                      setNewEmail('')
-                      setPassword('')
-                      setEmailError(null)
-                    }}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
-                    disabled={emailLoading}
-                  >
-                    Abbrechen
-                  </button>
+                <div className="flex justify-end">
                   <button
                     type="submit"
                     className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
-                    disabled={emailLoading}
+                    disabled={loading}
                   >
-                    {emailLoading ? 'Wird gespeichert...' : 'Speichern'}
+                    {loading ? 'Speichern...' : 'Speichern'}
                   </button>
                 </div>
-              </form>
-            )}
-          </div>
-
-          {/* Allgemeine Einstellungen */}
-          <form id="general-settings" onSubmit={handleSubmit} className="rounded-lg shadow-md p-4 mb-8 bg-white">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Allgemeine Einstellungen</h2>
-            
-            <div className="space-y-6">
-              <div>
-                <label htmlFor="accountName" className="block text-sm font-medium text-gray-700">
-                  Kontobezeichnung
-                </label>
-                <div className="mt-1">
-                  <input
-                    type="text"
-                    id="accountName"
-                    value={accountName}
-                    onChange={(e) => setAccountName(e.target.value)}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="z.B. Girokonto"
-                    disabled={loading}
-                  />
-                </div>
               </div>
+            </form>
 
-              <div>
-                <label htmlFor="salaryDay" className="block text-sm font-medium text-gray-700">
-                  Tag des Gehaltseingangs
-                </label>
-                <div className="mt-1">
-                  <select
-                    id="salaryDay"
-                    value={salaryDay}
-                    onChange={(e) => setSalaryDay(parseInt(e.target.value))}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    disabled={loading}
+            {/* E-Mail-Änderung */}
+            <div id="email-settings" className="rounded-lg shadow-md p-4 bg-white">
+              <h2 className="text-lg font-medium text-gray-900 mb-4">E-Mail-Adresse</h2>
+              
+              {emailError && (
+                <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+                  {emailError}
+                </div>
+              )}
+
+              {emailSuccess && (
+                <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
+                  E-Mail-Adresse wurde erfolgreich aktualisiert
+                </div>
+              )}
+
+              {!showEmailForm ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Aktuelle E-Mail-Adresse</p>
+                    <p className="font-medium">{session?.user?.email}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowEmailForm(true)}
+                    className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700"
                   >
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                      <option key={day} value={day}>
-                        {day}. des Monats
-                      </option>
-                    ))}
-                  </select>
+                    Ändern
+                  </button>
                 </div>
-                <p className="mt-2 text-sm text-gray-500">
-                  Der Gehaltsmonat läuft dann vom {salaryDay}. bis zum {salaryDay}. des Folgemonats
-                </p>
-              </div>
+              ) : (
+                <form onSubmit={handleEmailChange} className="space-y-4">
+                  <div>
+                    <label htmlFor="newEmail" className="block text-sm font-medium text-gray-700">
+                      Neue E-Mail-Adresse
+                    </label>
+                    <input
+                      type="email"
+                      id="newEmail"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      required
+                      disabled={emailLoading}
+                    />
+                  </div>
 
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
-                  disabled={loading}
-                >
-                  {loading ? 'Speichern...' : 'Speichern'}
-                </button>
-              </div>
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                      Aktuelles Passwort
+                    </label>
+                    <input
+                      type="password"
+                      id="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      required
+                      disabled={emailLoading}
+                    />
+                  </div>
+
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowEmailForm(false)
+                        setNewEmail('')
+                        setPassword('')
+                        setEmailError(null)
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                      disabled={emailLoading}
+                    >
+                      Abbrechen
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
+                      disabled={emailLoading}
+                    >
+                      {emailLoading ? 'Wird gespeichert...' : 'Speichern'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
-          </form>
+
+            {/* Backup Manager */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <BackupManager />
+            </div>
+
+            {/* Account löschen */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <DeleteAccount />
+            </div>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   )
 } 

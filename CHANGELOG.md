@@ -5,6 +5,23 @@ Alle wichtigen Änderungen an diesem Projekt werden in dieser Datei dokumentiert
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
 und dieses Projekt adhäriert zu [Semantic Versioning](https://semver.org/lang/de/).
 
+## [2.10.0]
+
+### Hinzugefügt
+- Backup-Funktionalität zum Erstellen und Wiederherstellen von Daten
+- Möglichkeit zum Löschen des Benutzerkontos mit Bestätigungsdialog
+- Neue API-Route für Backup-Operationen
+- Neue API-Route für das Löschen des Benutzerkontos
+
+### Geändert
+- Verbesserte Struktur der Einstellungsseite
+- Neue Reihenfolge der Einstellungsoptionen (Allgemeine Einstellungen, E-Mail, Backup, Konto löschen)
+
+### Verbessert
+- Sicherheitsmaßnahmen beim Löschen des Kontos (doppelte Bestätigung)
+- Benutzerführung durch klare Warnungen und Bestätigungsdialoge
+- Atomare Transaktionen bei kritischen Operationen
+
 ## [2.9.0]
 
 ### Geändert

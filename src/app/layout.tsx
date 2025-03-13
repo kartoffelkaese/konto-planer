@@ -18,10 +18,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="de">
-      <body className={`${inter.className} bg-gray-50`}>
+      <body className={inter.className}>
         <Providers>
-          <Navigation />
-          {children}
+          <div className="min-h-screen bg-gray-50">
+            <Navigation />
+            <main className="md:ml-16 transition-all duration-300 ease-in-out">
+              {children}
+            </main>
+          </div>
         </Providers>
       </body>
     </html>

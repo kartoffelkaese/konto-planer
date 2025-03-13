@@ -8,9 +8,9 @@ export default withAuth(
       return NextResponse.redirect(new URL('/', req.url))
     }
 
-    // Wenn Session vorhanden und auf Auth-Seite oder Landing Page
-    if (req.nextauth.token && (req.nextUrl.pathname.startsWith('/auth/') || req.nextUrl.pathname === '/')) {
-      return NextResponse.redirect(new URL('/transactions', req.url))
+    // Wenn Session vorhanden und auf Auth-Seite
+    if (req.nextauth.token && req.nextUrl.pathname.startsWith('/auth/')) {
+      return NextResponse.redirect(new URL('/', req.url))
     }
 
     return NextResponse.next()

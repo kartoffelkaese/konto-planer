@@ -1,127 +1,95 @@
-# Konto-Planer
+# KontoPlaner
 
-Eine moderne Web-Anwendung zur Verwaltung von Einnahmen und Ausgaben, mit Fokus auf wiederkehrende Zahlungen und Kategorisierung.
-
-## Version
-
-Aktuelle Version: 2.7.0
+Eine moderne Webanwendung zur Verwaltung von Finanzen, entwickelt mit Next.js 14, TypeScript und Tailwind CSS.
 
 ## Features
 
-- 📊 Übersichtliche Darstellung von Einnahmen und Ausgaben
-- 🔄 Verwaltung von wiederkehrenden Zahlungen
-- 📅 Automatische Erstellung ausstehender Zahlungen
-- 🏷️ Kategorisierung von Händlern und Transaktionen
-- 💰 Echtzeit-Aktualisierung des Kontostands
-- 📱 Responsive Design für Desktop und Mobile
-- 🔒 Sichere Authentifizierung
-- 🎨 Modernes und intuitives Interface
+- 📊 **Dashboard**
+  - Übersichtliche Darstellung von Einnahmen und Ausgaben
+  - Visualisierung der Ausgabenverteilung in Kategorien
+  - Anzeige der nächsten fälligen wiederkehrenden Zahlungen
+  - Einnahmenberechnung basierend auf dem konfigurierten Gehaltsmonat
 
-## Technologien
+- 💰 **Transaktionen**
+  - Erfassung von Einnahmen und Ausgaben
+  - Kategorisierung von Transaktionen
+  - Zuordnung zu Händlern
+  - Detaillierte Transaktionsübersicht
 
-- Next.js 14
-- React 18
-- TypeScript
-- Prisma
-- MySQL
-- TailwindCSS
-- NextAuth.js
+- 🔄 **Wiederkehrende Zahlungen**
+  - Verwaltung von regelmäßigen Einnahmen und Ausgaben
+  - Flexible Konfiguration von Zahlungsintervallen
+  - Übersicht der nächsten fälligen Zahlungen
+  - Automatische Berechnung des nächsten Zahlungsdatums
+
+- 🏷️ **Kategorien**
+  - Individuelle Kategorisierung von Transaktionen
+  - Farbkodierung für bessere Übersichtlichkeit
+  - Hierarchische Kategorieverwaltung
+
+- 🏪 **Händler**
+  - Verwaltung von Händlern und Geschäften
+  - Automatische Vorschläge bei Transaktionseingabe
+  - Zuordnung von Händlern zu Kategorien
+
+- ⚙️ **Einstellungen**
+  - Konfiguration des Gehaltsmonats
+  - Anpassung der Kategorien und Händler
+  - Benutzerdefinierte Einstellungen
+
+## Technologie-Stack
+
+- **Frontend**: Next.js 14, TypeScript, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Datenbank**: PostgreSQL mit Prisma ORM
+- **Authentifizierung**: NextAuth.js
+- **Visualisierung**: Chart.js
+- **Styling**: Tailwind CSS, Heroicons
 
 ## Installation
 
-1. Repository klonen
-```bash
-git clone [repository-url]
-```
+1. Repository klonen:
+   ```bash
+   git clone https://github.com/kartoffelkaese/konto-planer.git
+   cd konto-planer
+   ```
 
-2. Abhängigkeiten installieren
-```bash
-npm install
-```
+2. Abhängigkeiten installieren:
+   ```bash
+   npm install
+   ```
 
-3. Umgebungsvariablen konfigurieren
-```bash
-cp .env.example .env
-```
+3. Umgebungsvariablen konfigurieren:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Bearbeiten Sie die `.env.local` Datei mit Ihren Datenbank- und Authentifizierungsdaten.
 
-4. Datenbank-Migrationen ausführen
-```bash
-npx prisma migrate dev
-```
+4. Datenbank initialisieren:
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
 
-5. Entwicklungsserver starten
-```bash
-npm run dev
-```
-
-## PM2 Deployment
-
-### Installation
-
-1. Installieren Sie PM2 global:
-```bash
-npm install -g pm2
-```
-
-2. Bauen Sie die Anwendung:
-```bash
-npm run build
-```
-
-### PM2 Befehle
-
-- Starten der Anwendung:
-```bash
-npm run pm2:start
-```
-
-- Stoppen der Anwendung:
-```bash
-npm run pm2:stop
-```
-
-- Neustarten der Anwendung:
-```bash
-npm run pm2:restart
-```
-
-- Logs anzeigen:
-```bash
-npm run pm2:logs
-```
-
-- Monitoring:
-```bash
-npm run pm2:monitor
-```
-
-### Automatischer Start nach Systemneustart
-
-1. Generieren Sie den Startup-Befehl:
-```bash
-pm2 startup
-```
-
-2. Speichern Sie die aktuelle Prozessliste:
-```bash
-pm2 save
-```
-
-### Konfiguration
-
-Die PM2-Konfiguration befindet sich in `ecosystem.config.js`. Hier können Sie:
-- Anzahl der Instanzen anpassen
-- Umgebungsvariablen setzen
-- Ressourcenlimits konfigurieren
-- Monitoring-Optionen einstellen
+5. Entwicklungsserver starten:
+   ```bash
+   npm run dev
+   ```
 
 ## Entwicklung
 
-- `npm run dev` - Startet den Entwicklungsserver
-- `npm run build` - Erstellt eine Production-Build
-- `npm run start` - Startet die Production-Version
-- `npm run lint` - Führt den Linter aus
+- `npm run dev`: Startet den Entwicklungsserver
+- `npm run build`: Erstellt die Produktionsversion
+- `npm run start`: Startet die Produktionsversion
+- `npm run lint`: Führt den Linter aus
+- `npm run format`: Formatiert den Code mit Prettier
 
 ## Lizenz
 
-Privat - Alle Rechte vorbehalten
+GPL-3.0
+
+## Version
+
+Aktuelle Version: 2.8.0
+
+Siehe [CHANGELOG.md](CHANGELOG.md) für detaillierte Änderungsinformationen.

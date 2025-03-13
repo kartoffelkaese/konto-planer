@@ -6,6 +6,7 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 248, 250, 252;
   --background-end-rgb: 248, 250, 252;
+  --sidebar-width: 16rem;
 }
 
 @media (prefers-color-scheme: dark) {

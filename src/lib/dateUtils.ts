@@ -68,17 +68,26 @@ export function getSalaryMonthRange(salaryDay: number) {
   const currentDay = now.date()
   
   let startDate: dayjs.Dayjs
+  let endDate: dayjs.Dayjs
+
   if (currentDay >= salaryDay) {
-    startDate = now.date(salaryDay)
+    // Wenn wir nach dem Gehaltstag sind, ist der aktuelle Monat der Gehaltsmonat
+    // Der Gehaltsmonat beginnt am Gehaltstag des aktuellen Monats
+    startDate = now.date(salaryDay).startOf('day')
+    // Der Gehaltsmonat endet am Tag vor dem Gehaltstag des nächsten Monats
+    endDate = now.add(1, 'month').date(salaryDay).subtract(1, 'day').endOf('day')
   } else {
-    startDate = now.subtract(1, 'month').date(salaryDay)
+    // Wenn wir vor dem Gehaltstag sind, ist der Vormonat der Gehaltsmonat
+    // Der Gehaltsmonat beginnt am Gehaltstag des Vormonats
+    startDate = now.subtract(1, 'month').date(salaryDay).startOf('day')
+    // Der Gehaltsmonat endet am Tag vor dem Gehaltstag des aktuellen Monats
+    endDate = now.date(salaryDay).subtract(1, 'day').endOf('day')
   }
   
-  const endDate = startDate.add(1, 'month').subtract(1, 'day')
-  
+  // Konvertiere die Daten in UTC für die Datenbank
   return {
-    startDate: startDate.toDate(),
-    endDate: endDate.toDate()
+    startDate: startDate.utc().toDate(),
+    endDate: endDate.utc().toDate()
   }
 }
 

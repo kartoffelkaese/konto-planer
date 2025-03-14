@@ -41,18 +41,27 @@ export default function Navigation() {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-50 p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 md:hidden"
-      >
-        <span className="sr-only">Menü öffnen</span>
-        {isOpen ? (
-          <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-        ) : (
-          <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+      {/* Mobile menu button and title */}
+      <div className="fixed top-4 left-4 z-50 md:hidden">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+        >
+          <span className="sr-only">Menü öffnen</span>
+          {isOpen ? (
+            <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+          ) : (
+            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+          )}
+        </button>
+        {isOpen && (
+          <div className="mt-4">
+            <Link href="/" className="text-xl font-bold text-blue-600">
+              KontoPlaner
+            </Link>
+          </div>
         )}
-      </button>
+      </div>
 
       {/* Desktop Overlay */}
       {!isCollapsed && (
@@ -69,7 +78,7 @@ export default function Navigation() {
         <div className="flex-1 overflow-y-auto">
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-4 border-b">
-            {(isOpen || !isCollapsed) && (
+            {!isCollapsed && (
               <Link href="/" className="text-xl font-bold text-blue-600">
                 KontoPlaner
               </Link>
@@ -87,7 +96,7 @@ export default function Navigation() {
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex-1 px-2 py-4 space-y-1">
+          <nav className={`flex-1 px-2 space-y-1 ${isOpen ? 'py-12' : 'py-4'}`}>
             {navigation.map((item) => {
               const isActivePath = isActive(item.href)
               return (

@@ -9,7 +9,7 @@ import {
   TagIcon,
   BuildingStorefrontIcon
 } from '@heroicons/react/24/outline'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, XAxis, YAxis, Bar } from 'recharts'
 
 interface DashboardData {
   monthlyIncome: number
@@ -261,6 +261,34 @@ export default function DashboardPage() {
               <p className="text-gray-500 text-center py-4">Keine wiederkehrenden Zahlungen vorhanden</p>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Grafik */}
+      <div className="bg-white rounded-lg shadow p-4 md:p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Ausgaben pro Kategorie</h3>
+        <div className="h-[300px] md:h-[400px] -mx-4 md:mx-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data.categoryDistribution}>
+              <XAxis 
+                dataKey="name" 
+                angle={-45}
+                textAnchor="end"
+                height={60}
+                interval={0}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis 
+                tickFormatter={(value) => `${value}€`}
+                tick={{ fontSize: 12 }}
+              />
+              <Tooltip 
+                formatter={(value: number) => [`${value.toFixed(2)}€`, 'Ausgaben']}
+                labelFormatter={(label) => `Kategorie: ${label}`}
+              />
+              <Bar dataKey="value" fill="#2563eb" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
     </div>

@@ -1,4 +1,7 @@
 # Changelog
+## [2.10.4]
+- Grafik für mobil angepasst
+
 ## [2.10.3]
 - Menüanpassungen mobiles Menü
 

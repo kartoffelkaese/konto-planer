@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
   HomeIcon, 
-  ChartBarIcon, 
-  ArrowPathIcon, 
+  ChartPieIcon, 
+  BanknotesIcon,
+  ArrowPathIcon,
   Cog6ToothIcon,
   Bars3Icon,
   XMarkIcon,
@@ -30,8 +31,9 @@ export default function Navigation() {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },
-    { name: 'Transaktionen', href: '/transactions', icon: ChartBarIcon },
+    { name: 'Transaktionen', href: '/transactions', icon: BanknotesIcon },
     { name: 'Wiederkehrend', href: '/recurring', icon: ArrowPathIcon },
+    { name: 'Statistiken', href: '/statistics', icon: ChartPieIcon },
     { name: 'Kategorien', href: '/settings/categories', icon: TagIcon },
     { name: 'Händler', href: '/settings/merchants', icon: BuildingStorefrontIcon },
     { name: 'Einstellungen', href: '/settings', icon: Cog6ToothIcon },

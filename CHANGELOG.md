@@ -1,4 +1,19 @@
 # Changelog
+
+## [2.11.0]
+### Hinzugefügt
+- Neue Statistikseite mit:
+  - Monatlicher Übersicht der Ausgaben pro Kategorie
+  - Auswahlmöglichkeit für verschiedene Zeiträume
+  - Benutzerdefinierte Datumsauswahl
+  - Farbkodierte Balken basierend auf Kategoriefarben
+  - Responsive Design für alle Bildschirmgrößen
+
+### Geändert
+- Navigation: Neue Icons für bessere visuelle Unterscheidung
+  - Transaktionen: Geldschein-Icon
+  - Statistiken: Kreisdiagramm-Icon
+
 ## [2.10.4]
 - Grafik für mobil angepasst
 
@@ -9,13 +24,11 @@
 - Anpassungen CSS
 
 ## [2.10.1]
-
 ### Geändert
 - Verbesserte mobile Navigation mit vollständiger Menübreite und Beschriftungen
 - Optimierte Benutzerführung im mobilen Menü durch bessere Sichtbarkeit der Navigationselemente
 
 ## [2.10.0]
-
 ### Hinzugefügt
 - Backup-Funktionalität zum Erstellen und Wiederherstellen von Daten
 - Möglichkeit zum Löschen des Benutzerkontos mit Bestätigungsdialog
@@ -32,7 +45,6 @@
 - Atomare Transaktionen bei kritischen Operationen
 
 ## [2.9.0]
-
 ### Geändert
 - Weißer Hintergrund für das Löschbestätigungs-Modal
 - Verbesserte Landing Page für nicht eingeloggte Benutzer
@@ -45,7 +57,6 @@
 - Verbesserte Benutzerführung durch klare Handlungsaufforderungen
 
 ## [2.8.0]
-
 ### Geändert
 - Einnahmenberechnung basiert jetzt auf dem konfigurierten Gehaltsmonat
 - Verbesserte Sortierung der wiederkehrenden Zahlungen nach nächstem Zahlungsdatum
@@ -61,18 +72,15 @@
 - Verbesserte Darstellung der Kategorieverteilung im Pie-Chart
 
 ## [2.7.2]
-
 ### Geändert
 - CSS entschlackt und geändert
 
 ## [2.7.1]
-
 ### Hinzugefügt
 - Tastaturnavigation
 - API Doku
 
 ## [2.7.0]
-
 ### Geändert
 - Überarbeitetes Dashboard-Layout
 - Verbesserte Navigation mit kollabierbarer Sidebar
@@ -88,7 +96,6 @@
 - Verbesserte Fehlerbehandlung bei der API
 
 ## [2.6.0]
-
 ### Geändert
 - Aktualisierte Benutzeroberfläche
 - Verbesserte Performance
@@ -105,13 +112,11 @@
 - Behebung von Layoutproblemen auf mobilen Geräten
 
 ## [2.5.4]
-
 ### Verbessert
 - Optimierte Implementierung des Infinite Scrollings für bessere Performance und Zuverlässigkeit
 - Verbesserte Ladeanimation und Benutzerführung beim Nachladen von Transaktionen
 
 ## [2.5.3]
-
 ### Geändert
 - Verbesserte Farbkodierung für wiederkehrende Zahlungen
   - Monatlich: Grün
@@ -120,7 +125,6 @@
   - Gesamt pro Monat: Violett
 
 ## [2.5.2]
-
 ### Verbessert
 - Versionsnummer in der Navigation ist jetzt mit der CHANGELOG.md verlinkt
 - Verbesserte Benutzerführung durch klickbare Versionsnummer
@@ -130,7 +134,6 @@
 - Angepasste Breakpoints für bessere Darstellung auf verschiedenen Bildschirmgrößen
 
 ## [2.5.1]
-
 ### Sicherheit
 - Kritische Sicherheitsverbesserung: Anmeldedaten werden nicht mehr über URL-Parameter übertragen
 - Implementierung zusätzlicher Sicherheitschecks im Authentifizierungsprozess
@@ -139,7 +142,6 @@
 - Designänderungen
 
 ## [2.5.0]
-
 ### Geändert
 - Überarbeitetes Design
 - Verbesserte Benutzerführung
@@ -155,19 +157,16 @@
 - Behebung von Anzeigefehlern
 
 ## [2.4.2]
-
 ### Verbessert
 - Einheitliches Padding (0.25rem) für alle Input-Felder, Select-Boxen und Textareas
 - Konsistentere Benutzeroberfläche durch standardisierte Eingabefelder
 
 ## [2.4.1]
-
 ### Verbessert
 - Optimierte Darstellung der Eingabefelder
 - Verbesserte Benutzerfreundlichkeit durch einheitliche Abstände
 
 ## [2.4.0]
-
 ### Hinzugefügt
 - Spezielle Tablet-Ansicht für Transaktionen zwischen Desktop und Mobile
 - Optimierte Darstellung für mittlere Bildschirmgrößen
@@ -187,7 +186,6 @@
 - Reorganisation der Spalten für bessere Lesbarkeit auf Tablets
 
 ## [2.3.0]
-
 ### Hinzugefügt
 - Automatische Aktualisierung der Transaktionsübersicht nach jeder Änderung
 - Echtzeit-Aktualisierung des Kontostands bei Transaktionsänderungen
@@ -210,7 +208,6 @@
 - Behebung von Anzeigefehlern
 
 ## [2.2.1]
-
 ### Verbessert
 - Optimierte Darstellung der Händlerverwaltung
 - Verbesserte Navigation auf mobilen Geräten
@@ -220,7 +217,6 @@
 - Problem mit der Anzeige von wiederkehrenden Zahlungen
 
 ## [2.2.0]
-
 ### Hinzugefügt
 - Kategorieverwaltung für Händler
 - Farbliche Kennzeichnung von Kategorien
@@ -242,7 +238,6 @@
 - Behebung von Layoutproblemen
 
 ## [2.1.0]
-
 ### Hinzugefügt
 - Händlerverwaltung
 - Automatische Erstellung ausstehender Zahlungen
@@ -263,7 +258,6 @@
 - Behebung von Anzeigefehlern
 
 ## [2.0.0]
-
 ### Hinzugefügt
 - Komplette Neuimplementierung mit Next.js 14
 - Neue Benutzeroberfläche mit TailwindCSS
@@ -293,7 +287,6 @@
 - Optimierte Datenbankabfragen
 
 ## [1.4.0]
-
 ### Hinzugefügt
 - Moderne Modal-Dialoge für Transaktionsbearbeitung
 - Verbesserte Benutzerinteraktion durch In-Page-Bearbeitung
@@ -305,19 +298,16 @@
 - Reduzierte Seitenneuladezeiten durch In-Page-Updates
 
 ## [1.3.2]
-
 ### Verbessert
 - Optimiertes Design der Kontobezeichnung auf der Transaktionsseite
 
 ## [1.3.1]
-
 ### Verbessert
 - Kompakteres Design der Monatsübersicht
 - Optimierte Darstellung der Beträge neben den Beschriftungen
 - Verbesserte Platznutzung in der Benutzeroberfläche
 
 ## [1.3.0]
-
 ### Hinzugefügt
 - Möglichkeit zur Änderung der E-Mail-Adresse im Benutzerprofil
 - Sicherheitsüberprüfung durch Passwortbestätigung bei E-Mail-Änderung
@@ -329,14 +319,12 @@
 - Verbesserte Fehlerbehandlung und Validierung
 
 ## [1.2.2]
-
 ### Verbessert
 - Bestätigungsprozess für Transaktionen überarbeitet
 - Transaktionsdatum bleibt bei Bestätigung unverändert
 - Korrekte Buchführung auch bei nachträglicher Bestätigung
 
 ## [1.2.1]
-
 ### Hinzugefügt
 - Versionierung von wiederkehrenden Zahlungen
 - Anzeige der Versionshistorie in der Transaktionsliste
@@ -353,7 +341,6 @@
 - Verbessertes Handling von Datumsänderungen bei Transaktionen
 
 ## [1.2.0]
-
 ### Hinzugefügt
 - Bestätigung von Transaktionen
 - Status-Tracking (bestätigt, ausstehend, nicht bestätigt)
@@ -364,7 +351,6 @@
 - Navigation und Layout-Struktur
 
 ## [1.1.0]
-
 ### Hinzugefügt
 - Wiederkehrende Zahlungen
 - Automatische Berechnung der monatlichen Belastung
@@ -375,7 +361,6 @@
 - Filterfunktionen für Transaktionen
 
 ## [1.0.0]
-
 ### Hinzugefügt
 - Erste Version der Anwendung
 - Grundlegende Funktionen für die Finanzverwaltung

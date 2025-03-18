@@ -7,7 +7,6 @@ Eine moderne Webanwendung zur Verwaltung Ihrer persönlichen Finanzen, entwickel
 - 📊 **Dashboard**
   - Übersichtliche Darstellung von Einnahmen und Ausgaben
   - Visualisierung der Kategorieverteilung
-  - Prognose für die nächsten 30 Tage
   - Anzeige wiederkehrender Zahlungen
 
 - 💰 **Transaktionsverwaltung**
@@ -44,16 +43,10 @@ Eine moderne Webanwendung zur Verwaltung Ihrer persönlichen Finanzen, entwickel
   - Backup-Funktionalität
   - Konto-Löschung
 
-## Technologie-Stack
-
-- **Frontend**: Next.js 14, React, TailwindCSS
-- **Backend**: Next.js API Routes
-- **Datenbank**: MySQL mit Prisma ORM
-- **Authentifizierung**: NextAuth.js
-- **Styling**: TailwindCSS, Heroicons
-- **Charts**: Chart.js, react-chartjs-2
-
-## Installation
+- **Benutzerverwaltung**
+  - Registrierung und Anmeldung
+  - E-Mail-Adressänderung
+  - Account-Löschung
 
 ## Lizenz
 

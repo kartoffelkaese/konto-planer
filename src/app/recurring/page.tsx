@@ -168,27 +168,27 @@ export default function RecurringTransactionsPage() {
     <div id="recurring-page" className="min-h-screen">
       <div id="recurring-container" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {successMessage && (
-          <div id="success-message" className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg shadow-md transition-opacity">
+          <div id="success-message" className="mb-4 p-4 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-lg shadow-md transition-opacity">
             {successMessage}
           </div>
         )}
 
         {error && (
-          <div id="error-message" className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+          <div id="error-message" className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg">
             {error}
           </div>
         )}
 
         <div id="page-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Wiederkehrende Zahlungen</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Wiederkehrende Zahlungen</h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Verwalten Sie Ihre regelmäßigen Ein- und Ausgaben
             </p>
           </div>
           <button
             onClick={() => setShowNewTransactionModal(true)}
-            className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
+            className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark transition-colors duration-150"
           >
             <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -197,93 +197,93 @@ export default function RecurringTransactionsPage() {
           </button>
         </div>
 
-        <div id="monthly-summary" className="rounded-lg shadow-md p-4 mb-8 bg-white">
-          <h3 className="text-sm font-semibold mb-3">Monatliche Belastung</h3>
+        <div id="monthly-summary" className="rounded-lg shadow-md dark:shadow-dark p-4 mb-8 bg-white dark:bg-dark-light">
+          <h3 className="text-sm font-semibold mb-3 text-gray-900 dark:text-white">Monatliche Belastung</h3>
           <div id="summary-grid" className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div id="monthly-total" className="p-2 bg-green-50 rounded-lg">
-              <p className="text-xs text-green-800 mb-1">Monatlich</p>
-              <p className="text-lg font-semibold text-green-600">
+            <div id="monthly-total" className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <p className="text-xs text-green-800 dark:text-green-200 mb-1">Monatlich</p>
+              <p className="text-lg font-semibold text-green-600 dark:text-green-400">
                 {formatCurrency(Math.abs(totals.monthly.total))}
               </p>
             </div>
-            <div id="quarterly-total" className="p-2 bg-yellow-50 rounded-lg">
-              <p className="text-xs text-yellow-800 mb-1">Vierteljährlich</p>
-              <p className="text-lg font-semibold text-yellow-600">
+            <div id="quarterly-total" className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+              <p className="text-xs text-yellow-800 dark:text-yellow-200 mb-1">Vierteljährlich</p>
+              <p className="text-lg font-semibold text-yellow-600 dark:text-yellow-400">
                 {formatCurrency(Math.abs(totals.quarterly.total))}
                 <span className="text-xs ml-1">
                   ({formatCurrency(Math.abs(totals.quarterly.perMonth))}/M)
                 </span>
               </p>
             </div>
-            <div id="yearly-total" className="p-2 bg-indigo-50 rounded-lg">
-              <p className="text-xs text-indigo-800 mb-1">Jährlich</p>
-              <p className="text-lg font-semibold text-indigo-600">
+            <div id="yearly-total" className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+              <p className="text-xs text-indigo-800 dark:text-indigo-200 mb-1">Jährlich</p>
+              <p className="text-lg font-semibold text-indigo-600 dark:text-indigo-400">
                 {formatCurrency(Math.abs(totals.yearly.total))}
                 <span className="text-xs ml-1">
                   ({formatCurrency(Math.abs(totals.yearly.perMonth))}/M)
                 </span>
               </p>
             </div>
-            <div id="total-monthly" className="p-2 bg-purple-50 rounded-lg">
-              <p className="text-xs text-purple-800 mb-1">Gesamt pro Monat</p>
-              <p className="text-lg font-semibold text-purple-600">
+            <div id="total-monthly" className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <p className="text-xs text-purple-800 dark:text-purple-200 mb-1">Gesamt pro Monat</p>
+              <p className="text-lg font-semibold text-purple-600 dark:text-purple-400">
                 {formatCurrency(Math.abs(totalMonthly))}
               </p>
             </div>
           </div>
         </div>
 
-        <div id="transactions-table" className="rounded-lg shadow-md p-4 mb-8 bg-white">
+        <div id="transactions-table" className="rounded-lg shadow-md dark:shadow-dark p-4 mb-8 bg-white dark:bg-dark-light">
           <div className="overflow-x-auto">
             {/* Desktop-Ansicht */}
             <table className="min-w-full hidden md:table">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left p-4">Händler</th>
-                  <th className="text-left p-4">Beschreibung</th>
-                  <th className="text-right p-4">Betrag</th>
-                  <th className="text-center p-4">Intervall</th>
-                  <th className="text-center p-4">Letzte Bestätigung</th>
-                  <th className="text-center p-4">Nächste Zahlung</th>
-                  <th className="text-right p-4">Aktionen</th>
+                <tr className="border-b dark:border-dark-lighter">
+                  <th className="text-left p-4 text-gray-500 dark:text-gray-400">Händler</th>
+                  <th className="text-left p-4 text-gray-500 dark:text-gray-400">Beschreibung</th>
+                  <th className="text-right p-4 text-gray-500 dark:text-gray-400">Betrag</th>
+                  <th className="text-center p-4 text-gray-500 dark:text-gray-400">Intervall</th>
+                  <th className="text-center p-4 text-gray-500 dark:text-gray-400">Letzte Bestätigung</th>
+                  <th className="text-center p-4 text-gray-500 dark:text-gray-400">Nächste Zahlung</th>
+                  <th className="text-right p-4 text-gray-500 dark:text-gray-400">Aktionen</th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center p-4 text-sm text-gray-500">
+                    <td colSpan={7} className="text-center p-4 text-sm text-gray-500 dark:text-gray-400">
                       Keine wiederkehrenden Zahlungen vorhanden
                     </td>
                   </tr>
                 ) : (
                   sortedTransactions.map((transaction) => (
-                    <tr key={transaction.id} className="border-b last:border-b-0">
-                      <td className="p-4 text-sm text-gray-900">{transaction.merchant}</td>
-                      <td className="p-4 text-sm text-gray-900">{transaction.description}</td>
+                    <tr key={transaction.id} className="border-b dark:border-dark-lighter last:border-b-0">
+                      <td className="p-4 text-sm text-gray-900 dark:text-white">{transaction.merchant}</td>
+                      <td className="p-4 text-sm text-gray-900 dark:text-white">{transaction.description}</td>
                       <td className={`p-4 text-sm text-right ${
-                        transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
+                        transaction.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                       }`}>
                         {formatCurrency(transaction.amount)}
                       </td>
-                      <td className="p-4 text-sm text-center text-gray-900">
+                      <td className="p-4 text-sm text-center text-gray-900 dark:text-white">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           transaction.recurringInterval === 'monthly' 
-                            ? 'bg-green-100 text-green-800' 
+                            ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200' 
                             : transaction.recurringInterval === 'quarterly'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-indigo-100 text-indigo-800'
+                            ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200'
+                            : 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-200'
                         }`}>
                           {transaction.recurringInterval === 'monthly' && 'Monatlich'}
                           {transaction.recurringInterval === 'quarterly' && 'Vierteljährlich'}
                           {transaction.recurringInterval === 'yearly' && 'Jährlich'}
                         </span>
                       </td>
-                      <td className="p-4 text-sm text-center text-gray-900">
+                      <td className="p-4 text-sm text-center text-gray-900 dark:text-white">
                         {transaction.lastConfirmedDate
                           ? formatDate(new Date(transaction.lastConfirmedDate))
                           : '-'}
                       </td>
-                      <td className="p-4 text-sm text-center text-gray-900">
+                      <td className="p-4 text-sm text-center text-gray-900 dark:text-white">
                         {formatDate(getNextPaymentDate(transaction))}
                       </td>
                       <td className="p-4 text-right">
@@ -291,7 +291,7 @@ export default function RecurringTransactionsPage() {
                           <button
                             onClick={() => handleCreateNextInstance(transaction)}
                             title="Nächste Zahlung erstellen"
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                           >
                             <ArrowPathIcon className="h-5 w-5" />
                           </button>
@@ -301,7 +301,7 @@ export default function RecurringTransactionsPage() {
                               setShowEditTransactionModal(true)
                             }}
                             title="Zahlung bearbeiten"
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                           >
                             <PencilIcon className="h-5 w-5" />
                           </button>
@@ -316,29 +316,29 @@ export default function RecurringTransactionsPage() {
             {/* Mobile-Ansicht */}
             <div className="md:hidden space-y-4">
               {transactions.length === 0 ? (
-                <div className="text-center py-8 text-sm text-gray-500">
+                <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
                   Keine wiederkehrenden Zahlungen vorhanden
                 </div>
               ) : (
                 sortedTransactions.map((transaction) => (
-                  <div key={transaction.id} className="rounded-lg shadow-sm border border-gray-200 p-4">
+                  <div key={transaction.id} className="rounded-lg shadow-sm border border-gray-200 dark:border-dark-lighter p-4 bg-white dark:bg-dark-light">
                     <div className="flex items-center space-x-3">
                       <div className="flex-shrink-0">
-                        <div className="p-1.5 bg-indigo-200 rounded-lg">
-                          <svg className="w-4 h-4 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="p-1.5 bg-indigo-200 dark:bg-indigo-900/20 rounded-lg">
+                          <svg className="w-4 h-4 text-indigo-700 dark:text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
                       </div>
                       <div>
-                        <h3 className="text-sm font-medium text-gray-900">{transaction.description}</h3>
-                        <p className="text-xs text-gray-500">{transaction.merchant}</p>
+                        <h3 className="text-sm font-medium text-gray-900 dark:text-white">{transaction.description}</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{transaction.merchant}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
                         <p className={`text-sm font-medium ${
-                          transaction.amount > 0 ? 'text-green-600' : 'text-red-600'
+                          transaction.amount > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                         }`}>
                           {formatCurrency(transaction.amount)}
                         </p>
@@ -349,7 +349,7 @@ export default function RecurringTransactionsPage() {
                             setSelectedTransactionId(transaction.id)
                             setShowEditTransactionModal(true)
                           }}
-                          className="p-1 text-indigo-600 hover:text-indigo-900"
+                          className="p-1 text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
                         >
                           <PencilIcon className="h-4 w-4" />
                         </button>
@@ -359,10 +359,10 @@ export default function RecurringTransactionsPage() {
                     <div className="flex flex-wrap gap-2 mb-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         transaction.recurringInterval === 'monthly' 
-                          ? 'bg-green-100 text-green-800' 
+                          ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200' 
                           : transaction.recurringInterval === 'quarterly'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-indigo-100 text-indigo-800'
+                          ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200'
+                          : 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-200'
                       }`}>
                         {transaction.recurringInterval === 'monthly' && 'Monatlich'}
                         {transaction.recurringInterval === 'quarterly' && 'Vierteljährlich'}
@@ -370,16 +370,16 @@ export default function RecurringTransactionsPage() {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
+                    <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400 mb-3">
                       <div>
-                        <div className="text-xs text-gray-500">Letzte Bestätigung</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-500">Letzte Bestätigung</div>
                         <div>{transaction.lastConfirmedDate
                           ? formatDate(new Date(transaction.lastConfirmedDate))
                           : '-'}
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-500">Nächste Zahlung</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-500">Nächste Zahlung</div>
                         <div>{formatDate(getNextPaymentDate(transaction))}</div>
                       </div>
                     </div>
@@ -387,7 +387,7 @@ export default function RecurringTransactionsPage() {
                     <div className="flex justify-end space-x-2">
                       <button
                         onClick={() => handleCreateNextInstance(transaction)}
-                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors duration-150"
+                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors duration-150"
                       >
                         <ArrowPathIcon className="h-4 w-4 mr-1" />
                         Neue Instanz
@@ -397,7 +397,7 @@ export default function RecurringTransactionsPage() {
                           setSelectedTransactionId(transaction.id)
                           setShowEditTransactionModal(true)
                         }}
-                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors duration-150"
+                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors duration-150"
                       >
                         <PencilIcon className="h-4 w-4 mr-1" />
                         Bearbeiten

@@ -110,29 +110,29 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
   return (
     <>
       {error && (
-        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+        <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg">
           {error}
         </div>
       )}
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-          <div className="p-6 rounded-lg shadow-xl max-w-md w-full bg-white">
-            <h3 className="text-lg font-semibold mb-4">Transaktion löschen</h3>
-            <p className="text-gray-600 mb-6">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-opacity-75 flex items-center justify-center">
+          <div className="p-6 rounded-lg shadow-xl max-w-md w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Transaktion löschen</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               Möchten Sie diese Transaktion wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
             </p>
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
                 disabled={loading}
               >
                 Abbrechen
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 dark:bg-red-500 border border-transparent rounded-md shadow-sm hover:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
                 {loading ? 'Wird gelöscht...' : 'Löschen'}
@@ -144,7 +144,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="merchant" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="merchant" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Händler
           </label>
           <input
@@ -152,7 +152,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
             id="merchant"
             value={formData.merchant}
             onChange={(e) => setFormData({ ...formData, merchant: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400"
             placeholder="z.B. Amazon, Lidl, etc."
             required
             disabled={loading}
@@ -161,7 +161,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Beschreibung
           </label>
           <input
@@ -169,14 +169,14 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
             id="description"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400"
             disabled={loading}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Betrag (€)
             </label>
             <input
@@ -186,21 +186,21 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
               min="0"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400"
               required
               disabled={loading}
             />
           </div>
 
           <div>
-            <label htmlFor="type" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="type" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Typ
             </label>
             <select
               id="type"
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400"
               disabled={loading}
             >
               <option value="expense">Ausgabe</option>
@@ -210,7 +210,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
         </div>
 
         <div>
-          <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Datum
           </label>
           <input
@@ -218,7 +218,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
             id="date"
             value={formData.date}
             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400"
             required
             disabled={loading}
           />
@@ -230,24 +230,24 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
             id="isRecurring"
             checked={formData.isRecurring}
             onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-dark-light rounded"
             disabled={loading}
           />
-          <label htmlFor="isRecurring" className="ml-2 block text-sm text-gray-700">
+          <label htmlFor="isRecurring" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
             Wiederkehrende Zahlung
           </label>
         </div>
 
         {formData.isRecurring && (
           <div>
-            <label htmlFor="recurringInterval" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="recurringInterval" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Wiederholungsintervall
             </label>
             <select
               id="recurringInterval"
               value={formData.recurringInterval}
               onChange={(e) => setFormData({ ...formData, recurringInterval: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400"
               disabled={loading}
             >
               <option value="monthly">Monatlich</option>
@@ -257,32 +257,32 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
           </div>
         )}
 
-        <div className="flex justify-between pt-4">
+        <div className="flex justify-end space-x-3">
           <button
             type="button"
             onClick={() => setShowDeleteConfirm(true)}
-            className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 disabled:opacity-50"
             disabled={loading}
+            className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 border border-red-300 dark:border-red-600 rounded-md shadow-sm hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-red-400"
           >
-            Transaktion löschen
+            Löschen
           </button>
-          <div className="flex space-x-4">
+          {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md disabled:opacity-50"
               disabled={loading}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
             >
               Abbrechen
             </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
-              disabled={loading}
-            >
-              {loading ? 'Wird gespeichert...' : 'Speichern'}
-            </button>
-          </div>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 border border-transparent rounded-md shadow-sm hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Wird gespeichert...' : 'Speichern'}
+          </button>
         </div>
       </form>
     </>

@@ -77,19 +77,19 @@ export default function BackupManager() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium text-gray-900">Backup & Wiederherstellung</h3>
-      <p className="text-sm text-gray-500">
+      <h3 className="text-lg font-medium text-gray-900 dark:text-white">Backup & Wiederherstellung</h3>
+      <p className="text-sm text-gray-500 dark:text-gray-400">
         Erstellen Sie ein Backup Ihrer Daten oder stellen Sie ein vorheriges Backup wieder her.
       </p>
 
       {error && (
-        <div className="p-4 bg-red-50 text-red-700 rounded-lg">
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-lg">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="p-4 bg-green-50 text-green-700 rounded-lg">
+        <div className="p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-200 rounded-lg">
           {success}
         </div>
       )}
@@ -98,13 +98,13 @@ export default function BackupManager() {
         <button
           onClick={handleBackup}
           disabled={isLoading}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark-light disabled:opacity-50"
         >
           <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
           Backup erstellen
         </button>
 
-        <label className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 cursor-pointer">
+        <label className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-dark-light disabled:opacity-50 cursor-pointer">
           <ArrowUpTrayIcon className="h-5 w-5 mr-2" />
           Backup wiederherstellen
           <input

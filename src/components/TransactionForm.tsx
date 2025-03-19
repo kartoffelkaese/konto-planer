@@ -94,17 +94,17 @@ export default function TransactionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="rounded-md bg-red-50 p-4">
+        <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
           <div className="flex">
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">{error}</h3>
+              <h3 className="text-sm font-medium text-red-800 dark:text-red-200">{error}</h3>
             </div>
           </div>
         </div>
       )}
 
       <div>
-        <label htmlFor="merchant" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="merchant" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Händler
         </label>
         <div className="mt-1">
@@ -120,7 +120,7 @@ export default function TransactionForm({
                   merchant: merchant ? merchant.name : ''
                 })
               }}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 sm:text-sm"
               autoFocus
             >
               <option value="">Händler auswählen oder neu eingeben</option>
@@ -138,7 +138,7 @@ export default function TransactionForm({
               id="merchant"
               value={formData.merchant}
               onChange={(e) => setFormData({ ...formData, merchant: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 sm:text-sm"
               placeholder="z.B. Amazon, Lidl, etc."
               required
               disabled={loading}
@@ -149,7 +149,7 @@ export default function TransactionForm({
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Beschreibung
         </label>
         <input
@@ -157,14 +157,14 @@ export default function TransactionForm({
           id="description"
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 sm:text-sm"
           disabled={loading}
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Betrag (€)
           </label>
           <input
@@ -174,21 +174,21 @@ export default function TransactionForm({
             min="0"
             value={formData.amount}
             onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 sm:text-sm"
             required
             disabled={loading}
           />
         </div>
 
         <div>
-          <label htmlFor="type" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="type" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Typ
           </label>
           <select
             id="type"
             value={formData.type}
             onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 sm:text-sm"
             disabled={loading}
           >
             <option value="expense">Ausgabe</option>
@@ -198,7 +198,7 @@ export default function TransactionForm({
       </div>
 
       <div>
-        <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Datum
         </label>
         <input
@@ -206,7 +206,7 @@ export default function TransactionForm({
           id="date"
           value={formData.date}
           onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 sm:text-sm"
           required
           disabled={loading}
         />
@@ -218,24 +218,24 @@ export default function TransactionForm({
           id="isRecurring"
           checked={formData.isRecurring}
           onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
-          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-dark-light rounded"
           disabled={loading}
         />
-        <label htmlFor="isRecurring" className="ml-2 block text-sm text-gray-700">
+        <label htmlFor="isRecurring" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
           Wiederkehrende Zahlung
         </label>
       </div>
 
       {formData.isRecurring && (
         <div>
-          <label htmlFor="recurringInterval" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="recurringInterval" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Wiederholungsintervall
           </label>
           <select
             id="recurringInterval"
             value={formData.recurringInterval}
             onChange={(e) => setFormData({ ...formData, recurringInterval: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 sm:text-sm"
             disabled={loading}
           >
             <option value="monthly">Monatlich</option>
@@ -250,16 +250,16 @@ export default function TransactionForm({
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             disabled={loading}
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
           >
             Abbrechen
           </button>
         )}
         <button
           type="submit"
-          className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           disabled={loading}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 border border-transparent rounded-md shadow-sm hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Wird gespeichert...' : 'Speichern'}
         </button>

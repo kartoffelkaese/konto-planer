@@ -46,7 +46,7 @@ export default function TransactionList({
         throw new Error('Fehler beim Aktualisieren der Transaktion')
       }
 
-      if (transaction.parentTransactionId) {
+      if ('parentTransactionId' in transaction && transaction.parentTransactionId) {
         const parentResponse = await fetch(`/api/transactions/${transaction.parentTransactionId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -154,28 +154,23 @@ export default function TransactionList({
     <div className="overflow-hidden">
       {/* Desktop Ansicht */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead>
-            <tr className="border-b">
-              <th className="text-left p-4">Datum</th>
-              <th className="text-left p-4">Händler</th>
-              <th className="text-left p-4">Kategorie</th>
-              <th className="text-left p-4">Beschreibung</th>
-              <th className="text-right p-4">Betrag</th>
-              <th className="text-center p-4">Status</th>
-              <th className="text-right p-4">Aktionen</th>
+            <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+              <th className="text-left p-4 text-gray-500 dark:text-gray-400">Datum</th>
+              <th className="text-left p-4 text-gray-500 dark:text-gray-400">Händler</th>
+              <th className="text-left p-4 text-gray-500 dark:text-gray-400">Kategorie</th>
+              <th className="text-left p-4 text-gray-500 dark:text-gray-400">Beschreibung</th>
+              <th className="text-right p-4 text-gray-500 dark:text-gray-400">Betrag</th>
+              <th className="text-center p-4 text-gray-500 dark:text-gray-400">Status</th>
+              <th className="text-right p-4 text-gray-500 dark:text-gray-400">Aktionen</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
             {transactions.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-4 text-center text-sm text-gray-500">
-                  <div className="flex flex-col items-center justify-center">
-                    <svg className="h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    <p>Keine Transaktionen vorhanden</p>
-                  </div>
+                <td colSpan={7} className="text-center p-4 text-sm text-gray-500 dark:text-gray-400">
+                  Keine Transaktionen vorhanden
                 </td>
               </tr>
             ) : (
@@ -183,19 +178,19 @@ export default function TransactionList({
                 <tr 
                   key={transaction.id} 
                   ref={index === transactions.length - 1 ? lastElementRef : undefined}
-                  className="hover:bg-gray-50"
+                  className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     <div className="flex items-center">
                       <button
                         onClick={() => handleEditClick(transaction.id)}
-                        className="text-gray-600 hover:text-gray-900"
+                        className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                       >
                         {formatDate(transaction.date)}
                       </button>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {transaction.merchant}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -210,14 +205,14 @@ export default function TransactionList({
                         {transaction.merchantRef.category.name}
                       </span>
                     ) : (
-                      <span className="text-gray-500">-</span>
+                      <span className="text-gray-500 dark:text-gray-400">-</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
                     {transaction.description}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                    <span className={transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'}>
+                    <span className={transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
                       {transaction.amount >= 0 ? '+' : ''}{transaction.amount.toFixed(2)} €
                     </span>
                   </td>
@@ -227,10 +222,10 @@ export default function TransactionList({
                       title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
                       className={`inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full ${
                         transaction.isConfirmed
-                          ? 'bg-green-100 text-green-800 border-green-200'
+                          ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800'
                           : isTransactionPending(transaction)
-                          ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                          : 'bg-gray-100 text-gray-800 border-gray-200'
+                          ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
                       }`}
                     >
                       {transaction.isConfirmed ? 'Bestätigt' : isTransactionPending(transaction) ? 'Ausstehend' : 'Offen'}
@@ -240,7 +235,7 @@ export default function TransactionList({
                     <button
                       onClick={() => handleEditClick(transaction.id)}
                       title="Transaktion bearbeiten"
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                     >
                       <PencilIcon className="h-5 w-5" />
                     </button>
@@ -255,7 +250,7 @@ export default function TransactionList({
       {/* Mobile Ansicht */}
       <div className="md:hidden space-y-4">
         {transactions.length === 0 ? (
-          <div className="text-center py-8 text-sm text-gray-500">
+          <div className="text-center p-4 text-sm text-gray-500 dark:text-gray-400">
             Keine Transaktionen vorhanden
           </div>
         ) : (
@@ -263,37 +258,40 @@ export default function TransactionList({
             <div
               key={transaction.id}
               ref={index === transactions.length - 1 ? lastElementRef : undefined}
-              className="rounded-lg shadow p-4"
+              className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 space-y-2"
             >
-              <div className="flex justify-between items-start mb-3">
+              <div className="flex justify-between items-start">
                 <div>
-                  <div className="font-medium text-gray-900">{transaction.description}</div>
-                  <div className="text-sm text-gray-600">{transaction.merchant}</div>
-                  {transaction.merchantRef?.category && (
-                    <div className="mt-1">
-                      <span 
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                        style={{
-                          backgroundColor: transaction.merchantRef.category.color,
-                          color: getContrastColor(transaction.merchantRef.category.color)
-                        }}
-                      >
-                        {transaction.merchantRef.category.name}
-                      </span>
-                    </div>
-                  )}
+                  <button
+                    onClick={() => handleEditClick(transaction.id)}
+                    className="text-sm font-medium text-gray-900 dark:text-white"
+                  >
+                    {formatDate(transaction.date)}
+                  </button>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">{transaction.merchant}</div>
                 </div>
-                <div className={`text-right font-medium ${
-                  transaction.amount >= 0 ? 'text-green-600' : 'text-red-600'
+                <span className={`text-sm font-medium ${
+                  transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                 }`}>
                   {transaction.amount >= 0 ? '+' : ''}{transaction.amount.toFixed(2)} €
-                </div>
+                </span>
               </div>
-
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <div className="flex items-center">
-                  <CalendarIcon className="h-4 w-4 mr-1" />
-                  {formatDate(transaction.date)}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  {transaction.merchantRef?.category ? (
+                    <span 
+                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      style={{
+                        backgroundColor: transaction.merchantRef.category.color,
+                        color: getContrastColor(transaction.merchantRef.category.color)
+                      }}
+                    >
+                      {transaction.merchantRef.category.name}
+                    </span>
+                  ) : (
+                    <span className="text-gray-500 dark:text-gray-400">-</span>
+                  )}
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{transaction.description}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
@@ -301,10 +299,10 @@ export default function TransactionList({
                     title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
                     className={`inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full ${
                       transaction.isConfirmed
-                        ? 'bg-green-100 text-green-800 border-green-200'
+                        ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800'
                         : isTransactionPending(transaction)
-                        ? 'bg-yellow-100 text-yellow-800 border-yellow-200'
-                        : 'bg-gray-100 text-gray-800 border-gray-200'
+                        ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
                     }`}
                   >
                     {transaction.isConfirmed ? 'Bestätigt' : isTransactionPending(transaction) ? 'Ausstehend' : 'Offen'}
@@ -312,7 +310,7 @@ export default function TransactionList({
                   <button
                     onClick={() => handleEditClick(transaction.id)}
                     title="Transaktion bearbeiten"
-                    className="text-blue-600 hover:text-blue-900"
+                    className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     <PencilIcon className="h-5 w-5" />
                   </button>
@@ -323,21 +321,19 @@ export default function TransactionList({
         )}
       </div>
 
-      {/* Bearbeiten Modal */}
-      <Modal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        title="Transaktion bearbeiten"
-        maxWidth="md"
-      >
-        {selectedTransactionId && (
+      {showEditModal && selectedTransactionId && (
+        <Modal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          title="Transaktion bearbeiten"
+        >
           <EditTransactionForm
             id={selectedTransactionId}
             onSuccess={handleEditSuccess}
             onCancel={() => setShowEditModal(false)}
           />
-        )}
-      </Modal>
+        </Modal>
+      )}
     </div>
   )
 } 

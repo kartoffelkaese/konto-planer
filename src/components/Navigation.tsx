@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { APP_VERSION } from '@/lib/version'
 import { signOut } from 'next-auth/react'
+import ThemeSwitcher from './ThemeSwitcher'
 
 export default function Navigation() {
   const pathname = usePathname()
@@ -81,25 +82,25 @@ export default function Navigation() {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-40 bg-white shadow-lg transform transition-all duration-300 ease-in-out ${
+      <div className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-dark-light shadow-lg transform transition-all duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       } md:translate-x-0 w-[var(--sidebar-width)] flex flex-col`}>
         <div className="flex-1 overflow-y-auto">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-4 border-b">
+          <div className="flex items-center justify-between h-16 px-4 border-b dark:border-dark-lighter">
             {!isCollapsed && (
-              <Link href="/" className="text-xl font-bold text-blue-600">
+              <Link href="/" className="text-xl font-bold text-blue-600 dark:text-blue-400">
                 KontoPlaner
               </Link>
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-lighter focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
             >
               {isCollapsed ? (
-                <ChevronRightIcon className="h-5 w-5 text-gray-500" />
+                <ChevronRightIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
               ) : (
-                <ChevronLeftIcon className="h-5 w-5 text-gray-500" />
+                <ChevronLeftIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
               )}
             </button>
           </div>
@@ -114,14 +115,14 @@ export default function Navigation() {
                   href={item.href}
                   className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150 ${
                     isActivePath
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-lighter hover:text-gray-900 dark:hover:text-white'
                   }`}
                   onClick={() => setIsOpen(false)}
                 >
                   <item.icon
                     className={`h-5 w-5 ${
-                      isActivePath ? 'text-blue-700' : 'text-gray-400'
+                      isActivePath ? 'text-blue-700 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'
                     }`}
                     aria-hidden="true"
                   />
@@ -134,13 +135,13 @@ export default function Navigation() {
           </nav>
 
           {/* Logout Button */}
-          <div className="px-2 py-2">
+          <div className="px-2 py-2 space-y-2">
             <button
               onClick={() => signOut()}
-              className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 transition-colors duration-150"
+              className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-150"
             >
-              <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
-              {!isCollapsed && (
+              <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-400 dark:text-red-500" aria-hidden="true" />
+              {(isOpen || !isCollapsed) && (
                 <span className="ml-3">Ausloggen</span>
               )}
             </button>
@@ -148,13 +149,13 @@ export default function Navigation() {
         </div>
 
         {/* Version */}
-        <div className={`px-4 py-2 ${!isCollapsed ? 'border-t' : ''}`}>
+        <div className={`px-4 py-2 ${!isCollapsed ? 'border-t dark:border-dark-lighter' : ''}`}>
           {!isCollapsed && (
             <a
               href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-start text-xs text-gray-500 hover:text-gray-700"
+              className="flex items-center justify-start text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
             >
               Version {APP_VERSION}
             </a>

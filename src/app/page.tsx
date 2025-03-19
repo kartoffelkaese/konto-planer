@@ -248,13 +248,13 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Dashboard</h1>
 
       {/* Kategorieverteilung und wiederkehrende Zahlungen */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Kategorieverteilung */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Ausgaben nach Kategorien</h3>
+        <div className="bg-white dark:bg-dark-light rounded-lg shadow-md dark:shadow-dark p-6">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Ausgaben nach Kategorien</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -271,41 +271,49 @@ export default function DashboardPage() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Tooltip 
+                  formatter={(value: number) => formatCurrency(value)}
+                  contentStyle={{ 
+                    backgroundColor: 'var(--card-bg)', 
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '0.5rem',
+                    color: 'var(--text-color)'
+                  }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Wiederkehrende Zahlungen */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white dark:bg-dark-light rounded-lg shadow-md dark:shadow-dark p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900">Wiederkehrende Zahlungen (nächste 30 Tage)</h3>
-            <CalendarIcon className="h-5 w-5 text-gray-400" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Wiederkehrende Zahlungen (nächste 30 Tage)</h3>
+            <CalendarIcon className="h-5 w-5 text-gray-400 dark:text-gray-500" />
           </div>
           <div className="space-y-4">
             {data.recurringTransactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between py-2 border-b border-gray-100">
+              <div key={transaction.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-dark-lighter">
                 <div>
-                  <p className="font-medium text-gray-900">{transaction.merchant}</p>
-                  <p className="text-sm text-gray-500">{transaction.category}</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{transaction.merchant}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{transaction.category}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-gray-900">{formatCurrency(transaction.amount)}</p>
-                  <p className="text-sm text-gray-500">Nächste Zahlung: {formatDate(transaction.date)}</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(transaction.amount)}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Nächste Zahlung: {formatDate(transaction.date)}</p>
                 </div>
               </div>
             ))}
             {data.recurringTransactions.length === 0 && (
-              <p className="text-gray-500 text-center py-4">Keine wiederkehrenden Zahlungen vorhanden</p>
+              <p className="text-gray-500 dark:text-gray-400 text-center py-4">Keine wiederkehrenden Zahlungen vorhanden</p>
             )}
           </div>
         </div>
       </div>
 
       {/* Grafik */}
-      <div className="bg-white rounded-lg shadow p-4 md:p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Ausgaben pro Kategorie</h3>
+      <div className="bg-white dark:bg-dark-light rounded-lg shadow dark:shadow-dark p-4 md:p-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Ausgaben pro Kategorie</h3>
         <div className="h-[300px] md:h-[400px] -mx-4 md:mx-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data.categoryDistribution}>
@@ -315,15 +323,21 @@ export default function DashboardPage() {
                 textAnchor="end"
                 height={60}
                 interval={0}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: 'var(--text-color)' }}
               />
               <YAxis 
                 tickFormatter={(value) => `${value}€`}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: 'var(--text-color)' }}
               />
               <Tooltip 
                 formatter={(value: number) => [`${value.toFixed(2)}€`, 'Ausgaben']}
                 labelFormatter={(label) => `Kategorie: ${label}`}
+                contentStyle={{ 
+                  backgroundColor: 'var(--card-bg)', 
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '0.5rem',
+                  color: 'var(--text-color)'
+                }}
               />
               <Bar dataKey="value" fill="#2563eb" />
             </BarChart>

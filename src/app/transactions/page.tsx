@@ -211,13 +211,13 @@ export default function TransactionsPage() {
 
   if (loading && transactions.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8 flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8 flex flex-col items-center justify-center">
         <div className="flex items-center space-x-3">
-          <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg className="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <span className="text-gray-600">Transaktionen werden geladen...</span>
+          <span className="text-gray-600 dark:text-gray-400">Transaktionen werden geladen...</span>
         </div>
       </div>
     )
@@ -225,8 +225,8 @@ export default function TransactionsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8 flex flex-col items-center justify-center">
-        <div className="bg-red-50 text-red-700 px-6 py-4 rounded-lg flex items-center space-x-3">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8 flex flex-col items-center justify-center">
+        <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-6 py-4 rounded-lg flex items-center space-x-3">
           <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
           </svg>
@@ -237,10 +237,10 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div id="transaction-page" className="min-h-screen">
+    <div id="transaction-page" className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div id="transaction-container" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
-          <div id="error-message" className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+          <div id="error-message" className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg">
             {error}
           </div>
         )}
@@ -248,40 +248,27 @@ export default function TransactionsPage() {
         <div id="page-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">Transaktionen</h1>
-              <span className="px-2 py-0.5 text-[10px] bg-gray-100 text-gray-600 rounded-full">
-                {accountName}
-              </span>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{accountName}</h1>
+              <button
+                onClick={handleCreatePending}
+                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              >
+                Ausstehende Zahlungen erstellen
+              </button>
             </div>
             <p className="mt-1 text-sm text-gray-500">
               Verwalten Sie Ihre Ein- und Ausgaben
             </p>
           </div>
-          <div id="action-buttons" className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-            <button
-              onClick={() => handleCreatePending()}
-              className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
-            >
-              <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-              </svg>
-              <span className="hidden sm:inline">Ausstehende Zahlungen erstellen</span>
-              <span className="sm:hidden">Ausstehend</span>
-            </button>
-            <button
-              onClick={() => setShowNewTransactionModal(true)}
-              className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-150"
-            >
-              <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-              <span className="hidden sm:inline">Neue Transaktion</span>
-              <span className="sm:hidden">Neu</span>
-            </button>
-          </div>
+          <button
+            onClick={() => setShowNewTransactionModal(true)}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+          >
+            Neue Transaktion
+          </button>
         </div>
 
-        <div id="monthly-overview-section" className="rounded-lg shadow-md p-4 mb-8 bg-white">
+        <div id="monthly-overview-section" className="rounded-lg shadow-md p-4 mb-8 bg-white dark:bg-gray-800">
           <MonthlyOverview 
             currentIncome={totals.currentIncome}
             currentExpenses={totals.currentExpenses}
@@ -292,25 +279,21 @@ export default function TransactionsPage() {
           />
         </div>
 
-        <div id="transaction-list-section" className="rounded-lg shadow-md p-4 mb-8 bg-white">
+        <div id="transaction-list-section" className="rounded-lg shadow-md p-4 mb-8 bg-white dark:bg-gray-800">
           <TransactionList 
             transactions={transactions} 
             onTransactionChange={handleTransactionChange}
             lastElementRef={lastElementRef}
           />
           {hasMore && (
-            <div ref={loadingRef} className="text-center p-6 border-t border-gray-100">
-              {loading ? (
-                <div className="flex items-center justify-center space-x-3">
-                  <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span className="text-gray-600">Weitere Transaktionen werden geladen...</span>
-                </div>
-              ) : (
-                <div className="h-20" /> // Platzhalter für den Trigger
-              )}
+            <div ref={loadingRef} className="flex justify-center mt-8">
+              <div className="flex items-center space-x-3">
+                <svg className="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span className="text-gray-600 dark:text-gray-400">Weitere Transaktionen werden geladen...</span>
+              </div>
             </div>
           )}
         </div>

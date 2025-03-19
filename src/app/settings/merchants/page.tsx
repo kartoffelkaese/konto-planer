@@ -180,10 +180,10 @@ export default function MerchantsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Händler verwalten</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Händler verwalten</h1>
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
           Händler hinzufügen
@@ -191,16 +191,16 @@ export default function MerchantsPage() {
       </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+        <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-lg">
           {error}
         </div>
       )}
 
       {/* Filter-Bereich */}
-      <div className="bg-white rounded-lg shadow-md p-4 mb-8">
+      <div className="bg-white dark:bg-dark-light rounded-lg shadow-md p-4 mb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Suche
             </label>
             <input
@@ -209,18 +209,18 @@ export default function MerchantsPage() {
               value={filters.search}
               onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
               placeholder="Nach Namen suchen..."
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             />
           </div>
           <div>
-            <label htmlFor="categoryFilter" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="categoryFilter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Kategorie
             </label>
             <select
               id="categoryFilter"
               value={filters.categoryId}
               onChange={(e) => setFilters(prev => ({ ...prev, categoryId: e.target.value }))}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             >
               <option value="">Alle Kategorien</option>
               {categories.map((category) => (
@@ -233,13 +233,13 @@ export default function MerchantsPage() {
         </div>
       </div>
 
-      <div className="rounded-lg shadow-md p-4 mb-8 bg-white">
+      <div className="rounded-lg shadow-md p-4 mb-8 bg-white dark:bg-dark-light">
         {merchants.length === 0 ? (
-          <div className="px-6 py-8 text-center text-gray-500">
+          <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
             Keine Händler vorhanden
           </div>
         ) : filteredMerchants.length === 0 ? (
-          <div className="px-6 py-8 text-center text-gray-500">
+          <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
             Keine Händler gefunden
           </div>
         ) : (
@@ -247,38 +247,28 @@ export default function MerchantsPage() {
             {filteredMerchants.map((merchant) => (
               <div
                 key={merchant.id}
-                className="relative border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4"
               >
-                <div className="p-4">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <h3 className="text-lg font-medium text-gray-900">{merchant.name}</h3>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    {merchant.category && (
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{ backgroundColor: merchant.category.color }}
+                      />
+                    )}
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                      {merchant.name}
+                    </h3>
                   </div>
-                  
-                  {merchant.category && (
-                    <div className="space-y-2">
-                      <div 
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
-                        style={{ 
-                          backgroundColor: merchant.category.color,
-                          color: getContrastColor(merchant.category.color)
-                        }}
-                      >
-                        {merchant.category.name}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="absolute top-3 right-3 flex items-center space-x-2">
+                  <div className="flex items-center space-x-2">
                     <button
                       onClick={() => {
                         setSelectedMerchant(merchant)
-                        setFormData({
-                          name: merchant.name,
-                          categoryId: merchant.categoryId || ''
-                        })
+                        setFormData({ name: merchant.name, categoryId: merchant.categoryId || '' })
                         setShowEditModal(true)
                       }}
-                      className="p-1 text-gray-400 hover:text-gray-500 rounded-full hover:bg-gray-100"
+                      className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
                     >
                       <PencilIcon className="h-5 w-5" />
                     </button>
@@ -287,53 +277,52 @@ export default function MerchantsPage() {
                         setSelectedMerchant(merchant)
                         setShowDeleteModal(true)
                       }}
-                      className="p-1 text-red-400 hover:text-red-500 rounded-full hover:bg-gray-100"
+                      className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
                     >
                       <TrashIcon className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
+                {merchant.category && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {merchant.category.name}
+                  </p>
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Händler hinzufügen Modal */}
+      {/* Modal für neuen Händler */}
       <Modal
         isOpen={showAddModal}
-        onClose={() => {
-          setShowAddModal(false)
-          setFormData({ name: '', categoryId: '' })
-          setError(null)
-        }}
-        title="Händler hinzufügen"
-        maxWidth="md"
+        onClose={() => setShowAddModal(false)}
+        title="Neuer Händler"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Name
             </label>
             <input
               type="text"
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               required
-              autoFocus
             />
           </div>
           <div>
-            <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Kategorie
             </label>
             <select
               id="categoryId"
               value={formData.categoryId}
-              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              onChange={(e) => setFormData(prev => ({ ...prev, categoryId: e.target.value }))}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             >
               <option value="">Keine Kategorie</option>
               {categories.map((category) => (
@@ -343,64 +332,53 @@ export default function MerchantsPage() {
               ))}
             </select>
           </div>
-          <div className="flex justify-end space-x-4 pt-4">
+          <div className="flex justify-end space-x-3">
             <button
               type="button"
-              onClick={() => {
-                setShowAddModal(false)
-                setFormData({ name: '', categoryId: '' })
-                setError(null)
-              }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              onClick={() => setShowAddModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
             >
               Abbrechen
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
             >
-              Hinzufügen
+              Erstellen
             </button>
           </div>
         </form>
       </Modal>
 
-      {/* Händler bearbeiten Modal */}
+      {/* Modal für Bearbeiten */}
       <Modal
         isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false)
-          setSelectedMerchant(null)
-          setFormData({ name: '', categoryId: '' })
-          setError(null)
-        }}
+        onClose={() => setShowEditModal(false)}
         title="Händler bearbeiten"
-        maxWidth="md"
       >
         <form onSubmit={handleEdit} className="space-y-4">
           <div>
-            <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Name
             </label>
             <input
               type="text"
               id="edit-name"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               required
-              autoFocus
             />
           </div>
           <div>
-            <label htmlFor="edit-categoryId" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="edit-categoryId" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Kategorie
             </label>
             <select
               id="edit-categoryId"
               value={formData.categoryId}
-              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              onChange={(e) => setFormData(prev => ({ ...prev, categoryId: e.target.value }))}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             >
               <option value="">Keine Kategorie</option>
               {categories.map((category) => (
@@ -410,22 +388,17 @@ export default function MerchantsPage() {
               ))}
             </select>
           </div>
-          <div className="flex justify-end space-x-4 pt-4">
+          <div className="flex justify-end space-x-3">
             <button
               type="button"
-              onClick={() => {
-                setShowEditModal(false)
-                setSelectedMerchant(null)
-                setFormData({ name: '', categoryId: '' })
-                setError(null)
-              }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              onClick={() => setShowEditModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
             >
               Abbrechen
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
             >
               Speichern
             </button>
@@ -433,38 +406,27 @@ export default function MerchantsPage() {
         </form>
       </Modal>
 
-      {/* Händler löschen Modal */}
+      {/* Modal für Löschen */}
       <Modal
         isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false)
-          setSelectedMerchant(null)
-          setError(null)
-        }}
+        onClose={() => setShowDeleteModal(false)}
         title="Händler löschen"
-        maxWidth="sm"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-500">
-            Sind Sie sicher, dass Sie den Händler &quot;{selectedMerchant?.name}&quot; löschen möchten?
-            Diese Aktion kann nicht rückgängig gemacht werden.
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Möchten Sie den Händler "{selectedMerchant?.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
           </p>
-          <div className="flex justify-end space-x-4 pt-4">
+          <div className="flex justify-end space-x-3">
             <button
               type="button"
-              onClick={() => {
-                setShowDeleteModal(false)
-                setSelectedMerchant(null)
-                setError(null)
-              }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              onClick={() => setShowDeleteModal(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
             >
               Abbrechen
             </button>
             <button
-              type="button"
               onClick={handleDelete}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-900"
             >
               Löschen
             </button>

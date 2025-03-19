@@ -24,10 +24,17 @@ export default function Navigation() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(true)
+  const [isMounted, setIsMounted] = useState(false)
 
   useEffect(() => {
+    setIsMounted(true)
     document.documentElement.style.setProperty('--sidebar-width', isCollapsed ? '4rem' : '16rem')
   }, [isCollapsed])
+
+  // Verhindere Hydration Mismatch
+  if (!isMounted) {
+    return null
+  }
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },
@@ -76,7 +83,7 @@ export default function Navigation() {
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-40 bg-white shadow-lg transform transition-all duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
-      } md:translate-x-0 ${isOpen ? 'w-64' : 'w-[var(--sidebar-width)]'} flex flex-col`}>
+      } md:translate-x-0 w-[var(--sidebar-width)] flex flex-col`}>
         <div className="flex-1 overflow-y-auto">
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-4 border-b">
@@ -98,7 +105,7 @@ export default function Navigation() {
           </div>
 
           {/* Navigation Links */}
-          <nav className={`flex-1 px-2 space-y-1 ${isOpen ? 'py-12' : 'py-4'}`}>
+          <nav className="flex-1 px-2 space-y-1 py-4">
             {navigation.map((item) => {
               const isActivePath = isActive(item.href)
               return (
@@ -118,7 +125,7 @@ export default function Navigation() {
                     }`}
                     aria-hidden="true"
                   />
-                  {(isOpen || !isCollapsed) && (
+                  {!isCollapsed && (
                     <span className="ml-3">{item.name}</span>
                   )}
                 </Link>
@@ -133,7 +140,7 @@ export default function Navigation() {
               className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 hover:text-red-700 transition-colors duration-150"
             >
               <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
-              {(isOpen || !isCollapsed) && (
+              {!isCollapsed && (
                 <span className="ml-3">Ausloggen</span>
               )}
             </button>
@@ -141,8 +148,8 @@ export default function Navigation() {
         </div>
 
         {/* Version */}
-        <div className={`px-4 py-2 ${(isOpen || !isCollapsed) ? 'border-t' : ''}`}>
-          {(isOpen || !isCollapsed) && (
+        <div className={`px-4 py-2 ${!isCollapsed ? 'border-t' : ''}`}>
+          {!isCollapsed && (
             <a
               href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md"
               target="_blank"

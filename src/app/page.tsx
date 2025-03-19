@@ -7,7 +7,10 @@ import {
   ChartBarIcon,
   ArrowPathIcon,
   TagIcon,
-  BuildingStorefrontIcon
+  BuildingStorefrontIcon,
+  BanknotesIcon,
+  ShieldCheckIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, XAxis, YAxis, Bar } from 'recharts'
 
@@ -66,118 +69,154 @@ export default function DashboardPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-        {/* Hero Section */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
-            <span className="block">Willkommen bei</span>
-            <span className="block text-blue-600">KontoPlaner</span>
-          </h1>
-          <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-            Ihre persönliche Finanzverwaltung - einfach, übersichtlich und effizient.
-          </p>
-          <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
-            <div className="rounded-md shadow">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50">
+        {/* Hero Section mit Animation */}
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-100/20 to-indigo-100/20 transform -skew-y-6 origin-top-right"></div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center relative z-20">
+            <h1 className="text-4xl font-bold text-gray-900 sm:text-5xl md:text-6xl">
+              <span className="block">Willkommen bei</span>
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">KontoPlaner</span>
+            </h1>
+            <p className="mt-3 max-w-md mx-auto text-base text-gray-600 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+              Ihre persönliche Finanzverwaltung - einfach, übersichtlich und effizient.
+            </p>
+            <div className="mt-8 flex justify-center gap-4">
               <a
-                href="/auth/login"
-                className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
+                href="/api/auth/signin"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 Jetzt anmelden
+              </a>
+              <a
+                href="/auth/register"
+                className="inline-flex items-center px-6 py-3 border-2 border-blue-600 text-base font-medium rounded-lg text-blue-600 bg-white hover:bg-blue-50 shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                Registrieren
               </a>
             </div>
           </div>
         </div>
 
-        {/* Feature Section */}
-        <div className="py-12 bg-white">
+        {/* Feature Section mit modernem Grid-Layout */}
+        <div className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="lg:text-center">
+            <div className="text-center mb-16">
               <h2 className="text-base text-blue-600 font-semibold tracking-wide uppercase">Features</h2>
               <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
                 Alles was Sie für Ihre Finanzverwaltung brauchen
               </p>
             </div>
 
-            <div className="mt-10">
-              <div className="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
-                {/* Feature 1 */}
-                <div className="relative">
-                  <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
-                    <ChartBarIcon className="h-6 w-6" aria-hidden="true" />
-                  </div>
-                  <div className="ml-16">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">Übersichtliches Dashboard</h3>
-                    <p className="mt-2 text-base text-gray-500">
-                      Behalten Sie Ihre Finanzen im Blick mit unserem intuitiven Dashboard.
-                    </p>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Dashboard Feature */}
+              <div className="group relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100">
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <ChartBarIcon className="h-6 w-6" aria-hidden="true" />
                 </div>
-
-                {/* Feature 2 */}
-                <div className="relative">
-                  <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
-                    <ArrowPathIcon className="h-6 w-6" aria-hidden="true" />
-                  </div>
-                  <div className="ml-16">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">Wiederkehrende Zahlungen</h3>
-                    <p className="mt-2 text-base text-gray-500">
-                      Verwalten Sie Ihre regelmäßigen Einnahmen und Ausgaben effizient.
-                    </p>
-                  </div>
+                <div className="mt-8">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Übersichtliches Dashboard</h3>
+                  <p className="text-gray-600">
+                    Behalten Sie Ihre Finanzen im Blick mit unserem intuitiven Dashboard. Visualisieren Sie Ihre Ausgaben und Einnahmen auf einen Blick.
+                  </p>
                 </div>
+              </div>
 
-                {/* Feature 3 */}
-                <div className="relative">
-                  <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
-                    <TagIcon className="h-6 w-6" aria-hidden="true" />
-                  </div>
-                  <div className="ml-16">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">Kategorisierung</h3>
-                    <p className="mt-2 text-base text-gray-500">
-                      Organisieren Sie Ihre Transaktionen mit benutzerdefinierten Kategorien.
-                    </p>
-                  </div>
+              {/* Transaktionsverwaltung */}
+              <div className="group relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100">
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <BanknotesIcon className="h-6 w-6" aria-hidden="true" />
                 </div>
+                <div className="mt-8">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Transaktionsverwaltung</h3>
+                  <p className="text-gray-600">
+                    Erfassen Sie Einnahmen und Ausgaben, kategorisieren Sie Transaktionen und verwalten Sie wiederkehrende Zahlungen.
+                  </p>
+                </div>
+              </div>
 
-                {/* Feature 4 */}
-                <div className="relative">
-                  <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
-                    <BuildingStorefrontIcon className="h-6 w-6" aria-hidden="true" />
-                  </div>
-                  <div className="ml-16">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">Händlerverwaltung</h3>
-                    <p className="mt-2 text-base text-gray-500">
-                      Erfassen Sie Ihre Händler und verknüpfen Sie sie mit Kategorien.
-                    </p>
-                  </div>
+              {/* Automatisierung */}
+              <div className="group relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100">
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <ArrowPathIcon className="h-6 w-6" aria-hidden="true" />
+                </div>
+                <div className="mt-8">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Automatisierung</h3>
+                  <p className="text-gray-600">
+                    Automatische Erstellung ausstehender Zahlungen und Echtzeit-Aktualisierung Ihres Kontostands.
+                  </p>
+                </div>
+              </div>
+
+              {/* Händlerverwaltung */}
+              <div className="group relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100">
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <BuildingStorefrontIcon className="h-6 w-6" aria-hidden="true" />
+                </div>
+                <div className="mt-8">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Händlerverwaltung</h3>
+                  <p className="text-gray-600">
+                    Verwalten Sie Ihre Händler und profitieren Sie von automatischer Kategorisierung.
+                  </p>
+                </div>
+              </div>
+
+              {/* Sicherheit */}
+              <div className="group relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100">
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <ShieldCheckIcon className="h-6 w-6" aria-hidden="true" />
+                </div>
+                <div className="mt-8">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Sicherheit</h3>
+                  <p className="text-gray-600">
+                    Sichere Authentifizierung, verschlüsselte Datenübertragung und datenschutzkonforme Implementierung.
+                  </p>
+                </div>
+              </div>
+
+              {/* Backup */}
+              <div className="group relative bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100">
+                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <ArrowDownTrayIcon className="h-6 w-6" aria-hidden="true" />
+                </div>
+                <div className="mt-8">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-3">Backup & Export</h3>
+                  <p className="text-gray-600">
+                    Erstellen Sie Backups Ihrer Daten und exportieren Sie Ihre Finanzübersichten.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* CTA Section */}
-        <div className="bg-blue-700">
-          <div className="max-w-2xl mx-auto text-center py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-              <span className="block">Bereit loszulegen?</span>
-              <span className="block">Starten Sie noch heute mit KontoPlaner.</span>
-            </h2>
-            <p className="mt-6 text-lg leading-6 text-blue-200">
-              Melden Sie sich jetzt an und übernehmen Sie die Kontrolle über Ihre Finanzen.
-            </p>
-            <a
-              href="/auth/login"
-              className="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50 sm:w-auto"
-            >
-              Kostenlos anmelden
-            </a>
-            <p className="mt-4 text-sm text-blue-200">
-              Noch kein Konto?{' '}
-              <a href="/auth/register" className="font-medium underline">
-                Jetzt registrieren
-              </a>
-            </p>
+        {/* CTA Section mit modernem Design */}
+        <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 overflow-hidden">
+          <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:60px_60px]"></div>
+          <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
+                <span className="block">Bereit loszulegen?</span>
+                <span className="block">Starten Sie noch heute mit KontoPlaner.</span>
+              </h2>
+              <p className="mt-6 text-lg leading-6 text-blue-100">
+                Melden Sie sich jetzt an und übernehmen Sie die Kontrolle über Ihre Finanzen.
+              </p>
+              <div className="mt-10 flex justify-center gap-4">
+                <a
+                  href="/auth/register"
+                  className="inline-flex items-center px-6 py-3 border-2 border-white text-base font-medium rounded-lg text-white hover:bg-white hover:text-blue-600 transition-all duration-200"
+                >
+                  Kostenlos registrieren
+                </a>
+                <a
+                  href="/api/auth/signin"
+                  className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-blue-600 bg-white hover:bg-blue-50 transition-all duration-200"
+                >
+                  Anmelden
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>

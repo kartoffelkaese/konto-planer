@@ -165,7 +165,7 @@ export default function RecurringTransactionsPage() {
   const totalMonthly = totals.monthly.perMonth + totals.quarterly.perMonth + totals.yearly.perMonth
 
   return (
-    <div id="recurring-page" className="min-h-screen bg-gray-50">
+    <div id="recurring-page" className="min-h-screen">
       <div id="recurring-container" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {successMessage && (
           <div id="success-message" className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg shadow-md transition-opacity">

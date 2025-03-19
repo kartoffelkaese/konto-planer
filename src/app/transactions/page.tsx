@@ -237,7 +237,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div id="transaction-page" className="min-h-screen bg-gray-100">
+    <div id="transaction-page" className="min-h-screen">
       <div id="transaction-container" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
           <div id="error-message" className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">

@@ -52,33 +52,33 @@ function LoginForm() {
   }
 
   return (
-    <main id="login-page" className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+    <main id="login-page" className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
       <div id="login-container" className="max-w-md w-full">
         <div id="login-header" className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Konto-Planer</h1>
-          <h2 className="text-2xl font-semibold text-gray-700 mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Konto-Planer</h1>
+          <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-8">
             Willkommen zurück
           </h2>
           {searchParams.get('registered') === 'true' && (
-            <div id="registration-success" className="mb-4 p-4 bg-green-50 rounded-lg">
-              <p className="text-green-700">
+            <div id="registration-success" className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <p className="text-green-700 dark:text-green-300">
                 Registrierung erfolgreich! Sie können sich jetzt anmelden.
               </p>
             </div>
           )}
         </div>
         
-        <div id="login-form-container" className="p-8 rounded-xl shadow-lg bg-white">
+        <div id="login-form-container" className="p-8 rounded-xl shadow-lg bg-white dark:bg-gray-800">
           <form id="login-form" className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div id="error-message" className="rounded-lg bg-red-50 p-4 text-center">
-                <div className="text-sm text-red-700">{error}</div>
+              <div id="error-message" className="rounded-lg bg-red-50 dark:bg-red-900/20 p-4 text-center">
+                <div className="text-sm text-red-700 dark:text-red-300">{error}</div>
               </div>
             )}
             
             <div id="form-fields" className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   E-Mail
                 </label>
                 <input
@@ -87,12 +87,12 @@ function LoginForm() {
                   type="email"
                   autoComplete="email"
                   required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="ihre@email.de"
                 />
               </div>
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Passwort
                 </label>
                 <input
@@ -101,7 +101,7 @@ function LoginForm() {
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="••••••••"
                 />
               </div>
@@ -111,7 +111,7 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors duration-200"
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:bg-blue-300 dark:disabled:bg-blue-700 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 {loading ? (
                   <div className="flex items-center">
@@ -132,7 +132,7 @@ function LoginForm() {
         <div id="register-link" className="mt-6 text-center">
           <Link
             href="/auth/register"
-            className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200"
+            className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
           >
             Noch kein Konto? Jetzt registrieren →
           </Link>

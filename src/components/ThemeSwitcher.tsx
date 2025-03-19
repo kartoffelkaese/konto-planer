@@ -7,13 +7,17 @@ type Theme = 'light' | 'dark' | 'system'
 
 export default function ThemeSwitcher() {
   const [mounted, setMounted] = useState(false)
-  const [theme, setTheme] = useState<Theme>('system')
+  const [theme, setTheme] = useState<Theme>('light')
 
   useEffect(() => {
     setMounted(true)
     const savedTheme = localStorage.getItem('theme') as Theme
     if (savedTheme) {
       setTheme(savedTheme)
+    } else {
+      // Wenn kein Theme gespeichert ist, setze auf hell
+      setTheme('light')
+      localStorage.setItem('theme', 'light')
     }
   }, [])
 

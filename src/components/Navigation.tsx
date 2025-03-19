@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { 
   HomeIcon, 
   ChartPieIcon, 
@@ -23,6 +24,7 @@ import ThemeSwitcher from './ThemeSwitcher'
 
 export default function Navigation() {
   const pathname = usePathname()
+  const { data: session } = useSession()
   const [isOpen, setIsOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(true)
   const [isMounted, setIsMounted] = useState(false)
@@ -136,15 +138,17 @@ export default function Navigation() {
 
           {/* Logout Button */}
           <div className="px-2 py-2 space-y-2">
-            <button
-              onClick={() => signOut()}
-              className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-150"
-            >
-              <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-400 dark:text-red-500" aria-hidden="true" />
-              {(isOpen || !isCollapsed) && (
-                <span className="ml-3">Ausloggen</span>
-              )}
-            </button>
+            {session && (
+              <button
+                onClick={() => signOut()}
+                className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-150"
+              >
+                <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-400 dark:text-red-500" aria-hidden="true" />
+                {(isOpen || !isCollapsed) && (
+                  <span className="ml-3">Ausloggen</span>
+                )}
+              </button>
+            )}
           </div>
         </div>
 

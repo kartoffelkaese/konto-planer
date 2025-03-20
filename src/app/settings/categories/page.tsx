@@ -246,7 +246,7 @@ export default function CategoriesPage() {
             Keine Kategorien gefunden
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-1">
             {filteredCategories.map((category) => (
               <div
                 key={category.id}

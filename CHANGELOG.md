@@ -1,17 +1,5 @@
 # Changelog
 
-## [2.12.2]
-
-### Geändert
-- Verbesserte mobile Navigation mit vollständiger Anzeige von Texten und Icons
-- Optimierte Positionierung des mobilen Menüs unter dem Schließen-Button
-- Dark Mode Anpassungen für bessere Lesbarkeit und Kontraste
-- Verbesserte Benutzerführung durch konsistente Navigation
-
-### Behoben
-- Logout-Button wird nur angezeigt, wenn der Benutzer eingeloggt ist
-- Korrektur der Desktop-Navigation nach Anpassungen am mobilen Menü
-
 ## [2.11.0]
 ### Hinzugefügt
 - Neue Statistikseite mit:

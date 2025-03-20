@@ -81,15 +81,8 @@ export default function Navigation() {
         isOpen ? 'translate-x-0 w-64' : '-translate-x-full'
       } md:translate-x-0 w-[var(--sidebar-width)] flex flex-col`}>
         <div className="flex-1 overflow-y-auto">
-          {/* Logo - Mobile */}
-          <div className="flex items-center justify-between h-16 px-4 border-b dark:border-dark-lighter mt-16 md:hidden">
-            <Link href="/" className="text-xl font-bold text-blue-600 dark:text-blue-400">
-              KontoPlaner
-            </Link>
-          </div>
-
-          {/* Logo - Desktop */}
-          <div className="hidden md:flex items-center justify-between h-16 px-4 border-b dark:border-dark-lighter">
+          {/* Logo */}
+          <div className="flex items-center justify-between h-16 px-4 border-b dark:border-dark-lighter mt-16 md:mt-0">
             {!isCollapsed && (
               <Link href="/" className="text-xl font-bold text-blue-600 dark:text-blue-400">
                 KontoPlaner
@@ -97,7 +90,7 @@ export default function Navigation() {
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-lighter focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-lighter focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
             >
               {isCollapsed ? (
                 <ChevronRightIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -128,8 +121,9 @@ export default function Navigation() {
                     }`}
                     aria-hidden="true"
                   />
-                  <span className="ml-3 md:hidden">{item.name}</span>
-                  {!isCollapsed && <span className="ml-3 hidden md:inline">{item.name}</span>}
+                  {!isCollapsed && (
+                    <span className="ml-3">{item.name}</span>
+                  )}
                 </Link>
               )
             })}
@@ -143,8 +137,9 @@ export default function Navigation() {
                 className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-150"
               >
                 <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-400 dark:text-red-500" aria-hidden="true" />
-                <span className="ml-3 md:hidden">Ausloggen</span>
-                {!isCollapsed && <span className="ml-3 hidden md:inline">Ausloggen</span>}
+                {!isCollapsed && (
+                  <span className="ml-3">Ausloggen</span>
+                )}
               </button>
             )}
           </div>
@@ -152,7 +147,7 @@ export default function Navigation() {
 
         {/* Version */}
         <div className={`px-4 py-2 ${!isCollapsed ? 'border-t dark:border-dark-lighter' : ''}`}>
-          <span className="md:hidden">
+          {!isCollapsed && (
             <a
               href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md"
               target="_blank"
@@ -161,18 +156,6 @@ export default function Navigation() {
             >
               Version {APP_VERSION}
             </a>
-          </span>
-          {!isCollapsed && (
-            <span className="hidden md:inline">
-              <a
-                href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-start text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-              >
-                Version {APP_VERSION}
-              </a>
-            </span>
           )}
         </div>
       </div>

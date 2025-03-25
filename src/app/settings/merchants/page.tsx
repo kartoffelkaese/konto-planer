@@ -167,11 +167,13 @@ export default function MerchantsPage() {
     }
   }
 
-  const filteredMerchants = merchants.filter(merchant => {
-    const matchesSearch = merchant.name.toLowerCase().includes(filters.search.toLowerCase())
-    const matchesCategory = !filters.categoryId || merchant.categoryId === filters.categoryId
-    return matchesSearch && matchesCategory
-  })
+  const filteredMerchants = merchants
+    .filter(merchant => {
+      const matchesSearch = merchant.name.toLowerCase().includes(filters.search.toLowerCase())
+      const matchesCategory = !filters.categoryId || merchant.categoryId === filters.categoryId
+      return matchesSearch && matchesCategory
+    })
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   if (loading) {
     return <div className="p-8 flex items-center justify-center">Laden...</div>
@@ -223,7 +225,7 @@ export default function MerchantsPage() {
               className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             >
               <option value="">Alle Kategorien</option>
-              {categories.map((category) => (
+              {[...categories].sort((a, b) => a.name.localeCompare(b.name)).map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
@@ -321,11 +323,11 @@ export default function MerchantsPage() {
             <select
               id="categoryId"
               value={formData.categoryId}
-              onChange={(e) => setFormData(prev => ({ ...prev, categoryId: e.target.value }))}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-700 dark:text-white sm:text-sm"
             >
-              <option value="">Keine Kategorie</option>
-              {categories.map((category) => (
+              <option value="">Kategorie auswählen</option>
+              {[...categories].sort((a, b) => a.name.localeCompare(b.name)).map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>

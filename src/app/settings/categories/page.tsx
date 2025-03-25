@@ -191,10 +191,11 @@ export default function CategoriesPage() {
     }
   }
 
-  const filteredCategories = categories.filter(category => {
-    const matchesSearch = category.name.toLowerCase().includes(filters.search.toLowerCase())
-    return matchesSearch
-  })
+  const filteredCategories = categories
+    .filter(category => 
+      category.name.toLowerCase().includes(filters.search.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   if (loading) {
     return <div className="p-8 flex items-center justify-center">Laden...</div>

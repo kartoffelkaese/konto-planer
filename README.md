@@ -51,7 +51,3 @@ Eine moderne Webanwendung zur Verwaltung Ihrer persönlichen Finanzen, entwickel
 ## Lizenz
 
 Dieses Projekt ist unter der GPL-3.0 Lizenz lizenziert. Siehe [LICENSE](LICENSE) für Details.
-
-## Changelog
-
-Alle Änderungen werden in der [CHANGELOG.md](CHANGELOG.md) dokumentiert.

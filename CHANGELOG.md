@@ -1,4 +1,9 @@
 # Changelog
+## [2.12.4]
+- QOL: Alphabetische Sortierung
+
+## [2.12.0]
+- Dark Mode
 
 ## [2.11.0]
 ### Hinzugefügt

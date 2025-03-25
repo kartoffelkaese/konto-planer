@@ -91,6 +91,11 @@ export default function TransactionForm({
     }
   }
 
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { id, value } = e.target
+    setFormData({ ...formData, [id]: value })
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
@@ -112,19 +117,12 @@ export default function TransactionForm({
             <select
               id="merchantId"
               value={formData.merchantId}
-              onChange={(e) => {
-                const merchant = merchants.find(m => m.id === e.target.value)
-                setFormData({
-                  ...formData,
-                  merchantId: e.target.value,
-                  merchant: merchant ? merchant.name : ''
-                })
-              }}
+              onChange={handleChange}
               className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-dark-light shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400 sm:text-sm"
               autoFocus
             >
               <option value="">Händler auswählen oder neu eingeben</option>
-              {merchants.map((merchant) => (
+              {[...merchants].sort((a, b) => a.name.localeCompare(b.name)).map((merchant) => (
                 <option key={merchant.id} value={merchant.id}>
                   {merchant.name}
                   {merchant.category ? ` (${merchant.category.name})` : ''}

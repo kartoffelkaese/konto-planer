@@ -52,11 +52,19 @@ export async function POST(
         userId: user.id,
         description: originalTransaction.description,
         merchant: originalTransaction.merchant,
+        merchantId: originalTransaction.merchantId,
         amount: originalTransaction.amount,
         date: nextDueDate,
         isConfirmed: false,
         isRecurring: false,
         parentTransactionId: originalTransaction.id
+      },
+      include: {
+        merchantRef: {
+          include: {
+            category: true
+          }
+        }
       }
     })
 

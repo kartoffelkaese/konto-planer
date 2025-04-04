@@ -12,6 +12,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
+    const merchant = searchParams.get('merchant')
     const timeRange = searchParams.get('timeRange')
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
@@ -50,9 +51,14 @@ export async function GET(request: Request) {
         user: {
           email: session.user.email
         },
-        merchantRef: {
-          categoryId: category
-        },
+        ...(category && {
+          merchantRef: {
+            categoryId: category
+          }
+        }),
+        ...(merchant && {
+          merchantId: merchant
+        }),
         date: {
           gte: startDateObj
         }

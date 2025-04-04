@@ -23,6 +23,11 @@ interface Category {
   color: string
 }
 
+interface Merchant {
+  id: string
+  name: string
+}
+
 interface StatisticsData {
   date: string
   amount: number
@@ -33,7 +38,9 @@ interface StatisticsData {
 export default function StatisticsPage() {
   const { data: session } = useSession()
   const [categories, setCategories] = useState<Category[]>([])
+  const [merchants, setMerchants] = useState<Merchant[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [selectedMerchant, setSelectedMerchant] = useState<string>('')
   const [timeRange, setTimeRange] = useState<string>('3months')
   const [customStartDate, setCustomStartDate] = useState<string>('')
   const [customEndDate, setCustomEndDate] = useState<string>('')
@@ -52,14 +59,15 @@ export default function StatisticsPage() {
   useEffect(() => {
     if (session) {
       fetchCategories()
+      fetchMerchants()
     }
   }, [session])
 
   useEffect(() => {
-    if (selectedCategory) {
+    if (selectedCategory || selectedMerchant) {
       fetchStatistics()
     }
-  }, [selectedCategory, timeRange, customStartDate, customEndDate])
+  }, [selectedCategory, selectedMerchant, timeRange, customStartDate, customEndDate])
 
   const fetchCategories = async () => {
     try {
@@ -79,10 +87,30 @@ export default function StatisticsPage() {
     }
   }
 
+  const fetchMerchants = async () => {
+    try {
+      const response = await fetch('/api/merchants')
+      const data = await response.json()
+      // Händler alphabetisch sortieren
+      const sortedMerchants = data.sort((a: Merchant, b: Merchant) => 
+        a.name.localeCompare(b.name, 'de')
+      )
+      setMerchants(sortedMerchants)
+    } catch (error) {
+      console.error('Fehler beim Laden der Händler:', error)
+    }
+  }
+
   const fetchStatistics = async () => {
     setIsLoading(true)
     try {
-      let url = `/api/statistics?category=${selectedCategory}&timeRange=${timeRange}`
+      let url = `/api/statistics?timeRange=${timeRange}`
+      if (selectedCategory) {
+        url += `&category=${selectedCategory}`
+      }
+      if (selectedMerchant) {
+        url += `&merchant=${selectedMerchant}`
+      }
       if (timeRange === 'custom' && customStartDate && customEndDate) {
         url += `&startDate=${customStartDate}&endDate=${customEndDate}`
       }
@@ -117,12 +145,42 @@ export default function StatisticsPage() {
           <div className="relative">
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value)
+                if (e.target.value) {
+                  setSelectedMerchant('') // Wenn eine Kategorie ausgewählt wird, Händler zurücksetzen
+                }
+              }}
               className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-lighter focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md appearance-none bg-white dark:bg-dark-light text-gray-900 dark:text-white"
             >
+              <option value="">Alle Kategorien</option>
               {categories.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+              <ChevronDownIcon className="h-4 w-4" />
+            </div>
+          </div>
+
+          {/* Händler-Auswahl */}
+          <div className="relative">
+            <select
+              value={selectedMerchant}
+              onChange={(e) => {
+                setSelectedMerchant(e.target.value)
+                if (e.target.value) {
+                  setSelectedCategory('') // Wenn ein Händler ausgewählt wird, Kategorie zurücksetzen
+                }
+              }}
+              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-lighter focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md appearance-none bg-white dark:bg-dark-light text-gray-900 dark:text-white"
+            >
+              <option value="">Alle Händler</option>
+              {merchants.map((merchant) => (
+                <option key={merchant.id} value={merchant.id}>
+                  {merchant.name}
                 </option>
               ))}
             </select>
@@ -178,7 +236,7 @@ export default function StatisticsPage() {
         <div className="h-[400px] -mx-4 md:mx-0">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -191,10 +249,12 @@ export default function StatisticsPage() {
                     const date = new Date(value + '-01')
                     return date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
                   }}
+                  stroke="var(--text-color)"
                 />
                 <YAxis 
                   tickFormatter={(value) => `${value}€`}
                   tick={{ fontSize: 12, fill: 'var(--text-color)' }}
+                  stroke="var(--text-color)"
                 />
                 <Tooltip 
                   formatter={(value: number) => [`${value.toFixed(2)}€`, 'Ausgaben']}
@@ -208,6 +268,7 @@ export default function StatisticsPage() {
                     borderRadius: '0.5rem',
                     color: 'var(--text-color)'
                   }}
+                  itemStyle={{ color: 'var(--text-color)' }}
                 />
                 <Bar 
                   dataKey="amount" 

@@ -213,7 +213,7 @@ export default function TransactionList({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                     <span className={transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-                      {transaction.amount >= 0 ? '+' : ''}{transaction.amount.toFixed(2)} €
+                      {transaction.amount >= 0 ? '+' : ''}{transaction.amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
@@ -273,7 +273,7 @@ export default function TransactionList({
                 <span className={`text-sm font-medium ${
                   transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                 }`}>
-                  {transaction.amount >= 0 ? '+' : ''}{transaction.amount.toFixed(2)} €
+                  {transaction.amount >= 0 ? '+' : ''}{transaction.amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                 </span>
               </div>
               <div className="flex items-center justify-between">

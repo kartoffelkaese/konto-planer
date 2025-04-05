@@ -252,12 +252,12 @@ export default function StatisticsPage() {
                   stroke="var(--text-color)"
                 />
                 <YAxis 
-                  tickFormatter={(value) => `${value}€`}
+                  tickFormatter={(value) => `${value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€`}
                   tick={{ fontSize: 12, fill: 'var(--text-color)' }}
                   stroke="var(--text-color)"
                 />
                 <Tooltip 
-                  formatter={(value: number) => [`${value.toFixed(2)}€`, 'Ausgaben']}
+                  formatter={(value: number) => [`${value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€`, 'Ausgaben']}
                   labelFormatter={(label) => {
                     const date = new Date(label + '-01')
                     return date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })

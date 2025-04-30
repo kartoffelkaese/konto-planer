@@ -132,15 +132,15 @@ export default function Navigation() {
           {/* Logout Button */}
           <div className="px-2 py-2 space-y-2">
             {session && (
-              <button
-                onClick={() => signOut()}
+            <button
+              onClick={() => signOut()}
                 className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-150"
-              >
+            >
                 <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-400 dark:text-red-500" aria-hidden="true" />
                 {!isCollapsed && (
-                  <span className="ml-3">Ausloggen</span>
-                )}
-              </button>
+                <span className="ml-3">Ausloggen</span>
+              )}
+            </button>
             )}
           </div>
         </div>

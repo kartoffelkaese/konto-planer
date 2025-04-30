@@ -276,13 +276,13 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
               Abbrechen
             </button>
           )}
-          <button
-            type="submit"
-            disabled={loading}
+            <button
+              type="submit"
+              disabled={loading}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 border border-transparent rounded-md shadow-sm hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Wird gespeichert...' : 'Speichern'}
-          </button>
+            >
+              {loading ? 'Wird gespeichert...' : 'Speichern'}
+            </button>
         </div>
       </form>
     </>

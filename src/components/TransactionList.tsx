@@ -279,15 +279,15 @@ export default function TransactionList({
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   {transaction.merchantRef?.category ? (
-                    <span 
-                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                      style={{
-                        backgroundColor: transaction.merchantRef.category.color,
-                        color: getContrastColor(transaction.merchantRef.category.color)
-                      }}
-                    >
-                      {transaction.merchantRef.category.name}
-                    </span>
+                      <span 
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        style={{
+                          backgroundColor: transaction.merchantRef.category.color,
+                          color: getContrastColor(transaction.merchantRef.category.color)
+                        }}
+                      >
+                        {transaction.merchantRef.category.name}
+                      </span>
                   ) : (
                     <span className="text-gray-500 dark:text-gray-400">-</span>
                   )}
@@ -322,18 +322,18 @@ export default function TransactionList({
       </div>
 
       {showEditModal && selectedTransactionId && (
-        <Modal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          title="Transaktion bearbeiten"
-        >
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        title="Transaktion bearbeiten"
+      >
           <EditTransactionForm
             id={selectedTransactionId}
             onSuccess={handleEditSuccess}
             onCancel={() => setShowEditModal(false)}
           />
         </Modal>
-      )}
+        )}
     </div>
   )
 } 

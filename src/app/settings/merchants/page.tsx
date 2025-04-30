@@ -169,10 +169,10 @@ export default function MerchantsPage() {
 
   const filteredMerchants = merchants
     .filter(merchant => {
-      const matchesSearch = merchant.name.toLowerCase().includes(filters.search.toLowerCase())
-      const matchesCategory = !filters.categoryId || merchant.categoryId === filters.categoryId
-      return matchesSearch && matchesCategory
-    })
+    const matchesSearch = merchant.name.toLowerCase().includes(filters.search.toLowerCase())
+    const matchesCategory = !filters.categoryId || merchant.categoryId === filters.categoryId
+    return matchesSearch && matchesCategory
+  })
     .sort((a, b) => a.name.localeCompare(b.name))
 
   if (loading) {

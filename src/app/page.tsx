@@ -75,12 +75,12 @@ export default function DashboardPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-blue-100/20 to-indigo-100/20 dark:from-blue-900/20 dark:to-indigo-900/20 transform -skew-y-6 origin-top-right"></div>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center relative z-20">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">
-              <span className="block">Willkommen bei</span>
+            <span className="block">Willkommen bei</span>
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">KontoPlaner</span>
-            </h1>
+          </h1>
             <p className="mt-3 max-w-md mx-auto text-base text-gray-600 dark:text-gray-300 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-              Ihre persönliche Finanzverwaltung - einfach, übersichtlich und effizient.
-            </p>
+            Ihre persönliche Finanzverwaltung - einfach, übersichtlich und effizient.
+          </p>
             <div className="mt-8 flex justify-center gap-4">
               <a
                 href="/api/auth/signin"
@@ -112,15 +112,15 @@ export default function DashboardPage() {
               {/* Dashboard Feature */}
               <div className="group relative bg-white dark:bg-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-gray-600">
                 <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <ChartBarIcon className="h-6 w-6" aria-hidden="true" />
-                </div>
+                    <ChartBarIcon className="h-6 w-6" aria-hidden="true" />
+                  </div>
                 <div className="mt-8">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Übersichtliches Dashboard</h3>
                   <p className="text-gray-600 dark:text-gray-300">
                     Behalten Sie Ihre Finanzen im Blick mit unserem intuitiven Dashboard. Visualisieren Sie Ihre Ausgaben und Einnahmen auf einen Blick.
-                  </p>
+                    </p>
+                  </div>
                 </div>
-              </div>
 
               {/* Transaktionsverwaltung */}
               <div className="group relative bg-white dark:bg-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-gray-600">
@@ -138,40 +138,40 @@ export default function DashboardPage() {
               {/* Automatisierung */}
               <div className="group relative bg-white dark:bg-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-gray-600">
                 <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <ArrowPathIcon className="h-6 w-6" aria-hidden="true" />
-                </div>
+                    <ArrowPathIcon className="h-6 w-6" aria-hidden="true" />
+                  </div>
                 <div className="mt-8">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Automatisierung</h3>
                   <p className="text-gray-600 dark:text-gray-300">
                     Automatische Erstellung ausstehender Zahlungen und Echtzeit-Aktualisierung Ihres Kontostands.
-                  </p>
+                    </p>
+                  </div>
                 </div>
-              </div>
 
               {/* Händlerverwaltung */}
               <div className="group relative bg-white dark:bg-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-gray-600">
                 <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
                   <BuildingStorefrontIcon className="h-6 w-6" aria-hidden="true" />
-                </div>
+                  </div>
                 <div className="mt-8">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Händlerverwaltung</h3>
                   <p className="text-gray-600 dark:text-gray-300">
                     Verwalten Sie Ihre Händler und profitieren Sie von automatischer Kategorisierung.
-                  </p>
+                    </p>
+                  </div>
                 </div>
-              </div>
 
               {/* Sicherheit */}
               <div className="group relative bg-white dark:bg-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-gray-600">
                 <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
                   <ShieldCheckIcon className="h-6 w-6" aria-hidden="true" />
-                </div>
+                  </div>
                 <div className="mt-8">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Sicherheit</h3>
                   <p className="text-gray-600 dark:text-gray-300">
                     Sichere Authentifizierung, verschlüsselte Datenübertragung und datenschutzkonforme Implementierung.
-                  </p>
-                </div>
+                    </p>
+                  </div>
               </div>
 
               {/* Backup */}
@@ -195,26 +195,26 @@ export default function DashboardPage() {
           <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:60px_60px]"></div>
           <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
             <div className="text-center">
-              <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-                <span className="block">Bereit loszulegen?</span>
-                <span className="block">Starten Sie noch heute mit KontoPlaner.</span>
-              </h2>
+            <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
+              <span className="block">Bereit loszulegen?</span>
+              <span className="block">Starten Sie noch heute mit KontoPlaner.</span>
+            </h2>
               <p className="mt-6 text-lg leading-6 text-blue-100">
-                Melden Sie sich jetzt an und übernehmen Sie die Kontrolle über Ihre Finanzen.
-              </p>
+              Melden Sie sich jetzt an und übernehmen Sie die Kontrolle über Ihre Finanzen.
+            </p>
               <div className="mt-10 flex justify-center gap-4">
-                <a
+            <a
                   href="/auth/register"
                   className="inline-flex items-center px-6 py-3 border-2 border-white text-base font-medium rounded-lg text-white hover:bg-white hover:text-blue-600 dark:hover:text-blue-700 transition-all duration-200"
-                >
+            >
                   Kostenlos registrieren
-                </a>
+            </a>
                 <a
                   href="/api/auth/signin"
                   className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-blue-600 dark:text-blue-700 bg-white hover:bg-blue-50 dark:hover:bg-gray-100 transition-all duration-200"
                 >
                   Anmelden
-                </a>
+              </a>
               </div>
             </div>
           </div>

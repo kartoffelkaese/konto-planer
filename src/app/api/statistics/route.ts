@@ -52,8 +52,8 @@ export async function GET(request: Request) {
           email: session.user.email
         },
         ...(category && {
-          merchantRef: {
-            categoryId: category
+        merchantRef: {
+          categoryId: category
           }
         }),
         ...(merchant && {

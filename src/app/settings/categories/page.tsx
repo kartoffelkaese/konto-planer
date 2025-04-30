@@ -249,13 +249,13 @@ export default function CategoriesPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-1">
             {filteredCategories.map((category) => (
-              <div
-                key={category.id}
+              <div 
+                key={category.id} 
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
-                    <div
+                    <div 
                       className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: category.color }}
                     />

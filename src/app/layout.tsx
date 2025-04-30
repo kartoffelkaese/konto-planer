@@ -20,10 +20,10 @@ export default function RootLayout({
     <html lang="de">
       <body className={inter.className}>
         <Providers>
-          <Navigation />
+            <Navigation />
           <main className="md:ml-[var(--sidebar-width)] transition-all duration-300">
-            {children}
-          </main>
+              {children}
+            </main>
         </Providers>
       </body>
     </html>

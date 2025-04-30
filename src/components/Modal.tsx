@@ -69,7 +69,7 @@ export default function Modal({
                     {title}
                   </Dialog.Title>
                   <div className="text-gray-600 dark:text-gray-300">
-                    {children}
+                  {children}
                   </div>
                 </div>
               </Dialog.Panel>

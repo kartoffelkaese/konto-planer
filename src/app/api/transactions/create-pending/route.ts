@@ -25,6 +25,13 @@ export async function POST(request: NextRequest) {
       where: {
         userId: user.id,
         isRecurring: true
+      },
+      include: {
+        merchantRef: {
+          include: {
+            category: true
+          }
+        }
       }
     })
 
@@ -63,12 +70,20 @@ export async function POST(request: NextRequest) {
             data: {
               description: transaction.description,
               merchant: transaction.merchant,
+              merchantId: transaction.merchantId,
               amount: transaction.amount,
               date: nextDueDate,
               isConfirmed: false,
               isRecurring: false,
               userId: user.id,
               parentTransactionId: transaction.id
+            },
+            include: {
+              merchantRef: {
+                include: {
+                  category: true
+                }
+              }
             }
           })
           newTransactions.push(newTransaction)

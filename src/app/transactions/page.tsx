@@ -10,6 +10,7 @@ import MonthlyOverview from '@/components/MonthlyOverview'
 import Modal from '@/components/Modal'
 import TransactionForm from '@/components/TransactionForm'
 import EditTransactionForm from '@/components/EditTransactionForm'
+import NotesReminder from '@/components/NotesReminder'
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -327,6 +328,8 @@ export default function TransactionsPage() {
           />
         )}
       </Modal>
+
+      <NotesReminder />
     </div>
   )
 } 

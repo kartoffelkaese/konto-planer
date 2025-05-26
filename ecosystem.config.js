@@ -7,6 +7,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 3001
+        HOST: '127.0.0.1'
       },
       instances: 1,
       autorestart: true,

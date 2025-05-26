@@ -12,7 +12,7 @@ interface Note {
   title: string
   content: string
   isActive: boolean
-  months: { id?: number; month: number }[]
+  months: { id: number; month: number }[]
 }
 
 export default function NotesPage() {
@@ -30,15 +30,9 @@ export default function NotesPage() {
 
   const fetchNotes = async () => {
     try {
-      console.log('Fetching notes...')
       const response = await fetch('/api/notes')
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Error response:', errorText)
-        throw new Error(`Failed to fetch notes: ${errorText}`)
-      }
+      if (!response.ok) throw new Error('Failed to fetch notes')
       const data = await response.json()
-      console.log('Fetched notes:', data)
       setNotes(data)
     } catch (error) {
       console.error('Error fetching notes:', error)
@@ -48,22 +42,12 @@ export default function NotesPage() {
 
   const handleCreateNote = async (note: Omit<Note, 'id'>) => {
     try {
-      console.log('Creating note:', note)
       const response = await fetch('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...note,
-          months: note.months.map(m => ({ month: m.month }))
-        }),
+        body: JSON.stringify(note),
       })
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Error response:', errorText)
-        throw new Error(`Failed to create note: ${errorText}`)
-      }
-      const data = await response.json()
-      console.log('Created note:', data)
+      if (!response.ok) throw new Error('Failed to create note')
       await fetchNotes()
       setShowNewNoteModal(false)
       showToast('Notiz erfolgreich erstellt', 'success')
@@ -73,24 +57,14 @@ export default function NotesPage() {
     }
   }
 
-  const handleUpdateNote = async (note: Omit<Note, 'id'> & { id: number }) => {
+  const handleUpdateNote = async (note: Note) => {
     try {
-      console.log('Updating note:', note)
       const response = await fetch(`/api/notes/${note.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...note,
-          months: note.months.map(m => ({ month: m.month }))
-        }),
+        body: JSON.stringify(note),
       })
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Error response:', errorText)
-        throw new Error(`Failed to update note: ${errorText}`)
-      }
-      const data = await response.json()
-      console.log('Updated note:', data)
+      if (!response.ok) throw new Error('Failed to update note')
       await fetchNotes()
       setShowEditNoteModal(false)
       showToast('Notiz erfolgreich aktualisiert', 'success')

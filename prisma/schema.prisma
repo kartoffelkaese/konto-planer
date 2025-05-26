@@ -16,8 +16,8 @@ model User {
   createdAt    DateTime      @default(now())
   categories   Category[]
   merchants    Merchant[]
-  transactions Transaction[]
   notes        Note[]
+  transactions Transaction[]
 
   @@map("users")
 }
@@ -77,19 +77,19 @@ model Category {
 }
 
 model Note {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String   @db.Text
-  isActive  Boolean  @default(true)
-  userId    String   @db.Char(36)
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  months    NoteMonth[]
+  id         Int              @id @default(autoincrement())
+  title      String
+  content    String           @db.Text
+  isActive   Boolean          @default(true)
+  userId     String           @db.Char(36)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  months     NoteMonth[]
   readStatus NoteReadStatus[]
+  user       User             @relation(fields: [userId], references: [id])
 
-  @@map("notes")
   @@index([userId])
+  @@map("notes")
 }
 
 model NoteMonth {
@@ -104,13 +104,13 @@ model NoteMonth {
 }
 
 model NoteReadStatus {
-  id        Int      @id @default(autoincrement())
-  noteId    Int
-  year      Int
-  month     Int      @db.TinyInt
-  isRead    Boolean  @default(false)
-  readAt    DateTime?
-  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  id     Int       @id @default(autoincrement())
+  noteId Int
+  year   Int
+  month  Int       @db.TinyInt
+  isRead Boolean   @default(false)
+  readAt DateTime?
+  note   Note      @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
   @@unique([noteId, year, month])
   @@index([noteId])

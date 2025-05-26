@@ -16,8 +16,7 @@ import {
   ChevronRightIcon,
   TagIcon,
   BuildingStorefrontIcon,
-  ArrowRightOnRectangleIcon,
-  DocumentTextIcon
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
 import { APP_VERSION } from '@/lib/version'
 import { signOut } from 'next-auth/react'
@@ -45,7 +44,6 @@ export default function Navigation() {
     { name: 'Transaktionen', href: '/transactions', icon: BanknotesIcon },
     { name: 'Wiederkehrend', href: '/recurring', icon: ArrowPathIcon },
     { name: 'Statistiken', href: '/statistics', icon: ChartPieIcon },
-    { name: 'Notizen', href: '/notes', icon: DocumentTextIcon },
     { name: 'Kategorien', href: '/settings/categories', icon: TagIcon },
     { name: 'Händler', href: '/settings/merchants', icon: BuildingStorefrontIcon },
     { name: 'Einstellungen', href: '/settings', icon: Cog6ToothIcon },

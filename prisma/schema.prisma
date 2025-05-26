@@ -1,3 +1,9 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,10 +20,9 @@ model User {
   salaryDay    Int
   accountName  String?       @default("Mein Konto")
   createdAt    DateTime      @default(now())
-  categories   Category[]
-  merchants    Merchant[]
   transactions Transaction[]
-  notes        Note[]
+  merchants    Merchant[]
+  categories   Category[]
 
   @@map("users")
 }
@@ -28,6 +33,7 @@ model Transaction {
   description         String?
   merchant            String
   merchantId          String?
+  merchantRef         Merchant?     @relation(fields: [merchantId], references: [id])
   amount              Decimal       @db.Decimal(10, 2)
   date                DateTime
   isConfirmed         Boolean       @default(false)
@@ -36,15 +42,11 @@ model Transaction {
   lastConfirmedDate   DateTime?
   version             Int           @default(1)
   parentTransactionId String?
-  createdAt           DateTime      @default(now())
-  merchantRef         Merchant?     @relation(fields: [merchantId], references: [id])
   parentTransaction   Transaction?  @relation("RecurringInstances", fields: [parentTransactionId], references: [id])
   childTransactions   Transaction[] @relation("RecurringInstances")
+  createdAt           DateTime      @default(now())
   user                User          @relation(fields: [userId], references: [id])
 
-  @@index([merchantId], map: "transactions_merchantId_fkey")
-  @@index([parentTransactionId], map: "transactions_parentTransactionId_fkey")
-  @@index([userId], map: "transactions_userId_fkey")
   @@map("transactions")
 }
 
@@ -52,67 +54,25 @@ model Merchant {
   id           String        @id @default(uuid())
   userId       String
   name         String
-  createdAt    DateTime      @default(now())
   categoryId   String?
   category     Category?     @relation(fields: [categoryId], references: [id])
+  createdAt    DateTime      @default(now())
   user         User          @relation(fields: [userId], references: [id])
   transactions Transaction[]
 
-  @@unique([userId, name])
-  @@index([categoryId], map: "merchants_categoryId_fkey")
   @@map("merchants")
+  @@unique([userId, name])
 }
 
 model Category {
   id        String     @id @default(uuid())
   userId    String
   name      String
-  createdAt DateTime   @default(now())
   color     String     @default("#A7C7E7")
+  createdAt DateTime   @default(now())
   user      User       @relation(fields: [userId], references: [id])
   merchants Merchant[]
 
-  @@unique([userId, name])
   @@map("categories")
-}
-
-model Note {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String   @db.Text
-  isActive  Boolean  @default(true)
-  userId    String   @db.Char(36)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  months    NoteMonth[]
-  readStatus NoteReadStatus[]
-
-  @@map("notes")
-  @@index([userId])
-}
-
-model NoteMonth {
-  id     Int  @id @default(autoincrement())
-  noteId Int
-  month  Int  @db.TinyInt
-  note   Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
-
-  @@unique([noteId, month])
-  @@index([noteId])
-  @@map("note_months")
-}
-
-model NoteReadStatus {
-  id        Int      @id @default(autoincrement())
-  noteId    Int
-  year      Int
-  month     Int      @db.TinyInt
-  isRead    Boolean  @default(false)
-  readAt    DateTime?
-  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
-
-  @@unique([noteId, year, month])
-  @@index([noteId])
-  @@map("note_read_status")
+  @@unique([userId, name])
 }

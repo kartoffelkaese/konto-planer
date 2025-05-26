@@ -1,27 +1,9 @@
 import { PrismaClient } from '@prisma/client'
 
-declare global {
-  var prisma: PrismaClient | undefined
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined
 }
 
-let prisma: PrismaClient
+export const prisma = globalForPrisma.prisma ?? new PrismaClient()
 
-if (process.env.NODE_ENV === 'production') {
-  prisma = new PrismaClient()
-} else {
-  if (!global.prisma) {
-    global.prisma = new PrismaClient()
-  }
-  prisma = global.prisma
-}
-
-// Verbindung testen
-prisma.$connect()
-  .then(() => {
-    console.log('Prisma Client erfolgreich verbunden')
-  })
-  .catch((error) => {
-    console.error('Fehler bei der Prisma-Verbindung:', error)
-  })
-
-export { prisma } 
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma 

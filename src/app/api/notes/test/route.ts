@@ -2,14 +2,26 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
+import { Prisma } from '@prisma/client'
 
 export async function GET() {
   try {
     console.log('Test-Endpunkt aufgerufen')
     
     // Prüfe Datenbankverbindung
-    await prisma.$queryRaw`SELECT 1`
-    console.log('Datenbankverbindung OK')
+    try {
+      await prisma.$connect()
+      console.log('Datenbankverbindung OK')
+    } catch (error) {
+      console.error('Datenbankverbindungsfehler:', error)
+      return NextResponse.json(
+        { 
+          error: 'Datenbankverbindungsfehler',
+          details: error instanceof Error ? error.message : 'Unbekannter Fehler'
+        },
+        { status: 500 }
+      )
+    }
     
     const session = await getServerSession(authOptions)
     console.log('Session:', session?.user?.email)
@@ -47,6 +59,16 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Test-Endpunkt Fehler:', error)
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return NextResponse.json(
+        { 
+          error: 'Datenbankfehler',
+          code: error.code,
+          details: error.message
+        },
+        { status: 500 }
+      )
+    }
     return NextResponse.json(
       { 
         error: 'Test fehlgeschlagen',
@@ -54,5 +76,7 @@ export async function GET() {
       },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 } 

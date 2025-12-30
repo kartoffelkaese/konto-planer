@@ -148,9 +148,8 @@ export async function GET() {
       return transactionDate >= new Date() && transactionDate <= thirtyDaysFromNow
     })
 
-    // Berechne Kategorieverteilung
-    const categoryDistribution = await prisma.transaction.groupBy({
-      by: ['merchantId'],
+    // Berechne Kategorieverteilung - Hole alle Transaktionen mit ihren Kategorien
+    const transactionsWithCategories = await prisma.transaction.findMany({
       where: {
         userId: user.id,
         amount: {
@@ -162,55 +161,41 @@ export async function GET() {
         },
         isConfirmed: true
       },
-      _sum: {
-        amount: true
+      include: {
+        merchantRef: {
+          include: {
+            category: true
+          }
+        }
       }
     })
 
-    // Hole Kategorienamen für die Verteilung
-    const categories = await prisma.category.findMany({
-      where: {
-        userId: user.id
-      },
-      select: {
-        id: true,
-        name: true,
-        color: true
-      }
-    })
+    // Gruppiere nach Kategorie und summiere die Beträge
+    const categoryMap = new Map<string, { name: string; value: number; color: string }>()
 
-    // Hole Händler mit Kategorien
-    const merchants = await prisma.merchant.findMany({
-      where: {
-        userId: user.id
-      },
-      select: {
-        id: true,
-        categoryId: true
-      }
-    })
+    transactionsWithCategories.forEach(transaction => {
+      const categoryName = transaction.merchantRef?.category?.name || 'Unkategorisiert'
+      const categoryColor = transaction.merchantRef?.category?.color || '#6B7280'
+      const amount = Math.abs(transaction.amount.toNumber())
 
-    // Kombiniere Kategorieverteilung mit Kategorienamen
-    const categoryData = categoryDistribution.map(dist => {
-      const merchant = merchants.find(m => m.id === dist.merchantId)
-      const category = categories.find(c => c.id === merchant?.categoryId)
-      return {
-        name: category?.name || 'Unkategorisiert',
-        value: Math.abs(dist._sum.amount?.toNumber() || 0),
-        color: category?.color || '#6B7280'
-      }
-    })
-
-    // Kumuliere die Werte pro Kategorie
-    const kumulatedCategoryData = categoryData.reduce((acc, curr) => {
-      const existingCategory = acc.find(item => item.name === curr.name)
-      if (existingCategory) {
-        existingCategory.value += curr.value
+      if (categoryMap.has(categoryName)) {
+        const existing = categoryMap.get(categoryName)!
+        existing.value += amount
       } else {
-        acc.push(curr)
+        categoryMap.set(categoryName, {
+          name: categoryName,
+          value: amount,
+          color: categoryColor
+        })
       }
-      return acc
-    }, [] as typeof categoryData)
+    })
+
+    // Konvertiere Map zu Array und sortiere nach Wert (absteigend)
+    const kumulatedCategoryData = Array.from(categoryMap.values())
+      .sort((a, b) => b.value - a.value)
+
+    console.log('Transaktionen gefunden:', transactionsWithCategories.length)
+    console.log('Kategorieverteilung:', kumulatedCategoryData)
 
     return NextResponse.json({
       monthlyIncome: income,

@@ -2,16 +2,16 @@
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
+  const { id } = await params
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     console.log('Session:', session)
 
     if (!session) {
@@ -33,7 +33,7 @@ export async function GET(
 
     const category = await prisma.category.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id
       },
       include: {
@@ -57,10 +57,10 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
-  console.log('Session bei PATCH:', await getServerSession(authOptions))
-  const session = await getServerSession(authOptions)
+  const { id } = await params
+  const session = await auth()
 
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
@@ -86,7 +86,7 @@ export async function PATCH(
         userId: user.id,
         name: name,
         NOT: {
-          id: params.id
+          id
         }
       }
     })
@@ -100,7 +100,7 @@ export async function PATCH(
 
     const category = await prisma.category.update({
       where: {
-        id: params.id,
+        id,
         userId: user.id
       },
       data: {
@@ -122,10 +122,11 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
+  const { id } = await params
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     console.log('Session bei DELETE:', session)
 
     if (!session) {
@@ -148,7 +149,7 @@ export async function DELETE(
     // Überprüfen, ob die Kategorie existiert und dem Benutzer gehört
     const category = await prisma.category.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id
       },
       include: {
@@ -166,7 +167,7 @@ export async function DELETE(
     if (category._count.merchants > 0) {
       await prisma.merchant.updateMany({
         where: {
-          categoryId: params.id
+          categoryId: id
         },
         data: {
           categoryId: null
@@ -177,7 +178,7 @@ export async function DELETE(
     // Kategorie löschen
     await prisma.category.delete({
       where: {
-        id: params.id,
+        id,
         userId: user.id
       }
     })

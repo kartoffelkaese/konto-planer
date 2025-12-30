@@ -1,15 +1,15 @@
 'use server'
 
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions)
+  const { id } = await params
+  const session = await auth()
 
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
@@ -26,7 +26,7 @@ export async function GET(
 
     const merchant = await prisma.merchant.findFirst({
       where: {
-        id: params.id,
+        id,
         userId: user.id
       }
     })
@@ -47,9 +47,10 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions)
+  const { id } = await params
+  const session = await auth()
 
   if (!session) {
     return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
@@ -85,7 +86,7 @@ export async function PATCH(
       userId: user.id,
       name: name,
       NOT: {
-        id: params.id
+        id
       }
     }
   })
@@ -99,7 +100,7 @@ export async function PATCH(
 
   const merchant = await prisma.merchant.update({
     where: {
-      id: params.id,
+      id,
       userId: user.id,
     },
     data: {
@@ -116,9 +117,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions)
+  const { id } = await params
+  const session = await auth()
 
   if (!session) {
     return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
@@ -140,7 +142,7 @@ export async function DELETE(
 
   await prisma.merchant.delete({
     where: {
-      id: params.id,
+      id,
       userId: user.id,
     },
   })

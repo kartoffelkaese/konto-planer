@@ -1,35 +1,23 @@
-import { withAuth } from 'next-auth/middleware'
+import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 
-export default withAuth(
-  function middleware(req) {
-    // Wenn keine Session vorhanden ist und nicht auf einer Auth-Seite oder der Landing Page
-    if (!req.nextauth.token && !req.nextUrl.pathname.startsWith('/auth/') && req.nextUrl.pathname !== '/') {
-      return NextResponse.redirect(new URL('/', req.url))
-    }
+export default auth((req) => {
+  const token = req.auth
+  const pathname = req.nextUrl.pathname
 
-    // Wenn Session vorhanden und auf Auth-Seite
-    if (req.nextauth.token && req.nextUrl.pathname.startsWith('/auth/')) {
-      return NextResponse.redirect(new URL('/', req.url))
-    }
-
-    return NextResponse.next()
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        // Erlaube Zugriff auf /auth/* und / ohne Token
-        if (req.nextUrl.pathname.startsWith('/auth/') || req.nextUrl.pathname === '/') {
-          return true
-        }
-        // Für alle anderen Routen wird ein Token benötigt
-        return !!token
-      },
-    },
+  // Wenn keine Session vorhanden ist und nicht auf einer Auth-Seite oder der Landing Page
+  if (!token && !pathname.startsWith('/auth/') && pathname !== '/') {
+    return NextResponse.redirect(new URL('/', req.url))
   }
-)
 
-// Konfiguriere die Pfade, für die die Middleware ausgeführt werden soll
+  // Wenn Session vorhanden und auf Auth-Seite
+  if (token && pathname.startsWith('/auth/')) {
+    return NextResponse.redirect(new URL('/', req.url))
+  }
+
+  return NextResponse.next()
+})
+
 export const config = {
   matcher: [
     /*

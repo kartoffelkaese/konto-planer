@@ -1,40 +1,27 @@
-import { AuthOptions, Session } from 'next-auth'
-import CredentialsProvider from 'next-auth/providers/credentials'
+import NextAuth from 'next-auth'
+import { NextAuthConfig } from 'next-auth'
+import Credentials from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-import { JWT } from 'next-auth/jwt'
 
-export const authOptions: AuthOptions = {
+export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
   providers: [
-    CredentialsProvider({
+    Credentials({
       name: 'credentials',
       credentials: {
         email: { label: 'E-Mail', type: 'email' },
         password: { label: 'Passwort', type: 'password' }
       },
-      async authorize(credentials, req) {
+      async authorize(credentials) {
         try {
-          // Sicherheitscheck: Keine Anmeldedaten in der URL erlauben
-          const referer = req.headers?.referer
-          if (referer && (referer.includes('email=') || referer.includes('password='))) {
-            console.warn('Sicherheitswarnung: Anmeldeversuch mit Anmeldedaten in der URL')
-            return null
-          }
-
-          // Sicherheitscheck: Nur POST-Anfragen erlauben
-          if (req.method !== 'POST') {
-            console.warn('Sicherheitswarnung: Anmeldeversuch mit nicht-POST Methode')
-            return null
-          }
-
           if (!credentials?.email || !credentials?.password) {
             throw new Error('Bitte E-Mail und Passwort eingeben')
           }
 
           const user = await prisma.user.findUnique({
-            where: { email: credentials.email }
+            where: { email: credentials.email as string }
           })
 
           if (!user?.passwordHash) {
@@ -42,7 +29,7 @@ export const authOptions: AuthOptions = {
           }
 
           const isValid = await bcrypt.compare(
-            credentials.password,
+            credentials.password as string,
             user.passwordHash
           )
 
@@ -63,17 +50,16 @@ export const authOptions: AuthOptions = {
     })
   ],
   session: {
-    strategy: 'jwt' as const
+    strategy: 'jwt'
   },
   pages: {
     signIn: '/auth/login',
-    newUser: '/auth/register',
     error: '/auth/error'
   },
   callbacks: {
-    async session({ session, token }: { session: Session; token: JWT }) {
-      if (session.user) {
-        session.user.id = token.sub as string
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub
       }
       return session
     },
@@ -86,8 +72,7 @@ export const authOptions: AuthOptions = {
       return url.startsWith(baseUrl) ? url : baseUrl
     }
   },
-  events: {
-    async signOut() {}
-  },
   debug: false
-} 
+}
+
+export const { auth, handlers, signIn, signOut } = NextAuth(authConfig) 

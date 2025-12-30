@@ -1,12 +1,11 @@
 'use server'
 
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET() {
-  const session = await getServerSession(authOptions)
+  const session = await auth()
 
   if (!session) {
     return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
@@ -41,7 +40,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions)
+  const session = await auth()
 
   if (!session) {
     return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {

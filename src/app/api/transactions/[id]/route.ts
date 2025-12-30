@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 
 interface UpdateData {
   description?: string
@@ -18,13 +17,13 @@ interface UpdateData {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const resolvedParams = await Promise.resolve(params)
+  const { id } = await params
   
   try {
     const transaction = await prisma.transaction.findUnique({
-      where: { id: resolvedParams.id }
+      where: { id }
     })
 
     if (!transaction) {
@@ -46,11 +45,11 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const resolvedParams = await Promise.resolve(context.params)
-  console.log('PATCH Route aufgerufen mit ID:', resolvedParams.id)
-  const session = await getServerSession(authOptions)
+  const { id } = await params
+  console.log('PATCH Route aufgerufen mit ID:', id)
+  const session = await auth()
 
   if (!session?.user?.email) {
     console.log('Keine Benutzer-Session gefunden')
@@ -72,13 +71,13 @@ export async function PATCH(
     // Überprüfe, ob die Transaktion existiert und dem Benutzer gehört
     const existingTransaction = await prisma.transaction.findFirst({
       where: {
-        id: resolvedParams.id,
+        id,
         userId: user.id
       }
     })
 
     if (!existingTransaction) {
-      console.log('Transaktion nicht gefunden für ID:', resolvedParams.id)
+      console.log('Transaktion nicht gefunden für ID:', id)
       return NextResponse.json({ error: 'Transaktion nicht gefunden' }, { status: 404 })
     }
 
@@ -104,7 +103,7 @@ export async function PATCH(
     console.log('Bereinigte Update-Felder:', cleanedUpdateFields)
 
     const updatedTransaction = await prisma.transaction.update({
-      where: { id: resolvedParams.id },
+      where: { id },
       data: cleanedUpdateFields,
       include: {
         merchantRef: {
@@ -138,13 +137,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const resolvedParams = await Promise.resolve(params)
+  const { id } = await params
   
   try {
     await prisma.transaction.delete({
-      where: { id: resolvedParams.id }
+      where: { id }
     })
     return new NextResponse(null, { status: 204 })
   } catch (error) {

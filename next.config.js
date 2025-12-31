@@ -2,8 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
+    allowedDevOrigins: ['https://konto-planer.de', 'http://konto-planer.de'],
     serverActions: {
-      allowedOrigins: ['localhost:3000']
+      allowedOrigins: ['localhost:3001', 'https://konto-planer.de', 'http://konto-planer.de']
     }
   },
   typescript: {

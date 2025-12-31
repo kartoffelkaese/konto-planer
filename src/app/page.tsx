@@ -263,32 +263,32 @@ export default function DashboardPage() {
                 <p className="text-gray-500 dark:text-gray-400">Keine Ausgaben im aktuellen Zeitraum</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={data.categoryDistribution}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={({ name, value }) => `${name}: ${formatCurrency(value)}`}
-                  >
-                    {data.categoryDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value: number) => formatCurrency(value)}
-                    contentStyle={{ 
-                      backgroundColor: 'var(--card-bg)', 
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '0.5rem',
-                      color: 'var(--text-color)'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data.categoryDistribution}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  label={({ name, value }) => `${name}: ${formatCurrency(value)}`}
+                >
+                  {data.categoryDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value: number) => formatCurrency(value)}
+                  contentStyle={{ 
+                    backgroundColor: 'var(--card-bg)', 
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '0.5rem',
+                    color: 'var(--text-color)'
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
             )}
           </div>
         </div>
@@ -328,33 +328,33 @@ export default function DashboardPage() {
               <p className="text-gray-500 dark:text-gray-400">Keine Ausgaben im aktuellen Zeitraum</p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.categoryDistribution}>
-                <XAxis 
-                  dataKey="name" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                  interval={0}
-                  tick={{ fontSize: 12, fill: 'var(--text-color)' }}
-                />
-                <YAxis 
-                  tickFormatter={(value) => `${value}€`}
-                  tick={{ fontSize: 12, fill: 'var(--text-color)' }}
-                />
-                <Tooltip 
-                  formatter={(value: number) => [`${value.toFixed(2)}€`, 'Ausgaben']}
-                  labelFormatter={(label) => `Kategorie: ${label}`}
-                  contentStyle={{ 
-                    backgroundColor: 'var(--card-bg)', 
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '0.5rem',
-                    color: 'var(--text-color)'
-                  }}
-                />
-                <Bar dataKey="value" fill="#2563eb" />
-              </BarChart>
-            </ResponsiveContainer>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data.categoryDistribution}>
+              <XAxis 
+                dataKey="name" 
+                angle={-45}
+                textAnchor="end"
+                height={60}
+                interval={0}
+                tick={{ fontSize: 12, fill: 'var(--text-color)' }}
+              />
+              <YAxis 
+                tickFormatter={(value) => `${value}€`}
+                tick={{ fontSize: 12, fill: 'var(--text-color)' }}
+              />
+              <Tooltip 
+                formatter={(value: number) => [`${value.toFixed(2)}€`, 'Ausgaben']}
+                labelFormatter={(label) => `Kategorie: ${label}`}
+                contentStyle={{ 
+                  backgroundColor: 'var(--card-bg)', 
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '0.5rem',
+                  color: 'var(--text-color)'
+                }}
+              />
+              <Bar dataKey="value" fill="#2563eb" />
+            </BarChart>
+          </ResponsiveContainer>
           )}
         </div>
       </div>

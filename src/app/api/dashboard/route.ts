@@ -2,12 +2,16 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getSalaryMonthRange } from '@/lib/dateUtils'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
   try {
     const session = await auth()
     
     if (!session?.user?.email) {
+      logger.warn('Dashboard: Unauthorized access attempt', {
+        endpoint: '/api/dashboard'
+      })
       return new NextResponse('Nicht autorisiert', { status: 401 })
     }
 
@@ -207,7 +211,10 @@ export async function GET() {
       categoryDistribution: kumulatedCategoryData
     })
   } catch (error) {
-    console.error('Fehler beim Laden der Dashboard-Daten:', error)
+    logger.error('Fehler beim Laden der Dashboard-Daten', error, {
+      endpoint: '/api/dashboard',
+      userId: (await auth())?.user?.email || 'unknown'
+    })
     return new NextResponse('Interner Server-Fehler', { status: 500 })
   }
 } 

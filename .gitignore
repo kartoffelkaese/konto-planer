@@ -50,3 +50,10 @@ next-env.d.ts
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Logs
+/logs
+*.log
+pm2-error.log
+pm2-out.log
+pm2-combined.log

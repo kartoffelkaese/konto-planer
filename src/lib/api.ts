@@ -31,10 +31,22 @@ api.interceptors.response.use(
   }
 )
 
-export const getTransactions = async (page: number = 1, limit: number = 20): Promise<TransactionsResponse> => {
-  const response = await api.get('/transactions', {
-    params: { page, limit }
-  })
+export const getTransactions = async (
+  page: number = 1, 
+  limit: number = 20,
+  options?: {
+    salaryDay?: number | null
+    filterSalaryMonth?: boolean
+  }
+): Promise<TransactionsResponse> => {
+  const params: any = { page, limit }
+  if (options?.salaryDay !== undefined && options.salaryDay !== null) {
+    params.salaryDay = options.salaryDay
+  }
+  if (options?.filterSalaryMonth !== undefined) {
+    params.filterSalaryMonth = options.filterSalaryMonth
+  }
+  const response = await api.get('/transactions', { params })
   return response.data
 }
 

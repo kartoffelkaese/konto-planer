@@ -2,30 +2,108 @@
 
 import Link from 'next/link'
 import { Transaction } from '@/types'
-import { isTransactionPending, formatDate } from '@/lib/dateUtils'
+import { formatDate, isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
 import { formatCurrency } from '@/lib/formatters'
-import { PencilIcon, CheckIcon, MinusCircleIcon, ClockIcon, CalendarIcon } from '@heroicons/react/24/outline'
+import { PencilIcon, CheckIcon, MinusCircleIcon, ClockIcon, CalendarIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import Modal from '@/components/Modal'
 import EditTransactionForm from '@/components/EditTransactionForm'
 import { getContrastColor } from '@/lib/colorUtils'
 
+type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
+type SortDirection = 'asc' | 'desc'
+
 interface TransactionListProps {
   transactions: Transaction[]
   onTransactionChange: () => void
   lastElementRef: (node: HTMLElement | null) => void
+  sortField?: SortField
+  sortDirection?: SortDirection
+  onSort?: (field: SortField) => void
+  salaryDay?: number | null
 }
 
 export default function TransactionList({ 
   transactions, 
   onTransactionChange,
-  lastElementRef 
+  lastElementRef,
+  sortField = 'date',
+  sortDirection = 'desc',
+  onSort,
+  salaryDay
 }: TransactionListProps) {
   const [editingDate, setEditingDate] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Hilfsfunktion für isTransactionPending mit salaryDay
+  const checkIsPending = (transaction: Transaction): boolean => {
+    if (salaryDay === null || salaryDay === undefined) return false
+    return transaction.isRecurring && 
+           isTransactionDueInSalaryMonth({
+             date: new Date(transaction.date),
+             isRecurring: transaction.isRecurring,
+             recurringInterval: transaction.recurringInterval,
+             lastConfirmedDate: transaction.lastConfirmedDate ? new Date(transaction.lastConfirmedDate) : undefined
+           }, salaryDay) && 
+           !transaction.isConfirmed
+  }
+
+  // Sortiere Transaktionen clientseitig
+  const sortedTransactions = [...transactions].sort((a, b) => {
+    let comparison = 0
+
+    switch (sortField) {
+      case 'date':
+        comparison = new Date(a.date).getTime() - new Date(b.date).getTime()
+        break
+      case 'merchant':
+        comparison = (a.merchant || '').localeCompare(b.merchant || '')
+        break
+      case 'category':
+        const categoryA = a.merchantRef?.category?.name || ''
+        const categoryB = b.merchantRef?.category?.name || ''
+        comparison = categoryA.localeCompare(categoryB)
+        break
+      case 'description':
+        comparison = (a.description || '').localeCompare(b.description || '')
+        break
+      case 'amount':
+        comparison = a.amount - b.amount
+        break
+      case 'status':
+        // Status: bestätigt > ausstehend > offen
+        const statusA = a.isConfirmed ? 3 : checkIsPending(a) ? 2 : 1
+        const statusB = b.isConfirmed ? 3 : checkIsPending(b) ? 2 : 1
+        comparison = statusA - statusB
+        break
+    }
+
+    return sortDirection === 'asc' ? comparison : -comparison
+  })
+
+  const handleSort = (field: SortField) => {
+    if (onSort) {
+      onSort(field)
+    }
+  }
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) {
+      return (
+        <span className="inline-block w-4 h-4 opacity-30">
+          <ChevronUpIcon className="h-4 w-4" />
+        </span>
+      )
+    }
+    return sortDirection === 'asc' ? (
+      <ChevronUpIcon className="h-4 w-4" />
+    ) : (
+      <ChevronDownIcon className="h-4 w-4" />
+    )
+  }
 
   const handleToggleConfirmation = async (transaction: Transaction) => {
     try {
@@ -157,27 +235,75 @@ export default function TransactionList({
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead>
             <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-              <th className="text-left p-4 text-gray-500 dark:text-gray-400">Datum</th>
-              <th className="text-left p-4 text-gray-500 dark:text-gray-400">Händler</th>
-              <th className="text-left p-4 text-gray-500 dark:text-gray-400">Kategorie</th>
-              <th className="text-left p-4 text-gray-500 dark:text-gray-400">Beschreibung</th>
-              <th className="text-right p-4 text-gray-500 dark:text-gray-400">Betrag</th>
-              <th className="text-center p-4 text-gray-500 dark:text-gray-400">Status</th>
+              <th 
+                className="text-left p-4 text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none"
+                onClick={() => handleSort('date')}
+              >
+                <div className="flex items-center space-x-1">
+                  <span>Datum</span>
+                  <SortIcon field="date" />
+                </div>
+              </th>
+              <th 
+                className="text-left p-4 text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none"
+                onClick={() => handleSort('merchant')}
+              >
+                <div className="flex items-center space-x-1">
+                  <span>Händler</span>
+                  <SortIcon field="merchant" />
+                </div>
+              </th>
+              <th 
+                className="text-left p-4 text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none"
+                onClick={() => handleSort('category')}
+              >
+                <div className="flex items-center space-x-1">
+                  <span>Kategorie</span>
+                  <SortIcon field="category" />
+                </div>
+              </th>
+              <th 
+                className="text-left p-4 text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none"
+                onClick={() => handleSort('description')}
+              >
+                <div className="flex items-center space-x-1">
+                  <span>Beschreibung</span>
+                  <SortIcon field="description" />
+                </div>
+              </th>
+              <th 
+                className="text-right p-4 text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none"
+                onClick={() => handleSort('amount')}
+              >
+                <div className="flex items-center justify-end space-x-1">
+                  <span>Betrag</span>
+                  <SortIcon field="amount" />
+                </div>
+              </th>
+              <th 
+                className="text-center p-4 text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none"
+                onClick={() => handleSort('status')}
+              >
+                <div className="flex items-center justify-center space-x-1">
+                  <span>Status</span>
+                  <SortIcon field="status" />
+                </div>
+              </th>
               <th className="text-right p-4 text-gray-500 dark:text-gray-400">Aktionen</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-            {transactions.length === 0 ? (
+            {sortedTransactions.length === 0 ? (
               <tr>
                 <td colSpan={7} className="text-center p-4 text-sm text-gray-500 dark:text-gray-400">
                   Keine Transaktionen vorhanden
                 </td>
               </tr>
             ) : (
-              transactions.map((transaction, index) => (
+              sortedTransactions.map((transaction, index) => (
                 <tr 
                   key={transaction.id} 
-                  ref={index === transactions.length - 1 ? lastElementRef : undefined}
+                  ref={index === sortedTransactions.length - 1 ? lastElementRef : undefined}
                   className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
@@ -223,12 +349,12 @@ export default function TransactionList({
                       className={`inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full ${
                         transaction.isConfirmed
                           ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800'
-                          : isTransactionPending(transaction)
+                          : checkIsPending(transaction)
                           ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800'
                           : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
                       }`}
                     >
-                      {transaction.isConfirmed ? 'Bestätigt' : isTransactionPending(transaction) ? 'Ausstehend' : 'Offen'}
+                      {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
                     </button>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -249,15 +375,15 @@ export default function TransactionList({
 
       {/* Mobile Ansicht */}
       <div className="md:hidden space-y-4">
-        {transactions.length === 0 ? (
+        {sortedTransactions.length === 0 ? (
           <div className="text-center p-4 text-sm text-gray-500 dark:text-gray-400">
             Keine Transaktionen vorhanden
           </div>
         ) : (
-          transactions.map((transaction, index) => (
+          sortedTransactions.map((transaction, index) => (
             <div
               key={transaction.id}
-              ref={index === transactions.length - 1 ? lastElementRef : undefined}
+              ref={index === sortedTransactions.length - 1 ? lastElementRef : undefined}
               className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 space-y-2"
             >
               <div className="flex justify-between items-start">
@@ -300,12 +426,12 @@ export default function TransactionList({
                     className={`inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full ${
                       transaction.isConfirmed
                         ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800'
-                        : isTransactionPending(transaction)
+                        : checkIsPending(transaction)
                         ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
                     }`}
                   >
-                    {transaction.isConfirmed ? 'Bestätigt' : isTransactionPending(transaction) ? 'Ausstehend' : 'Offen'}
+                    {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
                   </button>
                   <button
                     onClick={() => handleEditClick(transaction.id)}

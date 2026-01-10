@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getSalaryMonthRange } from '@/lib/dateUtils'
 
 export async function GET(request: Request) {
   const session = await auth()
@@ -16,6 +17,8 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const skip = (page - 1) * limit
+    const salaryDayParam = searchParams.get('salaryDay')
+    const filterSalaryMonth = searchParams.get('filterSalaryMonth') === 'true'
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email }
@@ -25,11 +28,28 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
+    // Filter für Gehaltsmonat
+    let dateFilter: { gte?: Date; lte?: Date } | undefined
+    if (filterSalaryMonth && salaryDayParam) {
+      const salaryDay = parseInt(salaryDayParam)
+      const { startDate, endDate } = getSalaryMonthRange(salaryDay)
+      dateFilter = {
+        gte: startDate,
+        lte: endDate
+      }
+    }
+
+    const whereClause: any = {
+      userId: user.id
+    }
+
+    if (dateFilter) {
+      whereClause.date = dateFilter
+    }
+
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({
-        where: {
-          userId: user.id
-        },
+        where: whereClause,
         include: {
           merchantRef: {
             include: {
@@ -49,9 +69,7 @@ export async function GET(request: Request) {
         take: limit
       }),
       prisma.transaction.count({
-        where: {
-          userId: user.id
-        }
+        where: whereClause
       })
     ])
 

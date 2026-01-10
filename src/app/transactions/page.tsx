@@ -11,6 +11,9 @@ import Modal from '@/components/Modal'
 import TransactionForm from '@/components/TransactionForm'
 import EditTransactionForm from '@/components/EditTransactionForm'
 
+type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
+type SortDirection = 'asc' | 'desc'
+
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
@@ -19,6 +22,9 @@ export default function TransactionsPage() {
   const [accountName, setAccountName] = useState('Mein Konto')
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
+  const [sortField, setSortField] = useState<SortField>('date')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [filterSalaryMonth, setFilterSalaryMonth] = useState(false)
   const [totals, setTotals] = useState<{
     currentIncome: number
     currentExpenses: number
@@ -55,6 +61,15 @@ export default function TransactionsPage() {
     loadTotals()
   }, [salaryDay])
 
+  useEffect(() => {
+    if (salaryDay !== null) {
+      // Beim Ändern des Filters zurück zur ersten Seite und Transaktionen neu laden
+      setPage(1)
+      setTransactions([])
+      loadTransactions(1, false)
+    }
+  }, [filterSalaryMonth, salaryDay])
+
   const loadSettings = async () => {
     try {
       const response = await fetch('/api/users/settings')
@@ -84,7 +99,10 @@ export default function TransactionsPage() {
   const loadTransactions = async (pageNum: number, append = false) => {
     try {
       setLoading(true)
-      const response = await getTransactions(pageNum)
+      const response = await getTransactions(pageNum, 20, {
+        salaryDay: salaryDay,
+        filterSalaryMonth: filterSalaryMonth
+      })
       const data = response.transactions.map(t => ({
         ...t,
         amount: Number(t.amount)
@@ -132,7 +150,7 @@ export default function TransactionsPage() {
         observer.current.disconnect()
       }
     }
-  }, [hasMore, loading, page])
+  }, [hasMore, loading, page, filterSalaryMonth, salaryDay])
 
   // Leere Funktion für die Kompatibilität mit TransactionList
   const lastElementRef = useCallback(() => {}, [])
@@ -169,7 +187,18 @@ export default function TransactionsPage() {
   const handleTransactionChange = useCallback(async () => {
     await loadTotals()
     await loadTransactions(page)
-  }, [page, salaryDay])
+  }, [page, salaryDay, filterSalaryMonth])
+
+  const handleSort = useCallback((field: SortField) => {
+    if (sortField === field) {
+      // Toggle direction if same field
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      // Set new field with default direction
+      setSortField(field)
+      setSortDirection('desc')
+    }
+  }, [sortField])
 
   const handleCreatePending = async () => {
     try {
@@ -260,12 +289,25 @@ export default function TransactionsPage() {
               Verwalten Sie Ihre Ein- und Ausgaben
             </p>
           </div>
-          <button
-            onClick={() => setShowNewTransactionModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-          >
-            Neue Transaktion
-          </button>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={filterSalaryMonth}
+                onChange={(e) => setFilterSalaryMonth(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Nur Gehaltsmonat
+              </span>
+            </label>
+            <button
+              onClick={() => setShowNewTransactionModal(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            >
+              Neue Transaktion
+            </button>
+          </div>
         </div>
 
         <div id="monthly-overview-section" className="rounded-lg shadow-md p-4 mb-8 bg-white dark:bg-gray-800">
@@ -284,6 +326,10 @@ export default function TransactionsPage() {
             transactions={transactions} 
             onTransactionChange={handleTransactionChange}
             lastElementRef={lastElementRef}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+            salaryDay={salaryDay}
           />
           {hasMore && (
             <div ref={loadingRef} className="flex justify-center mt-8">

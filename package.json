@@ -1,0 +1,50 @@
+{
+  "name": "konto-planer",
+  "version": "3.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -H 127.0.0.1",
+    "build": "next build",
+    "start": "next start -H 127.0.0.1 -p 3001",
+    "lint": "next lint",
+    "pm2:start": "pm2 start ecosystem.config.js --env production",
+    "pm2:stop": "pm2 stop konto-planer",
+    "pm2:restart": "pm2 restart konto-planer",
+    "pm2:logs": "pm2 logs konto-planer",
+    "pm2:monitor": "pm2 monit konto-planer"
+  },
+  "overrides": {
+    "postcss": "^8.5.12",
+    "@hono/node-server": "^1.19.13",
+    "eslint": "10.2.1"
+  },
+  "dependencies": {
+    "@auth/core": "^0.37.0",
+    "@auth/prisma-adapter": "^2.11.2",
+    "@headlessui/react": "^2.2.10",
+    "@heroicons/react": "^2.2.0",
+    "@prisma/client": "^7.8.0",
+    "bcryptjs": "^3.0.3",
+    "dayjs": "^1.11.20",
+    "mysql2": "^3.22.3",
+    "next": "^16.2.4",
+    "next-auth": "^5.0.0-beta.29",
+    "prisma": "^7.8.0",
+    "react": "^19.2.5",
+    "react-colorful": "^5.6.1",
+    "react-dom": "^19.2.5",
+    "recharts": "^3.8.1"
+  },
+  "devDependencies": {
+    "@eslint/compat": "^2.0.5",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.5.0",
+    "eslint": "10.2.1",
+    "eslint-config-next": "^16.2.4",
+    "postcss": "^8.5.12",
+    "tailwindcss": "^4.2.4",
+    "typescript": "^6.0.3"
+  }
+}

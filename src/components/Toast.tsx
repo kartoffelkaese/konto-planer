@@ -68,7 +68,7 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
       </div>
       <button
         onClick={onClose}
-        className="absolute right-2 top-2 rounded-md p-1.5 hover:bg-opacity-10 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2"
+        className="cursor-pointer absolute right-2 top-2 rounded-md p-1.5 hover:bg-opacity-10 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2"
         aria-label="Benachrichtigung schließen"
       >
         <XCircleIcon className="h-5 w-5" />

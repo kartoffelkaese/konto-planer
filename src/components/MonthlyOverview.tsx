@@ -30,7 +30,7 @@ export default function MonthlyOverview({
       <div className="md:hidden">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-xl p-4 shadow-sm flex items-center justify-between"
+          className="cursor-pointer w-full bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 rounded-xl p-4 shadow-sm flex items-center justify-between"
         >
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">

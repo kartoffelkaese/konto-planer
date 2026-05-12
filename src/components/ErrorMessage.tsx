@@ -20,7 +20,7 @@ export default function ErrorMessage({ message, onRetry, className = '' }: Error
               <button
                 type="button"
                 onClick={onRetry}
-                className="rounded-md bg-red-50 px-2 py-1.5 text-sm font-medium text-red-800 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
+                className="cursor-pointer rounded-md bg-red-50 px-2 py-1.5 text-sm font-medium text-red-800 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2"
               >
                 Erneut versuchen
               </button>

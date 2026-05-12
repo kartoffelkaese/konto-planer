@@ -188,7 +188,7 @@ export default function RecurringTransactionsPage() {
           </div>
           <button
             onClick={() => setShowNewTransactionModal(true)}
-            className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark transition-colors duration-150"
+            className="cursor-pointer inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark transition-colors duration-150"
           >
             <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -291,7 +291,7 @@ export default function RecurringTransactionsPage() {
                           <button
                             onClick={() => handleCreateNextInstance(transaction)}
                             title="Nächste Zahlung erstellen"
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                            className="cursor-pointer text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                           >
                             <ArrowPathIcon className="h-5 w-5" />
                           </button>
@@ -301,7 +301,7 @@ export default function RecurringTransactionsPage() {
                               setShowEditTransactionModal(true)
                             }}
                             title="Zahlung bearbeiten"
-                            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                            className="cursor-pointer text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                           >
                             <PencilIcon className="h-5 w-5" />
                           </button>
@@ -349,7 +349,7 @@ export default function RecurringTransactionsPage() {
                             setSelectedTransactionId(transaction.id)
                             setShowEditTransactionModal(true)
                           }}
-                          className="p-1 text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                          className="cursor-pointer p-1 text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
                         >
                           <PencilIcon className="h-4 w-4" />
                         </button>
@@ -387,7 +387,7 @@ export default function RecurringTransactionsPage() {
                     <div className="flex justify-end space-x-2">
                       <button
                         onClick={() => handleCreateNextInstance(transaction)}
-                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors duration-150"
+                        className="cursor-pointer inline-flex items-center px-3 py-1.5 text-xs rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors duration-150"
                       >
                         <ArrowPathIcon className="h-4 w-4 mr-1" />
                         Neue Instanz
@@ -397,7 +397,7 @@ export default function RecurringTransactionsPage() {
                           setSelectedTransactionId(transaction.id)
                           setShowEditTransactionModal(true)
                         }}
-                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors duration-150"
+                        className="cursor-pointer inline-flex items-center px-3 py-1.5 text-xs rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors duration-150"
                       >
                         <PencilIcon className="h-4 w-4 mr-1" />
                         Bearbeiten

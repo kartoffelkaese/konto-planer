@@ -55,13 +55,13 @@ export default function Error({
         <div className="flex gap-4">
           <button
             onClick={reset}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            className="cursor-pointer flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
           >
             Erneut versuchen
           </button>
           <button
             onClick={() => window.location.href = '/'}
-            className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            className="cursor-pointer flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
           >
             Zur Startseite
           </button>

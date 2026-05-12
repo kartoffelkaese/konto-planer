@@ -310,7 +310,7 @@ export default function TransactionList({
                     <div className="flex items-center">
                       <button
                         onClick={() => handleEditClick(transaction.id)}
-                        className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                        className="cursor-pointer text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
                       >
                         {formatDate(transaction.date)}
                       </button>
@@ -346,7 +346,7 @@ export default function TransactionList({
                     <button
                       onClick={() => handleToggleConfirmation(transaction)}
                       title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
-                      className={`inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full ${
+                      className={`cursor-pointer inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full ${
                         transaction.isConfirmed
                           ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800'
                           : checkIsPending(transaction)
@@ -361,7 +361,7 @@ export default function TransactionList({
                     <button
                       onClick={() => handleEditClick(transaction.id)}
                       title="Transaktion bearbeiten"
-                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                      className="cursor-pointer text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                     >
                       <PencilIcon className="h-5 w-5" />
                     </button>
@@ -390,7 +390,7 @@ export default function TransactionList({
                 <div>
                   <button
                     onClick={() => handleEditClick(transaction.id)}
-                    className="text-sm font-medium text-gray-900 dark:text-white"
+                    className="cursor-pointer text-sm font-medium text-gray-900 dark:text-white"
                   >
                     {formatDate(transaction.date)}
                   </button>
@@ -423,7 +423,7 @@ export default function TransactionList({
                   <button
                     onClick={() => handleToggleConfirmation(transaction)}
                     title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
-                    className={`inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full ${
+                    className={`cursor-pointer inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full ${
                       transaction.isConfirmed
                         ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800'
                         : checkIsPending(transaction)
@@ -436,7 +436,7 @@ export default function TransactionList({
                   <button
                     onClick={() => handleEditClick(transaction.id)}
                     title="Transaktion bearbeiten"
-                    className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                    className="cursor-pointer text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     <PencilIcon className="h-5 w-5" />
                   </button>

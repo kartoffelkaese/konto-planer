@@ -16,8 +16,19 @@ assertProductionEnv()
 
 const isProduction = process.env.NODE_ENV === 'production'
 
+/**
+ * Hinter Reverse-Proxy (nginx/Caddy): Host-Header von AUTH_URL vertrauen.
+ * Deaktivieren nur mit AUTH_TRUST_HOST=false (selten nötig).
+ */
+function shouldTrustHost(): boolean {
+  if (!isProduction) return true
+  if (process.env.AUTH_TRUST_HOST === 'false') return false
+  if (process.env.AUTH_TRUST_HOST === 'true') return true
+  return !!(process.env.AUTH_URL || process.env.NEXTAUTH_URL)
+}
+
 export const authConfig: NextAuthConfig = {
-  trustHost: isProduction ? !!process.env.AUTH_TRUST_HOST : true,
+  trustHost: shouldTrustHost(),
   adapter: PrismaAdapter(prisma),
   useSecureCookies: isProduction,
   session: {

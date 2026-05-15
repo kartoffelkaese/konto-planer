@@ -43,7 +43,7 @@ export default function Error({
         </p>
         {process.env.NODE_ENV === 'development' && (
           <details className="mb-4">
-            <summary className="cursor-pointer text-sm text-gray-500 dark:text-gray-400 mb-2">
+            <summary className="text-sm text-gray-500 dark:text-gray-400 mb-2">
               Fehlerdetails
             </summary>
             <pre className="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded overflow-auto">
@@ -55,13 +55,13 @@ export default function Error({
         <div className="flex gap-4">
           <button
             onClick={reset}
-            className="cursor-pointer flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
           >
             Erneut versuchen
           </button>
           <button
             onClick={() => window.location.href = '/'}
-            className="cursor-pointer flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+            className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
           >
             Zur Startseite
           </button>

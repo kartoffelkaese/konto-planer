@@ -97,7 +97,7 @@ export default function ConfirmDialog({
           <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
             <button
               type="button"
-              className={`cursor-pointer inline-flex w-full justify-center rounded-md border border-transparent px-4 py-2 text-base font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-dark-light sm:ml-3 sm:w-auto sm:text-sm ${styles.button}`}
+              className={`inline-flex w-full justify-center rounded-md border border-transparent px-4 py-2 text-base font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-dark-light sm:ml-3 sm:w-auto sm:text-sm ${styles.button}`}
               onClick={() => {
                 onConfirm()
                 onClose()
@@ -108,7 +108,7 @@ export default function ConfirmDialog({
             </button>
             <button
               type="button"
-              className="cursor-pointer mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 dark:border-gray-600 px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-dark-light sm:mt-0 sm:w-auto sm:text-sm"
+              className="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 dark:border-gray-600 px-4 py-2 text-base font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-dark-light sm:mt-0 sm:w-auto sm:text-sm"
               onClick={onClose}
             >
               {cancelText}

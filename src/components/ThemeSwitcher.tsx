@@ -56,7 +56,7 @@ export default function ThemeSwitcher() {
     <div className="flex items-center space-x-2">
       <button
         onClick={() => handleThemeChange('light')}
-        className={`cursor-pointer p-2 rounded-lg transition-colors ${
+        className={`p-2 rounded-lg transition-colors ${
           theme === 'light'
             ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300'
             : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
@@ -67,7 +67,7 @@ export default function ThemeSwitcher() {
       </button>
       <button
         onClick={() => handleThemeChange('dark')}
-        className={`cursor-pointer p-2 rounded-lg transition-colors ${
+        className={`p-2 rounded-lg transition-colors ${
           theme === 'dark'
             ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300'
             : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
@@ -78,7 +78,7 @@ export default function ThemeSwitcher() {
       </button>
       <button
         onClick={() => handleThemeChange('system')}
-        className={`cursor-pointer p-2 rounded-lg transition-colors ${
+        className={`p-2 rounded-lg transition-colors ${
           theme === 'system'
             ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300'
             : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'

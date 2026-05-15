@@ -1,4 +1,4 @@
-@config "../../tailwind.config.ts";
+@config "../../tailwind.config.mjs";
 @import "tailwindcss";
 
 :root {
@@ -50,14 +50,29 @@ table {
   color: var(--text-primary);
 }
 
-/* Stärkerer Kontrast für Links */
-a {
+/* Links */
+a[href] {
   color: rgb(37, 99, 235);
+  cursor: pointer;
 }
 
-/* Bessere Lesbarkeit für Buttons */
+/* Buttons */
 button {
   color: var(--text-primary);
+}
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+label[for],
+label:has(input:not([disabled]):not([type="hidden"])),
+summary,
+th.select-none {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
 }
 
 /* Einheitliches Padding für Input-Felder */

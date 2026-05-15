@@ -280,7 +280,7 @@ export default function TransactionsPage() {
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{accountName}</h1>
               <button
                 onClick={handleCreatePending}
-                className="cursor-pointer inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
               >
                 Ausstehende Zahlungen erstellen
               </button>
@@ -290,7 +290,7 @@ export default function TransactionsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <label className="flex items-center space-x-2 cursor-pointer">
+            <label className="flex items-center space-x-2">
               <input
                 type="checkbox"
                 checked={filterSalaryMonth}
@@ -303,7 +303,7 @@ export default function TransactionsPage() {
             </label>
           <button
             onClick={() => setShowNewTransactionModal(true)}
-            className="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
           >
             Neue Transaktion
           </button>

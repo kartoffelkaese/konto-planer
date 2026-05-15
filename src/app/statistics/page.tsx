@@ -1,5 +1,7 @@
 'use client'
 
+// Statistik: Charts ohne zusätzliche Mikrointeraktionen – stabile Darstellung hat Vorrang.
+
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { 

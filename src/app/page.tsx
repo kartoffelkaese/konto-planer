@@ -1,5 +1,7 @@
 'use client'
 
+// Marketing-Landing: bestehende Hover-Effekte bewusst; keine weiteren Mikrointeraktionen (siehe globals.css prefers-reduced-motion).
+
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { 

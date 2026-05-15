@@ -5,6 +5,10 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 248, 250, 252;
   --background-end-rgb: 248, 250, 252;
+  --motion-duration-feedback: 150ms;
+  --motion-duration-overlay: 300ms;
+  --motion-duration-expand: 200ms;
+  --motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
   --sidebar-width: 4rem;
   --card-bg: #ffffff;
   --card-border: #e5e7eb;
@@ -59,6 +63,14 @@ a[href] {
 /* Buttons */
 button {
   color: var(--text-primary);
+  transition: color var(--motion-duration-feedback) var(--motion-easing),
+    background-color var(--motion-duration-feedback) var(--motion-easing),
+    border-color var(--motion-duration-feedback) var(--motion-easing),
+    transform var(--motion-duration-feedback) var(--motion-easing);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 button:not(:disabled),
@@ -99,4 +111,53 @@ input, select, textarea {
   background-color: var(--hover-bg);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+/* Toast */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-out-down {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up var(--motion-duration-expand) var(--motion-easing) forwards;
+}
+
+.animate-fade-out-down {
+  animation: fade-out-down var(--motion-duration-expand) var(--motion-easing) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  button:active:not(:disabled) {
+    transform: none;
+  }
+
+  .hover-card:hover {
+    transform: none;
+  }
 }

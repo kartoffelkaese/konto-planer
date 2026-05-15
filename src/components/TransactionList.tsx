@@ -90,18 +90,32 @@ export default function TransactionList({
     }
   }
 
+  const getSortHeaderClass = (field: SortField, align: 'left' | 'right' | 'center' = 'left') => {
+    const alignClass =
+      align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'
+    const isActive = sortField === field
+    return `${alignClass} p-4 select-none transition-colors duration-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
+      isActive
+        ? 'text-gray-900 dark:text-white font-medium'
+        : 'text-gray-500 dark:text-gray-400'
+    }`
+  }
+
+  const statusPillClass =
+    'inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full transition-colors duration-150 active:scale-95'
+
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) {
       return (
-        <span className="inline-block w-4 h-4 opacity-30">
+        <span className="inline-block w-4 h-4 opacity-30 transition-opacity duration-150">
           <ChevronUpIcon className="h-4 w-4" />
         </span>
       )
     }
     return sortDirection === 'asc' ? (
-      <ChevronUpIcon className="h-4 w-4" />
+      <ChevronUpIcon className="h-4 w-4 transition-transform duration-150" />
     ) : (
-      <ChevronDownIcon className="h-4 w-4" />
+      <ChevronDownIcon className="h-4 w-4 transition-transform duration-150" />
     )
   }
 
@@ -235,8 +249,8 @@ export default function TransactionList({
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead>
             <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-              <th 
-                className="text-left p-4 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 select-none"
+              <th
+                className={getSortHeaderClass('date')}
                 onClick={() => handleSort('date')}
               >
                 <div className="flex items-center space-x-1">
@@ -244,8 +258,8 @@ export default function TransactionList({
                   <SortIcon field="date" />
                 </div>
               </th>
-              <th 
-                className="text-left p-4 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 select-none"
+              <th
+                className={getSortHeaderClass('merchant')}
                 onClick={() => handleSort('merchant')}
               >
                 <div className="flex items-center space-x-1">
@@ -253,8 +267,8 @@ export default function TransactionList({
                   <SortIcon field="merchant" />
                 </div>
               </th>
-              <th 
-                className="text-left p-4 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 select-none"
+              <th
+                className={getSortHeaderClass('category')}
                 onClick={() => handleSort('category')}
               >
                 <div className="flex items-center space-x-1">
@@ -262,8 +276,8 @@ export default function TransactionList({
                   <SortIcon field="category" />
                 </div>
               </th>
-              <th 
-                className="text-left p-4 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 select-none"
+              <th
+                className={getSortHeaderClass('description')}
                 onClick={() => handleSort('description')}
               >
                 <div className="flex items-center space-x-1">
@@ -271,8 +285,8 @@ export default function TransactionList({
                   <SortIcon field="description" />
                 </div>
               </th>
-              <th 
-                className="text-right p-4 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 select-none"
+              <th
+                className={getSortHeaderClass('amount', 'right')}
                 onClick={() => handleSort('amount')}
               >
                 <div className="flex items-center justify-end space-x-1">
@@ -280,8 +294,8 @@ export default function TransactionList({
                   <SortIcon field="amount" />
                 </div>
               </th>
-              <th 
-                className="text-center p-4 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 select-none"
+              <th
+                className={getSortHeaderClass('status', 'center')}
                 onClick={() => handleSort('status')}
               >
                 <div className="flex items-center justify-center space-x-1">
@@ -304,7 +318,7 @@ export default function TransactionList({
                 <tr 
                   key={transaction.id} 
                   ref={index === sortedTransactions.length - 1 ? lastElementRef : undefined}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  className="transition-colors duration-100 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     <div className="flex items-center">
@@ -346,7 +360,7 @@ export default function TransactionList({
                     <button
                       onClick={() => handleToggleConfirmation(transaction)}
                       title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
-                      className={`inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full ${
+                      className={`${statusPillClass} ${
                         transaction.isConfirmed
                           ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800'
                           : checkIsPending(transaction)
@@ -423,7 +437,7 @@ export default function TransactionList({
                   <button
                     onClick={() => handleToggleConfirmation(transaction)}
                     title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
-                    className={`inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full ${
+                    className={`${statusPillClass} ${
                       transaction.isConfirmed
                         ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800'
                         : checkIsPending(transaction)

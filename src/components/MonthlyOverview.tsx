@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
+import { ChevronDownIcon } from '@heroicons/react/24/outline'
 import { formatCurrency } from '@/lib/formatters'
 import { formatDate } from '@/lib/dateUtils'
 
@@ -48,17 +48,25 @@ export default function MonthlyOverview({
             <p className="text-lg font-bold text-indigo-700 dark:text-indigo-300">
               {formatCurrency(clearedBalance)}
             </p>
-            {isExpanded ? (
-              <ChevronUpIcon className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />
-            ) : (
-              <ChevronDownIcon className="h-5 w-5 text-indigo-700 dark:text-indigo-300" />
-            )}
+            <ChevronDownIcon
+              className={`h-5 w-5 text-indigo-700 dark:text-indigo-300 transition-transform duration-200 ${
+                isExpanded ? 'rotate-180' : ''
+              }`}
+            />
           </div>
         </button>
 
-        {/* Ausgeklappte Ansicht */}
-        {isExpanded && (
-          <div className="mt-4 space-y-4">
+        <div
+          className={`grid transition-[grid-template-rows] duration-200 ease-out ${
+            isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div
+              className={`mt-4 space-y-4 transition-opacity duration-200 ${
+                isExpanded ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
             {/* Einnahmen */}
             <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-4 shadow-sm">
               <div className="flex items-center justify-between">
@@ -123,8 +131,9 @@ export default function MonthlyOverview({
                 </p>
               </div>
             </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Tablet: 2x2 Grid */}

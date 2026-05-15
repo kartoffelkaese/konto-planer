@@ -1,4 +1,6 @@
-import { useEffect } from 'react'
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
 import { CheckCircleIcon, XCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline'
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation'
 
@@ -11,18 +13,29 @@ interface ToastProps {
   duration?: number
 }
 
+const EXIT_DURATION_MS = 200
+
 export default function Toast({ message, type, onClose, duration = 3000 }: ToastProps) {
+  const [isExiting, setIsExiting] = useState(false)
+
+  const requestClose = useCallback(() => {
+    setIsExiting((prev) => (prev ? prev : true))
+  }, [])
+
   useKeyboardNavigation({
-    onEscape: onClose
+    onEscape: requestClose,
   })
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose()
-    }, duration)
-
+    const timer = setTimeout(requestClose, duration)
     return () => clearTimeout(timer)
-  }, [duration, onClose])
+  }, [duration, requestClose])
+
+  useEffect(() => {
+    if (!isExiting) return
+    const timer = setTimeout(onClose, EXIT_DURATION_MS)
+    return () => clearTimeout(timer)
+  }, [isExiting, onClose])
 
   const getIcon = () => {
     switch (type) {
@@ -38,36 +51,36 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
   const getStyles = () => {
     switch (type) {
       case 'success':
-        return 'bg-green-50 text-green-800 border-green-200'
+        return 'bg-green-50 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-800'
       case 'error':
-        return 'bg-red-50 text-red-800 border-red-200'
+        return 'bg-red-50 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-200 dark:border-red-800'
       case 'warning':
-        return 'bg-yellow-50 text-yellow-800 border-yellow-200'
+        return 'bg-yellow-50 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-200 dark:border-yellow-800'
     }
   }
 
   return (
-    <div 
+    <div
       role="alert"
       aria-live="polite"
       className={`
-        fixed bottom-4 right-4 z-50 
-        flex items-center p-4 
-        rounded-lg border shadow-lg 
+        fixed bottom-4 right-4 z-50
+        flex items-center p-4
+        rounded-lg border shadow-lg
         ${getStyles()}
-        animate-fade-in-up
-        transform transition-all duration-300 ease-in-out
+        ${isExiting ? 'animate-fade-out-down' : 'animate-fade-in-up'}
       `}
     >
       <div className="flex-shrink-0">{getIcon()}</div>
       <div className="ml-3 mr-8">
         <p className="text-sm font-medium">{message}</p>
-        <p className="text-xs text-gray-500 mt-1">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
           Drücke ESC zum Schließen
         </p>
       </div>
       <button
-        onClick={onClose}
+        type="button"
+        onClick={requestClose}
         className="absolute right-2 top-2 rounded-md p-1.5 hover:bg-opacity-10 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2"
         aria-label="Benachrichtigung schließen"
       >
@@ -75,4 +88,4 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
       </button>
     </div>
   )
-} 
+}

@@ -6,8 +6,10 @@ import { useSession } from 'next-auth/react'
 import BackupManager from '@/components/BackupManager'
 import DeleteAccount from '@/components/DeleteAccount'
 import ThemeSwitcher from '@/components/ThemeSwitcher'
+import { useToast } from '@/hooks/useToast'
 
 export default function SettingsPage() {
+  const { showToast } = useToast()
   const { data: session, update: updateSession } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -68,9 +70,11 @@ export default function SettingsPage() {
       }
 
       setSuccess(true)
+      showToast('Einstellungen gespeichert', 'success')
     } catch (err) {
       console.error('Error saving settings:', err)
       setError('Fehler beim Speichern der Einstellungen')
+      showToast('Fehler beim Speichern der Einstellungen', 'error')
     } finally {
       setLoading(false)
     }
@@ -101,6 +105,7 @@ export default function SettingsPage() {
       }
 
       setEmailSuccess(true)
+      showToast('E-Mail-Adresse aktualisiert', 'success')
       setShowEmailForm(false)
       setNewEmail('')
       setPassword('')
@@ -115,7 +120,9 @@ export default function SettingsPage() {
       })
     } catch (err) {
       console.error('Error updating email:', err)
-      setEmailError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten')
+      const message = err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten'
+      setEmailError(message)
+      showToast(message, 'error')
     } finally {
       setEmailLoading(false)
     }

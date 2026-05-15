@@ -2,8 +2,10 @@
 
 import { useState } from 'react'
 import { ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
+import { useToast } from '@/hooks/useToast'
 
 export default function BackupManager() {
+  const { showToast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -29,9 +31,11 @@ export default function BackupManager() {
       document.body.removeChild(a)
 
       setSuccess('Backup erfolgreich erstellt')
+      showToast('Backup erfolgreich erstellt', 'success')
     } catch (err) {
       console.error('Fehler beim Erstellen des Backups:', err)
       setError('Fehler beim Erstellen des Backups')
+      showToast('Fehler beim Erstellen des Backups', 'error')
     } finally {
       setIsLoading(false)
     }
@@ -59,10 +63,12 @@ export default function BackupManager() {
           if (!response.ok) throw new Error('Fehler beim Wiederherstellen des Backups')
 
           setSuccess('Backup erfolgreich wiederhergestellt')
+          showToast('Backup erfolgreich wiederhergestellt', 'success')
           window.location.reload()
         } catch (err) {
           console.error('Fehler beim Wiederherstellen des Backups:', err)
           setError('Fehler beim Wiederherstellen des Backups')
+          showToast('Fehler beim Wiederherstellen des Backups', 'error')
         } finally {
           setIsLoading(false)
         }

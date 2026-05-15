@@ -10,8 +10,10 @@ import { PencilIcon, ArrowPathIcon, TrashIcon } from '@heroicons/react/24/outlin
 import Modal from '@/components/Modal'
 import TransactionForm from '@/components/TransactionForm'
 import EditTransactionForm from '@/components/EditTransactionForm'
+import { useToast } from '@/hooks/useToast'
 
 export default function RecurringTransactionsPage() {
+  const { showToast } = useToast()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -48,25 +50,23 @@ export default function RecurringTransactionsPage() {
   const handleCreateNextInstance = async (transaction: Transaction) => {
     try {
       const newTransaction = await createRecurringInstance(transaction.id)
-      setSuccessMessage(`Neue Zahlung für "${transaction.merchant}" wurde erstellt`)
-      // Nach 3 Sekunden ausblenden
-      setTimeout(() => setSuccessMessage(null), 3000)
-      // Zur Transaktionsseite weiterleiten
+      showToast(`Neue Zahlung für „${transaction.merchant}“ erstellt`, 'success')
       window.location.href = '/transactions'
     } catch (err) {
       console.error('Fehler beim Erstellen der nächsten Instanz:', err)
       setError('Fehler beim Erstellen der nächsten Zahlung')
-      setTimeout(() => setError(null), 3000)
+      showToast('Fehler beim Erstellen der nächsten Zahlung', 'error')
     }
   }
 
   const handleCreateAllPending = async () => {
     try {
       await createPendingInstances()
-      // Nach dem Erstellen neu laden
       await loadTransactions()
+      showToast('Ausstehende Zahlungen erstellt', 'success')
     } catch (err) {
       console.error('Fehler beim Erstellen der ausstehenden Transaktionen:', err)
+      showToast('Fehler beim Erstellen der ausstehenden Zahlungen', 'error')
     }
   }
 

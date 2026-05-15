@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createTransaction } from '@/lib/api'
 import { formatDateForInput } from '@/lib/dateUtils'
+import { useToast } from '@/hooks/useToast'
 
 interface Merchant {
   id: string
@@ -27,6 +28,7 @@ export default function TransactionForm({
   defaultIsRecurring = false 
 }: TransactionFormProps) {
   const router = useRouter()
+  const { showToast } = useToast()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [merchants, setMerchants] = useState<Merchant[]>([])
@@ -81,11 +83,13 @@ export default function TransactionForm({
         recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined
       })
 
+      showToast('Transaktion erstellt', 'success')
       onSuccess?.()
       router.refresh()
     } catch (err) {
       console.error('Error creating transaction:', err)
       setError('Fehler beim Erstellen der Transaktion')
+      showToast('Fehler beim Erstellen der Transaktion', 'error')
     } finally {
       setLoading(false)
     }

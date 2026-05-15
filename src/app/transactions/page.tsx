@@ -10,6 +10,7 @@ import MonthlyOverview from '@/components/MonthlyOverview'
 import Modal from '@/components/Modal'
 import TransactionForm from '@/components/TransactionForm'
 import EditTransactionForm from '@/components/EditTransactionForm'
+import { useToast } from '@/hooks/useToast'
 
 type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
 type SortDirection = 'asc' | 'desc'
@@ -42,6 +43,8 @@ export default function TransactionsPage() {
   })
   const observer = useRef<IntersectionObserver | null>(null)
   const loadingRef = useRef<HTMLDivElement>(null)
+  const [togglingTransactionIds, setTogglingTransactionIds] = useState<string[]>([])
+  const { showToast } = useToast()
 
   // Modal states
   const [showNewTransactionModal, setShowNewTransactionModal] = useState(false)
@@ -121,6 +124,7 @@ export default function TransactionsPage() {
       setPage(pageNum)
     } catch (err) {
       setError('Fehler beim Laden der Transaktionen')
+      showToast('Fehler beim Laden der Transaktionen', 'error')
       console.error(err)
     } finally {
       setLoading(false)
@@ -156,19 +160,57 @@ export default function TransactionsPage() {
   const lastElementRef = useCallback(() => {}, [])
 
   const handleToggleConfirmation = async (transaction: Transaction) => {
+    const previous = transaction
+    const newConfirmed = !transaction.isConfirmed
+    const currentDate = new Date().toISOString()
+
+    setTransactions((prev) =>
+      prev.map((t) =>
+        t.id === transaction.id
+          ? {
+              ...t,
+              isConfirmed: newConfirmed,
+              lastConfirmedDate: newConfirmed ? currentDate : null,
+            }
+          : t
+      )
+    )
+    setTogglingTransactionIds((prev) => [...prev, transaction.id])
+
     try {
       const updatedTransaction = await updateTransaction(transaction.id, {
-        isConfirmed: !transaction.isConfirmed,
-        lastConfirmedDate: !transaction.isConfirmed ? new Date().toISOString() : null
+        isConfirmed: newConfirmed,
+        lastConfirmedDate: newConfirmed ? currentDate : null,
       })
-      setTransactions(transactions.map(t => 
-        t.id === updatedTransaction.id ? {
-          ...updatedTransaction,
-          amount: Number(updatedTransaction.amount)
-        } : t
-      ))
+
+      if (transaction.parentTransactionId) {
+        await updateTransaction(transaction.parentTransactionId, {
+          lastConfirmedDate: currentDate,
+        }).catch(() => {
+          console.error('Fehler beim Aktualisieren der Eltern-Transaktion')
+        })
+      }
+
+      setTransactions((prev) =>
+        prev.map((t) =>
+          t.id === updatedTransaction.id
+            ? { ...updatedTransaction, amount: Number(updatedTransaction.amount) }
+            : t
+        )
+      )
+      showToast(
+        newConfirmed ? 'Als bestätigt markiert' : 'Bestätigung aufgehoben',
+        'success'
+      )
+      await loadTotals()
     } catch (err) {
+      setTransactions((prev) =>
+        prev.map((t) => (t.id === previous.id ? previous : t))
+      )
+      showToast('Status konnte nicht geändert werden', 'error')
       console.error('Fehler beim Aktualisieren der Transaktion:', err)
+    } finally {
+      setTogglingTransactionIds((prev) => prev.filter((id) => id !== transaction.id))
     }
   }
 
@@ -204,9 +246,11 @@ export default function TransactionsPage() {
     try {
       await createPendingInstances()
       await handleTransactionChange()
+      showToast('Ausstehende Zahlungen erstellt', 'success')
     } catch (err) {
       console.error('Error creating pending instances:', err)
       setError('Fehler beim Erstellen der ausstehenden Zahlungen')
+      showToast('Fehler beim Erstellen der ausstehenden Zahlungen', 'error')
     }
   }
 
@@ -325,6 +369,8 @@ export default function TransactionsPage() {
           <TransactionList 
             transactions={transactions} 
             onTransactionChange={handleTransactionChange}
+            onToggleConfirmation={handleToggleConfirmation}
+            togglingTransactionIds={togglingTransactionIds}
             lastElementRef={lastElementRef}
             sortField={sortField}
             sortDirection={sortDirection}

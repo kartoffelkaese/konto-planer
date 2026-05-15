@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
+import { useToast } from '@/hooks/useToast'
 
 // Funktion zur Berechnung der Textfarbe basierend auf der Hintergrundfarbe
 function getContrastColor(hexcolor: string) {
@@ -36,6 +37,7 @@ interface Merchant {
 }
 
 export default function MerchantsPage() {
+  const { showToast } = useToast()
   const [merchants, setMerchants] = useState<Merchant[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -109,9 +111,12 @@ export default function MerchantsPage() {
       await loadMerchants()
       setShowAddModal(false)
       setFormData({ name: '', categoryId: '' })
+      showToast('Händler erstellt', 'success')
     } catch (err) {
       console.error('Error creating merchant:', err)
-      setError(err instanceof Error ? err.message : 'Fehler beim Erstellen des Händlers')
+      const message = err instanceof Error ? err.message : 'Fehler beim Erstellen des Händlers'
+      setError(message)
+      showToast(message, 'error')
     }
   }
 
@@ -138,9 +143,12 @@ export default function MerchantsPage() {
       setShowEditModal(false)
       setSelectedMerchant(null)
       setFormData({ name: '', categoryId: '' })
+      showToast('Händler gespeichert', 'success')
     } catch (err) {
       console.error('Error updating merchant:', err)
-      setError(err instanceof Error ? err.message : 'Fehler beim Aktualisieren des Händlers')
+      const message = err instanceof Error ? err.message : 'Fehler beim Aktualisieren des Händlers'
+      setError(message)
+      showToast(message, 'error')
     }
   }
 
@@ -161,9 +169,12 @@ export default function MerchantsPage() {
       await loadMerchants()
       setShowDeleteModal(false)
       setSelectedMerchant(null)
+      showToast('Händler gelöscht', 'success')
     } catch (err) {
       console.error('Error deleting merchant:', err)
-      setError(err instanceof Error ? err.message : 'Fehler beim Löschen des Händlers')
+      const message = err instanceof Error ? err.message : 'Fehler beim Löschen des Händlers'
+      setError(message)
+      showToast(message, 'error')
     }
   }
 

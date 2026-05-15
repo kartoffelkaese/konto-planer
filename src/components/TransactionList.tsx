@@ -8,7 +8,9 @@ import { PencilIcon, CheckIcon, MinusCircleIcon, ClockIcon, CalendarIcon, Chevro
 import { useState } from 'react'
 import Modal from '@/components/Modal'
 import EditTransactionForm from '@/components/EditTransactionForm'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import { getContrastColor } from '@/lib/colorUtils'
+import { useToast } from '@/hooks/useToast'
 
 type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
 type SortDirection = 'asc' | 'desc'
@@ -16,6 +18,8 @@ type SortDirection = 'asc' | 'desc'
 interface TransactionListProps {
   transactions: Transaction[]
   onTransactionChange: () => void
+  onToggleConfirmation?: (transaction: Transaction) => void | Promise<void>
+  togglingTransactionIds?: string[]
   lastElementRef: (node: HTMLElement | null) => void
   sortField?: SortField
   sortDirection?: SortDirection
@@ -26,17 +30,22 @@ interface TransactionListProps {
 export default function TransactionList({ 
   transactions, 
   onTransactionChange,
+  onToggleConfirmation,
+  togglingTransactionIds = [],
   lastElementRef,
   sortField = 'date',
   sortDirection = 'desc',
   onSort,
   salaryDay
 }: TransactionListProps) {
+  const { showToast } = useToast()
   const [editingDate, setEditingDate] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Hilfsfunktion für isTransactionPending mit salaryDay
   const checkIsPending = (transaction: Transaction): boolean => {
@@ -120,14 +129,19 @@ export default function TransactionList({
   }
 
   const handleToggleConfirmation = async (transaction: Transaction) => {
+    if (onToggleConfirmation) {
+      await onToggleConfirmation(transaction)
+      return
+    }
+
     try {
-      const currentDate = new Date().toISOString();
+      const currentDate = new Date().toISOString()
       const updatedTransaction = {
         ...transaction,
         isConfirmed: !transaction.isConfirmed,
         lastConfirmedDate: !transaction.isConfirmed ? currentDate : null,
       }
-      
+
       const response = await fetch(`/api/transactions/${transaction.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -138,13 +152,11 @@ export default function TransactionList({
         throw new Error('Fehler beim Aktualisieren der Transaktion')
       }
 
-      if ('parentTransactionId' in transaction && transaction.parentTransactionId) {
+      if (transaction.parentTransactionId) {
         const parentResponse = await fetch(`/api/transactions/${transaction.parentTransactionId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            lastConfirmedDate: currentDate
-          }),
+          body: JSON.stringify({ lastConfirmedDate: currentDate }),
         })
 
         if (!parentResponse.ok) {
@@ -154,9 +166,22 @@ export default function TransactionList({
 
       setEditingDate(null)
       await onTransactionChange()
+      showToast('Status aktualisiert', 'success')
     } catch (err) {
       console.error('Fehler beim Aktualisieren der Transaktion:', err)
+      showToast('Status konnte nicht geändert werden', 'error')
     }
+  }
+
+  const getStatusPillClasses = (transaction: Transaction) => {
+    const isToggling = togglingTransactionIds.includes(transaction.id)
+    const stateClasses = transaction.isConfirmed
+      ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800'
+      : checkIsPending(transaction)
+        ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800'
+        : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
+
+    return `${statusPillClass} ${stateClasses}${isToggling ? ' opacity-60 pointer-events-none' : ''}`
   }
 
   const handleUpdateDate = async (transaction: Transaction, newDate: string) => {
@@ -181,8 +206,10 @@ export default function TransactionList({
 
       setEditingDate(null)
       await onTransactionChange()
+      showToast('Datum aktualisiert', 'success')
     } catch (err) {
       console.error('Fehler beim Aktualisieren der Transaktion:', err)
+      showToast('Datum konnte nicht geändert werden', 'error')
     }
   }
 
@@ -221,13 +248,19 @@ export default function TransactionList({
     }
   }
 
-  const handleDeleteTransaction = async (id: string) => {
-    if (!confirm('Möchten Sie diese Transaktion wirklich löschen?')) {
-      return
-    }
+  const handleDeleteTransaction = (transaction: Transaction) => {
+    setDeleteTarget({
+      id: transaction.id,
+      label: transaction.merchant || transaction.description || 'diese Transaktion',
+    })
+  }
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+
+    setIsDeleting(true)
     try {
-      const response = await fetch(`/api/transactions/${id}`, {
+      const response = await fetch(`/api/transactions/${deleteTarget.id}`, {
         method: 'DELETE',
       })
 
@@ -235,10 +268,15 @@ export default function TransactionList({
         throw new Error('Fehler beim Löschen der Transaktion')
       }
 
+      setDeleteTarget(null)
       await onTransactionChange()
+      showToast('Transaktion gelöscht', 'success')
     } catch (err) {
       console.error('Error deleting transaction:', err)
       setError('Fehler beim Löschen der Transaktion')
+      showToast('Fehler beim Löschen der Transaktion', 'error')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -360,13 +398,7 @@ export default function TransactionList({
                     <button
                       onClick={() => handleToggleConfirmation(transaction)}
                       title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
-                      className={`${statusPillClass} ${
-                        transaction.isConfirmed
-                          ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800'
-                          : checkIsPending(transaction)
-                          ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
-                      }`}
+                      className={getStatusPillClasses(transaction)}
                     >
                       {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
                     </button>
@@ -437,13 +469,7 @@ export default function TransactionList({
                   <button
                     onClick={() => handleToggleConfirmation(transaction)}
                     title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
-                    className={`${statusPillClass} ${
-                      transaction.isConfirmed
-                        ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800'
-                        : checkIsPending(transaction)
-                        ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
-                    }`}
+                    className={getStatusPillClasses(transaction)}
                   >
                     {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
                   </button>
@@ -474,6 +500,17 @@ export default function TransactionList({
           />
         </Modal>
         )}
+
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        onClose={() => !isDeleting && setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Transaktion löschen"
+        message={`Möchten Sie „${deleteTarget?.label}“ wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`}
+        confirmText={isDeleting ? 'Wird gelöscht...' : 'Löschen'}
+        cancelText="Abbrechen"
+        type="danger"
+      />
     </div>
   )
 } 

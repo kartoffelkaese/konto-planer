@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getTransaction, updateTransaction, deleteTransaction } from '@/lib/api'
 import { formatDateForInput } from '@/lib/dateUtils'
+import { useToast } from '@/hooks/useToast'
 
 interface EditTransactionFormProps {
   id: string
@@ -13,6 +14,7 @@ interface EditTransactionFormProps {
 
 export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTransactionFormProps) {
   const router = useRouter()
+  const { showToast } = useToast()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -58,11 +60,13 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
     setError(null)
     try {
       await deleteTransaction(id)
+      showToast('Transaktion gelöscht', 'success')
       onSuccess?.()
       router.refresh()
     } catch (err) {
       console.error('Error deleting transaction:', err)
       setError('Fehler beim Löschen der Transaktion')
+      showToast('Fehler beim Löschen der Transaktion', 'error')
       setLoading(false)
     }
   }
@@ -85,11 +89,13 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
         isRecurring: formData.isRecurring,
         recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined
       })
+      showToast('Transaktion gespeichert', 'success')
       onSuccess?.()
       router.refresh()
     } catch (err) {
       console.error('Error updating transaction:', err)
       setError('Fehler beim Aktualisieren der Transaktion')
+      showToast('Fehler beim Aktualisieren der Transaktion', 'error')
     } finally {
       setLoading(false)
     }

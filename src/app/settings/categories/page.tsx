@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
+import { useToast } from '@/hooks/useToast'
 
 const PRESET_COLORS = [
   '#FF6B6B', // Rot
@@ -77,6 +78,7 @@ interface Category {
 }
 
 export default function CategoriesPage() {
+  const { showToast } = useToast()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -133,9 +135,12 @@ export default function CategoriesPage() {
       await loadCategories()
       setShowAddModal(false)
       setFormData({ name: '', color: '#A7C7E7' })
+      showToast('Kategorie erstellt', 'success')
     } catch (err) {
       console.error('Error creating category:', err)
-      setError(err instanceof Error ? err.message : 'Fehler beim Erstellen der Kategorie')
+      const message = err instanceof Error ? err.message : 'Fehler beim Erstellen der Kategorie'
+      setError(message)
+      showToast(message, 'error')
     }
   }
 
@@ -162,9 +167,12 @@ export default function CategoriesPage() {
       setShowEditModal(false)
       setSelectedCategory(null)
       setFormData({ name: '', color: '#A7C7E7' })
+      showToast('Kategorie gespeichert', 'success')
     } catch (err) {
       console.error('Error updating category:', err)
-      setError(err instanceof Error ? err.message : 'Fehler beim Aktualisieren der Kategorie')
+      const message = err instanceof Error ? err.message : 'Fehler beim Aktualisieren der Kategorie'
+      setError(message)
+      showToast(message, 'error')
     }
   }
 
@@ -185,9 +193,12 @@ export default function CategoriesPage() {
       await loadCategories()
       setShowDeleteModal(false)
       setSelectedCategory(null)
+      showToast('Kategorie gelöscht', 'success')
     } catch (err) {
       console.error('Error deleting category:', err)
-      setError(err instanceof Error ? err.message : 'Fehler beim Löschen der Kategorie')
+      const message = err instanceof Error ? err.message : 'Fehler beim Löschen der Kategorie'
+      setError(message)
+      showToast(message, 'error')
     }
   }
 

@@ -1,28 +1,66 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import bcrypt from 'bcryptjs'
+import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import {
+  checkRateLimit,
+  getClientIp,
+  RATE_LIMITS,
+} from '@/lib/rate-limit'
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 })
+    const authResult = await getUserBySession()
+    if (isErrorResponse(authResult)) return authResult
+
+    const { user } = authResult
+
+    const ip = getClientIp(request.headers)
+    const { allowed } = checkRateLimit(
+      `account-delete:${ip}:${user.id}`,
+      RATE_LIMITS.accountDelete
+    )
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Zu viele Versuche. Bitte später erneut versuchen.' },
+        { status: 429 }
+      )
     }
 
-    // Starte Transaktion für atomare Operation
+    let body: { password?: string }
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json(
+        { error: 'Passwort ist erforderlich' },
+        { status: 400 }
+      )
+    }
+
+    if (!body.password || typeof body.password !== 'string') {
+      return NextResponse.json(
+        { error: 'Passwort ist erforderlich' },
+        { status: 400 }
+      )
+    }
+
+    const isPasswordValid = await bcrypt.compare(body.password, user.passwordHash)
+    if (!isPasswordValid) {
+      return NextResponse.json({ error: 'Falsches Passwort' }, { status: 400 })
+    }
+
     await prisma.$transaction(async (tx) => {
-      // Lösche alle Daten des Benutzers
       await tx.transaction.deleteMany({
-        where: { userId: session.user.id }
+        where: { userId: user.id },
       })
       await tx.merchant.deleteMany({
-        where: { userId: session.user.id }
+        where: { userId: user.id },
       })
       await tx.category.deleteMany({
-        where: { userId: session.user.id }
+        where: { userId: user.id },
       })
       await tx.user.delete({
-        where: { id: session.user.id }
+        where: { id: user.id },
       })
     })
 
@@ -31,4 +69,4 @@ export async function DELETE() {
     console.error('Fehler beim Löschen des Kontos:', error)
     return NextResponse.json({ error: 'Interner Server-Fehler' }, { status: 500 })
   }
-} 
+}

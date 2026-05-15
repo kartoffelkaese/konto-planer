@@ -1,28 +1,20 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getSalaryMonthRange } from '@/lib/dateUtils'
 import { logger } from '@/lib/logger'
+import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 
 export async function GET() {
   try {
-    const session = await auth()
-    
-    if (!session?.user?.email) {
+    const authResult = await getUserBySession()
+    if (isErrorResponse(authResult)) {
       logger.warn('Dashboard: Unauthorized access attempt', {
-        endpoint: '/api/dashboard'
+        endpoint: '/api/dashboard',
       })
-      return new NextResponse('Nicht autorisiert', { status: 401 })
+      return authResult
     }
 
-    // Hole den aktuellen Benutzer
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return new NextResponse('Benutzer nicht gefunden', { status: 404 })
-    }
+    const { user } = authResult
 
     // Hole den Gehaltsmonat
     const { startDate, endDate } = getSalaryMonthRange(user.salaryDay)
@@ -198,9 +190,6 @@ export async function GET() {
     const kumulatedCategoryData = Array.from(categoryMap.values())
       .sort((a, b) => b.value - a.value)
 
-    console.log('Transaktionen gefunden:', transactionsWithCategories.length)
-    console.log('Kategorieverteilung:', kumulatedCategoryData)
-
     return NextResponse.json({
       monthlyIncome: income,
       monthlyExpenses: expenses,
@@ -213,7 +202,6 @@ export async function GET() {
   } catch (error) {
     logger.error('Fehler beim Laden der Dashboard-Daten', error, {
       endpoint: '/api/dashboard',
-      userId: (await auth())?.user?.email || 'unknown'
     })
     return new NextResponse('Interner Server-Fehler', { status: 500 })
   }

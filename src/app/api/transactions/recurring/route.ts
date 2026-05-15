@@ -1,32 +1,23 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-    }
+    const authResult = await getUserBySession()
+    if (isErrorResponse(authResult)) return authResult
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
+    const { user } = authResult
 
-    if (!user) {
-      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
-    }
-
-    // Hole alle wiederkehrenden Transaktionen des Benutzers
     const transactions = await prisma.transaction.findMany({
       where: {
         userId: user.id,
-        isRecurring: true
+        isRecurring: true,
       },
       orderBy: {
-        date: 'desc'
-      }
+        date: 'desc',
+      },
     })
 
     return NextResponse.json(transactions)
@@ -37,4 +28,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

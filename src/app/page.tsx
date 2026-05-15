@@ -12,7 +12,8 @@ import {
   ShieldCheckIcon,
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline'
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, XAxis, YAxis, Bar } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, BarChart, XAxis, YAxis, Bar } from 'recharts'
+import ChartContainer from '@/components/ChartContainer'
 
 interface DashboardData {
   monthlyIncome: number
@@ -54,8 +55,6 @@ export default function DashboardPage() {
         const response = await fetch('/api/dashboard')
         if (!response.ok) throw new Error('Fehler beim Laden der Daten')
         const dashboardData = await response.json()
-        console.log('Dashboard-Daten:', dashboardData)
-        console.log('Kategorieverteilung:', dashboardData.categoryDistribution)
         setData(dashboardData)
       } catch (error) {
         console.error('Fehler:', error)
@@ -257,13 +256,13 @@ export default function DashboardPage() {
         {/* Kategorieverteilung */}
         <div className="bg-white dark:bg-dark-light rounded-lg shadow-md dark:shadow-dark p-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Ausgaben nach Kategorien</h3>
-          <div className="h-80">
+          <div className="min-w-0">
             {data.categoryDistribution.length === 0 ? (
-              <div className="flex items-center justify-center h-full">
+              <div className="flex items-center justify-center h-80">
                 <p className="text-gray-500 dark:text-gray-400">Keine Ausgaben im aktuellen Zeitraum</p>
               </div>
             ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer height={320}>
               <PieChart>
                 <Pie
                   data={data.categoryDistribution}
@@ -279,7 +278,7 @@ export default function DashboardPage() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value) => formatCurrency(Number(value ?? 0))}
                   contentStyle={{ 
                     backgroundColor: 'var(--card-bg)', 
                     border: '1px solid var(--border-color)',
@@ -288,7 +287,7 @@ export default function DashboardPage() {
                   }}
                 />
               </PieChart>
-            </ResponsiveContainer>
+            </ChartContainer>
             )}
           </div>
         </div>
@@ -322,13 +321,13 @@ export default function DashboardPage() {
       {/* Grafik */}
       <div className="bg-white dark:bg-dark-light rounded-lg shadow dark:shadow-dark p-4 md:p-6">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Ausgaben pro Kategorie</h3>
-        <div className="h-[300px] md:h-[400px] -mx-4 md:mx-0">
+        <div className="w-full min-w-0">
           {data.categoryDistribution.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-[400px]">
               <p className="text-gray-500 dark:text-gray-400">Keine Ausgaben im aktuellen Zeitraum</p>
             </div>
           ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ChartContainer height={400}>
             <BarChart data={data.categoryDistribution}>
               <XAxis 
                 dataKey="name" 
@@ -343,7 +342,7 @@ export default function DashboardPage() {
                 tick={{ fontSize: 12, fill: 'var(--text-color)' }}
               />
               <Tooltip 
-                formatter={(value: number) => [`${value.toFixed(2)}€`, 'Ausgaben']}
+                formatter={(value) => [`${Number(value ?? 0).toFixed(2)}€`, 'Ausgaben']}
                 labelFormatter={(label) => `Kategorie: ${label}`}
                 contentStyle={{ 
                   backgroundColor: 'var(--card-bg)', 
@@ -354,7 +353,7 @@ export default function DashboardPage() {
               />
               <Bar dataKey="value" fill="#2563eb" />
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
           )}
         </div>
       </div>

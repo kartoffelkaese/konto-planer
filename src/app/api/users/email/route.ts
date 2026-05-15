@@ -1,23 +1,35 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
+import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import {
+  checkRateLimit,
+  getClientIp,
+  RATE_LIMITS,
+} from '@/lib/rate-limit'
 
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await auth()
-    
-    if (!session?.user?.email) {
+    const authResult = await getUserBySession()
+    if (isErrorResponse(authResult)) return authResult
+
+    const { user, email: currentEmail } = authResult
+
+    const ip = getClientIp(request.headers)
+    const { allowed } = checkRateLimit(
+      `email-change:${ip}:${user.id}`,
+      RATE_LIMITS.emailChange
+    )
+    if (!allowed) {
       return NextResponse.json(
-        { error: 'Nicht autorisiert' },
-        { status: 401 }
+        { error: 'Zu viele Versuche. Bitte später erneut versuchen.' },
+        { status: 429 }
       )
     }
 
     const { newEmail, password } = await request.json()
 
-    // Validiere E-Mail-Format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(newEmail)) {
       return NextResponse.json(
@@ -26,9 +38,8 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Prüfe, ob die neue E-Mail bereits existiert
     const existingUser = await prisma.user.findUnique({
-      where: { email: newEmail }
+      where: { email: newEmail },
     })
 
     if (existingUser) {
@@ -38,20 +49,14 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Hole aktuellen Benutzer
-    const currentUser = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!currentUser) {
+    if (!password || typeof password !== 'string') {
       return NextResponse.json(
-        { error: 'Benutzer nicht gefunden' },
-        { status: 404 }
+        { error: 'Passwort ist erforderlich' },
+        { status: 400 }
       )
     }
 
-    // Überprüfe das Passwort
-    const isPasswordValid = await bcrypt.compare(password, currentUser.passwordHash)
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash)
     if (!isPasswordValid) {
       return NextResponse.json(
         { error: 'Falsches Passwort' },
@@ -59,15 +64,14 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Aktualisiere die E-Mail-Adresse
-    const updatedUser = await prisma.user.update({
-      where: { email: session.user.email },
-      data: { email: newEmail }
+    await prisma.user.update({
+      where: { email: currentEmail },
+      data: { email: newEmail },
     })
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'E-Mail-Adresse wurde erfolgreich aktualisiert',
-      email: newEmail
+      email: newEmail,
     })
   } catch (error) {
     console.error('Error updating email:', error)
@@ -76,4 +80,4 @@ export async function PATCH(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

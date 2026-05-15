@@ -2,12 +2,22 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { Prisma } from '@prisma/client'
+import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
+import { validatePassword } from '@/lib/password-policy'
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request.headers)
+    const { allowed } = checkRateLimit(`register:${ip}`, RATE_LIMITS.register)
+    if (!allowed) {
+      return NextResponse.json(
+        { message: 'Zu viele Registrierungsversuche. Bitte später erneut versuchen.' },
+        { status: 429 }
+      )
+    }
+
     const { email, password, salaryDay } = await request.json()
 
-    // Validierung
     if (!email || !password || !salaryDay) {
       return NextResponse.json(
         { message: 'Alle Felder müssen ausgefüllt werden' },
@@ -15,7 +25,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // E-Mail-Format validieren
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       return NextResponse.json(
@@ -24,9 +33,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // Prüfe, ob die E-Mail bereits existiert
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email },
     })
 
     if (existingUser) {
@@ -36,15 +44,11 @@ export async function POST(request: Request) {
       )
     }
 
-    // Validiere Passwortlänge
-    if (password.length < 8) {
-      return NextResponse.json(
-        { message: 'Das Passwort muss mindestens 8 Zeichen lang sein' },
-        { status: 400 }
-      )
+    const passwordError = validatePassword(password)
+    if (passwordError) {
+      return NextResponse.json({ message: passwordError }, { status: 400 })
     }
 
-    // Validiere salaryDay
     if (salaryDay < 1 || salaryDay > 31) {
       return NextResponse.json(
         { message: 'Der Gehaltszahlungstag muss zwischen 1 und 31 liegen' },
@@ -52,18 +56,16 @@ export async function POST(request: Request) {
       )
     }
 
-    // Hash das Passwort
     const salt = await bcrypt.genSalt(10)
     const passwordHash = await bcrypt.hash(password, salt)
 
-    // Erstelle den Benutzer
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: {
         email,
         passwordHash,
         salaryDay,
-        accountName: 'Mein Konto' // Standardwert
-      }
+        accountName: 'Mein Konto',
+      },
     })
 
     return NextResponse.json(
@@ -74,7 +76,6 @@ export async function POST(request: Request) {
     console.error('Registrierungsfehler:', error)
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      // Prisma-spezifische Fehler
       switch (error.code) {
         case 'P2002':
           return NextResponse.json(
@@ -82,16 +83,13 @@ export async function POST(request: Request) {
             { status: 400 }
           )
         default:
-          return NextResponse.json(
-            { message: 'Datenbankfehler: ' + error.message },
-            { status: 500 }
-          )
+          break
       }
     }
 
     return NextResponse.json(
-      { message: 'Ein unerwarteter Fehler ist aufgetreten: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler') },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }
-} 
+}

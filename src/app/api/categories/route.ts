@@ -1,29 +1,14 @@
 'use server'
 
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 
 export async function GET() {
-  const session = await auth()
+  const authResult = await getUserBySession()
+  if (isErrorResponse(authResult)) return authResult
 
-  if (!session) {
-    return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
-      status: 401,
-    })
-  }
-
-  const user = await prisma.user.findUnique({
-    where: {
-      email: session.user?.email!,
-    },
-  })
-
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'Benutzer nicht gefunden' }), {
-      status: 404,
-    })
-  }
+  const { user } = authResult
 
   const categories = await prisma.category.findMany({
     where: {
@@ -31,43 +16,26 @@ export async function GET() {
     },
     include: {
       _count: {
-        select: { merchants: true }
-      }
-    }
+        select: { merchants: true },
+      },
+    },
   })
 
   return NextResponse.json(categories)
 }
 
 export async function POST(request: Request) {
-  const session = await auth()
+  const authResult = await getUserBySession()
+  if (isErrorResponse(authResult)) return authResult
 
-  if (!session) {
-    return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
-      status: 401,
-    })
-  }
-
-  const user = await prisma.user.findUnique({
-    where: {
-      email: session.user?.email!,
-    },
-  })
-
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'Benutzer nicht gefunden' }), {
-      status: 404,
-    })
-  }
+  const { user } = authResult
 
   const { name, color } = await request.json()
 
   if (!name || !color) {
-    return new Response(
-      JSON.stringify({ error: 'Name und Farbe sind Pflichtfelder' }),
-      {
-        status: 400,
-      }
+    return NextResponse.json(
+      { error: 'Name und Farbe sind Pflichtfelder' },
+      { status: 400 }
     )
   }
 
@@ -79,8 +47,8 @@ export async function POST(request: Request) {
   })
 
   if (existingCategory) {
-    return new Response(
-      JSON.stringify({ error: 'Eine Kategorie mit diesem Namen existiert bereits' }),
+    return NextResponse.json(
+      { error: 'Eine Kategorie mit diesem Namen existiert bereits' },
       { status: 400 }
     )
   }
@@ -94,4 +62,4 @@ export async function POST(request: Request) {
   })
 
   return NextResponse.json(category)
-} 
+}

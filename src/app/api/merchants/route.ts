@@ -1,30 +1,19 @@
 'use server'
 
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import {
+  getUserBySession,
+  assertCategoryOwned,
+  isErrorResponse,
+} from '@/lib/api-auth'
 
 export async function GET() {
   try {
-    const session = await auth()
+    const authResult = await getUserBySession()
+    if (isErrorResponse(authResult)) return authResult
 
-    if (!session) {
-      return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
-        status: 401,
-      })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: {
-        email: session.user?.email!,
-      },
-    })
-
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'Benutzer nicht gefunden' }), {
-        status: 404,
-      })
-    }
+    const { user } = authResult
 
     const merchants = await prisma.merchant.findMany({
       where: {
@@ -47,25 +36,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth()
+    const authResult = await getUserBySession()
+    if (isErrorResponse(authResult)) return authResult
 
-    if (!session) {
-      return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
-        status: 401,
-      })
-    }
-
-    const user = await prisma.user.findUnique({
-      where: {
-        email: session.user?.email!,
-      },
-    })
-
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'Benutzer nicht gefunden' }), {
-        status: 404,
-      })
-    }
+    const { user } = authResult
 
     const { name, categoryId } = await request.json()
 
@@ -77,6 +51,9 @@ export async function POST(request: Request) {
         }
       )
     }
+
+    const categoryError = await assertCategoryOwned(categoryId, user.id)
+    if (categoryError) return categoryError
 
     const existingMerchant = await prisma.merchant.findFirst({
       where: {
@@ -107,7 +84,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Detaillierter Fehler beim Erstellen des Händlers:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Fehler beim Erstellen des Händlers' },
+      { error: 'Fehler beim Erstellen des Händlers' },
       { status: 500 }
     )
   }

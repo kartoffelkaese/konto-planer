@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import {
+  getUserBySession,
+  assertCategoryOwned,
+  assertMerchantOwned,
+  isErrorResponse,
+} from '@/lib/api-auth'
 
 export async function GET(request: Request) {
   try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-    }
+    const authResult = await getUserBySession()
+    if (isErrorResponse(authResult)) return authResult
+
+    const { user } = authResult
 
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
@@ -16,14 +21,19 @@ export async function GET(request: Request) {
     const startDate = searchParams.get('startDate')
     const endDate = searchParams.get('endDate')
 
-    // Startdatum basierend auf Zeitraum berechnen
+    if (category) {
+      const categoryError = await assertCategoryOwned(category, user.id)
+      if (categoryError) return categoryError
+    }
+
+    if (merchant) {
+      const merchantError = await assertMerchantOwned(merchant, user.id)
+      if (merchantError) return merchantError
+    }
+
     let startDateObj: Date
     if (timeRange === 'custom' && startDate && endDate) {
       startDateObj = new Date(startDate)
-      // Setze das Enddatum auf den letzten Tag des Monats
-      const endDateObj = new Date(endDate)
-      endDateObj.setMonth(endDateObj.getMonth() + 1)
-      endDateObj.setDate(0)
     } else {
       startDateObj = new Date()
       switch (timeRange) {
@@ -40,49 +50,48 @@ export async function GET(request: Request) {
           startDateObj.setFullYear(startDateObj.getFullYear() - 1)
           break
         default:
-          startDateObj.setMonth(startDateObj.getMonth() - 3) // Standard: 3 Monate
+          startDateObj.setMonth(startDateObj.getMonth() - 3)
       }
     }
 
-    // Transaktionen abrufen
     const transactions = await prisma.transaction.findMany({
       where: {
-        user: {
-          email: session.user.email
-        },
+        userId: user.id,
         ...(category && {
-        merchantRef: {
-          categoryId: category
-          }
+          merchantRef: {
+            categoryId: category,
+          },
         }),
         ...(merchant && {
-          merchantId: merchant
+          merchantId: merchant,
         }),
         date: {
-          gte: startDateObj
-        }
+          gte: startDateObj,
+        },
       },
       include: {
         merchantRef: {
           include: {
-            category: true
-          }
-        }
+            category: true,
+          },
+        },
       },
       orderBy: {
-        date: 'asc'
-      }
+        date: 'asc',
+      },
     })
 
-    // Daten für die Grafik vorbereiten
-    const monthlyData = transactions.reduce((acc: { [key: string]: number }, transaction) => {
-      const date = new Date(transaction.date)
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-      acc[monthKey] = (acc[monthKey] || 0) + Math.abs(Number(transaction.amount))
-      return acc
-    }, {})
+    const monthlyData = transactions.reduce(
+      (acc: { [key: string]: number }, transaction) => {
+        const date = new Date(transaction.date)
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        acc[monthKey] =
+          (acc[monthKey] || 0) + Math.abs(Number(transaction.amount))
+        return acc
+      },
+      {}
+    )
 
-    // Daten in das Format für die Grafik umwandeln
     const chartData = Object.entries(monthlyData).map(([date, amount]) => {
       const transaction = transactions.find((t) => {
         const tDate = new Date(t.date)
@@ -93,7 +102,7 @@ export async function GET(request: Request) {
         date,
         amount,
         category: transaction?.merchantRef?.category?.name || '',
-        color: transaction?.merchantRef?.category?.color || '#A7C7E7' // Standardfarbe falls keine Kategorie
+        color: transaction?.merchantRef?.category?.color || '#A7C7E7',
       }
     })
 
@@ -102,4 +111,4 @@ export async function GET(request: Request) {
     console.error('Fehler beim Abrufen der Statistiken:', error)
     return NextResponse.json({ error: 'Interner Server-Fehler' }, { status: 500 })
   }
-} 
+}

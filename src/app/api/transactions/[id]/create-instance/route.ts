@@ -1,39 +1,28 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getNextDueDate } from '@/lib/dateUtils'
+import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
   try {
-    const session = await auth()
+    const authResult = await getUserBySession()
+    if (isErrorResponse(authResult)) return authResult
 
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-    }
+    const { user } = authResult
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
-    }
-
-    // Hole die originale Transaktion
-    const originalTransaction = await prisma.transaction.findUnique({
-      where: { id }
+    const originalTransaction = await prisma.transaction.findFirst({
+      where: { id, userId: user.id },
     })
 
     if (!originalTransaction) {
       return NextResponse.json({ error: 'Transaktion nicht gefunden' }, { status: 404 })
     }
 
-    // Prüfe, ob es eine wiederkehrende Transaktion ist
     if (!originalTransaction.isRecurring) {
       return NextResponse.json(
         { error: 'Transaktion ist nicht wiederkehrend' },
@@ -41,11 +30,13 @@ export async function POST(
       )
     }
 
-    // Berechne das nächste Fälligkeitsdatum
-    const lastDate = originalTransaction.lastConfirmedDate || originalTransaction.date
-    const nextDueDate = getNextDueDate(lastDate, originalTransaction.recurringInterval || 'monthly')
+    const lastDate =
+      originalTransaction.lastConfirmedDate || originalTransaction.date
+    const nextDueDate = getNextDueDate(
+      lastDate,
+      originalTransaction.recurringInterval || 'monthly'
+    )
 
-    // Erstelle eine neue Transaktion basierend auf der originalen
     const newTransaction = await prisma.transaction.create({
       data: {
         userId: user.id,
@@ -56,23 +47,23 @@ export async function POST(
         date: nextDueDate,
         isConfirmed: false,
         isRecurring: false,
-        parentTransactionId: originalTransaction.id
+        parentTransactionId: originalTransaction.id,
       },
       include: {
         merchantRef: {
           include: {
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     })
 
     return NextResponse.json(newTransaction)
   } catch (error) {
     console.error('Error creating transaction instance:', error)
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error },
+      { error: 'Internal Server Error' },
       { status: 500 }
     )
   }
-} 
+}

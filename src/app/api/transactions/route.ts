@@ -1,32 +1,27 @@
 'use server'
 
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getSalaryMonthRange } from '@/lib/dateUtils'
+import {
+  getUserBySession,
+  assertMerchantOwned,
+  isErrorResponse,
+} from '@/lib/api-auth'
 
 export async function GET(request: Request) {
-  const session = await auth()
+  const authResult = await getUserBySession()
+  if (isErrorResponse(authResult)) return authResult
 
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-  }
+  const { user } = authResult
 
   try {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20') || 20, 100)
     const skip = (page - 1) * limit
     const salaryDayParam = searchParams.get('salaryDay')
     const filterSalaryMonth = searchParams.get('filterSalaryMonth') === 'true'
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
-    }
 
     // Filter für Gehaltsmonat
     let dateFilter: { gte?: Date; lte?: Date } | undefined
@@ -89,21 +84,12 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await auth()
+  const authResult = await getUserBySession()
+  if (isErrorResponse(authResult)) return authResult
 
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-  }
+  const { user } = authResult
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
-    }
-
     const {
       merchant,
       merchantId,
@@ -113,6 +99,9 @@ export async function POST(request: Request) {
       isRecurring,
       recurringInterval
     } = await request.json()
+
+    const merchantError = await assertMerchantOwned(merchantId, user.id)
+    if (merchantError) return merchantError
 
     const transaction = await prisma.transaction.create({
       data: {

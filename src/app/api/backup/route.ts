@@ -1,41 +1,42 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { PrismaClient, Prisma } from '@prisma/client'
+import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import {
+  BACKUP_MAX_BYTES,
+  validateBackupPayload,
+} from '@/lib/backup-validation'
 
 export async function GET() {
   try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 })
-    }
+    const authResult = await getUserBySession()
+    if (isErrorResponse(authResult)) return authResult
 
-    // Hole alle Daten des Benutzers
+    const { email } = authResult
+
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { email },
       include: {
         categories: true,
         merchants: true,
-        transactions: true
-      }
+        transactions: true,
+      },
     })
 
     if (!user) {
       return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
-    // Erstelle Backup-Objekt
     const backup = {
       version: '1.0',
       createdAt: new Date().toISOString(),
       user: {
         email: user.email,
         salaryDay: user.salaryDay,
-        accountName: user.accountName
+        accountName: user.accountName,
       },
       categories: user.categories,
       merchants: user.merchants,
-      transactions: user.transactions
+      transactions: user.transactions,
     }
 
     return NextResponse.json(backup)
@@ -47,72 +48,113 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 })
+    const authResult = await getUserBySession()
+    if (isErrorResponse(authResult)) return authResult
+
+    const { user } = authResult
+
+    const contentLength = request.headers.get('content-length')
+    const bodyByteLength = contentLength ? parseInt(contentLength, 10) : undefined
+    if (bodyByteLength !== undefined && bodyByteLength > BACKUP_MAX_BYTES) {
+      return NextResponse.json(
+        { error: 'Backup-Datei ist zu groß' },
+        { status: 400 }
+      )
     }
 
-    const backup = await request.json()
-
-    // Validiere Backup-Format
-    if (!backup.version || !backup.categories || !backup.merchants || !backup.transactions) {
-      return NextResponse.json({ error: 'Ungültiges Backup-Format' }, { status: 400 })
+    const rawText = await request.text()
+    if (rawText.length > BACKUP_MAX_BYTES) {
+      return NextResponse.json(
+        { error: 'Backup-Datei ist zu groß' },
+        { status: 400 }
+      )
     }
 
-    // Starte Transaktion für atomare Operation
+    let backup: unknown
+    try {
+      backup = JSON.parse(rawText)
+    } catch {
+      return NextResponse.json(
+        { error: 'Ungültiges Backup-Format' },
+        { status: 400 }
+      )
+    }
+
+    const validationError = validateBackupPayload(backup, rawText.length)
+    if (validationError) return validationError
+
+    const b = backup as {
+      categories: Array<{ id: string; name: string; color: string }>
+      merchants: Array<{ id: string; name: string; categoryId: string | null }>
+      transactions: Array<{
+        id: string
+        amount: unknown
+        date: string
+        description?: string | null
+        isConfirmed: boolean
+        isRecurring: boolean
+        recurringInterval?: string | null
+        lastConfirmedDate?: string | null
+        merchant: string
+        merchantId: string | null
+      }>
+    }
+
     await prisma.$transaction(async (tx) => {
-      // Lösche existierende Daten
       await tx.transaction.deleteMany({
-        where: { userId: session.user.id }
+        where: { userId: user.id },
       })
       await tx.merchant.deleteMany({
-        where: { userId: session.user.id }
+        where: { userId: user.id },
       })
       await tx.category.deleteMany({
-        where: { userId: session.user.id }
+        where: { userId: user.id },
       })
 
-      // Erstelle neue Kategorien
-      const categoryMap = new Map()
-      for (const category of backup.categories) {
+      const categoryMap = new Map<string, string>()
+      for (const category of b.categories) {
         const newCategory = await tx.category.create({
           data: {
             name: category.name,
             color: category.color,
-            userId: session.user.id
-          }
+            userId: user.id,
+          },
         })
         categoryMap.set(category.id, newCategory.id)
       }
 
-      // Erstelle neue Händler
-      const merchantMap = new Map()
-      for (const merchant of backup.merchants) {
+      const merchantMap = new Map<string, string>()
+      for (const merchant of b.merchants) {
         const newMerchant = await tx.merchant.create({
           data: {
             name: merchant.name,
-            categoryId: categoryMap.get(merchant.categoryId),
-            userId: session.user.id
-          }
+            categoryId: merchant.categoryId
+              ? categoryMap.get(merchant.categoryId) ?? null
+              : null,
+            userId: user.id,
+          },
         })
         merchantMap.set(merchant.id, newMerchant.id)
       }
 
-      // Erstelle neue Transaktionen
-      for (const transaction of backup.transactions) {
+      for (const transaction of b.transactions) {
         await tx.transaction.create({
           data: {
-            amount: transaction.amount,
+            amount: Number(transaction.amount),
             date: new Date(transaction.date),
             description: transaction.description,
             isConfirmed: transaction.isConfirmed,
             isRecurring: transaction.isRecurring,
             recurringInterval: transaction.recurringInterval,
-            lastConfirmedDate: transaction.lastConfirmedDate ? new Date(transaction.lastConfirmedDate) : null,
+            lastConfirmedDate: transaction.lastConfirmedDate
+              ? new Date(transaction.lastConfirmedDate)
+              : null,
             merchant: transaction.merchant,
-            merchantId: merchantMap.get(transaction.merchantId),
-            userId: session.user.id
-          }
+            merchantId: transaction.merchantId
+              ? merchantMap.get(transaction.merchantId) ?? null
+              : null,
+            userId: user.id,
+          },
         })
       }
     })
@@ -122,4 +164,4 @@ export async function POST(request: Request) {
     console.error('Fehler beim Wiederherstellen des Backups:', error)
     return NextResponse.json({ error: 'Interner Server-Fehler' }, { status: 500 })
   }
-} 
+}

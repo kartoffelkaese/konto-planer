@@ -9,10 +9,9 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  Legend,
   Cell
 } from 'recharts'
+import ChartContainer from '@/components/ChartContainer'
 import { 
   ChevronDownIcon
 } from '@heroicons/react/24/outline'
@@ -233,13 +232,13 @@ export default function StatisticsPage() {
 
       {/* Grafik */}
       <div className="bg-white dark:bg-dark-light rounded-lg shadow dark:shadow-dark p-4 md:p-6">
-        <div className="h-[400px] -mx-4 md:mx-0">
+        <div className="w-full min-w-0">
           {isLoading ? (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-[400px]">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
+            <ChartContainer height={400}>
               <BarChart data={statisticsData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
                 <XAxis 
@@ -257,7 +256,10 @@ export default function StatisticsPage() {
                   stroke="var(--text-color)"
                 />
                 <Tooltip 
-                  formatter={(value: number) => [`${value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€`, 'Ausgaben']}
+                  formatter={(value) => [
+                    `${Number(value ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€`,
+                    'Ausgaben',
+                  ]}
                   labelFormatter={(label) => {
                     const date = new Date(label + '-01')
                     return date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
@@ -280,7 +282,7 @@ export default function StatisticsPage() {
                   ))}
                 </Bar>
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           )}
         </div>
       </div>

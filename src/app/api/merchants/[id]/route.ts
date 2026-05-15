@@ -1,34 +1,30 @@
 'use server'
 
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import {
+  getUserBySession,
+  assertCategoryOwned,
+  isErrorResponse,
+} from '@/lib/api-auth'
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const session = await auth()
 
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-  }
+  const authResult = await getUserBySession()
+  if (isErrorResponse(authResult)) return authResult
+
+  const { user } = authResult
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
-    }
-
     const merchant = await prisma.merchant.findFirst({
       where: {
         id,
-        userId: user.id
-      }
+        userId: user.id,
+      },
     })
 
     if (!merchant) {
@@ -50,34 +46,18 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const session = await auth()
 
-  if (!session) {
-    return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
-      status: 401,
-    })
-  }
+  const authResult = await getUserBySession()
+  if (isErrorResponse(authResult)) return authResult
 
-  const user = await prisma.user.findUnique({
-    where: {
-      email: session.user?.email!,
-    },
-  })
-
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'Benutzer nicht gefunden' }), {
-      status: 404,
-    })
-  }
+  const { user } = authResult
 
   const { name, categoryId } = await request.json()
 
   if (!name) {
-    return new Response(
-      JSON.stringify({ error: 'Name ist ein Pflichtfeld' }),
-      {
-        status: 400,
-      }
+    return NextResponse.json(
+      { error: 'Name ist ein Pflichtfeld' },
+      { status: 400 }
     )
   }
 
@@ -86,9 +66,9 @@ export async function PATCH(
       userId: user.id,
       name: name,
       NOT: {
-        id
-      }
-    }
+        id,
+      },
+    },
   })
 
   if (existingMerchant) {
@@ -97,6 +77,9 @@ export async function PATCH(
       { status: 400 }
     )
   }
+
+  const categoryError = await assertCategoryOwned(categoryId, user.id)
+  if (categoryError) return categoryError
 
   const merchant = await prisma.merchant.update({
     where: {
@@ -116,29 +99,15 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const session = await auth()
 
-  if (!session) {
-    return new Response(JSON.stringify({ error: 'Nicht authentifiziert' }), {
-      status: 401,
-    })
-  }
+  const authResult = await getUserBySession()
+  if (isErrorResponse(authResult)) return authResult
 
-  const user = await prisma.user.findUnique({
-    where: {
-      email: session.user?.email!,
-    },
-  })
-
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'Benutzer nicht gefunden' }), {
-      status: 404,
-    })
-  }
+  const { user } = authResult
 
   await prisma.merchant.delete({
     where: {
@@ -148,4 +117,4 @@ export async function DELETE(
   })
 
   return new Response(null, { status: 204 })
-} 
+}

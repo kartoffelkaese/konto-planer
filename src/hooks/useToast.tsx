@@ -24,14 +24,14 @@ export function useToast() {
     setToast(prev => ({ ...prev, isVisible: false }))
   }, [])
 
-  const ToastComponent = () => (
-    <Toast
-      message={toast.message}
-      type={toast.type}
-      onClose={hideToast}
-      isVisible={toast.isVisible}
-    />
-  )
+  const ToastComponent = () =>
+    toast.isVisible ? (
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={hideToast}
+      />
+    ) : null
 
   return {
     showToast,

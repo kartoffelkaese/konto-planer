@@ -1,40 +1,40 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/lib/auth'
+import {
+  getUserBySession,
+  isErrorResponse,
+  USER_PUBLIC_SELECT,
+  validateSalaryDay,
+  validateAccountName,
+} from '@/lib/api-auth'
 
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await auth()
-    
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Nicht autorisiert' },
-        { status: 401 }
-      )
-    }
+    const authResult = await getUserBySession()
+    if (isErrorResponse(authResult)) return authResult
 
+    const { user, email } = authResult
     const body = await request.json()
-    
-    // Benutzer anhand der E-Mail-Adresse finden
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
-    })
 
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Benutzer nicht gefunden' },
-        { status: 404 }
-      )
+    const data: { salaryDay?: number; accountName?: string | null } = {}
+
+    if (body.salaryDay !== undefined) {
+      const salaryDay = validateSalaryDay(body.salaryDay)
+      if (isErrorResponse(salaryDay)) return salaryDay
+      data.salaryDay = salaryDay
     }
 
-    // Aktualisiere den Benutzer
+    if (body.accountName !== undefined) {
+      const accountName = validateAccountName(body.accountName)
+      if (isErrorResponse(accountName)) return accountName
+      data.accountName = accountName
+    }
+
     const updatedUser = await prisma.user.update({
-      where: { email: session.user.email },
-      data: { 
-        salaryDay: body.salaryDay,
-        accountName: body.accountName
-      }
+      where: { email },
+      data,
+      select: USER_PUBLIC_SELECT,
     })
 
     return NextResponse.json(updatedUser)
@@ -47,19 +47,16 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const session = await auth()
-    
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: 'Nicht autorisiert' },
-        { status: 401 }
-      )
-    }
+    const authResult = await getUserBySession()
+    if (isErrorResponse(authResult)) return authResult
+
+    const { email } = authResult
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: { email },
+      select: USER_PUBLIC_SELECT,
     })
 
     if (!user) {
@@ -77,4 +74,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

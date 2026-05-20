@@ -12,22 +12,39 @@ import {
   RATE_LIMITS,
 } from '@/lib/rate-limit'
 
-/** In Dev darf AUTH_URL nicht auf die Produktions-Domain zeigen (häufig durch doppelte .env-Zeilen). */
-function stripProductionAuthUrlInDev() {
+/** In Dev: Produktions-URL aus .env entfernen, lokale AUTH_URL setzen (für Redirects/API). */
+function configureAuthUrlForDev() {
   if (process.env.NODE_ENV === 'production') return
-  const url = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL
-  if (!url) return
-  try {
-    const host = new URL(url).hostname
-    if (host === 'konto-planer.de' || host === 'www.konto-planer.de') {
-      delete process.env.AUTH_URL
+
+  for (const key of ['AUTH_URL', 'NEXTAUTH_URL'] as const) {
+    const value = process.env[key]
+    if (!value) continue
+    try {
+      const host = new URL(value).hostname
+      if (host === 'konto-planer.de' || host === 'www.konto-planer.de') {
+        delete process.env[key]
+      }
+    } catch {
+      delete process.env[key]
     }
-  } catch {
-    /* ungültige URL – NextAuth nutzt trustHost */
   }
+
+  const existing = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL
+  if (existing) {
+    try {
+      new URL(existing)
+      return
+    } catch {
+      delete process.env.AUTH_URL
+      delete process.env.NEXTAUTH_URL
+    }
+  }
+
+  const port = process.env.PORT ?? '3000'
+  process.env.AUTH_URL = `http://localhost:${port}`
 }
 
-stripProductionAuthUrlInDev()
+configureAuthUrlForDev()
 assertProductionEnv()
 
 const isProduction = process.env.NODE_ENV === 'production'
@@ -126,7 +143,7 @@ export const authConfig: NextAuthConfig = {
         if (target.origin !== base.origin) {
           return baseUrl
         }
-        return target.pathname + target.search
+        return target.href
       } catch {
         return baseUrl
       }

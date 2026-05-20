@@ -91,20 +91,18 @@ export default function ConfirmDialog({
       role="dialog"
       aria-modal="true"
     >
-      <div className="flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+      <div
+        className="fixed inset-0 z-10 flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:items-center sm:p-0 pointer-events-none"
+      >
         <div
-          className="fixed inset-0 bg-primary/50 transition-opacity"
+          className="fixed inset-0 z-0 bg-primary/50 transition-opacity pointer-events-auto"
           aria-hidden="true"
           onClick={() => {
             if (!isBusy) onClose()
           }}
         />
 
-        <span className="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">
-          &#8203;
-        </span>
-
-        <div className="inline-block transform overflow-hidden rounded-card px-4 pt-5 pb-4 text-left align-bottom shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6 sm:align-middle bg-surface border border-border">
+        <div className="relative z-10 inline-block w-full max-w-lg transform overflow-hidden rounded-card px-4 pt-5 pb-4 text-left align-bottom shadow-xl transition-all sm:my-8 sm:p-6 sm:align-middle bg-surface border border-border pointer-events-auto">
           <div className="sm:flex sm:items-start">
             <div
               className={`mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${styles.bg} sm:mx-0 sm:h-10 sm:w-10`}

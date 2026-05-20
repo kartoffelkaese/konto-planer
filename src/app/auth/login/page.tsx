@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, Suspense } from 'react'
-import { signIn } from 'next-auth/react'
+import { getSession, signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/Button'
@@ -30,21 +30,32 @@ function LoginForm() {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
 
+    const callbackUrl =
+      typeof window !== 'undefined' ? `${window.location.origin}/` : '/'
+
     try {
       const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
-        callbackUrl: '/'
+        callbackUrl,
       })
 
       if (result?.error) {
         setError(getErrorMessage(result.error))
-      } else {
+        return
+      }
+
+      router.push('/')
+      router.refresh()
+    } catch (err) {
+      // Session kann trotzdem gesetzt sein (z. B. relative Redirect-URL von Auth.js)
+      const session = await getSession()
+      if (session?.user) {
         router.push('/')
         router.refresh()
+        return
       }
-    } catch (err) {
       setError('Ein Fehler ist aufgetreten')
       console.error(err)
     } finally {

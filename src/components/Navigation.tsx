@@ -21,6 +21,7 @@ import {
 import { APP_VERSION } from '@/lib/version'
 import { signOut } from 'next-auth/react'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import { useToast } from '@/hooks/useToast'
 
 const labelTransition =
   'overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-in-out'
@@ -28,6 +29,7 @@ const labelTransition =
 export default function Navigation() {
   const pathname = usePathname()
   const { data: session } = useSession()
+  const { showToast } = useToast()
   const [isOpen, setIsOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(true)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
@@ -224,7 +226,12 @@ export default function Navigation() {
         isOpen={showLogoutConfirm}
         onClose={() => setShowLogoutConfirm(false)}
         onConfirm={async () => {
-          await signOut({ callbackUrl: '/auth/login' })
+          try {
+            await signOut({ callbackUrl: '/auth/login', redirect: true })
+          } catch {
+            showToast('Abmelden fehlgeschlagen. Bitte erneut versuchen.', 'error')
+            throw new Error('signOut failed')
+          }
         }}
         title="Abmelden?"
         message="Möchten Sie sich wirklich abmelden?"

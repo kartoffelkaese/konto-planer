@@ -11,6 +11,7 @@ import EditTransactionForm from '@/components/EditTransactionForm'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { getContrastColor } from '@/lib/colorUtils'
 import { useToast } from '@/hooks/useToast'
+import EmptyState from '@/components/EmptyState'
 
 type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
 type SortDirection = 'asc' | 'desc'
@@ -25,6 +26,7 @@ interface TransactionListProps {
   sortDirection?: SortDirection
   onSort?: (field: SortField) => void
   salaryDay?: number | null
+  onAddTransaction?: () => void
 }
 
 export default function TransactionList({ 
@@ -36,7 +38,8 @@ export default function TransactionList({
   sortField = 'date',
   sortDirection = 'desc',
   onSort,
-  salaryDay
+  salaryDay,
+  onAddTransaction,
 }: TransactionListProps) {
   const { showToast } = useToast()
   const [editingDate, setEditingDate] = useState<string | null>(null)
@@ -99,16 +102,47 @@ export default function TransactionList({
     }
   }
 
-  const getSortHeaderClass = (field: SortField, align: 'left' | 'right' | 'center' = 'left') => {
-    const alignClass =
-      align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'
-    const isActive = sortField === field
-    return `${alignClass} p-4 select-none transition-colors duration-100 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-      isActive
-        ? 'text-gray-900 dark:text-white font-medium'
-        : 'text-gray-500 dark:text-gray-400'
-    }`
+  const getSortAria = (field: SortField): 'ascending' | 'descending' | 'none' => {
+    if (sortField !== field) return 'none'
+    return sortDirection === 'asc' ? 'ascending' : 'descending'
   }
+
+  const SortableHeader = ({
+    field,
+    label,
+    align = 'left',
+  }: {
+    field: SortField
+    label: string
+    align?: 'left' | 'right' | 'center'
+  }) => {
+    const justify =
+      align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : 'justify-start'
+    const isActive = sortField === field
+    return (
+      <th className="p-0" aria-sort={getSortAria(field)}>
+        <button
+          type="button"
+          onClick={() => handleSort(field)}
+          className={`flex w-full items-center gap-1 min-h-12 px-4 py-3 text-sm font-medium transition-colors duration-100 hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent ${justify} ${
+            isActive ? 'text-primary' : 'text-secondary'
+          }`}
+        >
+          <span>{label}</span>
+          <SortIcon field={field} />
+        </button>
+      </th>
+    )
+  }
+
+  const emptyList = (
+    <EmptyState
+      title="Keine Transaktionen vorhanden"
+      description="Erfassen Sie Ihre erste Einnahme oder Ausgabe."
+      actionLabel={onAddTransaction ? 'Erste Transaktion anlegen' : undefined}
+      onAction={onAddTransaction}
+    />
+  )
 
   const statusPillClass =
     'inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full transition-colors duration-150 active:scale-95'
@@ -176,10 +210,10 @@ export default function TransactionList({
   const getStatusPillClasses = (transaction: Transaction) => {
     const isToggling = togglingTransactionIds.includes(transaction.id)
     const stateClasses = transaction.isConfirmed
-      ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800'
+      ? 'bg-income-bg text-income border-income/30'
       : checkIsPending(transaction)
-        ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800'
-        : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
+        ? 'bg-pending-bg text-pending border-pending/30'
+        : 'bg-surface-muted text-secondary border-border'
 
     return `${statusPillClass} ${stateClasses}${isToggling ? ' opacity-60 pointer-events-none' : ''}`
   }
@@ -284,91 +318,41 @@ export default function TransactionList({
     <div className="overflow-hidden">
       {/* Desktop Ansicht */}
       <div className="hidden md:block overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <table className="min-w-full divide-y divide-border">
           <thead>
-            <tr className="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-              <th
-                className={getSortHeaderClass('date')}
-                onClick={() => handleSort('date')}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Datum</span>
-                  <SortIcon field="date" />
-                </div>
-              </th>
-              <th
-                className={getSortHeaderClass('merchant')}
-                onClick={() => handleSort('merchant')}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Händler</span>
-                  <SortIcon field="merchant" />
-                </div>
-              </th>
-              <th
-                className={getSortHeaderClass('category')}
-                onClick={() => handleSort('category')}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Kategorie</span>
-                  <SortIcon field="category" />
-                </div>
-              </th>
-              <th
-                className={getSortHeaderClass('description')}
-                onClick={() => handleSort('description')}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Beschreibung</span>
-                  <SortIcon field="description" />
-                </div>
-              </th>
-              <th
-                className={getSortHeaderClass('amount', 'right')}
-                onClick={() => handleSort('amount')}
-              >
-                <div className="flex items-center justify-end space-x-1">
-                  <span>Betrag</span>
-                  <SortIcon field="amount" />
-                </div>
-              </th>
-              <th
-                className={getSortHeaderClass('status', 'center')}
-                onClick={() => handleSort('status')}
-              >
-                <div className="flex items-center justify-center space-x-1">
-                  <span>Status</span>
-                  <SortIcon field="status" />
-                </div>
-              </th>
-              <th className="text-right p-4 text-gray-500 dark:text-gray-400">Aktionen</th>
+            <tr className="border-b border-accent-border bg-accent-subtle">
+              <SortableHeader field="date" label="Datum" />
+              <SortableHeader field="merchant" label="Händler" />
+              <SortableHeader field="category" label="Kategorie" />
+              <SortableHeader field="description" label="Beschreibung" />
+              <SortableHeader field="amount" label="Betrag" align="right" />
+              <SortableHeader field="status" label="Status" align="center" />
+              <th className="text-right p-4 text-secondary text-sm font-medium">Aktionen</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
+          <tbody className="divide-y divide-border bg-canvas">
             {sortedTransactions.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center p-4 text-sm text-gray-500 dark:text-gray-400">
-                  Keine Transaktionen vorhanden
-                </td>
+                <td colSpan={7}>{emptyList}</td>
               </tr>
             ) : (
               sortedTransactions.map((transaction, index) => (
                 <tr 
                   key={transaction.id} 
                   ref={index === sortedTransactions.length - 1 ? lastElementRef : undefined}
-                  className="transition-colors duration-100 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                  className="transition-colors duration-100 hover:bg-surface-muted"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-primary">
                     <div className="flex items-center">
                       <button
                         onClick={() => handleEditClick(transaction.id)}
-                        className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                        className="text-secondary hover:text-primary"
                       >
                         {formatDate(transaction.date)}
                       </button>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-primary">
                     {transaction.merchant}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -383,14 +367,14 @@ export default function TransactionList({
                         {transaction.merchantRef.category.name}
                       </span>
                     ) : (
-                      <span className="text-gray-500 dark:text-gray-400">-</span>
+                      <span className="text-secondary">-</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                  <td className="px-6 py-4 text-sm text-primary">
                     {transaction.description}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                    <span className={transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                    <span className={transaction.amount >= 0 ? 'text-income' : 'text-expense'}>
                       {transaction.amount >= 0 ? '+' : ''}{transaction.amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                     </span>
                   </td>
@@ -407,7 +391,7 @@ export default function TransactionList({
                     <button
                       onClick={() => handleEditClick(transaction.id)}
                       title="Transaktion bearbeiten"
-                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                      className="text-accent hover:opacity-80"
                     >
                       <PencilIcon className="h-5 w-5" />
                     </button>
@@ -422,28 +406,26 @@ export default function TransactionList({
       {/* Mobile Ansicht */}
       <div className="md:hidden space-y-4">
         {sortedTransactions.length === 0 ? (
-          <div className="text-center p-4 text-sm text-gray-500 dark:text-gray-400">
-            Keine Transaktionen vorhanden
-          </div>
+          emptyList
         ) : (
           sortedTransactions.map((transaction, index) => (
             <div
               key={transaction.id}
               ref={index === sortedTransactions.length - 1 ? lastElementRef : undefined}
-              className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 space-y-2"
+              className="bg-canvas rounded-lg shadow-sm border border-border p-4 space-y-2"
             >
               <div className="flex justify-between items-start">
                 <div>
                   <button
                     onClick={() => handleEditClick(transaction.id)}
-                    className="text-sm font-medium text-gray-900 dark:text-white"
+                    className="text-sm font-medium text-primary"
                   >
                     {formatDate(transaction.date)}
                   </button>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{transaction.merchant}</div>
+                  <div className="text-sm text-secondary">{transaction.merchant}</div>
                 </div>
                 <span className={`text-sm font-medium ${
-                  transaction.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  transaction.amount >= 0 ? 'text-income' : 'text-expense'
                 }`}>
                   {transaction.amount >= 0 ? '+' : ''}{transaction.amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                 </span>
@@ -461,9 +443,9 @@ export default function TransactionList({
                         {transaction.merchantRef.category.name}
                       </span>
                   ) : (
-                    <span className="text-gray-500 dark:text-gray-400">-</span>
+                    <span className="text-secondary">-</span>
                   )}
-                  <span className="text-sm text-gray-500 dark:text-gray-400">{transaction.description}</span>
+                  <span className="text-sm text-secondary">{transaction.description}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
@@ -476,7 +458,7 @@ export default function TransactionList({
                   <button
                     onClick={() => handleEditClick(transaction.id)}
                     title="Transaktion bearbeiten"
-                    className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                    className="text-accent hover:opacity-80"
                   >
                     <PencilIcon className="h-5 w-5" />
                   </button>
@@ -507,9 +489,11 @@ export default function TransactionList({
         onConfirm={confirmDelete}
         title="Transaktion löschen"
         message={`Möchten Sie „${deleteTarget?.label}“ wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`}
-        confirmText={isDeleting ? 'Wird gelöscht...' : 'Löschen'}
+        confirmText="Löschen"
+        confirmLoadingText="Wird gelöscht…"
         cancelText="Abbrechen"
         type="danger"
+        loading={isDeleting}
       />
     </div>
   )

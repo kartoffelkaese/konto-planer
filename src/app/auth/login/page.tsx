@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { Button } from '@/components/Button'
 
 function LoginForm() {
   const router = useRouter()
@@ -34,13 +35,13 @@ function LoginForm() {
         email,
         password,
         redirect: false,
-        callbackUrl: '/transactions'
+        callbackUrl: '/'
       })
 
       if (result?.error) {
         setError(getErrorMessage(result.error))
       } else {
-        router.push('/transactions')
+        router.push('/')
         router.refresh()
       }
     } catch (err) {
@@ -52,33 +53,33 @@ function LoginForm() {
   }
 
   return (
-    <main id="login-page" className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
+    <main id="login-page" className="min-h-screen flex flex-col items-center justify-center bg-canvas py-12 px-4 sm:px-6 lg:px-8">
       <div id="login-container" className="max-w-md w-full">
         <div id="login-header" className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Konto-Planer</h1>
-          <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-8">
+          <h1 className="text-2xl font-semibold tracking-tight text-accent mb-2">KontoPlaner</h1>
+          <h2 className="text-xl font-semibold text-primary mb-8">
             Willkommen zurück
           </h2>
           {searchParams.get('registered') === 'true' && (
-            <div id="registration-success" className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <p className="text-green-700 dark:text-green-300">
+            <div id="registration-success" className="mb-4 p-4 bg-income-bg rounded-lg border border-border">
+              <p className="text-income">
                 Registrierung erfolgreich! Sie können sich jetzt anmelden.
               </p>
             </div>
           )}
         </div>
         
-        <div id="login-form-container" className="p-8 rounded-xl shadow-lg bg-white dark:bg-gray-800">
+        <div id="login-form-container" className="section-card-accent p-8">
           <form id="login-form" className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div id="error-message" className="rounded-lg bg-red-50 dark:bg-red-900/20 p-4 text-center">
-                <div className="text-sm text-red-700 dark:text-red-300">{error}</div>
+              <div id="error-message" className="rounded-lg bg-danger-subtle p-4 text-center border border-border">
+                <div className="text-sm text-danger">{error}</div>
               </div>
             )}
             
             <div id="form-fields" className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="email" className="block text-sm font-medium text-primary mb-1">
                   E-Mail
                 </label>
                 <input
@@ -87,12 +88,12 @@ function LoginForm() {
                   type="email"
                   autoComplete="email"
                   required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="appearance-none block w-full px-3 py-2 border border-border rounded-lg placeholder:text-secondary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent bg-surface text-primary"
                   placeholder="ihre@email.de"
                 />
               </div>
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-primary mb-1">
                   Passwort
                 </label>
                 <input
@@ -101,30 +102,22 @@ function LoginForm() {
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="appearance-none block w-full px-3 py-2 border border-border rounded-lg placeholder:text-secondary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent bg-surface text-primary"
                   placeholder="••••••••"
                 />
               </div>
             </div>
 
             <div>
-              <button
+              <Button
                 type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800 disabled:bg-blue-300 dark:disabled:bg-blue-700 transition-colors duration-200"
+                fullWidth
+                size="lg"
+                loading={loading}
+                loadingText="Anmeldung läuft…"
               >
-                {loading ? (
-                  <div className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Anmeldung läuft...
-                  </div>
-                ) : (
-                  'Anmelden'
-                )}
-              </button>
+                Anmelden
+              </Button>
             </div>
           </form>
         </div>
@@ -132,7 +125,7 @@ function LoginForm() {
         <div id="register-link" className="mt-6 text-center">
           <Link
             href="/auth/register"
-            className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
+            className="text-sm font-medium text-accent hover:text-accent-hover transition-colors duration-feedback"
           >
             Noch kein Konto? Jetzt registrieren →
           </Link>

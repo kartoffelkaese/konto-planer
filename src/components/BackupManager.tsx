@@ -3,16 +3,19 @@
 import { useState } from 'react'
 import { ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
+import { Button, getButtonClassName } from '@/components/Button'
 
 export default function BackupManager() {
   const { showToast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
+  const [isBackingUp, setIsBackingUp] = useState(false)
+  const [isRestoring, setIsRestoring] = useState(false)
+  const isBusy = isBackingUp || isRestoring
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
   const handleBackup = async () => {
     try {
-      setIsLoading(true)
+      setIsBackingUp(true)
       setError(null)
       setSuccess(null)
 
@@ -37,7 +40,7 @@ export default function BackupManager() {
       setError('Fehler beim Erstellen des Backups')
       showToast('Fehler beim Erstellen des Backups', 'error')
     } finally {
-      setIsLoading(false)
+      setIsBackingUp(false)
     }
   }
 
@@ -46,7 +49,7 @@ export default function BackupManager() {
     if (!file) return
 
     try {
-      setIsLoading(true)
+      setIsRestoring(true)
       setError(null)
       setSuccess(null)
 
@@ -70,54 +73,67 @@ export default function BackupManager() {
           setError('Fehler beim Wiederherstellen des Backups')
           showToast('Fehler beim Wiederherstellen des Backups', 'error')
         } finally {
-          setIsLoading(false)
+          setIsRestoring(false)
         }
       }
       reader.readAsText(file)
     } catch (err) {
       console.error('Fehler beim Lesen der Datei:', err)
       setError('Fehler beim Lesen der Datei')
-      setIsLoading(false)
+      setIsRestoring(false)
     }
   }
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium text-gray-900 dark:text-white">Backup & Wiederherstellung</h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400">
+      <h3 className="text-lg font-medium text-primary">Backup & Wiederherstellung</h3>
+      <p className="text-sm text-secondary">
         Erstellen Sie ein Backup Ihrer Daten oder stellen Sie ein vorheriges Backup wieder her.
       </p>
 
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-lg">
+        <div className="p-4 bg-danger-subtle text-danger rounded-lg">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="p-4 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-200 rounded-lg">
+        <div className="p-4 bg-income-bg text-income rounded-lg">
           {success}
         </div>
       )}
 
-      <div className="flex space-x-4">
-        <button
+      <div className="flex flex-wrap gap-3">
+        <Button
+          type="button"
           onClick={handleBackup}
-          disabled={isLoading}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark-light disabled:opacity-50"
+          disabled={isBusy}
+          loading={isBackingUp}
+          loadingText="Backup wird erstellt…"
         >
-          <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
+          <ArrowDownTrayIcon className="h-5 w-5" aria-hidden="true" />
           Backup erstellen
-        </button>
+        </Button>
 
-        <label className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-dark-light disabled:opacity-50">
-          <ArrowUpTrayIcon className="h-5 w-5 mr-2" />
-          Backup wiederherstellen
+        <label
+          className={`${getButtonClassName({ variant: 'primary' })} cursor-pointer ${isBusy ? 'pointer-events-none opacity-50' : ''}`}
+        >
+          {isRestoring ? (
+            <>
+              <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
+              Wird wiederhergestellt…
+            </>
+          ) : (
+            <>
+              <ArrowUpTrayIcon className="h-5 w-5" aria-hidden="true" />
+              Backup wiederherstellen
+            </>
+          )}
           <input
             type="file"
             accept=".json"
             onChange={handleRestore}
-            disabled={isLoading}
+            disabled={isBusy}
             className="hidden"
           />
         </label>

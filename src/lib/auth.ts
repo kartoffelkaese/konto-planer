@@ -12,6 +12,22 @@ import {
   RATE_LIMITS,
 } from '@/lib/rate-limit'
 
+/** In Dev darf AUTH_URL nicht auf die Produktions-Domain zeigen (häufig durch doppelte .env-Zeilen). */
+function stripProductionAuthUrlInDev() {
+  if (process.env.NODE_ENV === 'production') return
+  const url = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL
+  if (!url) return
+  try {
+    const host = new URL(url).hostname
+    if (host === 'konto-planer.de' || host === 'www.konto-planer.de') {
+      delete process.env.AUTH_URL
+    }
+  } catch {
+    /* ungültige URL – NextAuth nutzt trustHost */
+  }
+}
+
+stripProductionAuthUrlInDev()
 assertProductionEnv()
 
 const isProduction = process.env.NODE_ENV === 'production'

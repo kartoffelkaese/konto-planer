@@ -1,8 +1,7 @@
 'use client'
 
-// Marketing-Landing: bestehende Hover-Effekte bewusst; keine weiteren Mikrointeraktionen (siehe globals.css prefers-reduced-motion).
-
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { 
   CalendarIcon,
@@ -14,8 +13,11 @@ import {
   ShieldCheckIcon,
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline'
-import { PieChart, Pie, Cell, Tooltip, BarChart, XAxis, YAxis, Bar } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip } from 'recharts'
 import ChartContainer from '@/components/ChartContainer'
+import PageLoader from '@/components/PageLoader'
+import PageError from '@/components/PageError'
+import EmptyState from '@/components/EmptyState'
 
 interface DashboardData {
   monthlyIncome: number
@@ -50,175 +52,146 @@ export default function DashboardPage() {
     categoryDistribution: []
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  const fetchDashboardData = async () => {
+    setIsLoading(true)
+    setLoadError(null)
+    try {
+      const response = await fetch('/api/dashboard')
+      if (!response.ok) throw new Error('Fehler beim Laden der Daten')
+      const dashboardData = await response.json()
+      setData(dashboardData)
+    } catch (error) {
+      console.error('Fehler:', error)
+      setLoadError('Dashboard konnte nicht geladen werden.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const response = await fetch('/api/dashboard')
-        if (!response.ok) throw new Error('Fehler beim Laden der Daten')
-        const dashboardData = await response.json()
-        setData(dashboardData)
-      } catch (error) {
-        console.error('Fehler:', error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     if (session) {
       fetchDashboardData()
     }
   }, [session])
 
   if (!session) {
+    const features = [
+      {
+        icon: ChartBarIcon,
+        title: 'Übersichtliches Dashboard',
+        description:
+          'Behalten Sie Ihre Finanzen im Blick mit unserem intuitiven Dashboard. Visualisieren Sie Ihre Ausgaben und Einnahmen auf einen Blick.',
+      },
+      {
+        icon: BanknotesIcon,
+        title: 'Transaktionsverwaltung',
+        description:
+          'Erfassen Sie Einnahmen und Ausgaben, kategorisieren Sie Transaktionen und verwalten Sie wiederkehrende Zahlungen.',
+      },
+      {
+        icon: ArrowPathIcon,
+        title: 'Automatisierung',
+        description:
+          'Automatische Erstellung ausstehender Zahlungen und Echtzeit-Aktualisierung Ihres Kontostands.',
+      },
+      {
+        icon: TagIcon,
+        title: 'Kategorien',
+        description:
+          'Organisieren Sie Ihre Finanzen mit anpassbaren Kategorien und behalten Sie den Überblick über Ihre Ausgaben.',
+      },
+      {
+        icon: BuildingStorefrontIcon,
+        title: 'Händlerverwaltung',
+        description:
+          'Verwalten Sie Ihre Händler und profitieren Sie von automatischer Kategorisierung.',
+      },
+      {
+        icon: ShieldCheckIcon,
+        title: 'Sicherheit',
+        description:
+          'Sichere Authentifizierung, verschlüsselte Datenübertragung und datenschutzkonforme Implementierung.',
+      },
+      {
+        icon: ArrowDownTrayIcon,
+        title: 'Backup & Export',
+        description:
+          'Erstellen Sie Backups Ihrer Daten und exportieren Sie Ihre Finanzübersichten.',
+      },
+    ]
+
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        {/* Hero Section mit Animation */}
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-100/20 to-indigo-100/20 dark:from-blue-900/20 dark:to-indigo-900/20 transform -skew-y-6 origin-top-right"></div>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center relative z-20">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white sm:text-5xl md:text-6xl">
+      <div className="min-h-screen bg-canvas">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
+          <h1 className="text-4xl font-semibold tracking-tight text-primary sm:text-5xl md:text-6xl">
             <span className="block">Willkommen bei</span>
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">KontoPlaner</span>
+            <span className="block text-accent">KontoPlaner</span>
           </h1>
-            <p className="mt-3 max-w-md mx-auto text-base text-gray-600 dark:text-gray-300 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-            Ihre persönliche Finanzverwaltung - einfach, übersichtlich und effizient.
+          <p className="mt-3 max-w-md mx-auto text-base text-secondary sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
+            Ihre persönliche Finanzverwaltung – einfach, übersichtlich und effizient.
           </p>
-            <div className="mt-8 flex justify-center gap-4">
-              <a
-                href="/api/auth/signin"
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 dark:from-blue-500 dark:to-indigo-500 dark:hover:from-blue-600 dark:hover:to-indigo-600 shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                Jetzt anmelden
-              </a>
-              <a
-                href="/auth/register"
-                className="inline-flex items-center px-6 py-3 border-2 border-blue-600 dark:border-blue-400 text-base font-medium rounded-lg text-blue-600 dark:text-blue-400 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                Registrieren
-              </a>
-            </div>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Link
+              href="/auth/login"
+              className="btn-primary inline-flex items-center px-6 py-3 text-base font-medium rounded-control"
+            >
+              Jetzt anmelden
+            </Link>
+            <a
+              href="/auth/register"
+              className="btn-secondary inline-flex items-center px-6 py-3 text-base font-medium rounded-control"
+            >
+              Registrieren
+            </a>
           </div>
         </div>
 
-        {/* Feature Section mit modernem Grid-Layout */}
-        <div className="py-20 bg-white dark:bg-gray-800">
+        <div className="py-16 sm:py-20 border-t border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-base text-blue-600 dark:text-blue-400 font-semibold tracking-wide uppercase">Features</h2>
-              <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
-                Alles was Sie für Ihre Finanzverwaltung brauchen
+            <div className="text-center mb-12">
+              <h2 className="text-sm font-medium text-secondary uppercase tracking-wide">Features</h2>
+              <p className="mt-2 text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
+                Alles für Ihre Finanzverwaltung
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {/* Dashboard Feature */}
-              <div className="group relative bg-white dark:bg-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-gray-600">
-                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <ChartBarIcon className="h-6 w-6" aria-hidden="true" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {features.map(({ icon: Icon, title, description }) => (
+                <div key={title} className="section-card-accent p-6">
+                  <div className="w-10 h-10 rounded-lg bg-accent-subtle flex items-center justify-center text-accent mb-4">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
                   </div>
-                <div className="mt-8">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Übersichtliches Dashboard</h3>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Behalten Sie Ihre Finanzen im Blick mit unserem intuitiven Dashboard. Visualisieren Sie Ihre Ausgaben und Einnahmen auf einen Blick.
-                    </p>
-                  </div>
+                  <h3 className="text-lg font-semibold text-primary mb-2">{title}</h3>
+                  <p className="text-secondary text-sm leading-relaxed">{description}</p>
                 </div>
-
-              {/* Transaktionsverwaltung */}
-              <div className="group relative bg-white dark:bg-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-gray-600">
-                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <BanknotesIcon className="h-6 w-6" aria-hidden="true" />
-                </div>
-                <div className="mt-8">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Transaktionsverwaltung</h3>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Erfassen Sie Einnahmen und Ausgaben, kategorisieren Sie Transaktionen und verwalten Sie wiederkehrende Zahlungen.
-                  </p>
-                </div>
-              </div>
-
-              {/* Automatisierung */}
-              <div className="group relative bg-white dark:bg-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-gray-600">
-                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-                    <ArrowPathIcon className="h-6 w-6" aria-hidden="true" />
-                  </div>
-                <div className="mt-8">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Automatisierung</h3>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Automatische Erstellung ausstehender Zahlungen und Echtzeit-Aktualisierung Ihres Kontostands.
-                    </p>
-                  </div>
-                </div>
-
-              {/* Händlerverwaltung */}
-              <div className="group relative bg-white dark:bg-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-gray-600">
-                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <BuildingStorefrontIcon className="h-6 w-6" aria-hidden="true" />
-                  </div>
-                <div className="mt-8">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Händlerverwaltung</h3>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Verwalten Sie Ihre Händler und profitieren Sie von automatischer Kategorisierung.
-                    </p>
-                  </div>
-                </div>
-
-              {/* Sicherheit */}
-              <div className="group relative bg-white dark:bg-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-gray-600">
-                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <ShieldCheckIcon className="h-6 w-6" aria-hidden="true" />
-                  </div>
-                <div className="mt-8">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Sicherheit</h3>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Sichere Authentifizierung, verschlüsselte Datenübertragung und datenschutzkonforme Implementierung.
-                    </p>
-                  </div>
-              </div>
-
-              {/* Backup */}
-              <div className="group relative bg-white dark:bg-gray-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-gray-100 dark:border-gray-600">
-                <div className="absolute -top-4 -left-4 w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <ArrowDownTrayIcon className="h-6 w-6" aria-hidden="true" />
-                </div>
-                <div className="mt-8">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Backup & Export</h3>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Erstellen Sie Backups Ihrer Daten und exportieren Sie Ihre Finanzübersichten.
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* CTA Section mit modernem Design */}
-        <div className="relative bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-700 overflow-hidden">
-          <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:60px_60px]"></div>
-          <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
-            <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-              <span className="block">Bereit loszulegen?</span>
-              <span className="block">Starten Sie noch heute mit KontoPlaner.</span>
+        <div className="bg-accent">
+          <div className="max-w-7xl mx-auto py-16 px-4 sm:py-20 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              Bereit loszulegen?
             </h2>
-              <p className="mt-6 text-lg leading-6 text-blue-100">
+            <p className="mt-4 text-base text-white/85 max-w-xl mx-auto">
               Melden Sie sich jetzt an und übernehmen Sie die Kontrolle über Ihre Finanzen.
             </p>
-              <div className="mt-10 flex justify-center gap-4">
-            <a
-                  href="/auth/register"
-                  className="inline-flex items-center px-6 py-3 border-2 border-white text-base font-medium rounded-lg text-white hover:bg-white hover:text-blue-600 dark:hover:text-blue-700 transition-all duration-200"
-            >
-                  Kostenlos registrieren
-            </a>
-                <a
-                  href="/api/auth/signin"
-                  className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-blue-600 dark:text-blue-700 bg-white hover:bg-blue-50 dark:hover:bg-gray-100 transition-all duration-200"
-                >
-                  Anmelden
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
+              <a
+                href="/auth/register"
+                className="inline-flex items-center px-6 py-3 border-2 border-white text-base font-medium rounded-control text-accent bg-white hover:bg-accent-subtle transition-colors duration-feedback"
+              >
+                Kostenlos registrieren
               </a>
-              </div>
+              <Link
+                href="/auth/login"
+                className="inline-flex items-center px-6 py-3 border border-white/40 text-base font-medium rounded-control text-white hover:bg-white/10 transition-colors duration-feedback"
+              >
+                Anmelden
+              </Link>
             </div>
           </div>
         </div>
@@ -227,10 +200,12 @@ export default function DashboardPage() {
   }
 
   if (isLoading) {
+    return <PageLoader message="Dashboard wird geladen…" />
+  }
+
+  if (loadError) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
+      <PageError message={loadError} onRetry={fetchDashboardData} />
     )
   }
 
@@ -251,18 +226,21 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Dashboard</h1>
+      <h1 className="page-title mb-6">Dashboard</h1>
 
       {/* Kategorieverteilung und wiederkehrende Zahlungen */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Kategorieverteilung */}
-        <div className="bg-white dark:bg-dark-light rounded-lg shadow-md dark:shadow-dark p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Ausgaben nach Kategorien</h3>
+        <div className="bg-surface rounded-lg border border-border p-6">
+          <h3 className="text-lg font-medium text-primary mb-4">Ausgaben nach Kategorien</h3>
           <div className="min-w-0">
             {data.categoryDistribution.length === 0 ? (
-              <div className="flex items-center justify-center h-80">
-                <p className="text-gray-500 dark:text-gray-400">Keine Ausgaben im aktuellen Zeitraum</p>
-              </div>
+              <EmptyState
+                title="Keine Ausgaben im aktuellen Zeitraum"
+                description="Sobald Sie Ausgaben erfassen, erscheint hier die Verteilung nach Kategorien."
+                actionLabel="Transaktion erfassen"
+                actionHref="/transactions?new=1"
+              />
             ) : (
             <ChartContainer height={320}>
               <PieChart>
@@ -295,68 +273,33 @@ export default function DashboardPage() {
         </div>
 
         {/* Wiederkehrende Zahlungen */}
-        <div className="bg-white dark:bg-dark-light rounded-lg shadow-md dark:shadow-dark p-6">
+        <div className="bg-surface rounded-lg border border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Wiederkehrende Zahlungen (nächste 30 Tage)</h3>
-            <CalendarIcon className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+            <h3 className="text-lg font-medium text-primary">Wiederkehrende Zahlungen (nächste 30 Tage)</h3>
+            <CalendarIcon className="h-5 w-5 text-secondary" />
           </div>
           <div className="space-y-4">
             {data.recurringTransactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-dark-lighter">
+              <div key={transaction.id} className="flex items-center justify-between py-2 border-b border-border">
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">{transaction.merchant}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{transaction.category}</p>
+                  <p className="font-medium text-primary">{transaction.merchant}</p>
+                  <p className="text-sm text-secondary">{transaction.category}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(transaction.amount)}</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Nächste Zahlung: {formatDate(transaction.date)}</p>
+                  <p className="font-medium text-primary">{formatCurrency(transaction.amount)}</p>
+                  <p className="text-sm text-secondary">Nächste Zahlung: {formatDate(transaction.date)}</p>
                 </div>
               </div>
             ))}
             {data.recurringTransactions.length === 0 && (
-              <p className="text-gray-500 dark:text-gray-400 text-center py-4">Keine wiederkehrenden Zahlungen vorhanden</p>
+              <EmptyState
+                title="Keine wiederkehrenden Zahlungen"
+                description="In den nächsten 30 Tagen sind keine fälligen wiederkehrenden Buchungen geplant."
+                actionLabel="Wiederkehrende anlegen"
+                actionHref="/recurring"
+              />
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Grafik */}
-      <div className="bg-white dark:bg-dark-light rounded-lg shadow dark:shadow-dark p-4 md:p-6">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Ausgaben pro Kategorie</h3>
-        <div className="w-full min-w-0">
-          {data.categoryDistribution.length === 0 ? (
-            <div className="flex items-center justify-center h-[400px]">
-              <p className="text-gray-500 dark:text-gray-400">Keine Ausgaben im aktuellen Zeitraum</p>
-            </div>
-          ) : (
-          <ChartContainer height={400}>
-            <BarChart data={data.categoryDistribution}>
-              <XAxis 
-                dataKey="name" 
-                angle={-45}
-                textAnchor="end"
-                height={60}
-                interval={0}
-                tick={{ fontSize: 12, fill: 'var(--text-color)' }}
-              />
-              <YAxis 
-                tickFormatter={(value) => `${value}€`}
-                tick={{ fontSize: 12, fill: 'var(--text-color)' }}
-              />
-              <Tooltip 
-                formatter={(value) => [`${Number(value ?? 0).toFixed(2)}€`, 'Ausgaben']}
-                labelFormatter={(label) => `Kategorie: ${label}`}
-                contentStyle={{ 
-                  backgroundColor: 'var(--card-bg)', 
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '0.5rem',
-                  color: 'var(--text-color)'
-                }}
-              />
-              <Bar dataKey="value" fill="#2563eb" />
-            </BarChart>
-          </ChartContainer>
-          )}
         </div>
       </div>
     </div>

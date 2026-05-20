@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "3.3.4",
+  "version": "4.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
@@ -14,12 +14,11 @@
     "pm2:monitor": "pm2 monit konto-planer"
   },
   "overrides": {
-    "postcss": "^8.5.14",
+    "postcss": "^8.5.15",
     "@hono/node-server": "^1.19.13",
-    "eslint": "10.3.0"
+    "eslint": "10.4.0"
   },
   "dependencies": {
-    "@auth/core": "^0.37.0",
     "@auth/prisma-adapter": "^2.11.2",
     "@headlessui/react": "^2.2.10",
     "@heroicons/react": "^2.2.0",
@@ -27,26 +26,24 @@
     "@prisma/client": "^7.8.0",
     "bcryptjs": "^3.0.3",
     "dayjs": "^1.11.20",
-    "mariadb": "^3.5.2",
-    "mysql2": "^3.22.3",
     "next": "^16.2.6",
     "next-auth": "^5.0.0-beta.29",
     "prisma": "^7.8.0",
     "react": "^19.2.6",
-    "react-colorful": "^5.7.0",
     "react-dom": "^19.2.6",
     "recharts": "^3.8.1"
   },
   "devDependencies": {
+    "dotenv": "^16.6.1",
     "@eslint/compat": "^2.1.0",
     "@tailwindcss/postcss": "^4.3.0",
-    "@types/node": "^25.8.0",
-    "@types/react": "^19.2.14",
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.5.0",
-    "eslint": "10.3.0",
+    "eslint": "10.4.0",
     "eslint-config-next": "^16.2.6",
-    "postcss": "^8.5.14",
+    "postcss": "^8.5.15",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3"
   }

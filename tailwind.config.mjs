@@ -1,6 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 const config = {
-  darkMode: 'class',
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -9,19 +8,53 @@ const config = {
   theme: {
     extend: {
       colors: {
-        background: 'var(--background)',
-        foreground: 'var(--foreground)',
-        dark: {
-          DEFAULT: '#1a1a2e',
-          light: '#2a2a4a',
-          lighter: '#3a3a6a',
-          dark: '#0a0a1a',
+        canvas: 'var(--color-canvas)',
+        surface: {
+          DEFAULT: 'var(--color-surface)',
+          muted: 'var(--color-surface-muted)',
         },
+        border: {
+          DEFAULT: 'var(--color-border)',
+        },
+        primary: {
+          DEFAULT: 'var(--color-text-primary)',
+          foreground: 'var(--color-text-primary)',
+        },
+        secondary: {
+          DEFAULT: 'var(--color-text-secondary)',
+          foreground: 'var(--color-text-secondary)',
+        },
+        accent: {
+          DEFAULT: 'var(--color-accent)',
+          hover: 'var(--color-accent-hover)',
+          subtle: 'var(--color-accent-subtle)',
+          muted: 'var(--color-accent-muted)',
+          foreground: 'var(--color-accent-foreground)',
+          border: 'var(--color-accent-border)',
+        },
+        income: {
+          DEFAULT: 'var(--color-income)',
+          bg: 'var(--color-income-bg)',
+        },
+        expense: {
+          DEFAULT: 'var(--color-expense)',
+          bg: 'var(--color-expense-bg)',
+        },
+        pending: {
+          DEFAULT: 'var(--color-pending)',
+          bg: 'var(--color-pending-bg)',
+        },
+        danger: {
+          DEFAULT: 'var(--color-danger)',
+          hover: 'var(--color-danger-hover)',
+          subtle: 'var(--color-danger-subtle)',
+        },
+        background: 'var(--color-canvas)',
+        foreground: 'var(--color-text-primary)',
       },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic':
-          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      borderRadius: {
+        card: 'var(--radius-card)',
+        control: 'var(--radius-control)',
       },
       transitionDuration: {
         feedback: 'var(--motion-duration-feedback)',

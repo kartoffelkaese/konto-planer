@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { 
-  HomeIcon, 
-  ChartPieIcon, 
+import {
+  HomeIcon,
+  ChartPieIcon,
   BanknotesIcon,
   ArrowPathIcon,
   Cog6ToothIcon,
@@ -16,28 +16,28 @@ import {
   ChevronRightIcon,
   TagIcon,
   BuildingStorefrontIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline'
 import { APP_VERSION } from '@/lib/version'
 import { signOut } from 'next-auth/react'
-import ThemeSwitcher from './ThemeSwitcher'
+import ConfirmDialog from '@/components/ConfirmDialog'
+
+const labelTransition =
+  'overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-in-out'
 
 export default function Navigation() {
   const pathname = usePathname()
   const { data: session } = useSession()
   const [isOpen, setIsOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(true)
-  const [isMounted, setIsMounted] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   useEffect(() => {
-    setIsMounted(true)
-    document.documentElement.style.setProperty('--sidebar-width', isCollapsed ? '4rem' : '16rem')
+    document.documentElement.style.setProperty(
+      '--sidebar-width',
+      isCollapsed ? '4rem' : '16rem'
+    )
   }, [isCollapsed])
-
-  // Verhindere Hydration Mismatch
-  if (!isMounted) {
-    return null
-  }
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },
@@ -51,56 +51,95 @@ export default function Navigation() {
 
   const isActive = (path: string) => pathname === path
 
+  /** Mobil-Drawer oder Desktop ausgeklappt → volle Nav mit Text */
+  const showExpandedContent = !isCollapsed || isOpen
+  /** Nur schmale Desktop-Leiste (Icons) */
+  const iconOnlyMode = isCollapsed && !isOpen
+
+  const labelVisibility = showExpandedContent
+    ? 'max-w-[11rem] opacity-100 ml-3'
+    : 'max-w-0 opacity-0 ml-0'
+
+  const navItemClasses = (active: boolean) => {
+    const layout = iconOnlyMode
+      ? 'md:justify-center md:px-2 py-2 px-3'
+      : 'px-3 py-2'
+
+    const base = `flex items-center min-h-10 rounded-control transition-colors duration-feedback ${layout}`
+
+    if (active) {
+      if (iconOnlyMode) {
+        return `${base} bg-accent-subtle text-accent font-semibold`
+      }
+      return `${base} bg-accent-subtle text-accent border-l-[3px] border-l-accent font-semibold`
+    }
+
+    return `${base} text-secondary hover:bg-accent-muted hover:text-accent border-l-[3px] border-l-transparent`
+  }
+
   return (
     <>
-      {/* Mobile menu button and title */}
       <div className="fixed top-4 left-4 z-50 md:hidden">
         <button
+          type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+          className="p-2 rounded-control text-secondary hover:text-primary hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent"
         >
           <span className="sr-only">Menü öffnen</span>
           {isOpen ? (
-            <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+            <XMarkIcon className="h-6 w-6 shrink-0" aria-hidden="true" />
           ) : (
-            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+            <Bars3Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
           )}
         </button>
       </div>
 
-      {/* Desktop Overlay */}
       {!isCollapsed && (
-        <div 
-          className="fixed inset-0 z-30 bg-gray-600 bg-opacity-75 hidden md:block"
+        <div
+          className="fixed inset-0 z-30 bg-black/40 hidden md:block"
           onClick={() => setIsCollapsed(true)}
         />
       )}
 
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-40 bg-white dark:bg-dark-light shadow-lg transform transition-all duration-300 ease-in-out ${
-        isOpen ? 'translate-x-0 w-64' : '-translate-x-full'
-      } md:translate-x-0 w-[var(--sidebar-width)] flex flex-col`}>
-        <div className="flex-1 overflow-y-auto">
-          {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-4 border-b dark:border-dark-lighter mt-16 md:mt-0">
-            {!isCollapsed && (
-              <Link href="/" className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                KontoPlaner
-              </Link>
-            )}
+      <div
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-surface border-r-2 border-r-accent shadow-sm transition-[transform,width] duration-300 ease-in-out md:w-[var(--sidebar-width)] md:translate-x-0 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex-1 overflow-x-hidden overflow-y-auto">
+          <div
+            className={`flex h-16 shrink-0 items-center border-b border-accent-border bg-accent-muted px-4 mt-16 md:mt-0 transition-[padding] duration-300 ease-in-out ${
+              iconOnlyMode ? 'md:justify-center md:px-2' : 'justify-between'
+            }`}
+          >
+            <Link
+              href="/"
+              className={`text-xl font-semibold text-accent tracking-tight ${labelTransition} ${
+                showExpandedContent
+                  ? 'max-w-[8rem] opacity-100'
+                  : 'max-w-0 opacity-0 pointer-events-none'
+              }`}
+              tabIndex={showExpandedContent ? 0 : -1}
+              aria-hidden={!showExpandedContent}
+            >
+              KontoPlaner
+            </Link>
             <button
+              type="button"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden md:flex items-center justify-center w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-lighter focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              className={`hidden md:flex shrink-0 items-center justify-center w-8 h-8 rounded-control hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent ${
+                isCollapsed ? '' : 'ml-auto'
+              }`}
+              aria-label={isCollapsed ? 'Menü ausklappen' : 'Menü einklappen'}
             >
               {isCollapsed ? (
-                <ChevronRightIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                <ChevronRightIcon className="h-5 w-5 shrink-0 text-secondary" />
               ) : (
-                <ChevronLeftIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                <ChevronLeftIcon className="h-5 w-5 shrink-0 text-secondary" />
               )}
             </button>
           </div>
 
-          {/* Navigation Links */}
           <nav className="flex-1 px-2 space-y-1 py-4">
             {navigation.map((item) => {
               const isActivePath = isActive(item.href)
@@ -108,65 +147,91 @@ export default function Navigation() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150 ${
-                    isActivePath
-                      ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-lighter hover:text-gray-900 dark:hover:text-white'
-                  }`}
+                  title={iconOnlyMode ? item.name : undefined}
+                  className={navItemClasses(isActivePath)}
                   onClick={() => setIsOpen(false)}
                 >
-                  <item.icon
-                    className={`h-5 w-5 ${
-                      isActivePath ? 'text-blue-700 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'
-                    }`}
-                    aria-hidden="true"
-                  />
-                  {!isCollapsed && (
-                    <span className="ml-3">{item.name}</span>
-                  )}
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                    <item.icon
+                      className={`h-5 w-5 shrink-0 ${
+                        isActivePath ? 'text-accent' : 'text-secondary'
+                      }`}
+                      aria-hidden="true"
+                    />
+                  </span>
+                  <span className={`text-sm font-medium ${labelTransition} ${labelVisibility}`}>
+                    {item.name}
+                  </span>
                 </Link>
               )
             })}
           </nav>
 
-          {/* Logout Button */}
           <div className="px-2 py-2 space-y-2">
             {session && (
-            <button
-              onClick={() => signOut()}
-                className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors duration-150"
-            >
-                <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-400 dark:text-red-500" aria-hidden="true" />
-                {!isCollapsed && (
-                <span className="ml-3">Ausloggen</span>
-              )}
-            </button>
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(true)}
+                title={
+                  iconOnlyMode
+                    ? 'Ausloggen – Bestätigung erforderlich'
+                    : 'Vom Konto abmelden'
+                }
+                aria-label="Ausloggen"
+                className={`flex items-center w-full min-h-10 text-sm font-medium text-danger rounded-control hover:bg-danger-subtle transition-colors duration-feedback ${
+                  iconOnlyMode ? 'md:justify-center md:px-2 py-2 px-3' : 'px-3 py-2'
+                }`}
+              >
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                  <ArrowRightOnRectangleIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
+                </span>
+                <span className={`${labelTransition} ${labelVisibility}`}>Ausloggen</span>
+              </button>
             )}
           </div>
         </div>
 
-        {/* Version */}
-        <div className={`px-4 py-2 ${!isCollapsed ? 'border-t dark:border-dark-lighter' : ''}`}>
-          {!isCollapsed && (
-            <a
-              href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-start text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-            >
-              Version {APP_VERSION}
-            </a>
-          )}
+        <div
+          className={`shrink-0 px-2 py-2 overflow-hidden transition-[border-color] duration-300 ${
+            showExpandedContent ? 'border-t border-border' : ''
+          }`}
+        >
+          <a
+            href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center text-xs text-secondary hover:text-primary ${labelTransition} ${
+              showExpandedContent
+                ? 'max-w-full opacity-100 px-2 py-1'
+                : 'max-w-0 opacity-0 h-0 py-0 pointer-events-none'
+            }`}
+            tabIndex={showExpandedContent ? 0 : -1}
+            aria-hidden={!showExpandedContent}
+          >
+            Version {APP_VERSION}
+          </a>
         </div>
       </div>
 
-      {/* Mobile Overlay */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 z-30 bg-gray-600 bg-opacity-75 md:hidden"
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={async () => {
+          await signOut({ callbackUrl: '/auth/login' })
+        }}
+        title="Abmelden?"
+        message="Möchten Sie sich wirklich abmelden?"
+        confirmText="Abmelden"
+        cancelText="Abbrechen"
+        type="warning"
+      />
     </>
   )
-} 
+}

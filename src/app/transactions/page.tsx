@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import Link from 'next/link'
+import { Suspense, useState, useEffect, useRef, useCallback } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { PlusIcon } from '@heroicons/react/24/outline'
 import { Transaction } from '@/types'
 import { getTransactions, updateTransaction, createRecurringInstance, createPendingInstances } from '@/lib/api'
 import { isTransactionDueInSalaryMonth, getSalaryMonthRange } from '@/lib/dateUtils'
@@ -11,11 +12,17 @@ import Modal from '@/components/Modal'
 import TransactionForm from '@/components/TransactionForm'
 import EditTransactionForm from '@/components/EditTransactionForm'
 import { useToast } from '@/hooks/useToast'
+import { Button } from '@/components/Button'
+import PageLoader from '@/components/PageLoader'
+import PageError from '@/components/PageError'
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
 type SortDirection = 'asc' | 'desc'
 
-export default function TransactionsPage() {
+function TransactionsPageContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -48,6 +55,7 @@ export default function TransactionsPage() {
 
   // Modal states
   const [showNewTransactionModal, setShowNewTransactionModal] = useState(false)
+  const [isCreatingPending, setIsCreatingPending] = useState(false)
   const [showEditTransactionModal, setShowEditTransactionModal] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
 
@@ -58,6 +66,13 @@ export default function TransactionsPage() {
     }
     init()
   }, [])
+
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setShowNewTransactionModal(true)
+      router.replace('/transactions', { scroll: false })
+    }
+  }, [searchParams, router])
 
   useEffect(() => {
     if (salaryDay === null) return
@@ -243,6 +258,7 @@ export default function TransactionsPage() {
   }, [sortField])
 
   const handleCreatePending = async () => {
+    setIsCreatingPending(true)
     try {
       await createPendingInstances()
       await handleTransactionChange()
@@ -251,6 +267,8 @@ export default function TransactionsPage() {
       console.error('Error creating pending instances:', err)
       setError('Fehler beim Erstellen der ausstehenden Zahlungen')
       showToast('Fehler beim Erstellen der ausstehenden Zahlungen', 'error')
+    } finally {
+      setIsCreatingPending(false)
     }
   }
 
@@ -282,54 +300,59 @@ export default function TransactionsPage() {
            !transaction.isConfirmed
   }
 
-  if (loading && transactions.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8 flex flex-col items-center justify-center">
-        <div className="flex items-center space-x-3">
-          <svg className="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span className="text-gray-600 dark:text-gray-400">Transaktionen werden geladen...</span>
-        </div>
-      </div>
-    )
+  const hasPendingInList = transactions.some(isTransactionPending)
+  const showPendingAction =
+    totals.totalPendingExpenses > 0 || hasPendingInList
+
+  if (loading && transactions.length === 0 && !error) {
+    return <PageLoader message="Transaktionen werden geladen…" />
   }
 
-  if (error) {
+  if (error && transactions.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8 flex flex-col items-center justify-center">
-        <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-6 py-4 rounded-lg flex items-center space-x-3">
-          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-          <span>{error}</span>
-        </div>
-      </div>
+      <PageError
+        message={error}
+        onRetry={() => {
+          setError(null)
+          loadTransactions(1, false)
+        }}
+      />
     )
   }
 
   return (
-    <div id="transaction-page" className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div id="transaction-page" className="min-h-screen bg-canvas pb-24 md:pb-8">
       <div id="transaction-container" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error && (
-          <div id="error-message" className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg">
+        {error && transactions.length > 0 && (
+          <div
+            id="error-message"
+            className="mb-4 p-4 bg-danger-subtle text-danger rounded-card border border-danger/20"
+            role="alert"
+          >
             {error}
           </div>
         )}
 
         <div id="page-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{accountName}</h1>
-              <button
-                onClick={handleCreatePending}
-                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/20 hover:bg-blue-200 dark:hover:bg-blue-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-              >
-                Ausstehende Zahlungen erstellen
-              </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="page-title">{accountName}</h1>
+              {showPendingAction && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleCreatePending}
+                  loading={isCreatingPending}
+                  loadingText="Wird erstellt…"
+                  title="Erstellt Buchungen für fällige wiederkehrende Zahlungen im aktuellen Gehaltsmonat"
+                  aria-label="Ausstehende Zahlungen für den Gehaltsmonat erstellen"
+                >
+                  Ausstehende erstellen
+                </Button>
+              )}
             </div>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 page-subtitle">
               Verwalten Sie Ihre Ein- und Ausgaben
             </p>
           </div>
@@ -339,22 +362,23 @@ export default function TransactionsPage() {
                 type="checkbox"
                 checked={filterSalaryMonth}
                 onChange={(e) => setFilterSalaryMonth(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                className="rounded border-border text-accent focus:ring-accent bg-surface"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="text-sm text-primary">
                 Nur Gehaltsmonat
               </span>
             </label>
-          <button
+          <Button
+            type="button"
+            className="hidden md:inline-flex"
             onClick={() => setShowNewTransactionModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-400"
           >
             Neue Transaktion
-          </button>
+          </Button>
           </div>
         </div>
 
-        <div id="monthly-overview-section" className="rounded-lg shadow-md p-4 mb-8 bg-white dark:bg-gray-800">
+        <div id="monthly-overview-section" className="rounded-lg border border-border p-4 mb-8 bg-surface">
           <MonthlyOverview 
             currentIncome={totals.currentIncome}
             currentExpenses={totals.currentExpenses}
@@ -365,7 +389,7 @@ export default function TransactionsPage() {
           />
         </div>
 
-        <div id="transaction-list-section" className="rounded-lg shadow-md p-4 mb-8 bg-white dark:bg-gray-800">
+        <div id="transaction-list-section" className="rounded-lg border border-border p-4 mb-8 bg-surface">
           <TransactionList 
             transactions={transactions} 
             onTransactionChange={handleTransactionChange}
@@ -376,16 +400,12 @@ export default function TransactionsPage() {
             sortDirection={sortDirection}
             onSort={handleSort}
             salaryDay={salaryDay}
+            onAddTransaction={() => setShowNewTransactionModal(true)}
           />
           {hasMore && (
-            <div ref={loadingRef} className="flex justify-center mt-8">
-              <div className="flex items-center space-x-3">
-                <svg className="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span className="text-gray-600 dark:text-gray-400">Weitere Transaktionen werden geladen...</span>
-              </div>
+            <div ref={loadingRef} className="flex justify-center items-center gap-2 mt-8">
+              <LoadingSpinner size="sm" />
+              <span className="text-sm text-secondary">Weitere Transaktionen werden geladen…</span>
             </div>
           )}
         </div>
@@ -419,6 +439,23 @@ export default function TransactionsPage() {
           />
         )}
       </Modal>
+
+      <Button
+        type="button"
+        className="md:hidden fixed bottom-6 right-6 z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
+        onClick={() => setShowNewTransactionModal(true)}
+        aria-label="Neue Transaktion"
+      >
+        <PlusIcon className="h-6 w-6" aria-hidden="true" />
+      </Button>
     </div>
   )
-} 
+}
+
+export default function TransactionsPage() {
+  return (
+    <Suspense fallback={<PageLoader message="Transaktionen werden geladen…" />}>
+      <TransactionsPageContent />
+    </Suspense>
+  )
+}

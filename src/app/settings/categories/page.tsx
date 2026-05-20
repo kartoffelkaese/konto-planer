@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
 import { useToast } from '@/hooks/useToast'
+import { Button } from '@/components/Button'
 
 const PRESET_COLORS = [
   '#FF6B6B', // Rot
@@ -34,8 +35,8 @@ function ColorPicker({ value, onChange, id }: ColorPickerProps) {
           <button
             key={color}
             type="button"
-            className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${
-              value === color ? 'border-blue-500 dark:border-blue-400 shadow-lg scale-110' : 'border-white dark:border-gray-800 shadow-sm'
+            className={`w-8 h-8 rounded-full border-2 transition-colors hover:opacity-90 ${
+              value === color ? 'border-accent ring-2 ring-accent/30' : 'border-border shadow-sm'
             }`}
             style={{ backgroundColor: color }}
             onClick={() => onChange(color)}
@@ -53,13 +54,13 @@ function ColorPicker({ value, onChange, id }: ColorPickerProps) {
           />
           <label
             htmlFor={id}
-            className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-dark-light"
+            className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-primary border border-border rounded-control shadow-sm hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface"
           >
             Andere Farbe wählen
           </label>
         </div>
         <div 
-          className="w-10 h-10 rounded-full border-2 border-white dark:border-gray-800 shadow-md" 
+          className="w-10 h-10 rounded-full border-2 border-white border border-border" 
           style={{ backgroundColor: value }}
         />
       </div>
@@ -93,6 +94,7 @@ export default function CategoriesPage() {
   const [filters, setFilters] = useState({
     search: ''
   })
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     loadCategories()
@@ -117,6 +119,7 @@ export default function CategoriesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setIsSaving(true)
 
     try {
       const response = await fetch('/api/categories', {
@@ -141,6 +144,8 @@ export default function CategoriesPage() {
       const message = err instanceof Error ? err.message : 'Fehler beim Erstellen der Kategorie'
       setError(message)
       showToast(message, 'error')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -148,6 +153,7 @@ export default function CategoriesPage() {
     e.preventDefault()
     if (!selectedCategory) return
     setError(null)
+    setIsSaving(true)
 
     try {
       const response = await fetch(`/api/categories/${selectedCategory.id}`, {
@@ -173,12 +179,15 @@ export default function CategoriesPage() {
       const message = err instanceof Error ? err.message : 'Fehler beim Aktualisieren der Kategorie'
       setError(message)
       showToast(message, 'error')
+    } finally {
+      setIsSaving(false)
     }
   }
 
   const handleDelete = async () => {
     if (!selectedCategory) return
     setError(null)
+    setIsSaving(true)
 
     try {
       const response = await fetch(`/api/categories/${selectedCategory.id}`, {
@@ -199,6 +208,8 @@ export default function CategoriesPage() {
       const message = err instanceof Error ? err.message : 'Fehler beim Löschen der Kategorie'
       setError(message)
       showToast(message, 'error')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -215,10 +226,10 @@ export default function CategoriesPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Kategorien verwalten</h1>
+        <h1 className="page-title">Kategorien verwalten</h1>
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-control shadow-sm text-white bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
           Kategorie hinzufügen
@@ -226,15 +237,15 @@ export default function CategoriesPage() {
       </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-lg">
+        <div className="mb-4 p-4 bg-danger-subtle text-danger rounded-lg">
           {error}
         </div>
       )}
 
       {/* Filter-Bereich */}
-      <div className="bg-white dark:bg-dark-light rounded-lg shadow-md p-4 mb-8">
+      <div className="bg-surface rounded-lg border border-border p-4 mb-8">
         <div>
-          <label htmlFor="search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="search" className="block text-sm font-medium text-primary mb-1">
             Suche
           </label>
           <input
@@ -243,18 +254,18 @@ export default function CategoriesPage() {
             value={filters.search}
             onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
             placeholder="Nach Namen suchen..."
-            className="block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent sm:text-sm bg-surface text-primary"
           />
         </div>
       </div>
 
-      <div className="rounded-lg shadow-md p-4 mb-8 bg-white dark:bg-dark-light">
+      <div className="rounded-lg border border-border p-4 mb-8 bg-surface">
         {categories.length === 0 ? (
-          <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+          <div className="px-6 py-8 text-center text-secondary">
             Keine Kategorien vorhanden
           </div>
         ) : filteredCategories.length === 0 ? (
-          <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+          <div className="px-6 py-8 text-center text-secondary">
             Keine Kategorien gefunden
           </div>
         ) : (
@@ -262,7 +273,7 @@ export default function CategoriesPage() {
             {filteredCategories.map((category) => (
               <div 
                 key={category.id} 
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4"
+                className="bg-surface rounded-lg shadow-sm border border-border p-4"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
@@ -270,7 +281,7 @@ export default function CategoriesPage() {
                       className="w-4 h-4 rounded-full"
                       style={{ backgroundColor: category.color }}
                     />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    <h3 className="text-lg font-medium text-primary">
                       {category.name}
                     </h3>
                   </div>
@@ -281,7 +292,7 @@ export default function CategoriesPage() {
                         setFormData({ name: category.name, color: category.color })
                         setShowEditModal(true)
                       }}
-                      className="text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
+                      className="text-secondary hover:text-primary"
                     >
                       <PencilIcon className="h-5 w-5" />
                     </button>
@@ -290,13 +301,13 @@ export default function CategoriesPage() {
                         setSelectedCategory(category)
                         setShowDeleteModal(true)
                       }}
-                      className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
+                      className="text-secondary hover:text-danger"
                     >
                       <TrashIcon className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-secondary">
                   {category._count.merchants} Händler
                 </p>
               </div>
@@ -313,7 +324,7 @@ export default function CategoriesPage() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="name" className="block text-sm font-medium text-primary">
               Name
             </label>
             <input
@@ -321,12 +332,12 @@ export default function CategoriesPage() {
               id="name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent sm:text-sm bg-surface text-primary"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-primary mb-2">
               Farbe
             </label>
             <ColorPicker
@@ -335,20 +346,13 @@ export default function CategoriesPage() {
               id="color-picker"
             />
           </div>
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={() => setShowAddModal(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
-            >
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={() => setShowAddModal(false)} disabled={isSaving}>
               Abbrechen
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
-            >
+            </Button>
+            <Button type="submit" loading={isSaving} loadingText="Wird erstellt…">
               Erstellen
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -361,7 +365,7 @@ export default function CategoriesPage() {
       >
         <form onSubmit={handleEdit} className="space-y-4">
           <div>
-            <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label htmlFor="edit-name" className="block text-sm font-medium text-primary">
               Name
             </label>
             <input
@@ -369,12 +373,12 @@ export default function CategoriesPage() {
               id="edit-name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent sm:text-sm bg-surface text-primary"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-primary mb-2">
               Farbe
             </label>
             <ColorPicker
@@ -383,20 +387,13 @@ export default function CategoriesPage() {
               id="edit-color-picker"
             />
           </div>
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={() => setShowEditModal(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
-            >
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={() => setShowEditModal(false)} disabled={isSaving}>
               Abbrechen
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
-            >
+            </Button>
+            <Button type="submit" loading={isSaving} loadingText="Wird gespeichert…">
               Speichern
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
@@ -408,23 +405,16 @@ export default function CategoriesPage() {
         title="Kategorie löschen"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-secondary">
             Möchten Sie die Kategorie "{selectedCategory?.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
           </p>
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={() => setShowDeleteModal(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900"
-            >
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="secondary" onClick={() => setShowDeleteModal(false)} disabled={isSaving}>
               Abbrechen
-            </button>
-            <button
-              onClick={handleDelete}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-900"
-            >
+            </Button>
+            <Button type="button" variant="danger" onClick={handleDelete} loading={isSaving} loadingText="Wird gelöscht…">
               Löschen
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>

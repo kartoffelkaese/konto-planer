@@ -14,6 +14,10 @@ import {
   Cell
 } from 'recharts'
 import ChartContainer from '@/components/ChartContainer'
+import PageLoader from '@/components/PageLoader'
+import LoadingSpinner from '@/components/LoadingSpinner'
+import PageError from '@/components/PageError'
+import EmptyState from '@/components/EmptyState'
 import { 
   ChevronDownIcon
 } from '@heroicons/react/24/outline'
@@ -47,6 +51,7 @@ export default function StatisticsPage() {
   const [customEndDate, setCustomEndDate] = useState<string>('')
   const [statisticsData, setStatisticsData] = useState<StatisticsData[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   // Zeitraum-Optionen
   const timeRanges = [
@@ -104,6 +109,7 @@ export default function StatisticsPage() {
 
   const fetchStatistics = async () => {
     setIsLoading(true)
+    setLoadError(null)
     try {
       let url = `/api/statistics?timeRange=${timeRange}`
       if (selectedCategory) {
@@ -120,6 +126,7 @@ export default function StatisticsPage() {
       setStatisticsData(data)
     } catch (error) {
       console.error('Fehler beim Laden der Statistiken:', error)
+      setLoadError('Statistiken konnten nicht geladen werden.')
     } finally {
       setIsLoading(false)
     }
@@ -129,17 +136,25 @@ export default function StatisticsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Bitte melden Sie sich an</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">Um die Statistiken zu sehen, müssen Sie angemeldet sein.</p>
+          <h1 className="text-2xl font-semibold text-primary">Bitte melden Sie sich an</h1>
+          <p className="mt-2 text-secondary">Um die Statistiken zu sehen, müssen Sie angemeldet sein.</p>
         </div>
       </div>
     )
   }
 
+  if (isLoading && statisticsData.length === 0) {
+    return <PageLoader message="Statistiken werden geladen…" />
+  }
+
+  if (loadError && statisticsData.length === 0) {
+    return <PageError message={loadError} onRetry={fetchStatistics} />
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4 md:mb-0">Statistiken</h1>
+        <h1 className="page-title mb-4 md:mb-0">Statistiken</h1>
         
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
           {/* Kategorie-Auswahl */}
@@ -152,7 +167,7 @@ export default function StatisticsPage() {
                   setSelectedMerchant('') // Wenn eine Kategorie ausgewählt wird, Händler zurücksetzen
                 }
               }}
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-lighter focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md appearance-none bg-white dark:bg-dark-light text-gray-900 dark:text-white"
+              className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control appearance-none bg-surface text-primary"
             >
               <option value="">Alle Kategorien</option>
               {categories.map((category) => (
@@ -161,7 +176,7 @@ export default function StatisticsPage() {
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-primary">
               <ChevronDownIcon className="h-4 w-4" />
             </div>
           </div>
@@ -176,7 +191,7 @@ export default function StatisticsPage() {
                   setSelectedCategory('') // Wenn ein Händler ausgewählt wird, Kategorie zurücksetzen
                 }
               }}
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-lighter focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md appearance-none bg-white dark:bg-dark-light text-gray-900 dark:text-white"
+              className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control appearance-none bg-surface text-primary"
             >
               <option value="">Alle Händler</option>
               {merchants.map((merchant) => (
@@ -185,7 +200,7 @@ export default function StatisticsPage() {
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-primary">
               <ChevronDownIcon className="h-4 w-4" />
             </div>
           </div>
@@ -195,7 +210,7 @@ export default function StatisticsPage() {
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-lighter focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md appearance-none bg-white dark:bg-dark-light text-gray-900 dark:text-white"
+              className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control appearance-none bg-surface text-primary"
             >
               {timeRanges.map((range) => (
                 <option key={range.value} value={range.value}>
@@ -203,7 +218,7 @@ export default function StatisticsPage() {
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-primary">
               <ChevronDownIcon className="h-4 w-4" />
             </div>
           </div>
@@ -216,7 +231,7 @@ export default function StatisticsPage() {
                   type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-lighter focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-dark-light text-gray-900 dark:text-white"
+                  className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control bg-surface text-primary"
                 />
               </div>
               <div className="relative">
@@ -224,7 +239,7 @@ export default function StatisticsPage() {
                   type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-dark-lighter focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-dark-light text-gray-900 dark:text-white"
+                  className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control bg-surface text-primary"
                 />
               </div>
             </div>
@@ -233,12 +248,17 @@ export default function StatisticsPage() {
       </div>
 
       {/* Grafik */}
-      <div className="bg-white dark:bg-dark-light rounded-lg shadow dark:shadow-dark p-4 md:p-6">
+      <div className="bg-surface rounded-lg shadow p-4 md:p-6">
         <div className="w-full min-w-0">
           {isLoading ? (
             <div className="flex items-center justify-center h-[400px]">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
+              <LoadingSpinner size="md" />
             </div>
+          ) : statisticsData.length === 0 ? (
+            <EmptyState
+              title="Keine Daten für die Auswahl"
+              description="Wählen Sie eine andere Kategorie, einen anderen Händler oder einen anderen Zeitraum."
+            />
           ) : (
             <ChartContainer height={400}>
               <BarChart data={statisticsData}>

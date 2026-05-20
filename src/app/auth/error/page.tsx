@@ -24,15 +24,15 @@ function ErrorContent() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen flex items-center justify-center bg-surface-muted py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
             Fehler bei der Authentifizierung
           </h2>
           <div className="mt-4">
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">
+            <div className="rounded-control bg-danger-subtle p-4">
+              <div className="text-sm text-danger">
                 {getErrorMessage(error)}
               </div>
             </div>
@@ -40,7 +40,7 @@ function ErrorContent() {
           <div className="mt-6 text-center">
             <Link
               href="/auth/login"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-accent hover:text-accent-hover"
             >
               Zurück zur Anmeldung
             </Link>

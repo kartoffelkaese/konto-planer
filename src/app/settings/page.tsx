@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import BackupManager from '@/components/BackupManager'
 import DeleteAccount from '@/components/DeleteAccount'
-import ThemeSwitcher from '@/components/ThemeSwitcher'
 import { useToast } from '@/hooks/useToast'
+import ColorSchemeSwitcher from '@/components/ColorSchemeSwitcher'
+import { Button } from '@/components/Button'
 
 export default function SettingsPage() {
   const { showToast } = useToast()
@@ -133,29 +134,29 @@ export default function SettingsPage() {
       <main id="settings-page" className="min-h-screen">
         <div id="settings-container" className="max-w-2xl mx-auto">
           <div id="page-header" className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Einstellungen</h1>
+            <h1 className="page-title text-3xl">Einstellungen</h1>
           </div>
 
           {error && (
-            <div id="error-message" className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-lg">
+            <div id="error-message" className="mb-4 p-4 bg-danger-subtle text-danger rounded-lg">
               {error}
             </div>
           )}
 
           {success && (
-            <div id="success-message" className="mb-4 p-4 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-200 rounded-lg">
+            <div id="success-message" className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
               Einstellungen wurden erfolgreich gespeichert
             </div>
           )}
 
           <div id="settings-sections" className="space-y-6">
             {/* Allgemeine Einstellungen */}
-            <form id="general-settings" onSubmit={handleSubmit} className="rounded-lg shadow-md p-4 bg-white dark:bg-dark-light">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Allgemeine Einstellungen</h2>
+            <form id="general-settings" onSubmit={handleSubmit} className="rounded-lg border border-border p-4 bg-surface">
+              <h2 className="text-lg font-medium text-primary mb-4">Allgemeine Einstellungen</h2>
               
               <div className="space-y-6">
                 <div>
-                  <label htmlFor="accountName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="accountName" className="block text-sm font-medium text-primary">
                     Kontobezeichnung
                   </label>
                   <div className="mt-1">
@@ -164,7 +165,7 @@ export default function SettingsPage() {
                       id="accountName"
                       value={accountName}
                       onChange={(e) => setAccountName(e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
                       placeholder="z.B. Girokonto"
                       disabled={loading}
                     />
@@ -172,7 +173,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="salaryDay" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label htmlFor="salaryDay" className="block text-sm font-medium text-primary">
                     Tag des Gehaltseingangs
                   </label>
                   <div className="mt-1">
@@ -180,7 +181,7 @@ export default function SettingsPage() {
                       id="salaryDay"
                       value={salaryDay}
                       onChange={(e) => setSalaryDay(parseInt(e.target.value))}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
                       disabled={loading}
                     >
                       {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
@@ -190,35 +191,31 @@ export default function SettingsPage() {
                       ))}
                     </select>
                   </div>
-                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  <p className="mt-2 text-sm text-secondary">
                     Der Gehaltsmonat läuft dann vom {salaryDay}. bis zum {salaryDay}. des Folgemonats
                   </p>
                 </div>
 
                 <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-md disabled:opacity-50"
-                    disabled={loading}
-                  >
-                    {loading ? 'Speichern...' : 'Speichern'}
-                  </button>
+                  <Button type="submit" loading={loading} loadingText="Wird gespeichert…">
+                    Speichern
+                  </Button>
                 </div>
               </div>
             </form>
 
             {/* E-Mail-Änderung */}
-            <div id="email-settings" className="rounded-lg shadow-md p-4 bg-white dark:bg-dark-light">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">E-Mail-Adresse</h2>
+            <div id="email-settings" className="rounded-lg border border-border p-4 bg-surface">
+              <h2 className="text-lg font-medium text-primary mb-4">E-Mail-Adresse</h2>
               
               {emailError && (
-                <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-200 rounded-lg">
+                <div className="mb-4 p-4 bg-danger-subtle text-danger rounded-lg">
                   {emailError}
                 </div>
               )}
 
               {emailSuccess && (
-                <div className="mb-4 p-4 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-200 rounded-lg">
+                <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
                   E-Mail-Adresse wurde erfolgreich aktualisiert
                 </div>
               )}
@@ -226,21 +223,17 @@ export default function SettingsPage() {
               {!showEmailForm ? (
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Aktuelle E-Mail-Adresse</p>
-                    <p className="font-medium text-gray-900 dark:text-white">{session?.user?.email}</p>
+                    <p className="text-sm text-secondary">Aktuelle E-Mail-Adresse</p>
+                    <p className="font-medium text-primary">{session?.user?.email}</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowEmailForm(true)}
-                    className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                  >
+                  <Button type="button" variant="ghost" onClick={() => setShowEmailForm(true)}>
                     Ändern
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <form onSubmit={handleEmailChange} className="space-y-4">
                   <div>
-                    <label htmlFor="newEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label htmlFor="newEmail" className="block text-sm font-medium text-primary">
                       Neue E-Mail-Adresse
                     </label>
                     <input
@@ -248,14 +241,14 @@ export default function SettingsPage() {
                       id="newEmail"
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
                       required
                       disabled={emailLoading}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label htmlFor="password" className="block text-sm font-medium text-primary">
                       Passwort
                     </label>
                     <input
@@ -263,51 +256,39 @@ export default function SettingsPage() {
                       id="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
                       required
                       disabled={emailLoading}
                     />
                   </div>
 
-                  <div className="flex justify-end space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowEmailForm(false)}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-                    >
+                  <div className="flex justify-end gap-3">
+                    <Button type="button" variant="secondary" onClick={() => setShowEmailForm(false)}>
                       Abbrechen
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 rounded-md shadow-sm disabled:opacity-50"
-                      disabled={emailLoading}
-                    >
-                      {emailLoading ? 'Speichern...' : 'Speichern'}
-                    </button>
+                    </Button>
+                    <Button type="submit" loading={emailLoading} loadingText="Wird gespeichert…">
+                      Speichern
+                    </Button>
                   </div>
                 </form>
               )}
             </div>
 
-            {/* Theme-Einstellungen */}
-            <div id="theme-settings" className="rounded-lg shadow-md p-4 bg-white dark:bg-dark-light">
-              <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Erscheinungsbild</h2>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Theme-Modus</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Wählen Sie zwischen hellem und dunklem Erscheinungsbild</p>
-                </div>
-                <ThemeSwitcher />
-              </div>
+            <div id="appearance-settings" className="rounded-lg border border-border p-4 bg-surface">
+              <h2 className="text-lg font-medium text-primary mb-2">Farbschema</h2>
+              <p className="text-sm text-secondary mb-4">
+                Nebel &amp; Veilchen (Standard) oder Abendlicht
+              </p>
+              <ColorSchemeSwitcher />
             </div>
 
             {/* Backup-Manager */}
-            <div id="backup-settings" className="rounded-lg shadow-md p-4 bg-white dark:bg-dark-light">
+            <div id="backup-settings" className="rounded-lg border border-border p-4 bg-surface">
               <BackupManager />
             </div>
 
             {/* Konto löschen */}
-            <div id="delete-account" className="rounded-lg shadow-md p-4 bg-white dark:bg-dark-light">
+            <div id="delete-account" className="rounded-lg border border-border p-4 bg-surface">
               <DeleteAccount />
             </div>
           </div>

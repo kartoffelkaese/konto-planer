@@ -88,12 +88,16 @@ table {
   color: var(--color-text-primary);
 }
 
-a[href] {
+a[href]:not(.btn-primary):not(.btn-secondary):not(.landing-cta-solid):not(
+    .landing-cta-outline
+  ) {
   color: var(--color-accent);
   cursor: pointer;
 }
 
-a[href]:hover {
+a[href]:not(.btn-primary):not(.btn-secondary):not(.landing-cta-solid):not(
+    .landing-cta-outline
+  ):hover {
   color: var(--color-accent-hover);
 }
 
@@ -146,24 +150,59 @@ textarea:focus {
   border-color: var(--color-accent);
 }
 
-.btn-primary {
+.btn-primary,
+a[href].btn-primary {
   background-color: var(--color-accent);
   color: var(--color-accent-foreground);
 }
 
-.btn-primary:hover:not(:disabled) {
+.btn-primary:hover:not(:disabled),
+a[href].btn-primary:hover {
   background-color: var(--color-accent-hover);
+  color: var(--color-accent-foreground);
 }
 
-.btn-secondary {
+.btn-secondary,
+a[href].btn-secondary {
   background-color: var(--color-surface);
   color: var(--color-accent);
   border: 1px solid var(--color-accent-border);
 }
 
-.btn-secondary:hover:not(:disabled) {
+.btn-secondary:hover:not(:disabled),
+a[href].btn-secondary:hover {
   background-color: var(--color-accent-subtle);
   border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* CTA auf Akzent-Hintergrund (Landing) */
+.landing-cta-solid,
+a[href].landing-cta-solid {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 2px solid var(--color-surface);
+}
+
+.landing-cta-solid:hover,
+a[href].landing-cta-solid:hover {
+  background-color: var(--color-accent-subtle);
+  color: var(--color-accent-hover);
+  border-color: var(--color-accent-subtle);
+}
+
+.landing-cta-outline,
+a[href].landing-cta-outline {
+  background-color: transparent;
+  color: var(--color-surface);
+  border: 1px solid rgb(255 255 255 / 0.55);
+}
+
+.landing-cta-outline:hover,
+a[href].landing-cta-outline:hover {
+  background-color: rgb(255 255 255 / 0.12);
+  color: var(--color-surface);
+  border-color: rgb(255 255 255 / 0.75);
 }
 
 .section-card-accent {
@@ -172,6 +211,33 @@ textarea:focus {
   border-top: 3px solid var(--color-accent);
   border-radius: var(--radius-card);
   padding: 1rem;
+}
+
+/* Landing page */
+.landing-hero-glow {
+  background:
+    radial-gradient(ellipse 80% 60% at 100% 0%, var(--color-accent-subtle), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 0% 100%, var(--color-accent-muted), transparent 50%);
+}
+
+.landing-fade-in {
+  animation: fade-in-up var(--motion-duration-expand) var(--motion-easing) both;
+}
+
+.landing-fade-in-delay-1 {
+  animation-delay: 80ms;
+}
+
+.landing-fade-in-delay-2 {
+  animation-delay: 160ms;
+}
+
+.landing-fade-in-delay-3 {
+  animation-delay: 240ms;
+}
+
+.landing-fade-in-delay-4 {
+  animation-delay: 320ms;
 }
 
 .page-title {

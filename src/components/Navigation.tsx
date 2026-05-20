@@ -35,11 +35,19 @@ export default function Navigation() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   useEffect(() => {
+    if (!session) {
+      document.documentElement.style.setProperty('--sidebar-width', '0')
+      return
+    }
     document.documentElement.style.setProperty(
       '--sidebar-width',
       isCollapsed ? '4rem' : '16rem'
     )
-  }, [isCollapsed])
+  }, [session, isCollapsed])
+
+  if (!session) {
+    return null
+  }
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: HomeIcon },

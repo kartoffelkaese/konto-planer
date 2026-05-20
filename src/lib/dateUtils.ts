@@ -91,6 +91,16 @@ export function getSalaryMonthRange(salaryDay: number) {
   }
 }
 
+/** Lesbare Angabe des aktuellen Gehaltsmonats (für Dashboard & Co.) */
+export function getSalaryMonthPeriodInfo(salaryDay: number) {
+  const { startDate, endDate } = getSalaryMonthRange(salaryDay)
+  return {
+    startDate,
+    endDate,
+    rangeLabel: `${formatDate(startDate)} – ${formatDate(endDate)}`,
+  }
+}
+
 /**
  * Prüft ob eine Transaktion im aktuellen Gehaltsmonat fällig ist
  */

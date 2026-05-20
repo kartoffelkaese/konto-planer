@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getSalaryMonthRange } from '@/lib/dateUtils'
+import { getSalaryMonthRange, getSalaryMonthPeriodInfo } from '@/lib/dateUtils'
 import { logger } from '@/lib/logger'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 
@@ -18,6 +18,7 @@ export async function GET() {
 
     // Hole den Gehaltsmonat
     const { startDate, endDate } = getSalaryMonthRange(user.salaryDay)
+    const categoryPeriod = getSalaryMonthPeriodInfo(user.salaryDay)
 
     // Berechne monatliches Einkommen
     const monthlyIncome = await prisma.transaction.aggregate({
@@ -197,7 +198,13 @@ export async function GET() {
       savingsRate: Math.max(0, savingsRate),
       totalBalance: totalBalance._sum.amount?.toNumber() || 0,
       recurringTransactions: upcomingTransactions,
-      categoryDistribution: kumulatedCategoryData
+      categoryDistribution: kumulatedCategoryData,
+      categoryPeriod: {
+        startDate: categoryPeriod.startDate.toISOString(),
+        endDate: categoryPeriod.endDate.toISOString(),
+        rangeLabel: categoryPeriod.rangeLabel,
+        salaryDay: user.salaryDay,
+      },
     })
   } catch (error) {
     logger.error('Fehler beim Laden der Dashboard-Daten', error, {

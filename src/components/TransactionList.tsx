@@ -374,8 +374,8 @@ export default function TransactionList({
                     {transaction.description}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                    <span className={transaction.amount >= 0 ? 'text-income' : 'text-expense'}>
-                      {transaction.amount >= 0 ? '+' : ''}{transaction.amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                    <span className={transaction.amount > 0 ? 'text-income' : transaction.amount < 0 ? 'text-expense' : 'text-primary'}>
+                      {transaction.amount > 0 ? '+' : transaction.amount < 0 ? '-' : ''}{Math.abs(transaction.amount).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
@@ -425,9 +425,9 @@ export default function TransactionList({
                   <div className="text-sm text-secondary">{transaction.merchant}</div>
                 </div>
                 <span className={`text-sm font-medium ${
-                  transaction.amount >= 0 ? 'text-income' : 'text-expense'
+                  transaction.amount > 0 ? 'text-income' : transaction.amount < 0 ? 'text-expense' : 'text-primary'
                 }`}>
-                  {transaction.amount >= 0 ? '+' : ''}{transaction.amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                  {transaction.amount > 0 ? '+' : transaction.amount < 0 ? '-' : ''}{Math.abs(transaction.amount).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                 </span>
               </div>
               <div className="flex items-center justify-between">

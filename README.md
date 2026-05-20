@@ -1,53 +1,60 @@
 # KontoPlaner
 
-Eine moderne Webanwendung zur Verwaltung Ihrer persönlichen Finanzen, entwickelt mit Next.js 14 und TailwindCSS.
+Webapp zur Verwaltung persönlicher Finanzen: Transaktionen, Kategorien, Händler, Gehaltsmonat und Auswertungen.
 
-## Features
+**Stack:** Next.js 16 · React 19 · Tailwind CSS 4 · Prisma 7 · MySQL/MariaDB · NextAuth.js v5
 
-- 📊 **Dashboard**
-  - Übersichtliche Darstellung von Einnahmen und Ausgaben
-  - Visualisierung der Kategorieverteilung
-  - Anzeige wiederkehrender Zahlungen
+## Funktionen
 
-- 💰 **Transaktionsverwaltung**
-  - Erfassung von Einnahmen und Ausgaben
-  - Kategorisierung von Transaktionen
-  - Wiederkehrende Zahlungen (monatlich, vierteljährlich, jährlich)
-  - Bestätigungssystem für Transaktionen
-  - Manuelles Setzen des Transaktionsdatums
+- Dashboard mit Kategorieverteilung und anstehenden wiederkehrenden Zahlungen
+- Transaktionen (Einnahmen/Ausgaben), Bestätigung, Gehaltsmonat-Filter, unendliches Nachladen
+- Wiederkehrende Buchungen (monatlich, vierteljährlich, jährlich) und automatische Ausstehende
+- Statistiken nach Kategorie, Händler und Zeitraum
+- Kategorien und Händler mit Farben; Zuordnung über Händler
+- Einstellungen: Kontoname, Gehaltstag, Farbschema, E-Mail, Backup, Konto löschen
+- Registrierung und Anmeldung (Credentials)
 
-- 🏪 **Händlerverwaltung**
-  - Verwaltung von Händlern und Geschäften
-  - Automatische Kategorisierung basierend auf Händlern
-  - Farbliche Kennzeichnung von Kategorien
+## Voraussetzungen
 
-- 🔄 **Automatisierung**
-  - Automatische Erstellung ausstehender Zahlungen
-  - Echtzeit-Aktualisierung des Kontostands
-  - Automatische Kategorisierung basierend auf Händlern
+- Node.js 20+
+- MySQL- oder MariaDB-Datenbank
 
-- 📱 **Responsives Design**
-  - Optimierte Ansicht für Desktop, Tablet und Mobile
-  - Kollabierbare Navigation
-  - Touch-freundliche Benutzeroberfläche
+## Lokale Entwicklung
 
-- 🔒 **Sicherheit**
-  - Sichere Authentifizierung mit NextAuth.js
-  - Verschlüsselte Datenübertragung
-  - Datenschutzkonforme Implementierung
+```bash
+npm install
+cp .env.example .env
+npx prisma generate
+npm run dev
+```
 
-- ⚙️ **Einstellungen**
-  - Anpassbare Kontobezeichnung
-  - Konfigurierbarer Gehaltsmonat
-  - E-Mail-Adressverwaltung
-  - Backup-Funktionalität
-  - Konto-Löschung
+App: [http://localhost:3000](http://localhost:3000) (siehe `package.json` → `dev`)
 
-- **Benutzerverwaltung**
-  - Registrierung und Anmeldung
-  - E-Mail-Adressänderung
-  - Account-Löschung
+### Umgebungsvariablen (Minimum)
+
+| Variable | Beschreibung |
+|----------|--------------|
+| `DATABASE_URL` | MySQL/MariaDB-Verbindungs-URL |
+| `AUTH_SECRET` oder `NEXTAUTH_SECRET` | Geheimer Schlüssel für Sessions |
+| `AUTH_URL` oder `NEXTAUTH_URL` | Öffentliche Basis-URL (Produktion Pflicht) |
+
+Weitere Details: [API.md](API.md) · Logging: [LOGGING.md](LOGGING.md)
+
+## Skripte
+
+| Befehl | Zweck |
+|--------|--------|
+| `npm run dev` | Entwicklungsserver |
+| `npm run build` | Produktions-Build |
+| `npm run start` | Server (Port 3001, siehe `package.json`) |
+| `npm run lint` | ESLint |
+| `npm run pm2:start` | Produktion mit PM2 (`ecosystem.config.js`) |
+
+## Dokumentation
+
+- [API.md](API.md) – API-Endpunkte
+- [LOGGING.md](LOGGING.md) – Protokollierung
 
 ## Lizenz
 
-Dieses Projekt ist unter der GPL-3.0 Lizenz lizenziert. Siehe [LICENSE](LICENSE) für Details.
+GPL-3.0 – siehe [LICENSE](LICENSE).

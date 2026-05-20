@@ -1,193 +1,151 @@
-# API Dokumentation
+# API
+
+HTTP-JSON-API der KontoPlaner-Webapp. Gedacht für den eingebauten Next.js-Client (Session-Cookies), nicht als öffentliche Drittanbieter-API.
 
 ## Authentifizierung
-Alle API-Endpunkte erfordern eine gültige Authentifizierung. Die Authentifizierung erfolgt über einen Bearer Token im Authorization Header.
 
+Geschützte Routen erwarten eine **gültige NextAuth-Session** (Cookie `credentials: 'include'` bei `fetch` aus dem Browser).
+
+```http
+401 Unauthorized
 ```
-Authorization: Bearer <token>
+
+```json
+{ "error": "Nicht autorisiert" }
 ```
+
+**Ohne Session erreichbar:**
+
+| Pfad | Beschreibung |
+|------|----------------|
+| `/api/auth/*` | NextAuth (Login, Session, …) |
+| `POST /api/auth/register` | Registrierung |
+
+Anmeldung in der App: `/auth/login` (Credentials). Es gibt **keinen** Bearer-Token-Header.
+
+## Konventionen
+
+- `Content-Type: application/json` bei POST/PATCH
+- Beträge: positiv = Einnahme, negativ = Ausgabe
+- Datumsfelder: ISO-8601
+- Wiederholung: `recurringInterval` z. B. `monthly`, `quarterly`, `yearly`
 
 ## Endpunkte
 
+### Dashboard
+
+| Methode | Pfad | Beschreibung |
+|---------|------|----------------|
+| `GET` | `/api/dashboard` | Kennzahlen, Kategorieverteilung, wiederkehrende Zahlungen (30 Tage) |
+
 ### Transaktionen
 
-#### GET /api/transactions
-Ruft alle Transaktionen ab.
+| Methode | Pfad | Beschreibung |
+|---------|------|----------------|
+| `GET` | `/api/transactions` | Paginierte Liste |
+| `POST` | `/api/transactions` | Anlegen |
+| `GET` | `/api/transactions/:id` | Einzelbuchung |
+| `PATCH` | `/api/transactions/:id` | Aktualisieren (inkl. `isConfirmed`, `lastConfirmedDate`) |
+| `DELETE` | `/api/transactions/:id` | Löschen |
+| `GET` | `/api/transactions/recurring` | Alle wiederkehrenden Vorlagen |
+| `GET` | `/api/transactions/totals` | Summen fürs Konto/Gehaltsmonat |
+| `POST` | `/api/transactions/create-pending` | Fällige ausstehende Instanzen erzeugen |
+| `POST` | `/api/transactions/:id/create-instance` | Instanz einer wiederkehrenden Buchung |
 
-**Query Parameter:**
-- `month`: (optional) Format YYYY-MM - Filtert nach Monat
-- `type`: (optional) "income" | "expense" - Filtert nach Transaktionstyp
+**`GET /api/transactions` – Query**
 
-**Antwort:**
-```json
-{
-  "transactions": [
-    {
-      "id": string,
-      "amount": number,
-      "description": string,
-      "date": string, // ISO 8601
-      "type": "income" | "expense",
-      "category": string,
-      "isRecurring": boolean,
-      "recurringInterval": "monthly" | "yearly" | null
-    }
-  ]
-}
-```
+| Parameter | Beschreibung |
+|-----------|----------------|
+| `page` | Seite (Standard: 1) |
+| `limit` | Einträge pro Seite (Standard: 20, max. 100) |
+| `salaryDay` | Gehaltstag (1–31), mit `filterSalaryMonth` |
+| `filterSalaryMonth` | `true` = nur aktueller Gehaltsmonat |
 
-#### POST /api/transactions
-Erstellt eine neue Transaktion.
+Antwort: `{ transactions, total, page, hasMore }`
 
-**Body:**
-```json
-{
-  "amount": number,
-  "description": string,
-  "date": string, // ISO 8601
-  "type": "income" | "expense",
-  "category": string,
-  "isRecurring": boolean,
-  "recurringInterval": "monthly" | "yearly" | null
-}
-```
+**`POST /api/transactions` – Body (Auszug)**
 
-#### PUT /api/transactions/:id
-Aktualisiert eine bestehende Transaktion.
+`merchant`, `merchantId?`, `description?`, `amount`, `date`, `isRecurring?`, `recurringInterval?`
 
-**URL Parameter:**
-- `id`: Transaction ID
+**`GET /api/transactions/totals` – Query**
 
-**Body:** Gleich wie POST /api/transactions
+`salaryDay` (Standard: 23)
 
-#### DELETE /api/transactions/:id
-Löscht eine Transaktion.
-
-**URL Parameter:**
-- `id`: Transaction ID
-
-### Wiederkehrende Transaktionen
-
-#### GET /api/recurring
-Ruft alle wiederkehrenden Transaktionen ab.
-
-**Antwort:**
-```json
-{
-  "transactions": [
-    {
-      "id": string,
-      "amount": number,
-      "description": string,
-      "nextDate": string, // ISO 8601
-      "type": "income" | "expense",
-      "category": string,
-      "recurringInterval": "monthly" | "yearly"
-    }
-  ]
-}
-```
-
-#### POST /api/recurring/confirm/:id
-Bestätigt eine wiederkehrende Transaktion für den aktuellen Zeitraum.
-
-**URL Parameter:**
-- `id`: Transaction ID
-
-**Body:**
-```json
-{
-  "confirmedDate": string // ISO 8601
-}
-```
+Antwort: `currentIncome`, `currentExpenses`, `totalIncome`, `totalExpenses`, `totalPendingExpenses`, `available`
 
 ### Kategorien
 
-#### GET /api/categories
-Ruft alle verfügbaren Kategorien ab.
+| Methode | Pfad | Beschreibung |
+|---------|------|----------------|
+| `GET` | `/api/categories` | Alle Kategorien des Nutzers |
+| `POST` | `/api/categories` | Anlegen (`name`, `color`) |
+| `GET` | `/api/categories/:id` | Details |
+| `PATCH` | `/api/categories/:id` | Ändern |
+| `DELETE` | `/api/categories/:id` | Löschen |
 
-**Antwort:**
-```json
-{
-  "categories": [
-    {
-      "id": string,
-      "name": string,
-      "type": "income" | "expense"
-    }
-  ]
-}
-```
+### Händler
 
-#### POST /api/categories
-Erstellt eine neue Kategorie.
-
-**Body:**
-```json
-{
-  "name": string,
-  "type": "income" | "expense"
-}
-```
+| Methode | Pfad | Beschreibung |
+|---------|------|----------------|
+| `GET` | `/api/merchants` | Alle Händler (inkl. Kategorie) |
+| `POST` | `/api/merchants` | Anlegen (`name`, `categoryId?`) |
+| `GET` | `/api/merchants/:id` | Details |
+| `PATCH` | `/api/merchants/:id` | Ändern |
+| `DELETE` | `/api/merchants/:id` | Löschen |
 
 ### Statistiken
 
-#### GET /api/statistics/monthly
-Ruft die monatliche Übersicht ab.
+| Methode | Pfad | Beschreibung |
+|---------|------|----------------|
+| `GET` | `/api/statistics` | Monatliche Ausgaben-Serie für Charts |
 
-**Query Parameter:**
-- `month`: Format YYYY-MM
+**Query:** `category?`, `merchant?`, `timeRange` (`1month` \| `3months` \| `6months` \| `1year` \| `custom`), bei `custom` zusätzlich `startDate`, `endDate`
 
-**Antwort:**
-```json
-{
-  "totalIncome": number,
-  "totalExpenses": number,
-  "balance": number,
-  "categoryBreakdown": {
-    [category: string]: number
-  }
-}
-```
+Antwort: Array `{ date, amount, category, color }` (Monatsschlüssel `YYYY-MM`)
+
+### Nutzer & Konto
+
+| Methode | Pfad | Beschreibung |
+|---------|------|----------------|
+| `GET` | `/api/users/settings` | `salaryDay`, `accountName`, … |
+| `PATCH` | `/api/users/settings` | `salaryDay`, `accountName` |
+| `PATCH` | `/api/users/email` | E-Mail ändern (mit Passwort) |
+| `DELETE` | `/api/users/delete` | Konto löschen (mit Passwort) |
+
+### Backup
+
+| Methode | Pfad | Beschreibung |
+|---------|------|----------------|
+| `GET` | `/api/backup` | Export (JSON, Version `1.0`) |
+| `POST` | `/api/backup` | Import validiertes Backup |
+
+### Sonstiges
+
+| Methode | Pfad | Beschreibung |
+|---------|------|----------------|
+| `POST` | `/api/auth/register` | `email`, `password`, `salaryDay` |
+| `POST` | `/api/error-log` | Client-Fehler ans Server-Log (Session, Rate-Limit) |
 
 ## Fehlercodes
 
-- `400`: Ungültige Anfrage
-- `401`: Nicht authentifiziert
-- `403`: Keine Berechtigung
-- `404`: Ressource nicht gefunden
-- `500`: Serverfehler
+| Code | Bedeutung |
+|------|-----------|
+| `400` | Ungültige Eingabe |
+| `401` | Nicht angemeldet |
+| `404` | Ressource nicht gefunden |
+| `429` | Rate-Limit (Registrierung, Error-Log, Login) |
+| `500` | Serverfehler |
 
-## Beispiele
+Fehlerantworten sind meist `{ "error": "…" }` oder `{ "message": "…" }` (Registrierung).
 
-### Neue Transaktion erstellen
+## Client-Beispiel (Browser)
 
 ```typescript
-const response = await fetch('/api/transactions', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
-  },
-  body: JSON.stringify({
-    amount: 1000,
-    description: "Gehalt",
-    date: "2024-03-01T00:00:00.000Z",
-    type: "income",
-    category: "Gehalt",
-    isRecurring: true,
-    recurringInterval: "monthly"
-  })
-});
+const res = await fetch('/api/transactions?page=1&limit=20', {
+  credentials: 'include',
+})
+if (!res.ok) throw new Error('Nicht autorisiert oder Fehler')
+const data = await res.json()
 ```
 
-### Monatliche Statistiken abrufen
-
-```typescript
-const month = "2024-03";
-const response = await fetch(`/api/statistics/monthly?month=${month}`, {
-  headers: {
-    'Authorization': `Bearer ${token}`
-  }
-});
-``` 
+Weitere Infos zum Projekt: [README.md](README.md)

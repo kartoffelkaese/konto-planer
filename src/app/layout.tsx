@@ -3,6 +3,11 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Navigation from '@/components/Navigation'
 import { Providers } from './providers'
+import {
+  COLOR_SCHEMES_JSON,
+  DARK_COLOR_SCHEMES_JSON,
+  DEFAULT_COLOR_SCHEME,
+} from '@/lib/colorSchemes'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -24,7 +29,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var v=['nebel','twilight'];var s=localStorage.getItem('colorScheme');document.documentElement.setAttribute('data-color-scheme',v.indexOf(s)>=0?s:'nebel');document.documentElement.classList.remove('dark','light');})();`,
+            __html: `(function(){var v=${COLOR_SCHEMES_JSON};var dark=${DARK_COLOR_SCHEMES_JSON};var d='${DEFAULT_COLOR_SCHEME}';var s=localStorage.getItem('colorScheme');if(s==='ocean'){s='lagoon';localStorage.setItem('colorScheme','lagoon');}var scheme=v.indexOf(s)>=0?s:d;document.documentElement.setAttribute('data-color-scheme',scheme);document.documentElement.classList.toggle('dark',dark.indexOf(scheme)>=0);document.documentElement.classList.remove('light');})();`,
           }}
         />
       </head>

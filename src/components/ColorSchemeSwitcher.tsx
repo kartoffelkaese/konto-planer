@@ -25,7 +25,7 @@ export default function ColorSchemeSwitcher() {
 
   if (!mounted) {
     return (
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 max-w-xl">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 max-w-3xl">
         {COLOR_SCHEMES.map((id) => (
           <div key={id} className="h-20 rounded-card bg-surface-muted animate-pulse" />
         ))}
@@ -34,7 +34,7 @@ export default function ColorSchemeSwitcher() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 max-w-xl" role="radiogroup" aria-label="Farbschema">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 max-w-3xl" role="radiogroup" aria-label="Farbschema">
       {COLOR_SCHEMES.map((id) => {
         const { title, description, swatches } = COLOR_SCHEME_LABELS[id]
         const selected = scheme === id
@@ -55,7 +55,7 @@ export default function ColorSchemeSwitcher() {
               {swatches.map((color) => (
                 <span
                   key={color}
-                  className="h-6 flex-1 rounded-md border border-white/80 shadow-sm first:rounded-l-lg last:rounded-r-lg"
+                  className="h-6 flex-1 rounded-md border border-border shadow-sm first:rounded-l-lg last:rounded-r-lg"
                   style={{ backgroundColor: color }}
                 />
               ))}

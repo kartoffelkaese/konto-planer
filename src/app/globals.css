@@ -10,57 +10,181 @@
   --radius-control: 0.5rem;
 }
 
-/* Standard: Nebel & Veilchen */
+/*
+ * Nebel & Veilchen – kühl-violett (UI), Grün/Rost für Werte
+ * Canvas neutral; Akzent dunkler als Einnahmen-Grün.
+ */
 html[data-color-scheme="nebel"],
 html:not([data-color-scheme]) {
   --color-canvas: #f3f2f8;
   --color-surface: #ffffff;
-  --color-surface-muted: #e8e7f0;
-  --color-border: #d5d3e3;
+  --color-surface-muted: #ecebf3;
+  --color-border: #ccc9db;
   --color-text-primary: #1c1b28;
   --color-text-secondary: #5e5c70;
-  --color-accent: #5e6ad2;
-  --color-accent-hover: #4e58b8;
+  --color-accent: #4e58b8;
+  --color-accent-hover: #3d46a0;
   --color-accent-subtle: #e8eafc;
-  --color-accent-muted: #f0f1fa;
+  --color-accent-muted: #f3f2f8;
   --color-accent-foreground: #ffffff;
-  --color-accent-border: #9ba3e0;
-  --color-income: #3a8f6e;
+  --color-accent-border: #7a85c9;
+  --color-income: #2f7a5c;
   --color-income-bg: #e3f2eb;
-  --color-expense: #c4695a;
+  --color-expense: #b85a4c;
   --color-expense-bg: #faece9;
-  --color-pending: #b8943f;
+  --color-pending: #9a7d2e;
   --color-pending-bg: #f8f0e0;
-  --color-danger: #c4695a;
-  --color-danger-hover: #a85548;
+  --color-danger: #a85548;
+  --color-danger-hover: #8f463b;
   --color-danger-subtle: #faece9;
   --shadow-color: rgba(28, 27, 40, 0.06);
 }
 
-/* Abendlicht – Coolors: 22223b · 4a4e69 · 9a8c98 · c9ada7 · f2e9e4 */
+/*
+ * Abendlicht – Coolors: 22223b · 4a4e69 · 9a8c98 · c9ada7 · f2e9e4
+ * Analog Schiefer/Lila-Grau (UI); Salbei/Mauve/Amber-Taupe semantisch getrennt.
+ */
 html[data-color-scheme="twilight"] {
-  --color-canvas: #f2e9e4;
+  --color-canvas: #f5f2f0;
   --color-surface: #ffffff;
-  --color-surface-muted: #e8e0dc;
-  --color-border: #c9ada7;
+  --color-surface-muted: #ebe6e2;
+  --color-border: #d4ccc6;
   --color-text-primary: #22223b;
   --color-text-secondary: #4a4e69;
   --color-accent: #4a4e69;
   --color-accent-hover: #22223b;
-  --color-accent-subtle: #eae6ec;
-  --color-accent-muted: #f2e9e4;
+  --color-accent-subtle: #ede8e4;
+  --color-accent-muted: #f5f2f0;
   --color-accent-foreground: #ffffff;
   --color-accent-border: #9a8c98;
-  --color-income: #4a7c59;
+  --color-income: #3d6b4a;
   --color-income-bg: #e8f0ea;
-  --color-expense: #8b6b73;
+  --color-expense: #7a5560;
   --color-expense-bg: #f0e8ea;
-  --color-pending: #9a8c98;
-  --color-pending-bg: #e8e0dc;
-  --color-danger: #8b6b73;
-  --color-danger-hover: #735a62;
+  --color-pending: #8f7a5c;
+  --color-pending-bg: #f3ebe0;
+  --color-danger: #6d4f57;
+  --color-danger-hover: #5a4148;
   --color-danger-subtle: #f0e8ea;
   --shadow-color: rgba(34, 34, 59, 0.08);
+}
+
+/*
+ * Moos & Teal – Coolors: c9e4ca · 87bba2 · 55828b · 3b6064 · 364958
+ * Warmes Salbei/Moos (erdig-grün), ohne Cyan – UI aus #55828b/#87bba2.
+ */
+html[data-color-scheme="forest"] {
+  --color-canvas: #e8efe4;
+  --color-surface: #ffffff;
+  --color-surface-muted: #dde8d8;
+  --color-border: #9bb89a;
+  --color-text-primary: #2a3530;
+  --color-text-secondary: #4a5f52;
+  --color-accent: #55828b;
+  --color-accent-hover: #4a6e58;
+  --color-accent-subtle: #e0eadc;
+  --color-accent-muted: #e8efe4;
+  --color-accent-foreground: #ffffff;
+  --color-accent-border: #87bba2;
+  --color-income: #4a6e58;
+  --color-income-bg: #dce8d6;
+  --color-expense: #7a5c48;
+  --color-expense-bg: #f0e8e0;
+  --color-pending: #6b7d52;
+  --color-pending-bg: #ebe8d4;
+  --color-danger: #8b5a4a;
+  --color-danger-hover: #6d4538;
+  --color-danger-subtle: #f0e8e0;
+  --shadow-color: rgba(42, 53, 48, 0.08);
+}
+
+/*
+ * Nachtviolett (Dunkel) – Coolors: eaeaea · 893168 · 4a1942 · 2e1c2b · 050404
+ * Tiefe Violett-Stufen; helles Grau Text; Beere UI; Mint/Lilac/Rosa semantisch.
+ */
+html[data-color-scheme="plum"] {
+  color-scheme: dark;
+  --color-canvas: #050404;
+  --color-surface: #2e1c2b;
+  --color-surface-muted: #4a1942;
+  --color-border: #5c3d55;
+  --color-text-primary: #eaeaea;
+  --color-text-secondary: #c4b0bc;
+  --color-accent: #b87aa0;
+  --color-accent-hover: #d4a0c0;
+  --color-accent-subtle: #3d1e32;
+  --color-accent-muted: #2e1c2b;
+  --color-accent-foreground: #050404;
+  --color-accent-border: #893168;
+  --color-income: #6ecf9a;
+  --color-income-bg: #0d2e22;
+  --color-expense: #e88aaa;
+  --color-expense-bg: #3d1028;
+  --color-pending: #d4b0e0;
+  --color-pending-bg: #2a1f30;
+  --color-danger: #ff6b8a;
+  --color-danger-hover: #ff8aa8;
+  --color-danger-subtle: #3d1028;
+  --shadow-color: rgba(0, 0, 0, 0.4);
+}
+
+/*
+ * Lagune – Coolors: 001219 · 005f73 · 0a9396 · 94d2bd · e9d8a6 · ca6702 · 9b2226 · …
+ * Kühl-aquatisch (Cyan/Navy); warme Amber/Koralle nur für Werte – klar von Moos getrennt.
+ */
+html[data-color-scheme="lagoon"] {
+  --color-canvas: #e8f6fa;
+  --color-surface: #ffffff;
+  --color-surface-muted: #dff5f8;
+  --color-border: #94d2bd;
+  --color-text-primary: #001219;
+  --color-text-secondary: #005f73;
+  --color-accent: #0077b6;
+  --color-accent-hover: #001219;
+  --color-accent-subtle: #cceef5;
+  --color-accent-muted: #e8f6fa;
+  --color-accent-foreground: #ffffff;
+  --color-accent-border: #0a9396;
+  --color-income: #0a9396;
+  --color-income-bg: #d4f5f0;
+  --color-expense: #9b2226;
+  --color-expense-bg: #fcecea;
+  --color-pending: #ca6702;
+  --color-pending-bg: #faf0d8;
+  --color-danger: #ae2012;
+  --color-danger-hover: #9b2226;
+  --color-danger-subtle: #fcecea;
+  --shadow-color: rgba(0, 18, 25, 0.1);
+}
+
+/*
+ * Heritage (Dunkel) – Coolors: 780000 · c1121f · fdf0d5 · 003049 · 669bbc
+ * Marine-Stufen für Flächen; Stahlblau UI; Creme Text; Rot/Amber semantisch.
+ */
+html[data-color-scheme="heritage"] {
+  color-scheme: dark;
+  --color-canvas: #001a28;
+  --color-surface: #002438;
+  --color-surface-muted: #003049;
+  --color-border: #1e5575;
+  --color-text-primary: #fdf0d5;
+  --color-text-secondary: #9ec4dc;
+  --color-accent: #669bbc;
+  --color-accent-hover: #90c4e0;
+  --color-accent-subtle: #0d3347;
+  --color-accent-muted: #002438;
+  --color-accent-foreground: #001a28;
+  --color-accent-border: #4a8aad;
+  --color-income: #6ecf9a;
+  --color-income-bg: #0d2e22;
+  --color-expense: #f0717f;
+  --color-expense-bg: #3d1018;
+  --color-pending: #e0b060;
+  --color-pending-bg: #2a3a18;
+  --color-danger: #c1121f;
+  --color-danger-hover: #e85a68;
+  --color-danger-subtle: #3d1018;
+  --shadow-color: rgba(0, 0, 0, 0.35);
 }
 
 html {
@@ -245,6 +369,11 @@ a[href].landing-cta-outline:hover {
   font-weight: 600;
   letter-spacing: -0.025em;
   color: var(--color-accent-hover);
+}
+
+html[data-color-scheme="heritage"] .page-title,
+html[data-color-scheme="plum"] .page-title {
+  color: var(--color-text-primary);
 }
 
 .page-subtitle {

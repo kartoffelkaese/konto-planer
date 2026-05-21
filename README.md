@@ -25,8 +25,17 @@ Webapp zur Verwaltung persönlicher Finanzen: Transaktionen, Kategorien, Händle
 npm install
 cp .env.example .env
 npx prisma generate
+npm run db:migrate:dev   # Erstinstallation; bestehende DB: ggf. prisma migrate resolve
 npm run dev
 ```
+
+### Datenbank-Migrationen
+
+| Befehl | Zweck |
+|--------|--------|
+| `npm run db:migrate:dev` | Entwicklung: Migration anwenden und Client neu generieren |
+| `npm run db:migrate` | Produktion: `prisma migrate deploy` |
+| `npm test` | Unit-Tests (Vitest) |
 
 App: [http://localhost:3000](http://localhost:3000) (siehe `package.json` → `dev`)
 

@@ -1,24 +1,31 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { Transaction } from '@/types'
 import { getRecurringTransactions, createRecurringInstance, createPendingInstances } from '@/lib/api'
-import { isTransactionDueInSalaryMonth, getNextDueDate, formatDate } from '@/lib/dateUtils'
-import { formatCurrency, formatNumber } from '@/lib/formatters'
-import { PencilIcon, ArrowPathIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { getNextDueDate, formatDate } from '@/lib/dateUtils'
+import {
+  getRecurringSalaryMonthStatus,
+  type RecurringWithStatus,
+} from '@/lib/recurringStatus'
+import { formatCurrency } from '@/lib/formatters'
+import { PencilIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
 import TransactionForm from '@/components/TransactionForm'
 import EditTransactionForm from '@/components/EditTransactionForm'
+import PageLoader from '@/components/PageLoader'
+import PageError from '@/components/PageError'
+import SalaryMonthHint from '@/components/SalaryMonthHint'
 import { useToast } from '@/hooks/useToast'
+import { useUserSettings } from '@/hooks/useUserSettings'
+import { Button } from '@/components/Button'
 
 export default function RecurringTransactionsPage() {
   const { showToast } = useToast()
-  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const { salaryDay } = useUserSettings()
+  const [transactions, setTransactions] = useState<RecurringWithStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [salaryDay, setSalaryDay] = useState(23) // TODO: Aus den Einstellungen laden
+  const [isCreatingPending, setIsCreatingPending] = useState(false)
   const [showNewTransactionModal, setShowNewTransactionModal] = useState(false)
   const [showEditTransactionModal, setShowEditTransactionModal] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
@@ -31,12 +38,17 @@ export default function RecurringTransactionsPage() {
     try {
       const transactions = await getRecurringTransactions()
       // Konvertiere die Beträge in Zahlen und stelle sicher, dass alle erforderlichen Felder vorhanden sind
-      const recurringTransactions = transactions.map(t => ({
+      const recurringTransactions = transactions.map((t) => ({
         ...t,
         amount: Number(t.amount),
         version: t.version || 1,
-        userId: t.userId || '', // Stelle sicher, dass userId immer einen Wert hat
-      })) as Transaction[]
+        userId: t.userId || '',
+        dueInSalaryMonth: Boolean(t.dueInSalaryMonth),
+        hasInstanceInSalaryMonth: Boolean(t.hasInstanceInSalaryMonth),
+        hasUnconfirmedInstanceInSalaryMonth: Boolean(
+          t.hasUnconfirmedInstanceInSalaryMonth
+        ),
+      })) as RecurringWithStatus[]
       setTransactions(recurringTransactions)
       setError(null)
     } catch (err) {
@@ -47,7 +59,21 @@ export default function RecurringTransactionsPage() {
     }
   }
 
-  const handleCreateNextInstance = async (transaction: Transaction) => {
+  const handleCreateAllPending = async () => {
+    setIsCreatingPending(true)
+    try {
+      await createPendingInstances()
+      await loadTransactions()
+      showToast('Ausstehende Zahlungen erstellt', 'success')
+    } catch (err) {
+      console.error('Fehler beim Erstellen der ausstehenden Transaktionen:', err)
+      showToast('Fehler beim Erstellen der ausstehenden Zahlungen', 'error')
+    } finally {
+      setIsCreatingPending(false)
+    }
+  }
+
+  const handleCreateNextInstance = async (transaction: RecurringWithStatus) => {
     try {
       const newTransaction = await createRecurringInstance(transaction.id)
       showToast(`Neue Zahlung für „${transaction.merchant}“ erstellt`, 'success')
@@ -56,17 +82,6 @@ export default function RecurringTransactionsPage() {
       console.error('Fehler beim Erstellen der nächsten Instanz:', err)
       setError('Fehler beim Erstellen der nächsten Zahlung')
       showToast('Fehler beim Erstellen der nächsten Zahlung', 'error')
-    }
-  }
-
-  const handleCreateAllPending = async () => {
-    try {
-      await createPendingInstances()
-      await loadTransactions()
-      showToast('Ausstehende Zahlungen erstellt', 'success')
-    } catch (err) {
-      console.error('Fehler beim Erstellen der ausstehenden Transaktionen:', err)
-      showToast('Fehler beim Erstellen der ausstehenden Zahlungen', 'error')
     }
   }
 
@@ -81,20 +96,7 @@ export default function RecurringTransactionsPage() {
     loadTransactions()
   }
 
-  const getIntervalText = (interval: string) => {
-    switch (interval) {
-      case 'monthly':
-        return 'Monatlich'
-      case 'quarterly':
-        return 'Vierteljährlich'
-      case 'yearly':
-        return 'Jährlich'
-      default:
-        return interval
-    }
-  }
-
-  const getNextPaymentDate = (transaction: Transaction): Date => {
+  const getNextPaymentDate = (transaction: RecurringWithStatus): Date => {
     if (!transaction.lastConfirmedDate) {
       // Wenn keine letzte Bestätigung vorhanden ist, das ursprüngliche Datum verwenden
       return new Date(transaction.date)
@@ -116,15 +118,24 @@ export default function RecurringTransactionsPage() {
     return nextDate
   }
 
+  const hasDueWithoutInstance = transactions.some(
+    (t) => t.dueInSalaryMonth && !t.hasInstanceInSalaryMonth
+  )
+
   if (loading) {
-    return <div className="p-8 flex items-center justify-center">Laden...</div>
+    return <PageLoader message="Wiederkehrende Zahlungen werden geladen…" />
   }
 
   if (error) {
     return (
-      <div className="p-8 flex items-center justify-center text-danger">
-        {error}
-      </div>
+      <PageError
+        message={error}
+        onRetry={() => {
+          setError(null)
+          setLoading(true)
+          loadTransactions()
+        }}
+      />
     )
   }
 
@@ -167,25 +178,31 @@ export default function RecurringTransactionsPage() {
   return (
     <div id="recurring-page" className="min-h-screen">
       <div id="recurring-container" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {successMessage && (
-          <div id="success-message" className="mb-4 p-4 bg-income-bg text-income rounded-lg border border-border transition-opacity">
-            {successMessage}
-          </div>
-        )}
-
-        {error && (
-          <div id="error-message" className="mb-4 p-4 bg-danger-subtle text-danger rounded-lg">
-            {error}
-          </div>
-        )}
-
         <div id="page-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
           <div>
             <h1 className="page-title">Wiederkehrende Zahlungen</h1>
             <p className="mt-1 text-sm text-secondary">
               Verwalten Sie Ihre regelmäßigen Ein- und Ausgaben
             </p>
+            {salaryDay !== null && (
+              <div className="mt-2">
+                <SalaryMonthHint salaryDay={salaryDay} />
+              </div>
+            )}
           </div>
+          <div className="flex flex-wrap gap-2">
+            {hasDueWithoutInstance && (
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleCreateAllPending}
+                loading={isCreatingPending}
+                loadingText="Wird erstellt…"
+              >
+                Ausstehende erstellen
+              </Button>
+            )}
           <button
             onClick={() => setShowNewTransactionModal(true)}
             className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent focus:ring-offset-canvas transition-colors duration-150"
@@ -195,6 +212,7 @@ export default function RecurringTransactionsPage() {
             </svg>
             Neue wiederkehrende Zahlung
           </button>
+          </div>
         </div>
 
         <div id="monthly-summary" className="rounded-lg border border-border p-4 mb-8 bg-surface">
@@ -245,18 +263,21 @@ export default function RecurringTransactionsPage() {
                   <th className="text-center p-4 text-secondary">Intervall</th>
                   <th className="text-center p-4 text-secondary">Letzte Bestätigung</th>
                   <th className="text-center p-4 text-secondary">Nächste Zahlung</th>
+                  <th className="text-center p-4 text-secondary">Gehaltsmonat</th>
                   <th className="text-right p-4 text-secondary">Aktionen</th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center p-4 text-sm text-secondary">
+                    <td colSpan={8} className="text-center p-4 text-sm text-secondary">
                       Keine wiederkehrenden Zahlungen vorhanden
                     </td>
                   </tr>
                 ) : (
-                  sortedTransactions.map((transaction) => (
+                  sortedTransactions.map((transaction) => {
+                    const salaryStatus = getRecurringSalaryMonthStatus(transaction)
+                    return (
                     <tr key={transaction.id} className="border-b border-border last:border-b-0">
                       <td className="p-4 text-sm text-primary">{transaction.merchant}</td>
                       <td className="p-4 text-sm text-primary">{transaction.description}</td>
@@ -286,6 +307,14 @@ export default function RecurringTransactionsPage() {
                       <td className="p-4 text-sm text-center text-primary">
                         {formatDate(getNextPaymentDate(transaction))}
                       </td>
+                      <td className="p-4 text-sm text-center">
+                        <span
+                          className={`inline-flex max-w-[12rem] items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${salaryStatus.className}`}
+                          title={salaryStatus.label}
+                        >
+                          {salaryStatus.label}
+                        </span>
+                      </td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <button
@@ -308,7 +337,7 @@ export default function RecurringTransactionsPage() {
                         </div>
                       </td>
                     </tr>
-                  ))
+                  )})
                 )}
               </tbody>
             </table>
@@ -320,7 +349,9 @@ export default function RecurringTransactionsPage() {
                   Keine wiederkehrenden Zahlungen vorhanden
                 </div>
               ) : (
-                sortedTransactions.map((transaction) => (
+                sortedTransactions.map((transaction) => {
+                  const salaryStatus = getRecurringSalaryMonthStatus(transaction)
+                  return (
                   <div key={transaction.id} className="rounded-lg shadow-sm border border-border p-4 bg-surface">
                     <div className="flex items-center space-x-3">
                       <div className="flex-shrink-0">
@@ -357,6 +388,11 @@ export default function RecurringTransactionsPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2 mb-3">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${salaryStatus.className}`}
+                      >
+                        {salaryStatus.label}
+                      </span>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         transaction.recurringInterval === 'monthly' 
                           ? 'bg-income-bg text-income' 
@@ -404,7 +440,7 @@ export default function RecurringTransactionsPage() {
                       </button>
                     </div>
                   </div>
-                ))
+                )})
               )}
             </div>
           </div>

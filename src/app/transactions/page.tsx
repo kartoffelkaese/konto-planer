@@ -2,10 +2,10 @@
 
 import { Suspense, useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { PlusIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { Transaction } from '@/types'
 import { getTransactions, updateTransaction, createRecurringInstance, createPendingInstances } from '@/lib/api'
-import { isTransactionDueInSalaryMonth, getSalaryMonthRange } from '@/lib/dateUtils'
+import { isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
 import TransactionList from '@/components/TransactionList'
 import MonthlyOverview from '@/components/MonthlyOverview'
 import Modal from '@/components/Modal'
@@ -16,9 +16,18 @@ import { Button } from '@/components/Button'
 import PageLoader from '@/components/PageLoader'
 import PageError from '@/components/PageError'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import SalaryMonthHint from '@/components/SalaryMonthHint'
+import { useUserSettings } from '@/hooks/useUserSettings'
 
 type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
 type SortDirection = 'asc' | 'desc'
+
+const SORT_FIELDS: SortField[] = ['date', 'merchant', 'category', 'description', 'amount', 'status']
+
+function buildTransactionsUrl(params: URLSearchParams): string {
+  const q = params.toString()
+  return q ? `/transactions?${q}` : '/transactions'
+}
 
 function TransactionsPageContent() {
   const router = useRouter()
@@ -26,51 +35,94 @@ function TransactionsPageContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [salaryDay, setSalaryDay] = useState<number | null>(null)
-  const [accountName, setAccountName] = useState('Mein Konto')
+  const { salaryDay, accountName, loading: settingsLoading } = useUserSettings()
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
-  const [sortField, setSortField] = useState<SortField>('date')
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
-  const [filterSalaryMonth, setFilterSalaryMonth] = useState(false)
-  const [totals, setTotals] = useState<{
-    currentIncome: number
-    currentExpenses: number
-    totalIncome: number
-    totalExpenses: number
-    totalPendingExpenses: number
-    available: number
-  }>({
+  const [sortField, setSortField] = useState<SortField>(() => {
+    const s = searchParams.get('sort')
+    return SORT_FIELDS.includes(s as SortField) ? (s as SortField) : 'date'
+  })
+  const [sortDirection, setSortDirection] = useState<SortDirection>(() =>
+    searchParams.get('dir') === 'asc' ? 'asc' : 'desc'
+  )
+  const [filterSalaryMonth, setFilterSalaryMonth] = useState(
+    () => searchParams.get('filterSalaryMonth') === '1'
+  )
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '')
+  const [debouncedSearch, setDebouncedSearch] = useState(() => searchParams.get('q') ?? '')
+  const [totals, setTotals] = useState({
     currentIncome: 0,
     currentExpenses: 0,
     totalIncome: 0,
     totalExpenses: 0,
     totalPendingExpenses: 0,
-    available: 0
+    available: 0,
   })
   const observer = useRef<IntersectionObserver | null>(null)
   const loadingRef = useRef<HTMLDivElement>(null)
   const [togglingTransactionIds, setTogglingTransactionIds] = useState<string[]>([])
   const { showToast } = useToast()
 
-  // Modal states
   const [showNewTransactionModal, setShowNewTransactionModal] = useState(false)
   const [isCreatingPending, setIsCreatingPending] = useState(false)
   const [showEditTransactionModal, setShowEditTransactionModal] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
 
-  useEffect(() => {
-    const init = async () => {
-      await loadSettings()
-      loadTransactions(1)
-    }
-    init()
-  }, [])
+  const syncUrl = useCallback(
+    (overrides?: {
+      filterSalaryMonth?: boolean
+      search?: string
+      sort?: SortField
+      dir?: SortDirection
+    }) => {
+      const params = new URLSearchParams()
+      const filter = overrides?.filterSalaryMonth ?? filterSalaryMonth
+      const search = overrides?.search ?? debouncedSearch
+      const sort = overrides?.sort ?? sortField
+      const dir = overrides?.dir ?? sortDirection
+
+      if (filter) params.set('filterSalaryMonth', '1')
+      if (search.trim()) params.set('q', search.trim())
+      if (sort !== 'date') params.set('sort', sort)
+      if (dir !== 'desc') params.set('dir', dir)
+
+      router.replace(buildTransactionsUrl(params), { scroll: false })
+    },
+    [router, filterSalaryMonth, debouncedSearch, sortField, sortDirection]
+  )
 
   useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery), 300)
+    return () => clearTimeout(t)
+  }, [searchQuery])
+
+  useEffect(() => {
+    const currentQ = searchParams.get('q') ?? ''
+    if (debouncedSearch === currentQ) return
+    syncUrl({ search: debouncedSearch })
+  }, [debouncedSearch, searchParams, syncUrl])
+
+  useEffect(() => {
+    if (salaryDay !== null) {
+      loadTransactions(1, false)
+    }
+  }, [salaryDay, debouncedSearch, filterSalaryMonth])
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+
     if (searchParams.get('new') === '1') {
       setShowNewTransactionModal(true)
-      router.replace('/transactions', { scroll: false })
+      params.delete('new')
+      router.replace(buildTransactionsUrl(params), { scroll: false })
+    }
+
+    const editId = searchParams.get('edit')
+    if (editId) {
+      setSelectedTransactionId(editId)
+      setShowEditTransactionModal(true)
+      params.delete('edit')
+      router.replace(buildTransactionsUrl(params), { scroll: false })
     }
   }, [searchParams, router])
 
@@ -79,32 +131,10 @@ function TransactionsPageContent() {
     loadTotals()
   }, [salaryDay])
 
-  useEffect(() => {
-    if (salaryDay !== null) {
-      // Beim Ändern des Filters zurück zur ersten Seite und Transaktionen neu laden
-      setPage(1)
-      setTransactions([])
-      loadTransactions(1, false)
-    }
-  }, [filterSalaryMonth, salaryDay])
-
-  const loadSettings = async () => {
-    try {
-      const response = await fetch('/api/users/settings')
-      if (response.ok) {
-        const data = await response.json()
-        setSalaryDay(data.salaryDay)
-        setAccountName(data.accountName || 'Mein Konto')
-      }
-    } catch (err) {
-      console.error('Error loading settings:', err)
-    }
-  }
-
   const loadTotals = async () => {
     if (salaryDay === null) return
     try {
-      const response = await fetch(`/api/transactions/totals?salaryDay=${salaryDay}`)
+      const response = await fetch('/api/transactions/totals')
       if (response.ok) {
         const data = await response.json()
         setTotals(data)
@@ -119,19 +149,18 @@ function TransactionsPageContent() {
       setLoading(true)
       const response = await getTransactions(pageNum, 20, {
         salaryDay: salaryDay,
-        filterSalaryMonth: filterSalaryMonth
+        filterSalaryMonth: filterSalaryMonth,
+        search: debouncedSearch,
       })
-      const data = response.transactions.map(t => ({
+      const data = response.transactions.map((t) => ({
         ...t,
-        amount: Number(t.amount)
+        amount: Number(t.amount),
       }))
-      
-      setTransactions(prev => {
+
+      setTransactions((prev) => {
         if (!append) return data
-        // Erstelle ein Set aus den IDs der vorhandenen Transaktionen
-        const existingIds = new Set(prev.map(t => t.id))
-        // Filtere neue Transaktionen, die noch nicht im State sind
-        const newTransactions = data.filter(t => !existingIds.has(t.id))
+        const existingIds = new Set(prev.map((t) => t.id))
+        const newTransactions = data.filter((t) => !existingIds.has(t.id))
         return [...prev, ...newTransactions]
       })
       setHasMore(response.hasMore)
@@ -152,7 +181,7 @@ function TransactionsPageContent() {
     const options = {
       root: null,
       rootMargin: '20px',
-      threshold: 0.1
+      threshold: 0.1,
     }
 
     observer.current = new IntersectionObserver((entries) => {
@@ -165,13 +194,10 @@ function TransactionsPageContent() {
     observer.current.observe(loadingRef.current)
 
     return () => {
-      if (observer.current) {
-        observer.current.disconnect()
-      }
+      observer.current?.disconnect()
     }
-  }, [hasMore, loading, page, filterSalaryMonth, salaryDay])
+  }, [hasMore, loading, page, filterSalaryMonth, salaryDay, debouncedSearch])
 
-  // Leere Funktion für die Kompatibilität mit TransactionList
   const lastElementRef = useCallback(() => {}, [])
 
   const handleToggleConfirmation = async (transaction: Transaction) => {
@@ -229,33 +255,25 @@ function TransactionsPageContent() {
     }
   }
 
-  const handleCreateInstance = async (transaction: Transaction) => {
-    try {
-      const newTransaction = await createRecurringInstance(transaction.id)
-      setTransactions([...transactions, {
-        ...newTransaction,
-        amount: Number(newTransaction.amount)
-      }])
-    } catch (err) {
-      console.error('Fehler beim Erstellen der Transaktion:', err)
-    }
-  }
-
   const handleTransactionChange = useCallback(async () => {
     await loadTotals()
-    await loadTransactions(page)
-  }, [page, salaryDay, filterSalaryMonth])
+    await loadTransactions(page, false)
+  }, [page, salaryDay, filterSalaryMonth, debouncedSearch])
 
-  const handleSort = useCallback((field: SortField) => {
-    if (sortField === field) {
-      // Toggle direction if same field
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
-    } else {
-      // Set new field with default direction
-      setSortField(field)
-      setSortDirection('desc')
-    }
-  }, [sortField])
+  const handleSort = useCallback(
+    (field: SortField) => {
+      if (sortField === field) {
+        const nextDir = sortDirection === 'asc' ? 'desc' : 'asc'
+        setSortDirection(nextDir)
+        syncUrl({ sort: field, dir: nextDir })
+      } else {
+        setSortField(field)
+        setSortDirection('desc')
+        syncUrl({ sort: field, dir: 'desc' })
+      }
+    },
+    [sortField, sortDirection, syncUrl]
+  )
 
   const handleCreatePending = async () => {
     setIsCreatingPending(true)
@@ -290,21 +308,27 @@ function TransactionsPageContent() {
 
   const isTransactionPending = (transaction: Transaction) => {
     if (salaryDay === null) return false
-    return transaction.isRecurring && 
-           isTransactionDueInSalaryMonth({
-             date: new Date(transaction.date),
-             isRecurring: transaction.isRecurring,
-             recurringInterval: transaction.recurringInterval,
-             lastConfirmedDate: transaction.lastConfirmedDate ? new Date(transaction.lastConfirmedDate) : undefined
-           }, salaryDay) && 
-           !transaction.isConfirmed
+    return (
+      transaction.isRecurring &&
+      isTransactionDueInSalaryMonth(
+        {
+          date: new Date(transaction.date),
+          isRecurring: transaction.isRecurring,
+          recurringInterval: transaction.recurringInterval,
+          lastConfirmedDate: transaction.lastConfirmedDate
+            ? new Date(transaction.lastConfirmedDate)
+            : undefined,
+        },
+        salaryDay
+      ) &&
+      !transaction.isConfirmed
+    )
   }
 
   const hasPendingInList = transactions.some(isTransactionPending)
-  const showPendingAction =
-    totals.totalPendingExpenses > 0 || hasPendingInList
+  const showPendingAction = totals.totalPendingExpenses > 0 || hasPendingInList
 
-  if (loading && transactions.length === 0 && !error) {
+  if ((loading || settingsLoading) && transactions.length === 0 && !error) {
     return <PageLoader message="Transaktionen werden geladen…" />
   }
 
@@ -333,7 +357,10 @@ function TransactionsPageContent() {
           </div>
         )}
 
-        <div id="page-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
+        <div
+          id="page-header"
+          className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-4"
+        >
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="page-title">{accountName}</h1>
@@ -352,34 +379,64 @@ function TransactionsPageContent() {
                 </Button>
               )}
             </div>
-            <p className="mt-1 page-subtitle">
-              Verwalten Sie Ihre Ein- und Ausgaben
-            </p>
+            {salaryDay !== null && (
+              <div className="mt-2">
+                <SalaryMonthHint
+                  salaryDay={salaryDay}
+                  filterActive={filterSalaryMonth}
+                />
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-3">
-            <label className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <label className="flex items-center space-x-2 shrink-0">
               <input
                 type="checkbox"
                 checked={filterSalaryMonth}
-                onChange={(e) => setFilterSalaryMonth(e.target.checked)}
+                onChange={(e) => {
+                  const checked = e.target.checked
+                  setFilterSalaryMonth(checked)
+                  syncUrl({ filterSalaryMonth: checked })
+                }}
                 className="rounded border-border text-accent focus:ring-accent bg-surface"
               />
-              <span className="text-sm text-primary">
-                Nur Gehaltsmonat
-              </span>
+              <span className="text-sm text-primary">Nur Gehaltsmonat</span>
             </label>
-          <Button
-            type="button"
-            className="hidden md:inline-flex"
-            onClick={() => setShowNewTransactionModal(true)}
-          >
-            Neue Transaktion
-          </Button>
+            <Button
+              type="button"
+              className="hidden md:inline-flex shrink-0"
+              onClick={() => setShowNewTransactionModal(true)}
+            >
+              Neue Transaktion
+            </Button>
           </div>
         </div>
 
-        <div id="monthly-overview-section" className="rounded-lg border border-border p-4 mb-8 bg-surface">
-          <MonthlyOverview 
+        <div className="mb-6">
+          <label htmlFor="transaction-search" className="sr-only">
+            Transaktionen durchsuchen
+          </label>
+          <div className="flex items-center gap-3 w-full rounded-control border border-border bg-surface px-3 py-2 shadow-sm focus-within:border-accent focus-within:outline focus-within:outline-2 focus-within:outline-accent-subtle focus-within:outline-offset-1">
+            <MagnifyingGlassIcon
+              className="h-5 w-5 shrink-0 text-secondary"
+              aria-hidden="true"
+            />
+            <input
+              id="transaction-search"
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Händler oder Beschreibung suchen…"
+              className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-primary shadow-none focus:outline-none focus:ring-0"
+            />
+          </div>
+        </div>
+
+        <div
+          id="monthly-overview-section"
+          className="rounded-lg border border-border p-4 mb-8 bg-surface"
+        >
+          <MonthlyOverview
             currentIncome={totals.currentIncome}
             currentExpenses={totals.currentExpenses}
             totalIncome={totals.totalIncome}
@@ -389,9 +446,12 @@ function TransactionsPageContent() {
           />
         </div>
 
-        <div id="transaction-list-section" className="rounded-lg border border-border p-4 mb-8 bg-surface">
-          <TransactionList 
-            transactions={transactions} 
+        <div
+          id="transaction-list-section"
+          className="rounded-lg border border-border p-4 mb-8 bg-surface"
+        >
+          <TransactionList
+            transactions={transactions}
             onTransactionChange={handleTransactionChange}
             onToggleConfirmation={handleToggleConfirmation}
             togglingTransactionIds={togglingTransactionIds}
@@ -401,17 +461,20 @@ function TransactionsPageContent() {
             onSort={handleSort}
             salaryDay={salaryDay}
             onAddTransaction={() => setShowNewTransactionModal(true)}
+            onEditTransaction={handleEditTransaction}
+            isSearchActive={debouncedSearch.trim().length > 0}
           />
           {hasMore && (
             <div ref={loadingRef} className="flex justify-center items-center gap-2 mt-8">
               <LoadingSpinner size="sm" />
-              <span className="text-sm text-secondary">Weitere Transaktionen werden geladen…</span>
+              <span className="text-sm text-secondary">
+                Weitere Transaktionen werden geladen…
+              </span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Neue Transaktion Modal */}
       <Modal
         isOpen={showNewTransactionModal}
         onClose={() => setShowNewTransactionModal(false)}
@@ -424,7 +487,6 @@ function TransactionsPageContent() {
         />
       </Modal>
 
-      {/* Transaktion bearbeiten Modal */}
       <Modal
         isOpen={showEditTransactionModal}
         onClose={() => setShowEditTransactionModal(false)}

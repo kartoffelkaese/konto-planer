@@ -6,8 +6,6 @@ import { formatDate, isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
 import { formatCurrency } from '@/lib/formatters'
 import { PencilIcon, CheckIcon, MinusCircleIcon, ClockIcon, CalendarIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
-import Modal from '@/components/Modal'
-import EditTransactionForm from '@/components/EditTransactionForm'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { getContrastColor } from '@/lib/colorUtils'
 import { useToast } from '@/hooks/useToast'
@@ -27,6 +25,8 @@ interface TransactionListProps {
   onSort?: (field: SortField) => void
   salaryDay?: number | null
   onAddTransaction?: () => void
+  onEditTransaction?: (id: string) => void
+  isSearchActive?: boolean
 }
 
 export default function TransactionList({ 
@@ -40,12 +40,12 @@ export default function TransactionList({
   onSort,
   salaryDay,
   onAddTransaction,
+  onEditTransaction,
+  isSearchActive = false,
 }: TransactionListProps) {
   const { showToast } = useToast()
   const [editingDate, setEditingDate] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -137,10 +137,18 @@ export default function TransactionList({
 
   const emptyList = (
     <EmptyState
-      title="Keine Transaktionen vorhanden"
-      description="Erfassen Sie Ihre erste Einnahme oder Ausgabe."
-      actionLabel={onAddTransaction ? 'Erste Transaktion anlegen' : undefined}
-      onAction={onAddTransaction}
+      title={
+        isSearchActive ? 'Keine Treffer' : 'Keine Transaktionen vorhanden'
+      }
+      description={
+        isSearchActive
+          ? 'Passen Sie die Suche an oder deaktivieren Sie den Gehaltsmonats-Filter.'
+          : 'Erfassen Sie Ihre erste Einnahme oder Ausgabe.'
+      }
+      actionLabel={
+        isSearchActive ? undefined : onAddTransaction ? 'Erste Transaktion anlegen' : undefined
+      }
+      onAction={isSearchActive ? undefined : onAddTransaction}
     />
   )
 
@@ -248,14 +256,9 @@ export default function TransactionList({
   }
 
   const handleEditClick = (transactionId: string) => {
-    setSelectedTransactionId(transactionId)
-    setShowEditModal(true)
-  }
-
-  const handleEditSuccess = async () => {
-    setShowEditModal(false)
-    setSelectedTransactionId(null)
-    await onTransactionChange()
+    if (onEditTransaction) {
+      onEditTransaction(transactionId)
+    }
   }
 
   const handleConfirmTransaction = async (id: string) => {
@@ -468,20 +471,6 @@ export default function TransactionList({
           ))
         )}
       </div>
-
-      {showEditModal && selectedTransactionId && (
-      <Modal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        title="Transaktion bearbeiten"
-      >
-          <EditTransactionForm
-            id={selectedTransactionId}
-            onSuccess={handleEditSuccess}
-            onCancel={() => setShowEditModal(false)}
-          />
-        </Modal>
-        )}
 
       <ConfirmDialog
         isOpen={deleteTarget !== null}

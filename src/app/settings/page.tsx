@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
+import { TagIcon, BuildingStorefrontIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import BackupManager from '@/components/BackupManager'
 import DeleteAccount from '@/components/DeleteAccount'
 import { useToast } from '@/hooks/useToast'
@@ -14,7 +15,6 @@ export default function SettingsPage() {
   const { data: session, update: updateSession } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
   const [salaryDay, setSalaryDay] = useState(1)
   const [accountName, setAccountName] = useState("Mein Konto")
   
@@ -23,7 +23,6 @@ export default function SettingsPage() {
   const [newEmail, setNewEmail] = useState('')
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState<string | null>(null)
-  const [emailSuccess, setEmailSuccess] = useState(false)
   const [emailLoading, setEmailLoading] = useState(false)
 
   useEffect(() => {
@@ -52,8 +51,6 @@ export default function SettingsPage() {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    setSuccess(false)
-
     try {
       const response = await fetch('/api/users/settings', {
         method: 'PATCH',
@@ -70,7 +67,6 @@ export default function SettingsPage() {
         throw new Error('Fehler beim Speichern der Einstellungen')
       }
 
-      setSuccess(true)
       showToast('Einstellungen gespeichert', 'success')
     } catch (err) {
       console.error('Error saving settings:', err)
@@ -85,8 +81,6 @@ export default function SettingsPage() {
     e.preventDefault()
     setEmailLoading(true)
     setEmailError(null)
-    setEmailSuccess(false)
-
     try {
       const response = await fetch('/api/users/email', {
         method: 'PATCH',
@@ -105,7 +99,6 @@ export default function SettingsPage() {
         throw new Error(data.error || 'Ein Fehler ist aufgetreten')
       }
 
-      setEmailSuccess(true)
       showToast('E-Mail-Adresse aktualisiert', 'success')
       setShowEmailForm(false)
       setNewEmail('')
@@ -143,13 +136,33 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {success && (
-            <div id="success-message" className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
-              Einstellungen wurden erfolgreich gespeichert
-            </div>
-          )}
-
           <div id="settings-sections" className="space-y-6">
+            <div id="data-management" className="rounded-lg border border-border p-4 bg-surface">
+              <h2 className="text-lg font-medium text-primary mb-4">Datenverwaltung</h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Link
+                  href="/settings/categories"
+                  className="flex items-center justify-between rounded-control border border-border px-4 py-3 text-primary hover:bg-accent-muted transition-colors duration-feedback"
+                >
+                  <span className="flex items-center gap-3">
+                    <TagIcon className="h-5 w-5 text-accent shrink-0" aria-hidden="true" />
+                    <span className="text-sm font-medium">Kategorien</span>
+                  </span>
+                  <ChevronRightIcon className="h-5 w-5 text-secondary shrink-0" aria-hidden="true" />
+                </Link>
+                <Link
+                  href="/settings/merchants"
+                  className="flex items-center justify-between rounded-control border border-border px-4 py-3 text-primary hover:bg-accent-muted transition-colors duration-feedback"
+                >
+                  <span className="flex items-center gap-3">
+                    <BuildingStorefrontIcon className="h-5 w-5 text-accent shrink-0" aria-hidden="true" />
+                    <span className="text-sm font-medium">Händler</span>
+                  </span>
+                  <ChevronRightIcon className="h-5 w-5 text-secondary shrink-0" aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
+
             {/* Allgemeine Einstellungen */}
             <form id="general-settings" onSubmit={handleSubmit} className="rounded-lg border border-border p-4 bg-surface">
               <h2 className="text-lg font-medium text-primary mb-4">Allgemeine Einstellungen</h2>
@@ -211,12 +224,6 @@ export default function SettingsPage() {
               {emailError && (
                 <div className="mb-4 p-4 bg-danger-subtle text-danger rounded-lg">
                   {emailError}
-                </div>
-              )}
-
-              {emailSuccess && (
-                <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-lg">
-                  E-Mail-Adresse wurde erfolgreich aktualisiert
                 </div>
               )}
 

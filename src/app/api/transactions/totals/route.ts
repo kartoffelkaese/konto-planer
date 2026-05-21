@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSalaryMonthRange } from '@/lib/dateUtils'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import { resolveSalaryDay } from '@/lib/salaryDay'
 
 export async function GET(request: Request) {
   const authResult = await getUserBySession()
@@ -11,7 +12,10 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url)
-    const salaryDay = parseInt(searchParams.get('salaryDay') || '23')
+    const salaryDay = resolveSalaryDay(
+      searchParams.get('salaryDay'),
+      user.salaryDay
+    )
 
     const { startDate, endDate } = getSalaryMonthRange(salaryDay)
 

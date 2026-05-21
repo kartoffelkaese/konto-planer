@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSalaryMonthRange } from '@/lib/dateUtils'
+import { resolveSalaryDay } from '@/lib/salaryDay'
 import {
   getUserBySession,
   assertMerchantOwned,
@@ -22,11 +23,12 @@ export async function GET(request: Request) {
     const skip = (page - 1) * limit
     const salaryDayParam = searchParams.get('salaryDay')
     const filterSalaryMonth = searchParams.get('filterSalaryMonth') === 'true'
+    const search = searchParams.get('q')?.trim()
 
     // Filter für Gehaltsmonat
     let dateFilter: { gte?: Date; lte?: Date } | undefined
-    if (filterSalaryMonth && salaryDayParam) {
-      const salaryDay = parseInt(salaryDayParam)
+    if (filterSalaryMonth) {
+      const salaryDay = resolveSalaryDay(salaryDayParam, user.salaryDay)
       const { startDate, endDate } = getSalaryMonthRange(salaryDay)
       dateFilter = {
         gte: startDate,
@@ -34,12 +36,26 @@ export async function GET(request: Request) {
       }
     }
 
-    const whereClause: any = {
+    const whereClause: {
+      userId: string
+      date?: { gte: Date; lte: Date }
+      OR?: Array<
+        | { merchant: { contains: string } }
+        | { description: { contains: string } }
+      >
+    } = {
       userId: user.id
     }
 
     if (dateFilter) {
       whereClause.date = dateFilter
+    }
+
+    if (search && search.length > 0) {
+      whereClause.OR = [
+        { merchant: { contains: search } },
+        { description: { contains: search } },
+      ]
     }
 
     const [transactions, total] = await Promise.all([

@@ -7,6 +7,7 @@ import { formatDateForInput } from '@/lib/dateUtils'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
 import LoadingSpinner from '@/components/LoadingSpinner'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 interface EditTransactionFormProps {
   id: string
@@ -122,41 +123,18 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
 
   return (
     <>
-      {error && (
-        <div className="mb-4 p-4 bg-danger-subtle text-danger rounded-lg">
-          {error}
-        </div>
-      )}
-
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="p-6 rounded-lg shadow-xl max-w-md w-full bg-canvas border border-border">
-            <h3 className="text-lg font-semibold mb-4 text-primary">Transaktion löschen</h3>
-            <p className="text-secondary mb-6">
-              Möchten Sie diese Transaktion wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
-            </p>
-            <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={isSubmitting}
-              >
-                Abbrechen
-              </Button>
-              <Button
-                type="button"
-                variant="danger"
-                onClick={handleDelete}
-                loading={isSubmitting}
-                loadingText="Wird gelöscht…"
-              >
-                Löschen
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title="Transaktion löschen"
+        message="Möchten Sie diese Transaktion wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        confirmText="Löschen"
+        confirmLoadingText="Wird gelöscht…"
+        cancelText="Abbrechen"
+        type="danger"
+        loading={isSubmitting}
+      />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>

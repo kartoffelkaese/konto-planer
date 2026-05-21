@@ -14,8 +14,6 @@ import {
   XMarkIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  TagIcon,
-  BuildingStorefrontIcon,
   ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline'
 import { APP_VERSION } from '@/lib/version'
@@ -54,12 +52,15 @@ export default function Navigation() {
     { name: 'Transaktionen', href: '/transactions', icon: BanknotesIcon },
     { name: 'Wiederkehrend', href: '/recurring', icon: ArrowPathIcon },
     { name: 'Statistiken', href: '/statistics', icon: ChartPieIcon },
-    { name: 'Kategorien', href: '/settings/categories', icon: TagIcon },
-    { name: 'Händler', href: '/settings/merchants', icon: BuildingStorefrontIcon },
     { name: 'Einstellungen', href: '/settings', icon: Cog6ToothIcon },
   ]
 
-  const isActive = (path: string) => pathname === path
+  const isActive = (path: string) => {
+    if (path === '/settings') {
+      return pathname === '/settings' || pathname.startsWith('/settings/')
+    }
+    return pathname === path
+  }
 
   /** Mobil-Drawer oder Desktop ausgeklappt → volle Nav mit Text */
   const showExpandedContent = !isCollapsed || isOpen

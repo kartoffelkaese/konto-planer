@@ -126,12 +126,17 @@ export function isTransactionDueInSalaryMonth(
 }
 
 /**
- * Prüft ob eine Transaktion ausstehend ist
+ * Prüft ob eine Transaktion ausstehend ist (Gehaltsmonat aus Einstellungen)
  */
-export function isTransactionPending(transaction: Transaction): boolean {
-  return transaction.isRecurring && 
-         isTransactionDueInSalaryMonth(transaction, 23) && // TODO: salaryDay aus den Einstellungen laden
-         !transaction.isConfirmed
+export function isTransactionPending(
+  transaction: Transaction,
+  salaryDay: number
+): boolean {
+  return (
+    transaction.isRecurring &&
+    isTransactionDueInSalaryMonth(transaction, salaryDay) &&
+    !transaction.isConfirmed
+  )
 }
 
 /**

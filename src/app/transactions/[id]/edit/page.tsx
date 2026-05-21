@@ -1,16 +1,15 @@
-import EditTransactionForm from '@/components/EditTransactionForm'
-import { notFound } from 'next/navigation'
+import { redirect } from 'next/navigation'
 
+/** Bearbeiten nur über Modal auf /transactions */
 export default async function EditTransactionPage({
-  params
+  params,
 }: {
   params: Promise<{ id: string }> | { id: string }
 }) {
   const resolvedParams = await Promise.resolve(params)
-  
-  if (!resolvedParams?.id) {
-    notFound()
+  const id = resolvedParams?.id
+  if (!id) {
+    redirect('/transactions')
   }
-  
-  return <EditTransactionForm id={resolvedParams.id} />
-} 
+  redirect(`/transactions?edit=${encodeURIComponent(id)}`)
+}

@@ -26,10 +26,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Hole den Gehaltseingangstag aus den Einstellungen (später)
-    const salaryDay = 23
-
-    const { startDate, endDate } = getSalaryMonthRange(salaryDay)
+    const { startDate, endDate } = getSalaryMonthRange(user.salaryDay)
     const newTransactions = []
 
     // Für jede wiederkehrende Transaktion

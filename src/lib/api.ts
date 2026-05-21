@@ -75,6 +75,7 @@ export const getTransactions = async (
   options?: {
     salaryDay?: number | null
     filterSalaryMonth?: boolean
+    search?: string
   }
 ): Promise<TransactionsResponse> => {
   const params: Record<string, string | number | boolean | undefined> = { page, limit }
@@ -83,6 +84,9 @@ export const getTransactions = async (
   }
   if (options?.filterSalaryMonth !== undefined) {
     params.filterSalaryMonth = options.filterSalaryMonth
+  }
+  if (options?.search?.trim()) {
+    params.q = options.search.trim()
   }
   return apiFetch<TransactionsResponse>(`/transactions${encodeQuery(params)}`)
 }

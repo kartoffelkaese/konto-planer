@@ -5,6 +5,8 @@ import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
+import PageLoader from '@/components/PageLoader'
+import SettingsBreadcrumb from '@/components/SettingsBreadcrumb'
 
 const PRESET_COLORS = [
   '#FF6B6B', // Rot
@@ -220,11 +222,12 @@ export default function CategoriesPage() {
     .sort((a, b) => a.name.localeCompare(b.name))
 
   if (loading) {
-    return <div className="p-8 flex items-center justify-center">Laden...</div>
+    return <PageLoader message="Kategorien werden geladen…" />
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <SettingsBreadcrumb current="Kategorien" />
       <div className="flex justify-between items-center mb-6">
         <h1 className="page-title">Kategorien verwalten</h1>
         <button

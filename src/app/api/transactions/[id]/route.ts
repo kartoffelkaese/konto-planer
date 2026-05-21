@@ -83,9 +83,12 @@ export async function PATCH(
       isConfirmed: updateData.isConfirmed,
       isRecurring: updateData.isRecurring,
       recurringInterval: updateData.recurringInterval,
-      lastConfirmedDate: updateData.lastConfirmedDate
-        ? new Date(updateData.lastConfirmedDate)
-        : null,
+      lastConfirmedDate:
+        updateData.lastConfirmedDate !== undefined
+          ? updateData.lastConfirmedDate
+            ? new Date(updateData.lastConfirmedDate)
+            : null
+          : undefined,
     }
 
     if (updateData.isRecurringPaused !== undefined) {

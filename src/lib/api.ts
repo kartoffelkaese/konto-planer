@@ -121,7 +121,7 @@ export const updateTransaction = async (
   id: string,
   data: Partial<Transaction>
 ): Promise<Transaction> => {
-  const formattedData = {
+  const formattedData: Record<string, unknown> = {
     ...data,
     amount:
       data.amount !== undefined
@@ -130,7 +130,11 @@ export const updateTransaction = async (
           : data.amount
         : undefined,
     date: data.date ? toISOString(data.date) : undefined,
-    lastConfirmedDate: data.lastConfirmedDate ? toISOString(data.lastConfirmedDate) : null
+  }
+  if (data.lastConfirmedDate !== undefined) {
+    formattedData.lastConfirmedDate = data.lastConfirmedDate
+      ? toISOString(data.lastConfirmedDate)
+      : null
   }
 
   return apiFetch<Transaction>(`/transactions/${encodeURIComponent(id)}`, {

@@ -38,6 +38,7 @@ model Transaction {
   date                DateTime
   isConfirmed         Boolean       @default(false)
   isRecurring         Boolean       @default(false)
+  isRecurringPaused   Boolean       @default(false)
   recurringInterval   String?
   lastConfirmedDate   DateTime?
   version             Int           @default(1)

@@ -42,22 +42,116 @@ export function formatDateForInput(date: Date | string): string {
   return dayjs(date).tz(DEFAULT_TIMEZONE).format('YYYY-MM-DD')
 }
 
-/**
- * Berechnet das nächste Fälligkeitsdatum
- */
-export function getNextDueDate(lastConfirmedDate: Date | string, interval: string): Date {
-  const date = dayjs(lastConfirmedDate).tz(DEFAULT_TIMEZONE)
-  
+export type RecurringInterval = 'monthly' | 'quarterly' | 'yearly' | string
+
+function toBerlinDay(date: Date | string) {
+  return dayjs(date).tz(DEFAULT_TIMEZONE).startOf('day')
+}
+
+/** Ein Intervall-Schritt ab einem Datum (Anker-Kette). */
+export function addRecurringInterval(
+  date: Date | string | dayjs.Dayjs,
+  interval: RecurringInterval
+): dayjs.Dayjs {
+  const d = dayjs.isDayjs(date) ? date.tz(DEFAULT_TIMEZONE) : toBerlinDay(date)
+
   switch (interval) {
     case 'monthly':
-      return date.add(1, 'month').toDate()
+      return d.add(1, 'month')
     case 'quarterly':
-      return date.add(3, 'month').toDate()
+      return d.add(3, 'month')
     case 'yearly':
-      return date.add(1, 'year').toDate()
+      return d.add(1, 'year')
     default:
-      return date.toDate()
+      return d
   }
+}
+
+/**
+ * Nächstes Fälligkeitsdatum: ein Intervall nach dem übergebenen Datum.
+ * @deprecated Semantisch Anker – nutze addRecurringInterval oder getNextRecurringDueDate.
+ */
+export function getNextDueDate(anchorOrDate: Date | string, interval: string): Date {
+  return addRecurringInterval(anchorOrDate, interval).toDate()
+}
+
+const MAX_RECURRING_ITERATIONS = 500
+
+/**
+ * Nächster Anker-Termin (transaction.date) ab fromDate (inkl.), Standard: heute.
+ */
+export function getNextRecurringDueDate(
+  anchor: Date | string,
+  interval: RecurringInterval,
+  fromDate?: Date | string
+): Date {
+  const from = fromDate ? toBerlinDay(fromDate) : toBerlinDay(getCurrentDate())
+  let candidate = toBerlinDay(anchor)
+  let iterations = 0
+
+  while (candidate.isBefore(from, 'day') && iterations < MAX_RECURRING_ITERATIONS) {
+    candidate = addRecurringInterval(candidate, interval)
+    iterations++
+  }
+
+  return candidate.toDate()
+}
+
+/**
+ * Nächster Anker-Termin strikt nach afterDate (exkl. Tag von afterDate).
+ */
+export function getNextRecurringDueDateAfter(
+  anchor: Date | string,
+  interval: RecurringInterval,
+  afterDate: Date | string
+): Date {
+  const after = toBerlinDay(afterDate)
+  let candidate = toBerlinDay(anchor)
+  let iterations = 0
+
+  while (
+    (candidate.isBefore(after, 'day') || candidate.isSame(after, 'day')) &&
+    iterations < MAX_RECURRING_ITERATIONS
+  ) {
+    candidate = addRecurringInterval(candidate, interval)
+    iterations++
+  }
+
+  return candidate.toDate()
+}
+
+/**
+ * Alle Anker-Fälligkeitstermine im geschlossenen Intervall [start, end] (Kalendertage, Europe/Berlin).
+ */
+export function getRecurringDueDatesInRange(
+  anchor: Date | string,
+  interval: RecurringInterval,
+  start: Date | string,
+  end: Date | string
+): Date[] {
+  const rangeStart = toBerlinDay(start)
+  const rangeEnd = toBerlinDay(end)
+  const results: Date[] = []
+
+  let candidate = toBerlinDay(anchor)
+  let iterations = 0
+
+  while (candidate.isBefore(rangeStart, 'day') && iterations < MAX_RECURRING_ITERATIONS) {
+    candidate = addRecurringInterval(candidate, interval)
+    iterations++
+  }
+
+  iterations = 0
+  while (
+    (candidate.isBefore(rangeEnd, 'day') || candidate.isSame(rangeEnd, 'day')) &&
+    iterations < MAX_RECURRING_ITERATIONS
+  ) {
+    results.push(candidate.toDate())
+    candidate = addRecurringInterval(candidate, interval)
+    iterations++
+  }
+
+  return results
 }
 
 /**
@@ -108,21 +202,26 @@ export function isTransactionDueInSalaryMonth(
   transaction: {
     date: Date | string
     isRecurring: boolean
+    isRecurringPaused?: boolean
     recurringInterval?: string | null
     lastConfirmedDate?: Date | string | null
   },
   salaryDay: number
 ): boolean {
   if (!transaction.isRecurring) return false
-  if (!transaction.lastConfirmedDate || !transaction.recurringInterval) return true
+  if (transaction.isRecurringPaused) return false
+  const interval = transaction.recurringInterval || 'monthly'
+  if (!transaction.recurringInterval) return true
 
   const { startDate, endDate } = getSalaryMonthRange(salaryDay)
-  const nextDueDate = getNextDueDate(
-    transaction.lastConfirmedDate,
-    transaction.recurringInterval
+  const dueDates = getRecurringDueDatesInRange(
+    transaction.date,
+    interval,
+    startDate,
+    endDate
   )
 
-  return dayjs(nextDueDate).isBetween(startDate, endDate, 'day', '[]')
+  return dueDates.length > 0
 }
 
 /**

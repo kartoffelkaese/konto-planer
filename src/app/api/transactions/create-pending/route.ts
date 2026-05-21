@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
-import { getNextDueDate, getSalaryMonthRange } from '@/lib/dateUtils'
+import { getRecurringDueDatesInRange, getSalaryMonthRange } from '@/lib/dateUtils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +15,8 @@ export async function POST(request: NextRequest) {
     const recurringTransactions = await prisma.transaction.findMany({
       where: {
         userId: user.id,
-        isRecurring: true
+        isRecurring: true,
+        isRecurringPaused: false,
       },
       include: {
         merchantRef: {
@@ -31,28 +32,32 @@ export async function POST(request: NextRequest) {
 
     // Für jede wiederkehrende Transaktion
     for (const transaction of recurringTransactions) {
-      const lastDate = transaction.lastConfirmedDate || transaction.date
-      const nextDueDate = getNextDueDate(lastDate, transaction.recurringInterval || 'monthly')
+      const interval = transaction.recurringInterval || 'monthly'
+      const dueDates = getRecurringDueDatesInRange(
+        transaction.date,
+        interval,
+        startDate,
+        endDate
+      )
 
-      // Prüfe, ob das nächste Fälligkeitsdatum im aktuellen Gehaltsmonat liegt
-      if (nextDueDate >= startDate && nextDueDate <= endDate) {
-        // Prüfe, ob bereits eine Instanz für diesen Monat existiert
+      for (const dueDate of dueDates) {
+        const dayStart = new Date(dueDate)
+        dayStart.setHours(0, 0, 0, 0)
+        const dayEnd = new Date(dueDate)
+        dayEnd.setHours(23, 59, 59, 999)
+
         const existingInstance = await prisma.transaction.findFirst({
           where: {
             userId: user.id,
-            description: transaction.description,
-            merchant: transaction.merchant,
-            amount: transaction.amount,
-            date: {
-              gte: startDate,
-              lte: endDate
-            },
             isRecurring: false,
-            parentTransactionId: transaction.id
-          }
+            parentTransactionId: transaction.id,
+            date: {
+              gte: dayStart,
+              lte: dayEnd,
+            },
+          },
         })
 
-        // Wenn keine Instanz existiert, erstelle eine neue
         if (!existingInstance) {
           const newTransaction = await prisma.transaction.create({
             data: {
@@ -60,19 +65,19 @@ export async function POST(request: NextRequest) {
               merchant: transaction.merchant,
               merchantId: transaction.merchantId,
               amount: transaction.amount,
-              date: nextDueDate,
+              date: dueDate,
               isConfirmed: false,
               isRecurring: false,
               userId: user.id,
-              parentTransactionId: transaction.id
+              parentTransactionId: transaction.id,
             },
             include: {
               merchantRef: {
                 include: {
-                  category: true
-                }
-              }
-            }
+                  category: true,
+                },
+              },
+            },
           })
           newTransactions.push(newTransaction)
         }

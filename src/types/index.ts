@@ -24,6 +24,7 @@ export interface Transaction {
   date: string
   isConfirmed: boolean
   isRecurring: boolean
+  isRecurringPaused?: boolean
   recurringInterval?: string | null
   lastConfirmedDate?: string | null
   version?: number
@@ -40,6 +41,7 @@ export interface CreateTransactionData {
   date: string
   isConfirmed?: boolean
   isRecurring?: boolean
+  isRecurringPaused?: boolean
   recurringInterval?: string
   lastConfirmedDate?: string
   parentTransactionId?: string

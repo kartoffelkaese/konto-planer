@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getNextDueDate } from '@/lib/dateUtils'
+import {
+  getNextRecurringDueDate,
+  getNextRecurringDueDateAfter,
+} from '@/lib/dateUtils'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 
 export async function POST(
@@ -30,12 +33,31 @@ export async function POST(
       )
     }
 
-    const lastDate =
-      originalTransaction.lastConfirmedDate || originalTransaction.date
-    const nextDueDate = getNextDueDate(
-      lastDate,
-      originalTransaction.recurringInterval || 'monthly'
-    )
+    if (originalTransaction.isRecurringPaused) {
+      return NextResponse.json(
+        { error: 'Wiederkehrende Zahlung ist pausiert' },
+        { status: 400 }
+      )
+    }
+
+    const interval = originalTransaction.recurringInterval || 'monthly'
+
+    const lastChild = await prisma.transaction.findFirst({
+      where: {
+        userId: user.id,
+        parentTransactionId: originalTransaction.id,
+        isRecurring: false,
+      },
+      orderBy: { date: 'desc' },
+    })
+
+    const nextDueDate = lastChild
+      ? getNextRecurringDueDateAfter(
+          originalTransaction.date,
+          interval,
+          lastChild.date
+        )
+      : getNextRecurringDueDate(originalTransaction.date, interval)
 
     const newTransaction = await prisma.transaction.create({
       data: {

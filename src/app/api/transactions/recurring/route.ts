@@ -45,15 +45,18 @@ export async function GET(_request: NextRequest) {
 
     const enriched = transactions.map((t) => ({
       ...t,
-      dueInSalaryMonth: isTransactionDueInSalaryMonth(
-        {
-          date: t.date,
-          isRecurring: true,
-          recurringInterval: t.recurringInterval,
-          lastConfirmedDate: t.lastConfirmedDate,
-        },
-        user.salaryDay
-      ),
+      dueInSalaryMonth: t.isRecurringPaused
+        ? false
+        : isTransactionDueInSalaryMonth(
+            {
+              date: t.date,
+              isRecurring: true,
+              isRecurringPaused: t.isRecurringPaused,
+              recurringInterval: t.recurringInterval,
+              lastConfirmedDate: t.lastConfirmedDate,
+            },
+            user.salaryDay
+          ),
       hasInstanceInSalaryMonth: parentsWithInstance.has(t.id),
       hasUnconfirmedInstanceInSalaryMonth: instancesInSalaryMonth.some(
         (i) => i.parentTransactionId === t.id && !i.isConfirmed

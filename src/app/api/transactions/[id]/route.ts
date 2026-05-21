@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import {
   getUserBySession,
@@ -7,7 +8,6 @@ import {
   assertMerchantOwned,
   isErrorResponse,
 } from '@/lib/api-auth'
-
 const transactionInclude = {
   merchantRef: {
     include: {
@@ -69,7 +69,12 @@ export async function PATCH(
       if (merchantError) return merchantError
     }
 
-    const allowedUpdateFields = {
+    const willBeRecurring =
+      updateData.isRecurring !== undefined
+        ? Boolean(updateData.isRecurring)
+        : existingTransaction.isRecurring
+
+    const allowedUpdateFields: Record<string, unknown> = {
       description: updateData.description,
       merchant: updateData.merchant,
       merchantId: updateData.merchantId,
@@ -83,11 +88,19 @@ export async function PATCH(
         : null,
     }
 
+    if (updateData.isRecurringPaused !== undefined) {
+      allowedUpdateFields.isRecurringPaused = willBeRecurring
+        ? Boolean(updateData.isRecurringPaused)
+        : false
+    } else if (updateData.isRecurring === false) {
+      allowedUpdateFields.isRecurringPaused = false
+    }
+
     const cleanedUpdateFields = Object.fromEntries(
       Object.entries(allowedUpdateFields).filter(
         ([, value]) => value !== undefined
       )
-    )
+    ) as Prisma.TransactionUpdateInput
 
     const updatedTransaction = await prisma.transaction.update({
       where: { id },
@@ -142,6 +155,7 @@ export async function DELETE(
     await prisma.transaction.delete({
       where: { id },
     })
+
     return new NextResponse(null, { status: 204 })
   } catch (error) {
     console.error('Error deleting transaction:', error)

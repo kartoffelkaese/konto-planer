@@ -6,10 +6,23 @@ export type RecurringWithStatus = Transaction & {
   hasUnconfirmedInstanceInSalaryMonth?: boolean
 }
 
+export function isRecurringTemplateActive(t: {
+  isRecurring: boolean
+  isRecurringPaused?: boolean
+}): boolean {
+  return t.isRecurring && !t.isRecurringPaused
+}
+
 export function getRecurringSalaryMonthStatus(transaction: RecurringWithStatus): {
   label: string
   className: string
 } {
+  if (transaction.isRecurringPaused) {
+    return {
+      label: 'Pausiert',
+      className: 'bg-surface-muted text-secondary',
+    }
+  }
   if (transaction.hasUnconfirmedInstanceInSalaryMonth) {
     return {
       label: 'Ausstehend im Gehaltsmonat',

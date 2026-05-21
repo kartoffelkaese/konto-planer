@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getSalaryMonthRange, getSalaryMonthPeriodInfo } from '@/lib/dateUtils'
+import {
+  getSalaryMonthRange,
+  getSalaryMonthPeriodInfo,
+  getNextRecurringDueDate,
+} from '@/lib/dateUtils'
 import { logger } from '@/lib/logger'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 
@@ -104,23 +108,13 @@ export async function GET() {
     })
 
     // Berechne das nächste Zahlungsdatum für jede wiederkehrende Zahlung
-    const recurringTransactionsWithNextDate = recurringTransactions.map(transaction => {
-      const lastDate = transaction.lastConfirmedDate || transaction.date
-      let nextDate = new Date(lastDate)
-
-      switch (transaction.recurringInterval) {
-        case 'monthly':
-          nextDate.setMonth(nextDate.getMonth() + 1)
-          break
-        case 'quarterly':
-          nextDate.setMonth(nextDate.getMonth() + 3)
-          break
-        case 'yearly':
-          nextDate.setFullYear(nextDate.getFullYear() + 1)
-          break
-        default:
-          nextDate = transaction.date
-      }
+    const recurringTransactionsWithNextDate = recurringTransactions
+      .filter((transaction) => !transaction.isRecurringPaused)
+      .map((transaction) => {
+      const nextDate = getNextRecurringDueDate(
+        transaction.date,
+        transaction.recurringInterval || 'monthly'
+      )
 
       return {
         id: transaction.id,

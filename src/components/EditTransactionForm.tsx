@@ -22,6 +22,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isRecurringTemplate, setIsRecurringTemplate] = useState(false)
   const [formData, setFormData] = useState({
     merchant: '',
     description: '',
@@ -29,6 +30,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
     type: 'expense',
     date: formatDateForInput(new Date()),
     isRecurring: false,
+    isRecurringPaused: false,
     recurringInterval: 'monthly',
     isConfirmed: false
   })
@@ -40,6 +42,9 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
   const loadTransaction = async () => {
     try {
       const transaction = await getTransaction(id)
+      const isTemplate =
+        transaction.isRecurring && !transaction.parentTransactionId
+      setIsRecurringTemplate(isTemplate)
       setFormData({
         merchant: transaction.merchant || '',
         description: transaction.description || '',
@@ -47,6 +52,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
         type: transaction.amount >= 0 ? 'income' : 'expense',
         date: formatDateForInput(transaction.date),
         isRecurring: transaction.isRecurring,
+        isRecurringPaused: Boolean(transaction.isRecurringPaused),
         recurringInterval: transaction.recurringInterval || 'monthly',
         isConfirmed: transaction.isConfirmed
       })
@@ -91,6 +97,10 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
         amount,
         date: new Date(formData.date).toISOString(),
         isRecurring: formData.isRecurring,
+        isRecurringPaused:
+          isRecurringTemplate && formData.isRecurring
+            ? formData.isRecurringPaused
+            : false,
         recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined
       })
       showToast('Transaktion gespeichert', 'success')
@@ -231,6 +241,24 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
             Wiederkehrende Zahlung
           </label>
         </div>
+
+        {isRecurringTemplate && formData.isRecurring && (
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="isRecurringPaused"
+              checked={formData.isRecurringPaused}
+              onChange={(e) =>
+                setFormData({ ...formData, isRecurringPaused: e.target.checked })
+              }
+              className="h-4 w-4 text-accent focus:ring-accent border-border bg-surface rounded"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="isRecurringPaused" className="ml-2 block text-sm text-primary">
+              Zahlung pausieren (keine weiteren Fälligkeiten bis Fortsetzen)
+            </label>
+          </div>
+        )}
 
         {formData.isRecurring && (
           <div>

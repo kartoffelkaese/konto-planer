@@ -162,3 +162,10 @@ export const createPendingInstances = async (): Promise<Transaction[]> => {
 export const getRecurringTransactions = async (): Promise<RecurringWithStatus[]> => {
   return apiFetch<RecurringWithStatus[]>('/transactions/recurring')
 }
+
+export const setRecurringPaused = async (
+  id: string,
+  paused: boolean
+): Promise<Transaction> => {
+  return updateTransaction(id, { isRecurringPaused: paused })
+}

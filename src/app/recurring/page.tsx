@@ -1,14 +1,24 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getRecurringTransactions, createRecurringInstance, createPendingInstances } from '@/lib/api'
-import { getNextDueDate, formatDate } from '@/lib/dateUtils'
+import {
+  getRecurringTransactions,
+  createRecurringInstance,
+  createPendingInstances,
+  setRecurringPaused,
+} from '@/lib/api'
+import { getNextRecurringDueDate, formatDate } from '@/lib/dateUtils'
 import {
   getRecurringSalaryMonthStatus,
   type RecurringWithStatus,
 } from '@/lib/recurringStatus'
 import { formatCurrency } from '@/lib/formatters'
-import { PencilIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
+import {
+  PencilIcon,
+  ArrowPathIcon,
+  PauseIcon,
+  PlayIcon,
+} from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
 import TransactionForm from '@/components/TransactionForm'
 import EditTransactionForm from '@/components/EditTransactionForm'
@@ -29,6 +39,7 @@ export default function RecurringTransactionsPage() {
   const [showNewTransactionModal, setShowNewTransactionModal] = useState(false)
   const [showEditTransactionModal, setShowEditTransactionModal] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
+  const [togglingPauseId, setTogglingPauseId] = useState<string | null>(null)
 
   useEffect(() => {
     loadTransactions()
@@ -43,6 +54,7 @@ export default function RecurringTransactionsPage() {
         amount: Number(t.amount),
         version: t.version || 1,
         userId: t.userId || '',
+        isRecurringPaused: Boolean(t.isRecurringPaused),
       }))
       setTransactions(recurringTransactions)
       setError(null)
@@ -68,7 +80,29 @@ export default function RecurringTransactionsPage() {
     }
   }
 
+  const handleTogglePause = async (transaction: RecurringWithStatus) => {
+    const willPause = !transaction.isRecurringPaused
+    setTogglingPauseId(transaction.id)
+    try {
+      await setRecurringPaused(transaction.id, willPause)
+      showToast(
+        willPause ? 'Zahlung pausiert' : 'Zahlung fortgesetzt',
+        'success'
+      )
+      await loadTransactions()
+    } catch (err) {
+      console.error('Fehler beim Pausieren:', err)
+      showToast('Status konnte nicht geändert werden', 'error')
+    } finally {
+      setTogglingPauseId(null)
+    }
+  }
+
   const handleCreateNextInstance = async (transaction: RecurringWithStatus) => {
+    if (transaction.isRecurringPaused) {
+      showToast('Zahlung ist pausiert', 'error')
+      return
+    }
     try {
       const newTransaction = await createRecurringInstance(transaction.id)
       showToast(`Neue Zahlung für „${transaction.merchant}“ erstellt`, 'success')
@@ -92,29 +126,17 @@ export default function RecurringTransactionsPage() {
   }
 
   const getNextPaymentDate = (transaction: RecurringWithStatus): Date => {
-    if (!transaction.lastConfirmedDate) {
-      // Wenn keine letzte Bestätigung vorhanden ist, das ursprüngliche Datum verwenden
-      return new Date(transaction.date)
-    }
-
-    // Berechne das nächste Fälligkeitsdatum basierend auf der letzten Bestätigung
-    const nextDate = getNextDueDate(
-      new Date(transaction.lastConfirmedDate),
+    return getNextRecurringDueDate(
+      transaction.date,
       transaction.recurringInterval || 'monthly'
     )
-
-    // Wenn das nächste Datum in der Vergangenheit liegt, berechne das nächste gültige Datum
-    const today = new Date()
-    while (nextDate < today) {
-      const newDate = getNextDueDate(nextDate, transaction.recurringInterval || 'monthly')
-      nextDate.setTime(newDate.getTime())
-    }
-
-    return nextDate
   }
 
   const hasDueWithoutInstance = transactions.some(
-    (t) => t.dueInSalaryMonth && !t.hasInstanceInSalaryMonth
+    (t) =>
+      !t.isRecurringPaused &&
+      t.dueInSalaryMonth &&
+      !t.hasInstanceInSalaryMonth
   )
 
   if (loading) {
@@ -136,33 +158,42 @@ export default function RecurringTransactionsPage() {
 
   // Sortiere die Transaktionen nach dem nächsten Zahlungsdatum
   const sortedTransactions = [...transactions].sort((a, b) => {
-    const dateA = getNextPaymentDate(a)
-    const dateB = getNextPaymentDate(b)
-    return dateA.getTime() - dateB.getTime()
+    if (a.isRecurringPaused !== b.isRecurringPaused) {
+      return a.isRecurringPaused ? 1 : -1
+    }
+    const dateA = a.isRecurringPaused
+      ? new Date(a.date).getTime()
+      : getNextPaymentDate(a).getTime()
+    const dateB = b.isRecurringPaused
+      ? new Date(b.date).getTime()
+      : getNextPaymentDate(b).getTime()
+    return dateA - dateB
   })
+
+  const activeForTotals = sortedTransactions.filter((t) => !t.isRecurringPaused)
 
   const totals = {
     monthly: {
-      total: sortedTransactions
+      total: activeForTotals
         .filter(t => t.recurringInterval === 'monthly')
         .reduce((acc, t) => acc + t.amount, 0),
-      perMonth: sortedTransactions
+      perMonth: activeForTotals
         .filter(t => t.recurringInterval === 'monthly')
         .reduce((acc, t) => acc + t.amount, 0)
     },
     quarterly: {
-      total: sortedTransactions
+      total: activeForTotals
         .filter(t => t.recurringInterval === 'quarterly')
         .reduce((acc, t) => acc + t.amount, 0),
-      perMonth: sortedTransactions
+      perMonth: activeForTotals
         .filter(t => t.recurringInterval === 'quarterly')
         .reduce((acc, t) => acc + t.amount / 3, 0)
     },
     yearly: {
-      total: sortedTransactions
+      total: activeForTotals
         .filter(t => t.recurringInterval === 'yearly')
         .reduce((acc, t) => acc + t.amount, 0),
-      perMonth: sortedTransactions
+      perMonth: activeForTotals
         .filter(t => t.recurringInterval === 'yearly')
         .reduce((acc, t) => acc + t.amount / 12, 0)
     }
@@ -180,8 +211,12 @@ export default function RecurringTransactionsPage() {
               Verwalten Sie Ihre regelmäßigen Ein- und Ausgaben
             </p>
             {salaryDay !== null && (
-              <div className="mt-2">
+              <div className="mt-2 space-y-1">
                 <SalaryMonthHint salaryDay={salaryDay} />
+                <p className="text-xs text-secondary">
+                  Nächste Zahlung basiert auf dem Fälligkeitstag der Anlage, nicht auf dem
+                  Bestätigungsdatum.
+                </p>
               </div>
             )}
           </div>
@@ -256,6 +291,7 @@ export default function RecurringTransactionsPage() {
                   <th className="text-left p-4 text-secondary">Beschreibung</th>
                   <th className="text-right p-4 text-secondary">Betrag</th>
                   <th className="text-center p-4 text-secondary">Intervall</th>
+                  <th className="text-center p-4 text-secondary">Status</th>
                   <th className="text-center p-4 text-secondary">Letzte Bestätigung</th>
                   <th className="text-center p-4 text-secondary">Nächste Zahlung</th>
                   <th className="text-center p-4 text-secondary">Gehaltsmonat</th>
@@ -265,7 +301,7 @@ export default function RecurringTransactionsPage() {
               <tbody>
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center p-4 text-sm text-secondary">
+                    <td colSpan={9} className="text-center p-4 text-sm text-secondary">
                       Keine wiederkehrenden Zahlungen vorhanden
                     </td>
                   </tr>
@@ -294,13 +330,26 @@ export default function RecurringTransactionsPage() {
                           {transaction.recurringInterval === 'yearly' && 'Jährlich'}
                         </span>
                       </td>
+                      <td className="p-4 text-sm text-center">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            transaction.isRecurringPaused
+                              ? 'bg-surface-muted text-secondary'
+                              : 'bg-income-bg text-income'
+                          }`}
+                        >
+                          {transaction.isRecurringPaused ? 'Pausiert' : 'Aktiv'}
+                        </span>
+                      </td>
                       <td className="p-4 text-sm text-center text-primary">
                         {transaction.lastConfirmedDate
                           ? formatDate(new Date(transaction.lastConfirmedDate))
                           : '-'}
                       </td>
                       <td className="p-4 text-sm text-center text-primary">
-                        {formatDate(getNextPaymentDate(transaction))}
+                        {transaction.isRecurringPaused
+                          ? '—'
+                          : formatDate(getNextPaymentDate(transaction))}
                       </td>
                       <td className="p-4 text-sm text-center">
                         <span
@@ -313,13 +362,37 @@ export default function RecurringTransactionsPage() {
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <button
+                            type="button"
+                            onClick={() => handleTogglePause(transaction)}
+                            disabled={togglingPauseId === transaction.id}
+                            title={
+                              transaction.isRecurringPaused
+                                ? 'Fortsetzen'
+                                : 'Pausieren'
+                            }
+                            className="text-accent hover:text-accent-hover disabled:opacity-50"
+                          >
+                            {transaction.isRecurringPaused ? (
+                              <PlayIcon className="h-5 w-5" />
+                            ) : (
+                              <PauseIcon className="h-5 w-5" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => handleCreateNextInstance(transaction)}
-                            title="Nächste Zahlung erstellen"
-                            className="text-accent hover:text-accent-hover"
+                            disabled={transaction.isRecurringPaused}
+                            title={
+                              transaction.isRecurringPaused
+                                ? 'Zahlung ist pausiert'
+                                : 'Nächste Zahlung erstellen'
+                            }
+                            className="text-accent hover:text-accent-hover disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             <ArrowPathIcon className="h-5 w-5" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => {
                               setSelectedTransactionId(transaction.id)
                               setShowEditTransactionModal(true)
@@ -384,6 +457,15 @@ export default function RecurringTransactionsPage() {
 
                     <div className="flex flex-wrap gap-2 mb-3">
                       <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          transaction.isRecurringPaused
+                            ? 'bg-surface-muted text-secondary'
+                            : 'bg-income-bg text-income'
+                        }`}
+                      >
+                        {transaction.isRecurringPaused ? 'Pausiert' : 'Aktiv'}
+                      </span>
+                      <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${salaryStatus.className}`}
                       >
                         {salaryStatus.label}
@@ -411,19 +493,44 @@ export default function RecurringTransactionsPage() {
                       </div>
                       <div>
                         <div className="text-xs text-secondary">Nächste Zahlung</div>
-                        <div>{formatDate(getNextPaymentDate(transaction))}</div>
+                        <div>
+                          {transaction.isRecurringPaused
+                            ? '—'
+                            : formatDate(getNextPaymentDate(transaction))}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex justify-end space-x-2">
+                    <div className="flex flex-wrap justify-end gap-2">
                       <button
+                        type="button"
+                        onClick={() => handleTogglePause(transaction)}
+                        disabled={togglingPauseId === transaction.id}
+                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-control border border-border text-primary hover:bg-surface-muted transition-colors duration-feedback disabled:opacity-50"
+                      >
+                        {transaction.isRecurringPaused ? (
+                          <>
+                            <PlayIcon className="h-4 w-4 mr-1" />
+                            Fortsetzen
+                          </>
+                        ) : (
+                          <>
+                            <PauseIcon className="h-4 w-4 mr-1" />
+                            Pausieren
+                          </>
+                        )}
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => handleCreateNextInstance(transaction)}
-                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-control border border-accent text-accent hover:bg-accent-subtle transition-colors duration-feedback"
+                        disabled={transaction.isRecurringPaused}
+                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-control border border-accent text-accent hover:bg-accent-subtle transition-colors duration-feedback disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <ArrowPathIcon className="h-4 w-4 mr-1" />
                         Neue Instanz
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setSelectedTransactionId(transaction.id)
                           setShowEditTransactionModal(true)

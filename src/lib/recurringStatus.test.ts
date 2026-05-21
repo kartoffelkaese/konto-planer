@@ -12,6 +12,15 @@ const base = {
 } as RecurringWithStatus
 
 describe('getRecurringSalaryMonthStatus', () => {
+  it('zeigt Pausiert wenn isRecurringPaused', () => {
+    const status = getRecurringSalaryMonthStatus({
+      ...base,
+      isRecurringPaused: true,
+      dueInSalaryMonth: true,
+    })
+    expect(status.label).toBe('Pausiert')
+  })
+
   it('zeigt ausstehend wenn unbestätigte Instanz existiert', () => {
     const status = getRecurringSalaryMonthStatus({
       ...base,

@@ -93,6 +93,7 @@ export async function POST(request: Request) {
         description?: string | null
         isConfirmed: boolean
         isRecurring: boolean
+        isRecurringPaused?: boolean
         recurringInterval?: string | null
         lastConfirmedDate?: string | null
         merchant: string
@@ -145,6 +146,7 @@ export async function POST(request: Request) {
             description: transaction.description,
             isConfirmed: transaction.isConfirmed,
             isRecurring: transaction.isRecurring,
+            isRecurringPaused: transaction.isRecurringPaused ?? false,
             recurringInterval: transaction.recurringInterval,
             lastConfirmedDate: transaction.lastConfirmedDate
               ? new Date(transaction.lastConfirmedDate)

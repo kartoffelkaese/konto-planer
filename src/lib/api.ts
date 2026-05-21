@@ -1,4 +1,5 @@
 import { Transaction, CreateTransactionData } from '@/types'
+import type { RecurringWithStatus } from '@/lib/recurringStatus'
 import { toISOString } from '@/lib/dateUtils'
 
 interface TransactionsResponse {
@@ -158,6 +159,6 @@ export const createPendingInstances = async (): Promise<Transaction[]> => {
   return apiFetch<Transaction[]>('/transactions/create-pending', { method: 'POST' })
 }
 
-export const getRecurringTransactions = async (): Promise<Transaction[]> => {
-  return apiFetch<Transaction[]>('/transactions/recurring')
+export const getRecurringTransactions = async (): Promise<RecurringWithStatus[]> => {
+  return apiFetch<RecurringWithStatus[]>('/transactions/recurring')
 }

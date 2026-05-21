@@ -43,12 +43,7 @@ export default function RecurringTransactionsPage() {
         amount: Number(t.amount),
         version: t.version || 1,
         userId: t.userId || '',
-        dueInSalaryMonth: Boolean(t.dueInSalaryMonth),
-        hasInstanceInSalaryMonth: Boolean(t.hasInstanceInSalaryMonth),
-        hasUnconfirmedInstanceInSalaryMonth: Boolean(
-          t.hasUnconfirmedInstanceInSalaryMonth
-        ),
-      })) as RecurringWithStatus[]
+      }))
       setTransactions(recurringTransactions)
       setError(null)
     } catch (err) {

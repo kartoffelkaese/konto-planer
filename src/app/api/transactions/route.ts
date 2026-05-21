@@ -25,17 +25,6 @@ export async function GET(request: Request) {
     const filterSalaryMonth = searchParams.get('filterSalaryMonth') === 'true'
     const search = searchParams.get('q')?.trim()
 
-    // Filter für Gehaltsmonat
-    let dateFilter: { gte?: Date; lte?: Date } | undefined
-    if (filterSalaryMonth) {
-      const salaryDay = resolveSalaryDay(salaryDayParam, user.salaryDay)
-      const { startDate, endDate } = getSalaryMonthRange(salaryDay)
-      dateFilter = {
-        gte: startDate,
-        lte: endDate
-      }
-    }
-
     const whereClause: {
       userId: string
       date?: { gte: Date; lte: Date }
@@ -47,8 +36,10 @@ export async function GET(request: Request) {
       userId: user.id
     }
 
-    if (dateFilter) {
-      whereClause.date = dateFilter
+    if (filterSalaryMonth) {
+      const salaryDay = resolveSalaryDay(salaryDayParam, user.salaryDay)
+      const { startDate, endDate } = getSalaryMonthRange(salaryDay)
+      whereClause.date = { gte: startDate, lte: endDate }
     }
 
     if (search && search.length > 0) {

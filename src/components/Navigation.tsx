@@ -90,20 +90,29 @@ export default function Navigation() {
 
   return (
     <>
-      <div className="fixed top-4 left-4 z-50 md:hidden">
+      <header className="md:hidden sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-canvas px-3">
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 rounded-control text-secondary hover:text-primary hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent"
+          className="p-2 -ml-1 rounded-control text-secondary hover:text-primary hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent"
+          aria-expanded={isOpen}
+          aria-controls="mobile-sidebar"
         >
-          <span className="sr-only">Menü öffnen</span>
+          <span className="sr-only">{isOpen ? 'Menü schließen' : 'Menü öffnen'}</span>
           {isOpen ? (
             <XMarkIcon className="h-6 w-6 shrink-0" aria-hidden="true" />
           ) : (
             <Bars3Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
           )}
         </button>
-      </div>
+        <Link
+          href="/"
+          className="text-lg font-semibold text-accent tracking-tight truncate"
+          onClick={() => setIsOpen(false)}
+        >
+          KontoPlaner
+        </Link>
+      </header>
 
       {!isCollapsed && (
         <div
@@ -113,13 +122,14 @@ export default function Navigation() {
       )}
 
       <div
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-surface border-r-2 border-r-accent shadow-sm transition-[transform,width] duration-300 ease-in-out md:w-[var(--sidebar-width)] md:translate-x-0 ${
+        id="mobile-sidebar"
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-surface border-r-2 border-r-accent shadow-sm transition-[transform,width] duration-300 ease-in-out md:w-[var(--sidebar-width)] md:translate-x-0 max-md:top-14 max-md:h-[calc(100%-3.5rem)] ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex-1 overflow-x-hidden overflow-y-auto">
           <div
-            className={`flex h-16 shrink-0 items-center border-b border-accent-border bg-accent-muted px-4 mt-16 md:mt-0 transition-[padding] duration-300 ease-in-out ${
+            className={`hidden md:flex h-16 shrink-0 items-center border-b border-accent-border bg-accent-muted px-4 transition-[padding] duration-300 ease-in-out ${
               iconOnlyMode ? 'md:justify-center md:px-2' : 'justify-between'
             }`}
           >
@@ -226,8 +236,9 @@ export default function Navigation() {
 
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          className="fixed inset-0 top-14 z-30 bg-black/40 md:hidden md:top-0"
           onClick={() => setIsOpen(false)}
+          aria-hidden="true"
         />
       )}
 

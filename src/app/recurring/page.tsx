@@ -434,26 +434,13 @@ export default function RecurringTransactionsPage() {
                         <p className="text-xs text-secondary">{transaction.merchant}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <p className={`text-sm font-medium ${
-                          transaction.amount > 0 ? 'text-income' : 'text-expense'
-                        }`}>
-                          {formatCurrency(transaction.amount)}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => {
-                            setSelectedTransactionId(transaction.id)
-                            setShowEditTransactionModal(true)
-                          }}
-                          className="p-1 text-accent hover:text-accent-hover"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
+                    <p
+                      className={`mt-2 text-sm font-medium ${
+                        transaction.amount > 0 ? 'text-income' : 'text-expense'
+                      }`}
+                    >
+                      {formatCurrency(transaction.amount)}
+                    </p>
 
                     <div className="flex flex-wrap gap-2 mb-3">
                       <span

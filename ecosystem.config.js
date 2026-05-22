@@ -1,7 +1,11 @@
+const { version } = require('./package.json')
+
 module.exports = {
   apps: [
     {
       name: 'konto-planer',
+      version,
+      cwd: __dirname,
       script: 'npm',
       args: 'start',
       env: {

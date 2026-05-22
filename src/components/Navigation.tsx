@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -99,11 +99,18 @@ export default function Navigation() {
           aria-controls="mobile-sidebar"
         >
           <span className="sr-only">{isOpen ? 'Menü schließen' : 'Menü öffnen'}</span>
-          {isOpen ? (
-            <XMarkIcon className="h-6 w-6 shrink-0" aria-hidden="true" />
-          ) : (
-            <Bars3Icon className="h-6 w-6 shrink-0" aria-hidden="true" />
-          )}
+          <span className="relative inline-flex h-6 w-6 shrink-0" aria-hidden="true">
+            <Bars3Icon
+              className={`mobile-menu-icon absolute inset-0 h-6 w-6 ${
+                isOpen ? 'scale-75 opacity-0 rotate-90' : 'scale-100 opacity-100 rotate-0'
+              }`}
+            />
+            <XMarkIcon
+              className={`mobile-menu-icon absolute inset-0 h-6 w-6 ${
+                isOpen ? 'scale-100 opacity-100 rotate-0' : 'scale-75 opacity-0 -rotate-90'
+              }`}
+            />
+          </span>
         </button>
         <Link
           href="/"
@@ -123,8 +130,10 @@ export default function Navigation() {
 
       <div
         id="mobile-sidebar"
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-surface border-r-2 border-r-accent shadow-sm transition-[transform,width] duration-300 ease-in-out md:w-[var(--sidebar-width)] md:translate-x-0 max-md:top-14 max-md:h-[calc(100%-3.5rem)] ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-surface border-r-2 border-r-accent md:w-[var(--sidebar-width)] md:translate-x-0 md:transition-[transform,width] md:duration-300 md:ease-in-out max-md:mobile-nav-drawer max-md:top-14 max-md:h-[calc(100%-3.5rem)] ${
+          isOpen
+            ? 'max-md:translate-x-0 max-md:shadow-xl'
+            : 'max-md:-translate-x-full max-md:shadow-none'
         }`}
       >
         <div className="flex-1 overflow-x-hidden overflow-y-auto">
@@ -161,15 +170,22 @@ export default function Navigation() {
             </button>
           </div>
 
-          <nav className="flex-1 px-2 space-y-1 py-4">
-            {navigation.map((item) => {
+          <nav className="flex-1 px-2 space-y-1 py-4 max-md:pt-2">
+            {navigation.map((item, index) => {
               const isActivePath = isActive(item.href)
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   title={iconOnlyMode ? item.name : undefined}
-                  className={navItemClasses(isActivePath)}
+                  className={`${navItemClasses(isActivePath)}${
+                    isOpen ? ' max-md:mobile-nav-item-in' : ''
+                  }`}
+                  style={
+                    isOpen
+                      ? ({ animationDelay: `${60 + index * 40}ms` } satisfies CSSProperties)
+                      : undefined
+                  }
                   onClick={() => setIsOpen(false)}
                 >
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center">
@@ -201,7 +217,12 @@ export default function Navigation() {
                 aria-label="Ausloggen"
                 className={`flex items-center w-full min-h-10 text-sm font-medium text-danger rounded-control hover:bg-danger-subtle transition-colors duration-feedback ${
                   iconOnlyMode ? 'md:justify-center md:px-2 py-2 px-3' : 'px-3 py-2'
-                }`}
+                }${isOpen ? ' max-md:mobile-nav-item-in' : ''}`}
+                style={
+                  isOpen
+                    ? ({ animationDelay: `${60 + navigation.length * 40}ms` } satisfies CSSProperties)
+                    : undefined
+                }
               >
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center">
                   <ArrowRightOnRectangleIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
@@ -234,13 +255,13 @@ export default function Navigation() {
         </div>
       </div>
 
-      {isOpen && (
-        <div
-          className="fixed inset-0 top-14 z-30 bg-black/40 md:hidden md:top-0"
-          onClick={() => setIsOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+      <div
+        className={`mobile-nav-backdrop fixed inset-0 top-14 z-30 bg-black/40 md:hidden ${
+          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setIsOpen(false)}
+        aria-hidden={!isOpen}
+      />
 
       <ConfirmDialog
         isOpen={showLogoutConfirm}

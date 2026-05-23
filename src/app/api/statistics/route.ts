@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAccountContext } from '@/lib/account-context'
 import {
-  getUserBySession,
   assertCategoryOwned,
   assertMerchantOwned,
   isErrorResponse,
@@ -9,10 +9,10 @@ import {
 
 export async function GET(request: Request) {
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { user } = authResult
+    const { account } = ctx
 
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
@@ -22,12 +22,12 @@ export async function GET(request: Request) {
     const endDate = searchParams.get('endDate')
 
     if (category) {
-      const categoryError = await assertCategoryOwned(category, user.id)
+      const categoryError = await assertCategoryOwned(category, account.id)
       if (categoryError) return categoryError
     }
 
     if (merchant) {
-      const merchantError = await assertMerchantOwned(merchant, user.id)
+      const merchantError = await assertMerchantOwned(merchant, account.id)
       if (merchantError) return merchantError
     }
 
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
 
     const transactions = await prisma.transaction.findMany({
       where: {
-        userId: user.id,
+        accountId: account.id,
         ...(category && {
           merchantRef: {
             categoryId: category,

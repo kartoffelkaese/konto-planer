@@ -37,6 +37,14 @@ export function useUserSettings() {
     load()
   }, [load])
 
+  useEffect(() => {
+    const onAccountChanged = () => {
+      load()
+    }
+    window.addEventListener('account-changed', onAccountChanged)
+    return () => window.removeEventListener('account-changed', onAccountChanged)
+  }, [load])
+
   return {
     settings,
     salaryDay: settings?.salaryDay ?? null,

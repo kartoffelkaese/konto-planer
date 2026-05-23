@@ -1,19 +1,20 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import { getAccountContext } from '@/lib/account-context'
+import { isErrorResponse } from '@/lib/api-auth'
 import { getSalaryMonthRange, isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
 
 export async function GET(_request: NextRequest) {
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { user } = authResult
+    const { account } = ctx
 
     const transactions = await prisma.transaction.findMany({
       where: {
-        userId: user.id,
+        accountId: account.id,
         isRecurring: true,
       },
       orderBy: {
@@ -21,14 +22,14 @@ export async function GET(_request: NextRequest) {
       },
     })
 
-    const { startDate, endDate } = getSalaryMonthRange(user.salaryDay)
+    const { startDate, endDate } = getSalaryMonthRange(account.salaryDay)
     const recurringIds = transactions.map((t) => t.id)
 
     const instancesInSalaryMonth =
       recurringIds.length > 0
         ? await prisma.transaction.findMany({
             where: {
-              userId: user.id,
+              accountId: account.id,
               isRecurring: false,
               parentTransactionId: { in: recurringIds },
               date: { gte: startDate, lte: endDate },
@@ -55,7 +56,7 @@ export async function GET(_request: NextRequest) {
               recurringInterval: t.recurringInterval,
               lastConfirmedDate: t.lastConfirmedDate,
             },
-            user.salaryDay
+            account.salaryDay
           ),
       hasInstanceInSalaryMonth: parentsWithInstance.has(t.id),
       hasUnconfirmedInstanceInSalaryMonth: instancesInSalaryMonth.some(

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { AccountMemberRole } from '@prisma/client'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 import {
   checkRateLimit,
@@ -50,23 +51,48 @@ export async function DELETE(request: Request) {
     }
 
     await prisma.$transaction(async (tx) => {
-      await tx.transaction.deleteMany({
+      const memberships = await tx.accountMember.findMany({
         where: { userId: user.id },
+        include: {
+          account: {
+            include: { members: true },
+          },
+        },
       })
-      await tx.merchant.deleteMany({
-        where: { userId: user.id },
-      })
-      await tx.category.deleteMany({
-        where: { userId: user.id },
-      })
+
+      for (const membership of memberships) {
+        const { account } = membership
+        const otherMembers = account.members.filter((m) => m.userId !== user.id)
+
+        if (otherMembers.length === 0) {
+          await tx.account.delete({ where: { id: account.id } })
+          continue
+        }
+
+        if (membership.role === AccountMemberRole.OWNER) {
+          const ownerCount = account.members.filter(
+            (m) => m.role === AccountMemberRole.OWNER
+          ).length
+          if (ownerCount === 1) {
+            const next = otherMembers.sort(
+              (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+            )[0]
+            await tx.accountMember.update({
+              where: { id: next.id },
+              data: { role: AccountMemberRole.OWNER },
+            })
+          }
+        }
+      }
+
       await tx.user.delete({
         where: { id: user.id },
       })
     })
 
-    return NextResponse.json({ message: 'Konto erfolgreich gelöscht' })
+    return NextResponse.json({ message: 'Benutzerkonto erfolgreich gelöscht' })
   } catch (error) {
-    console.error('Fehler beim Löschen des Kontos:', error)
+    console.error('Fehler beim Löschen der Anmeldung:', error)
     return NextResponse.json({ error: 'Interner Server-Fehler' }, { status: 500 })
   }
 }

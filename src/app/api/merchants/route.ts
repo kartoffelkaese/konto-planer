@@ -2,22 +2,22 @@
 
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAccountContext } from '@/lib/account-context'
 import {
-  getUserBySession,
   assertCategoryOwned,
   isErrorResponse,
 } from '@/lib/api-auth'
 
 export async function GET() {
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { user } = authResult
+    const { account } = ctx
 
     const merchants = await prisma.merchant.findMany({
       where: {
-        userId: user.id,
+        accountId: account.id,
       },
       include: {
         category: true,
@@ -36,10 +36,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { user } = authResult
+    const { account } = ctx
 
     const { name, categoryId } = await request.json()
 
@@ -52,12 +52,12 @@ export async function POST(request: Request) {
       )
     }
 
-    const categoryError = await assertCategoryOwned(categoryId, user.id)
+    const categoryError = await assertCategoryOwned(categoryId, account.id)
     if (categoryError) return categoryError
 
     const existingMerchant = await prisma.merchant.findFirst({
       where: {
-        userId: user.id,
+        accountId: account.id,
         name: name
       }
     })
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       data: {
         name,
         categoryId,
-        userId: user.id,
+        accountId: account.id,
       },
       include: {
         category: true,

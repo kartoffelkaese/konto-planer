@@ -1,11 +1,8 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "binary"
 }
 
@@ -13,23 +10,72 @@ datasource db {
   provider = "mysql"
 }
 
+enum AccountMemberRole {
+  OWNER
+  MEMBER
+}
+
+enum AccountInviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+}
+
 model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  passwordHash String
-  salaryDay    Int
-  accountName  String?       @default("Mein Konto")
-  createdAt    DateTime      @default(now())
-  transactions Transaction[]
-  merchants    Merchant[]
-  categories   Category[]
+  id            String          @id @default(uuid())
+  email         String          @unique
+  passwordHash  String
+  createdAt     DateTime        @default(now())
+  memberships   AccountMember[]
+  invitesSent   AccountInvite[] @relation("InvitedBy")
 
   @@map("users")
 }
 
+model Account {
+  id           String          @id @default(uuid())
+  name         String
+  salaryDay    Int
+  createdAt    DateTime        @default(now())
+  members      AccountMember[]
+  invites      AccountInvite[]
+  transactions Transaction[]
+  merchants    Merchant[]
+  categories   Category[]
+
+  @@map("accounts")
+}
+
+model AccountMember {
+  id        String            @id @default(uuid())
+  accountId String
+  userId    String
+  role      AccountMemberRole
+  createdAt DateTime          @default(now())
+  account   Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, userId])
+  @@map("account_members")
+}
+
+model AccountInvite {
+  id              String              @id @default(uuid())
+  accountId       String
+  email           String
+  invitedByUserId String
+  status          AccountInviteStatus @default(PENDING)
+  createdAt       DateTime            @default(now())
+  account         Account             @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  invitedBy       User                @relation("InvitedBy", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, email])
+  @@map("account_invites")
+}
+
 model Transaction {
   id                  String        @id @default(uuid())
-  userId              String
+  accountId           String
   description         String?
   merchant            String
   merchantId          String?
@@ -46,34 +92,34 @@ model Transaction {
   parentTransaction   Transaction?  @relation("RecurringInstances", fields: [parentTransactionId], references: [id])
   childTransactions   Transaction[] @relation("RecurringInstances")
   createdAt           DateTime      @default(now())
-  user                User          @relation(fields: [userId], references: [id])
+  account             Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@map("transactions")
 }
 
 model Merchant {
   id           String        @id @default(uuid())
-  userId       String
+  accountId    String
   name         String
   categoryId   String?
   category     Category?     @relation(fields: [categoryId], references: [id])
   createdAt    DateTime      @default(now())
-  user         User          @relation(fields: [userId], references: [id])
+  account      Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
   transactions Transaction[]
 
+  @@unique([accountId, name])
   @@map("merchants")
-  @@unique([userId, name])
 }
 
 model Category {
   id        String     @id @default(uuid())
-  userId    String
+  accountId String
   name      String
   color     String     @default("#A7C7E7")
   createdAt DateTime   @default(now())
-  user      User       @relation(fields: [userId], references: [id])
+  account   Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
   merchants Merchant[]
 
+  @@unique([accountId, name])
   @@map("categories")
-  @@unique([userId, name])
 }

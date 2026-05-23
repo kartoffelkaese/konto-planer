@@ -4,6 +4,10 @@ import bcrypt from 'bcryptjs'
 import { Prisma } from '@prisma/client'
 import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
 import { validatePassword } from '@/lib/password-policy'
+import {
+  createDefaultAccountForUser,
+  normalizeEmail,
+} from '@/lib/accounts'
 
 export async function POST(request: Request) {
   try {
@@ -16,14 +20,16 @@ export async function POST(request: Request) {
       )
     }
 
-    const { email, password, salaryDay } = await request.json()
+    const { email: rawEmail, password, salaryDay } = await request.json()
 
-    if (!email || !password || !salaryDay) {
+    if (!rawEmail || !password || !salaryDay) {
       return NextResponse.json(
         { message: 'Alle Felder müssen ausgefüllt werden' },
         { status: 400 }
       )
     }
+
+    const email = normalizeEmail(rawEmail)
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
@@ -59,13 +65,14 @@ export async function POST(request: Request) {
     const salt = await bcrypt.genSalt(10)
     const passwordHash = await bcrypt.hash(password, salt)
 
-    await prisma.user.create({
-      data: {
-        email,
-        passwordHash,
-        salaryDay,
-        accountName: 'Mein Konto',
-      },
+    await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email,
+          passwordHash,
+        },
+      })
+      await createDefaultAccountForUser(user.id, salaryDay, 'Mein Konto', tx)
     })
 
     return NextResponse.json(

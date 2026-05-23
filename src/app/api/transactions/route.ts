@@ -4,17 +4,17 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSalaryMonthRange } from '@/lib/dateUtils'
 import { resolveSalaryDay } from '@/lib/salaryDay'
+import { getAccountContext } from '@/lib/account-context'
 import {
-  getUserBySession,
   assertMerchantOwned,
   isErrorResponse,
 } from '@/lib/api-auth'
 
 export async function GET(request: Request) {
-  const authResult = await getUserBySession()
-  if (isErrorResponse(authResult)) return authResult
+  const ctx = await getAccountContext()
+  if (isErrorResponse(ctx)) return ctx
 
-  const { user } = authResult
+  const { account } = ctx
 
   try {
     const { searchParams } = new URL(request.url)
@@ -26,18 +26,18 @@ export async function GET(request: Request) {
     const search = searchParams.get('q')?.trim()
 
     const whereClause: {
-      userId: string
+      accountId: string
       date?: { gte: Date; lte: Date }
       OR?: Array<
         | { merchant: { contains: string } }
         | { description: { contains: string } }
       >
     } = {
-      userId: user.id
+      accountId: account.id,
     }
 
     if (filterSalaryMonth) {
-      const salaryDay = resolveSalaryDay(salaryDayParam, user.salaryDay)
+      const salaryDay = resolveSalaryDay(salaryDayParam, account.salaryDay)
       const { startDate, endDate } = getSalaryMonthRange(salaryDay)
       whereClause.date = { gte: startDate, lte: endDate }
     }
@@ -55,31 +55,27 @@ export async function GET(request: Request) {
         include: {
           merchantRef: {
             include: {
-              category: true
-            }
-          }
+              category: true,
+            },
+          },
         },
         orderBy: [
-          {
-            date: 'desc'
-          },
-          {
-            isConfirmed: 'asc'
-          }
+          { date: 'desc' },
+          { isConfirmed: 'asc' },
         ],
         skip,
-        take: limit
+        take: limit,
       }),
       prisma.transaction.count({
-        where: whereClause
-      })
+        where: whereClause,
+      }),
     ])
 
     return NextResponse.json({
       transactions,
       total,
       page,
-      hasMore: skip + transactions.length < total
+      hasMore: skip + transactions.length < total,
     })
   } catch (error) {
     console.error('Error fetching transactions:', error)
@@ -91,10 +87,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const authResult = await getUserBySession()
-  if (isErrorResponse(authResult)) return authResult
+  const ctx = await getAccountContext()
+  if (isErrorResponse(ctx)) return ctx
 
-  const { user } = authResult
+  const { account } = ctx
 
   try {
     const {
@@ -104,30 +100,30 @@ export async function POST(request: Request) {
       amount,
       date,
       isRecurring,
-      recurringInterval
+      recurringInterval,
     } = await request.json()
 
-    const merchantError = await assertMerchantOwned(merchantId, user.id)
+    const merchantError = await assertMerchantOwned(merchantId, account.id)
     if (merchantError) return merchantError
 
     const transaction = await prisma.transaction.create({
       data: {
-        userId: user.id,
+        accountId: account.id,
         merchant,
         merchantId,
         description,
         amount,
         date: new Date(date),
         isRecurring: isRecurring || false,
-        recurringInterval: isRecurring ? recurringInterval : null
+        recurringInterval: isRecurring ? recurringInterval : null,
       },
       include: {
         merchantRef: {
           include: {
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     })
 
     return NextResponse.json(transaction)
@@ -138,4 +134,4 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
-} 
+}

@@ -2,7 +2,8 @@
 
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import { getAccountContext } from '@/lib/account-context'
+import { isErrorResponse } from '@/lib/api-auth'
 
 export async function GET(
   _request: Request,
@@ -10,15 +11,15 @@ export async function GET(
 ): Promise<Response> {
   const { id } = await params
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { user } = authResult
+    const { account } = ctx
 
     const category = await prisma.category.findFirst({
       where: {
         id,
-        userId: user.id,
+        accountId: account.id,
       },
       include: {
         merchants: true,
@@ -45,17 +46,17 @@ export async function PATCH(
 ): Promise<Response> {
   const { id } = await params
 
-  const authResult = await getUserBySession()
-  if (isErrorResponse(authResult)) return authResult
+  const ctx = await getAccountContext()
+  if (isErrorResponse(ctx)) return ctx
 
-  const { user } = authResult
+  const { account } = ctx
 
   try {
     const { name, color } = await request.json()
 
     const existingCategory = await prisma.category.findFirst({
       where: {
-        userId: user.id,
+        accountId: account.id,
         name: name,
         NOT: {
           id,
@@ -73,7 +74,7 @@ export async function PATCH(
     const category = await prisma.category.update({
       where: {
         id,
-        userId: user.id,
+        accountId: account.id,
       },
       data: {
         name,
@@ -97,15 +98,15 @@ export async function DELETE(
 ): Promise<Response> {
   const { id } = await params
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { user } = authResult
+    const { account } = ctx
 
     const category = await prisma.category.findFirst({
       where: {
         id,
-        userId: user.id,
+        accountId: account.id,
       },
       include: {
         _count: {
@@ -122,7 +123,7 @@ export async function DELETE(
       await prisma.merchant.updateMany({
         where: {
           categoryId: id,
-          userId: user.id,
+          accountId: account.id,
         },
         data: {
           categoryId: null,
@@ -133,7 +134,7 @@ export async function DELETE(
     await prisma.category.delete({
       where: {
         id,
-        userId: user.id,
+        accountId: account.id,
       },
     })
 

@@ -2,8 +2,8 @@
 
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAccountContext } from '@/lib/account-context'
 import {
-  getUserBySession,
   assertCategoryOwned,
   isErrorResponse,
 } from '@/lib/api-auth'
@@ -14,16 +14,16 @@ export async function GET(
 ) {
   const { id } = await params
 
-  const authResult = await getUserBySession()
-  if (isErrorResponse(authResult)) return authResult
+  const ctx = await getAccountContext()
+  if (isErrorResponse(ctx)) return ctx
 
-  const { user } = authResult
+  const { account } = ctx
 
   try {
     const merchant = await prisma.merchant.findFirst({
       where: {
         id,
-        userId: user.id,
+        accountId: account.id,
       },
     })
 
@@ -47,10 +47,10 @@ export async function PATCH(
 ) {
   const { id } = await params
 
-  const authResult = await getUserBySession()
-  if (isErrorResponse(authResult)) return authResult
+  const ctx = await getAccountContext()
+  if (isErrorResponse(ctx)) return ctx
 
-  const { user } = authResult
+  const { account } = ctx
 
   const { name, categoryId } = await request.json()
 
@@ -63,7 +63,7 @@ export async function PATCH(
 
   const existingMerchant = await prisma.merchant.findFirst({
     where: {
-      userId: user.id,
+      accountId: account.id,
       name: name,
       NOT: {
         id,
@@ -78,13 +78,13 @@ export async function PATCH(
     )
   }
 
-  const categoryError = await assertCategoryOwned(categoryId, user.id)
+  const categoryError = await assertCategoryOwned(categoryId, account.id)
   if (categoryError) return categoryError
 
   const merchant = await prisma.merchant.update({
     where: {
       id,
-      userId: user.id,
+      accountId: account.id,
     },
     data: {
       name,
@@ -104,15 +104,15 @@ export async function DELETE(
 ) {
   const { id } = await params
 
-  const authResult = await getUserBySession()
-  if (isErrorResponse(authResult)) return authResult
+  const ctx = await getAccountContext()
+  if (isErrorResponse(ctx)) return ctx
 
-  const { user } = authResult
+  const { account } = ctx
 
   await prisma.merchant.delete({
     where: {
       id,
-      userId: user.id,
+      accountId: account.id,
     },
   })
 

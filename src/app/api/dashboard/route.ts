@@ -6,28 +6,28 @@ import {
   getNextRecurringDueDate,
 } from '@/lib/dateUtils'
 import { logger } from '@/lib/logger'
-import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import { getAccountContext } from '@/lib/account-context'
+import { isErrorResponse } from '@/lib/api-auth'
 
 export async function GET() {
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) {
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) {
       logger.warn('Dashboard: Unauthorized access attempt', {
         endpoint: '/api/dashboard',
       })
-      return authResult
+      return ctx
     }
 
-    const { user } = authResult
+    const { account } = ctx
 
-    // Hole den Gehaltsmonat
-    const { startDate, endDate } = getSalaryMonthRange(user.salaryDay)
-    const categoryPeriod = getSalaryMonthPeriodInfo(user.salaryDay)
+    const { startDate, endDate } = getSalaryMonthRange(account.salaryDay)
+    const categoryPeriod = getSalaryMonthPeriodInfo(account.salaryDay)
 
     // Berechne monatliches Einkommen
     const monthlyIncome = await prisma.transaction.aggregate({
       where: {
-        userId: user.id,
+        accountId: account.id,
         amount: {
           gt: 0
         },
@@ -45,7 +45,7 @@ export async function GET() {
     // Berechne monatliche Ausgaben
     const monthlyExpenses = await prisma.transaction.aggregate({
       where: {
-        userId: user.id,
+        accountId: account.id,
         amount: {
           lt: 0
         },
@@ -63,7 +63,7 @@ export async function GET() {
     // Berechne wiederkehrende Ausgaben
     const recurringExpenses = await prisma.transaction.aggregate({
       where: {
-        userId: user.id,
+        accountId: account.id,
         amount: {
           lt: 0
         },
@@ -77,7 +77,7 @@ export async function GET() {
     // Berechne Gesamtbilanz
     const totalBalance = await prisma.transaction.aggregate({
       where: {
-        userId: user.id
+        accountId: account.id
       },
       _sum: {
         amount: true
@@ -92,7 +92,7 @@ export async function GET() {
     // Hole wiederkehrende Zahlungen mit Details
     const recurringTransactions = await prisma.transaction.findMany({
       where: {
-        userId: user.id,
+        accountId: account.id,
         isRecurring: true,
         amount: {
           lt: 0
@@ -142,7 +142,7 @@ export async function GET() {
     // Berechne Kategorieverteilung - Hole alle Transaktionen mit ihren Kategorien
     const transactionsWithCategories = await prisma.transaction.findMany({
       where: {
-        userId: user.id,
+        accountId: account.id,
         amount: {
           lt: 0
         },
@@ -197,7 +197,7 @@ export async function GET() {
         startDate: categoryPeriod.startDate.toISOString(),
         endDate: categoryPeriod.endDate.toISOString(),
         rangeLabel: categoryPeriod.rangeLabel,
-        salaryDay: user.salaryDay,
+        salaryDay: account.salaryDay,
       },
     })
   } catch (error) {

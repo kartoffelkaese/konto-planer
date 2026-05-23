@@ -5,7 +5,8 @@ import {
   getNextRecurringDueDate,
   getNextRecurringDueDateAfter,
 } from '@/lib/dateUtils'
-import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import { getAccountContext } from '@/lib/account-context'
+import { isErrorResponse } from '@/lib/api-auth'
 
 export async function POST(
   _request: NextRequest,
@@ -13,13 +14,13 @@ export async function POST(
 ) {
   const { id } = await params
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { user } = authResult
+    const { account } = ctx
 
     const originalTransaction = await prisma.transaction.findFirst({
-      where: { id, userId: user.id },
+      where: { id, accountId: account.id },
     })
 
     if (!originalTransaction) {
@@ -44,7 +45,7 @@ export async function POST(
 
     const lastChild = await prisma.transaction.findFirst({
       where: {
-        userId: user.id,
+        accountId: account.id,
         parentTransactionId: originalTransaction.id,
         isRecurring: false,
       },
@@ -61,7 +62,7 @@ export async function POST(
 
     const newTransaction = await prisma.transaction.create({
       data: {
-        userId: user.id,
+        accountId: account.id,
         description: originalTransaction.description,
         merchant: originalTransaction.merchant,
         merchantId: originalTransaction.merchantId,

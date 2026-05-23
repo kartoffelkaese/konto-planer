@@ -1,20 +1,33 @@
 import { NextResponse } from 'next/server'
+import { AccountInviteStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { getAccountContext } from '@/lib/account-context'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import { normalizeEmail } from '@/lib/accounts'
 import { getSalaryMonthRange, isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
 
 export async function GET() {
   const authResult = await getUserBySession()
   if (isErrorResponse(authResult)) return authResult
 
+  const ctx = await getAccountContext()
+  if (isErrorResponse(ctx)) return ctx
+
   const { user } = authResult
+  const { account } = ctx
 
   try {
-    const { startDate, endDate } = getSalaryMonthRange(user.salaryDay)
+    const pendingInvitations = await prisma.accountInvite.count({
+      where: {
+        email: normalizeEmail(user.email),
+        status: AccountInviteStatus.PENDING,
+      },
+    })
+    const { startDate, endDate } = getSalaryMonthRange(account.salaryDay)
 
     const unconfirmedTransactions = await prisma.transaction.count({
       where: {
-        userId: user.id,
+        accountId: account.id,
         isConfirmed: false,
         date: { gte: startDate, lte: endDate },
       },
@@ -22,7 +35,7 @@ export async function GET() {
 
     const recurringParents = await prisma.transaction.findMany({
       where: {
-        userId: user.id,
+        accountId: account.id,
         isRecurring: true,
         isRecurringPaused: false,
       },
@@ -39,7 +52,7 @@ export async function GET() {
       recurringIds.length > 0
         ? await prisma.transaction.findMany({
             where: {
-              userId: user.id,
+              accountId: account.id,
               isRecurring: false,
               parentTransactionId: { in: recurringIds },
               date: { gte: startDate, lte: endDate },
@@ -64,7 +77,7 @@ export async function GET() {
           recurringInterval: t.recurringInterval,
           lastConfirmedDate: t.lastConfirmedDate,
         },
-        user.salaryDay
+        account.salaryDay
       )
       if (due && !parentsWithInstance.has(t.id)) {
         recurringAttention += 1
@@ -74,6 +87,7 @@ export async function GET() {
     return NextResponse.json({
       unconfirmedTransactions,
       recurringAttention,
+      pendingInvitations,
     })
   } catch (error) {
     console.error('Error fetching nav badges:', error)

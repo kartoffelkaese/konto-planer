@@ -5,9 +5,13 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { TagIcon, BuildingStorefrontIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import BackupManager from '@/components/BackupManager'
-import DeleteAccount from '@/components/DeleteAccount'
+import DeleteFinancialAccount from '@/components/DeleteFinancialAccount'
+import DeleteUserAccount from '@/components/DeleteUserAccount'
 import { useToast } from '@/hooks/useToast'
 import ColorSchemeSwitcher from '@/components/ColorSchemeSwitcher'
+import AccountSharing from '@/components/AccountSharing'
+import AccountInvitations from '@/components/AccountInvitations'
+import CreateAdditionalAccount from '@/components/CreateAdditionalAccount'
 import { Button } from '@/components/Button'
 
 export default function SettingsPage() {
@@ -27,6 +31,12 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadSettings()
+  }, [])
+
+  useEffect(() => {
+    const onAccountChanged = () => loadSettings()
+    window.addEventListener('account-changed', onAccountChanged)
+    return () => window.removeEventListener('account-changed', onAccountChanged)
   }, [])
 
   const loadSettings = async () => {
@@ -137,6 +147,8 @@ export default function SettingsPage() {
           )}
 
           <div id="settings-sections" className="space-y-6">
+            <AccountInvitations />
+
             <div id="data-management" className="rounded-lg border border-border p-4 bg-surface">
               <h2 className="text-lg font-medium text-primary mb-4">Datenverwaltung</h2>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -217,6 +229,21 @@ export default function SettingsPage() {
               </div>
             </form>
 
+            <div className="rounded-lg border border-border p-4 bg-surface">
+              <h2 className="text-lg font-medium text-primary mb-4">Buchführungs-Konten</h2>
+              <CreateAdditionalAccount />
+              <DeleteFinancialAccount />
+            </div>
+
+            <div className="rounded-lg border border-border p-4 bg-surface">
+              <h2 className="text-lg font-medium text-primary mb-4">Konto teilen</h2>
+              <p className="text-sm text-secondary mb-4">
+                Laden Sie andere Nutzer per E-Mail ein. Sie erhalten vollen Zugriff auf
+                das aktuell gewählte Konto (Transaktionen, Kategorien, Backup).
+              </p>
+              <AccountSharing />
+            </div>
+
             {/* E-Mail-Änderung */}
             <div id="email-settings" className="rounded-lg border border-border p-4 bg-surface">
               <h2 className="text-lg font-medium text-primary mb-4">E-Mail-Adresse</h2>
@@ -294,9 +321,8 @@ export default function SettingsPage() {
               <BackupManager />
             </div>
 
-            {/* Konto löschen */}
-            <div id="delete-account" className="rounded-lg border border-border p-4 bg-surface">
-              <DeleteAccount />
+            <div id="delete-user-account" className="rounded-lg border border-border p-4 bg-surface">
+              <DeleteUserAccount />
             </div>
           </div>
         </div>

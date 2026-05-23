@@ -11,6 +11,7 @@ import {
   loginRateLimitKey,
   RATE_LIMITS,
 } from '@/lib/rate-limit'
+import { getFirstAccountIdForUser, userHasAccountAccess } from '@/lib/accounts'
 
 /** In Dev: Produktions-URL aus .env entfernen, lokale AUTH_URL setzen (für Redirects/API). */
 function configureAuthUrlForDev() {
@@ -110,10 +111,13 @@ export const authConfig: NextAuthConfig = {
             return null
           }
 
+          const firstAccountId = await getFirstAccountIdForUser(user.id)
+
           return {
             id: user.id,
             email: user.email,
-            name: user.accountName,
+            name: user.email,
+            activeAccountId: firstAccountId ?? undefined,
           }
         } catch (error) {
           console.error('Auth error:', error)
@@ -127,9 +131,34 @@ export const authConfig: NextAuthConfig = {
     error: '/auth/error',
   },
   callbacks: {
+    async jwt({ token, user, trigger, session }) {
+      if (user) {
+        const u = user as { id: string; activeAccountId?: string }
+        token.sub = u.id
+        if (u.activeAccountId) {
+          token.activeAccountId = u.activeAccountId
+        } else if (u.id) {
+          const first = await getFirstAccountIdForUser(u.id)
+          if (first) token.activeAccountId = first
+        }
+      }
+
+      if (trigger === 'update' && session?.activeAccountId && token.sub) {
+        const accountId = session.activeAccountId as string
+        const allowed = await userHasAccountAccess(token.sub, accountId)
+        if (allowed) {
+          token.activeAccountId = accountId
+        }
+      }
+
+      return token
+    },
     async session({ session, token }) {
       if (session.user && token.sub) {
         session.user.id = token.sub
+      }
+      if (token.activeAccountId) {
+        session.activeAccountId = token.activeAccountId as string
       }
       return session
     },

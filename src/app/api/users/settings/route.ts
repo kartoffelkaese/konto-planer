@@ -1,23 +1,22 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAccountContext } from '@/lib/account-context'
 import {
-  getUserBySession,
   isErrorResponse,
-  USER_PUBLIC_SELECT,
   validateSalaryDay,
-  validateAccountName,
+  validateAccountDisplayName,
 } from '@/lib/api-auth'
 
 export async function PATCH(request: NextRequest) {
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { user, email } = authResult
+    const { user, account, membership } = ctx
     const body = await request.json()
 
-    const data: { salaryDay?: number; accountName?: string | null } = {}
+    const data: { salaryDay?: number; name?: string } = {}
 
     if (body.salaryDay !== undefined) {
       const salaryDay = validateSalaryDay(body.salaryDay)
@@ -25,19 +24,30 @@ export async function PATCH(request: NextRequest) {
       data.salaryDay = salaryDay
     }
 
-    if (body.accountName !== undefined) {
-      const accountName = validateAccountName(body.accountName)
-      if (isErrorResponse(accountName)) return accountName
-      data.accountName = accountName
+    if (body.accountName !== undefined || body.name !== undefined) {
+      const name = validateAccountDisplayName(body.accountName ?? body.name)
+      if (isErrorResponse(name)) return name
+      if (name) data.name = name
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { email },
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: 'Keine Änderungen angegeben' }, { status: 400 })
+    }
+
+    const updated = await prisma.account.update({
+      where: { id: account.id },
       data,
-      select: USER_PUBLIC_SELECT,
     })
 
-    return NextResponse.json(updatedUser)
+    return NextResponse.json({
+      id: user.id,
+      email: user.email,
+      salaryDay: updated.salaryDay,
+      accountName: updated.name,
+      createdAt: updated.createdAt,
+      activeAccountId: account.id,
+      role: membership.role,
+    })
   } catch (error) {
     console.error('Error updating user settings:', error)
     return NextResponse.json(
@@ -49,24 +59,20 @@ export async function PATCH(request: NextRequest) {
 
 export async function GET() {
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { email } = authResult
+    const { user, account, membership } = ctx
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: USER_PUBLIC_SELECT,
+    return NextResponse.json({
+      id: user.id,
+      email: user.email,
+      salaryDay: account.salaryDay,
+      accountName: account.name,
+      createdAt: account.createdAt,
+      activeAccountId: account.id,
+      role: membership.role,
     })
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Benutzer nicht gefunden' },
-        { status: 404 }
-      )
-    }
-
-    return NextResponse.json(user)
   } catch (error) {
     console.error('Error fetching user settings:', error)
     return NextResponse.json(

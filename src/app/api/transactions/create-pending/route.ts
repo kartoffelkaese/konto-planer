@@ -1,36 +1,35 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import { getAccountContext } from '@/lib/account-context'
+import { isErrorResponse } from '@/lib/api-auth'
 import { getRecurringDueDatesInRange, getSalaryMonthRange } from '@/lib/dateUtils'
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { user } = authResult
+    const { account } = ctx
 
-    // Hole alle wiederkehrenden Transaktionen des Benutzers
     const recurringTransactions = await prisma.transaction.findMany({
       where: {
-        userId: user.id,
+        accountId: account.id,
         isRecurring: true,
         isRecurringPaused: false,
       },
       include: {
         merchantRef: {
           include: {
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     })
 
-    const { startDate, endDate } = getSalaryMonthRange(user.salaryDay)
+    const { startDate, endDate } = getSalaryMonthRange(account.salaryDay)
     const newTransactions = []
 
-    // Für jede wiederkehrende Transaktion
     for (const transaction of recurringTransactions) {
       const interval = transaction.recurringInterval || 'monthly'
       const dueDates = getRecurringDueDatesInRange(
@@ -48,7 +47,7 @@ export async function POST(request: NextRequest) {
 
         const existingInstance = await prisma.transaction.findFirst({
           where: {
-            userId: user.id,
+            accountId: account.id,
             isRecurring: false,
             parentTransactionId: transaction.id,
             date: {
@@ -68,7 +67,7 @@ export async function POST(request: NextRequest) {
               date: dueDate,
               isConfirmed: false,
               isRecurring: false,
-              userId: user.id,
+              accountId: account.id,
               parentTransactionId: transaction.id,
             },
             include: {
@@ -88,8 +87,11 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating pending transactions:', error)
     return NextResponse.json(
-      { error: 'Fehler beim Erstellen der ausstehenden Transaktionen', details: error },
+      {
+        error: 'Fehler beim Erstellen der ausstehenden Transaktionen',
+        details: error,
+      },
       { status: 500 }
     )
   }
-} 
+}

@@ -15,7 +15,7 @@ export interface Merchant {
 
 export interface Transaction {
   id: string
-  userId: string
+  accountId: string
   merchant: string
   merchantId?: string | null
   merchantRef?: Merchant | null

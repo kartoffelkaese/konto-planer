@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import type { User, Transaction } from '@prisma/client'
+import type { Transaction } from '@prisma/client'
 
-export const USER_PUBLIC_SELECT = {
+export { getUserBySession } from '@/lib/account-context'
+
+export const ACCOUNT_SETTINGS_SELECT = {
   id: true,
-  email: true,
+  name: true,
   salaryDay: true,
-  accountName: true,
   createdAt: true,
 } as const
 
@@ -17,32 +17,12 @@ export function isErrorResponse(
   return result instanceof NextResponse
 }
 
-export async function getUserBySession(): Promise<
-  { user: User; email: string } | NextResponse
-> {
-  const session = await auth()
-
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-  })
-
-  if (!user) {
-    return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
-  }
-
-  return { user, email: session.user.email }
-}
-
-export async function getTransactionForUser(
+export async function getTransactionForAccount(
   id: string,
-  userId: string
+  accountId: string
 ): Promise<Transaction | NextResponse> {
   const transaction = await prisma.transaction.findFirst({
-    where: { id, userId },
+    where: { id, accountId },
   })
 
   if (!transaction) {
@@ -57,14 +37,14 @@ export async function getTransactionForUser(
 
 export async function assertMerchantOwned(
   merchantId: string | null | undefined,
-  userId: string
+  accountId: string
 ): Promise<NextResponse | null> {
   if (merchantId == null || merchantId === '') {
     return null
   }
 
   const merchant = await prisma.merchant.findFirst({
-    where: { id: merchantId, userId },
+    where: { id: merchantId, accountId },
   })
 
   if (!merchant) {
@@ -79,14 +59,14 @@ export async function assertMerchantOwned(
 
 export async function assertCategoryOwned(
   categoryId: string | null | undefined,
-  userId: string
+  accountId: string
 ): Promise<NextResponse | null> {
   if (categoryId == null || categoryId === '') {
     return null
   }
 
   const category = await prisma.category.findFirst({
-    where: { id: categoryId, userId },
+    where: { id: categoryId, accountId },
   })
 
   if (!category) {
@@ -110,19 +90,19 @@ export function validateSalaryDay(salaryDay: unknown): number | NextResponse {
   return day
 }
 
-export function validateAccountName(
-  accountName: unknown
+export function validateAccountDisplayName(
+  name: unknown
 ): string | null | NextResponse {
-  if (accountName === undefined || accountName === null) {
+  if (name === undefined || name === null) {
     return null
   }
-  if (typeof accountName !== 'string') {
+  if (typeof name !== 'string') {
     return NextResponse.json(
       { error: 'Ungültiger Kontoname' },
       { status: 400 }
     )
   }
-  const trimmed = accountName.trim()
+  const trimmed = name.trim()
   if (trimmed.length === 0) {
     return NextResponse.json(
       { error: 'Kontoname darf nicht leer sein' },
@@ -137,3 +117,6 @@ export function validateAccountName(
   }
   return trimmed
 }
+
+/** @deprecated use validateAccountDisplayName */
+export const validateAccountName = validateAccountDisplayName

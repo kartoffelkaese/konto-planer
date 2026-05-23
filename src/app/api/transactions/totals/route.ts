@@ -1,27 +1,28 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSalaryMonthRange } from '@/lib/dateUtils'
-import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import { getAccountContext } from '@/lib/account-context'
+import { isErrorResponse } from '@/lib/api-auth'
 import { resolveSalaryDay } from '@/lib/salaryDay'
 
 export async function GET(request: Request) {
-  const authResult = await getUserBySession()
-  if (isErrorResponse(authResult)) return authResult
+  const ctx = await getAccountContext()
+  if (isErrorResponse(ctx)) return ctx
 
-  const { user } = authResult
+  const { account } = ctx
 
   try {
     const { searchParams } = new URL(request.url)
     const salaryDay = resolveSalaryDay(
       searchParams.get('salaryDay'),
-      user.salaryDay
+      account.salaryDay
     )
 
     const { startDate, endDate } = getSalaryMonthRange(salaryDay)
 
     const currentMonthTransactions = await prisma.transaction.findMany({
       where: {
-        userId: user.id,
+        accountId: account.id,
         date: {
           gte: startDate,
           lte: endDate,
@@ -31,14 +32,14 @@ export async function GET(request: Request) {
 
     const confirmedTransactions = await prisma.transaction.findMany({
       where: {
-        userId: user.id,
+        accountId: account.id,
         isConfirmed: true,
       },
     })
 
     const pendingTransactions = await prisma.transaction.findMany({
       where: {
-        userId: user.id,
+        accountId: account.id,
         isConfirmed: false,
       },
     })

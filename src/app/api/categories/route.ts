@@ -2,17 +2,18 @@
 
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import { getAccountContext } from '@/lib/account-context'
+import { isErrorResponse } from '@/lib/api-auth'
 
 export async function GET() {
-  const authResult = await getUserBySession()
-  if (isErrorResponse(authResult)) return authResult
+  const ctx = await getAccountContext()
+  if (isErrorResponse(ctx)) return ctx
 
-  const { user } = authResult
+  const { account } = ctx
 
   const categories = await prisma.category.findMany({
     where: {
-      userId: user.id,
+      accountId: account.id,
     },
     include: {
       _count: {
@@ -25,10 +26,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const authResult = await getUserBySession()
-  if (isErrorResponse(authResult)) return authResult
+  const ctx = await getAccountContext()
+  if (isErrorResponse(ctx)) return ctx
 
-  const { user } = authResult
+  const { account } = ctx
 
   const { name, color } = await request.json()
 
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
 
   const existingCategory = await prisma.category.findFirst({
     where: {
-      userId: user.id,
+      accountId: account.id,
       name: name,
     },
   })
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
     data: {
       name,
       color,
-      userId: user.id,
+      accountId: account.id,
     },
   })
 

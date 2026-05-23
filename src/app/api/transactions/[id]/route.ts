@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { getAccountContext } from '@/lib/account-context'
 import {
-  getUserBySession,
-  getTransactionForUser,
+  getTransactionForAccount,
   assertMerchantOwned,
   isErrorResponse,
 } from '@/lib/api-auth'
@@ -23,11 +23,11 @@ export async function GET(
   const { id } = await params
 
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { user } = authResult
-    const transaction = await getTransactionForUser(id, user.id)
+    const { account } = ctx
+    const transaction = await getTransactionForAccount(id, account.id)
     if (isErrorResponse(transaction)) return transaction
 
     const full = await prisma.transaction.findUnique({
@@ -52,11 +52,11 @@ export async function PATCH(
   const { id } = await params
 
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { user } = authResult
-    const existingTransaction = await getTransactionForUser(id, user.id)
+    const { account } = ctx
+    const existingTransaction = await getTransactionForAccount(id, account.id)
     if (isErrorResponse(existingTransaction)) return existingTransaction
 
     const updateData = await request.json()
@@ -64,7 +64,7 @@ export async function PATCH(
     if (updateData.merchantId !== undefined) {
       const merchantError = await assertMerchantOwned(
         updateData.merchantId,
-        user.id
+        account.id
       )
       if (merchantError) return merchantError
     }
@@ -118,7 +118,7 @@ export async function PATCH(
       const parent = await prisma.transaction.findFirst({
         where: {
           id: existingTransaction.parentTransactionId,
-          userId: user.id,
+          accountId: account.id,
         },
       })
       if (parent) {
@@ -148,11 +148,11 @@ export async function DELETE(
   const { id } = await params
 
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { user } = authResult
-    const existingTransaction = await getTransactionForUser(id, user.id)
+    const { account } = ctx
+    const existingTransaction = await getTransactionForAccount(id, account.id)
     if (isErrorResponse(existingTransaction)) return existingTransaction
 
     await prisma.transaction.delete({

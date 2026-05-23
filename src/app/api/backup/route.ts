@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import { getAccountContext } from '@/lib/account-context'
+import { isErrorResponse } from '@/lib/api-auth'
 import {
   BACKUP_MAX_BYTES,
   validateBackupPayload,
@@ -8,35 +9,28 @@ import {
 
 export async function GET() {
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { email } = authResult
+    const { account, user } = ctx
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        categories: true,
-        merchants: true,
-        transactions: true,
-      },
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: 'Benutzer nicht gefunden' }, { status: 404 })
-    }
+    const [categories, merchants, transactions] = await Promise.all([
+      prisma.category.findMany({ where: { accountId: account.id } }),
+      prisma.merchant.findMany({ where: { accountId: account.id } }),
+      prisma.transaction.findMany({ where: { accountId: account.id } }),
+    ])
 
     const backup = {
       version: '1.0',
       createdAt: new Date().toISOString(),
       user: {
         email: user.email,
-        salaryDay: user.salaryDay,
-        accountName: user.accountName,
+        salaryDay: account.salaryDay,
+        accountName: account.name,
       },
-      categories: user.categories,
-      merchants: user.merchants,
-      transactions: user.transactions,
+      categories,
+      merchants,
+      transactions,
     }
 
     return NextResponse.json(backup)
@@ -48,10 +42,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const authResult = await getUserBySession()
-    if (isErrorResponse(authResult)) return authResult
+    const ctx = await getAccountContext()
+    if (isErrorResponse(ctx)) return ctx
 
-    const { user } = authResult
+    const { account } = ctx
 
     const contentLength = request.headers.get('content-length')
     const bodyByteLength = contentLength ? parseInt(contentLength, 10) : undefined
@@ -103,13 +97,13 @@ export async function POST(request: Request) {
 
     await prisma.$transaction(async (tx) => {
       await tx.transaction.deleteMany({
-        where: { userId: user.id },
+        where: { accountId: account.id },
       })
       await tx.merchant.deleteMany({
-        where: { userId: user.id },
+        where: { accountId: account.id },
       })
       await tx.category.deleteMany({
-        where: { userId: user.id },
+        where: { accountId: account.id },
       })
 
       const categoryMap = new Map<string, string>()
@@ -118,7 +112,7 @@ export async function POST(request: Request) {
           data: {
             name: category.name,
             color: category.color,
-            userId: user.id,
+            accountId: account.id,
           },
         })
         categoryMap.set(category.id, newCategory.id)
@@ -132,7 +126,7 @@ export async function POST(request: Request) {
             categoryId: merchant.categoryId
               ? categoryMap.get(merchant.categoryId) ?? null
               : null,
-            userId: user.id,
+            accountId: account.id,
           },
         })
         merchantMap.set(merchant.id, newMerchant.id)
@@ -155,7 +149,7 @@ export async function POST(request: Request) {
             merchantId: transaction.merchantId
               ? merchantMap.get(transaction.merchantId) ?? null
               : null,
-            userId: user.id,
+            accountId: account.id,
           },
         })
       }

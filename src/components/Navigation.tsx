@@ -19,6 +19,7 @@ import {
 import { APP_VERSION } from '@/lib/version'
 import { signOut } from 'next-auth/react'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import AccountSwitcher from '@/components/AccountSwitcher'
 import { useToast } from '@/hooks/useToast'
 
 const labelTransition =
@@ -40,6 +41,7 @@ export default function Navigation() {
   const [badges, setBadges] = useState({
     unconfirmedTransactions: 0,
     recurringAttention: 0,
+    pendingInvitations: 0,
   })
 
   useEffect(() => {
@@ -64,6 +66,7 @@ export default function Navigation() {
         setBadges({
           unconfirmedTransactions: data.unconfirmedTransactions ?? 0,
           recurringAttention: data.recurringAttention ?? 0,
+          pendingInvitations: data.pendingInvitations ?? 0,
         })
       } catch {
         // Badge ist optional – Fehler still ignorieren
@@ -120,7 +123,13 @@ export default function Navigation() {
       badgeLabel: 'fällige wiederkehrende Zahlungen',
     },
     { name: 'Statistiken', href: '/statistics', icon: ChartPieIcon, badge: 0 },
-    { name: 'Einstellungen', href: '/settings', icon: Cog6ToothIcon, badge: 0 },
+    {
+      name: 'Einstellungen',
+      href: '/settings',
+      icon: Cog6ToothIcon,
+      badge: badges.pendingInvitations,
+      badgeLabel: 'offene Einladungen',
+    },
   ]
 
   const isActive = (path: string) => {
@@ -297,6 +306,13 @@ export default function Navigation() {
               )
             })}
           </nav>
+
+          <div className="shrink-0 overflow-hidden">
+            <AccountSwitcher
+              showExpanded={showExpandedContent}
+              iconOnlyMode={iconOnlyMode}
+            />
+          </div>
 
           <div className="px-2 py-2 space-y-2">
             {session && (

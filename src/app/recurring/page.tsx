@@ -54,7 +54,7 @@ export default function RecurringTransactionsPage() {
         ...t,
         amount: Number(t.amount),
         version: t.version || 1,
-        userId: t.userId || '',
+        accountId: t.accountId || '',
         isRecurringPaused: Boolean(t.isRecurringPaused),
       }))
       setTransactions(recurringTransactions)

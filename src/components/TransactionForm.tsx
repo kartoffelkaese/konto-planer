@@ -96,10 +96,36 @@ export default function TransactionForm({
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { id, value } = e.target
-    setFormData({ ...formData, [id]: value })
+  const sortedMerchants = [...merchants].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  )
+
+  const handleMerchantInput = (value: string) => {
+    const trimmed = value.trim()
+    const match = sortedMerchants.find(
+      (m) => m.name.toLowerCase() === trimmed.toLowerCase()
+    )
+    if (match) {
+      setFormData((prev) => ({
+        ...prev,
+        merchantId: match.id,
+        merchant: match.name,
+        description: prev.description || match.description || '',
+      }))
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        merchantId: '',
+        merchant: value,
+      }))
+    }
   }
+
+  const merchantDisplay =
+    formData.merchantId
+      ? sortedMerchants.find((m) => m.id === formData.merchantId)?.name ??
+        formData.merchant
+      : formData.merchant
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -118,35 +144,24 @@ export default function TransactionForm({
           Händler
         </label>
         <div className="mt-1">
-          {merchants.length > 0 ? (
-            <select
-              id="merchantId"
-              value={formData.merchantId}
-              onChange={handleChange}
-              className="mt-1 block w-full rounded-control border-border bg-surface shadow-sm focus:ring-accent sm:text-sm"
-              autoFocus
-            >
-              <option value="">Händler auswählen oder neu eingeben</option>
-              {[...merchants].sort((a, b) => a.name.localeCompare(b.name)).map((merchant) => (
-                <option key={merchant.id} value={merchant.id}>
-                  {merchant.name}
-                  {merchant.category ? ` (${merchant.category.name})` : ''}
-                </option>
+          <input
+            type="text"
+            id="merchant"
+            list={sortedMerchants.length > 0 ? 'merchant-suggestions' : undefined}
+            value={merchantDisplay}
+            onChange={(e) => handleMerchantInput(e.target.value)}
+            className="block w-full rounded-control border-border bg-surface shadow-sm focus:ring-accent sm:text-sm"
+            placeholder="z.B. Amazon, Lidl, etc."
+            required
+            disabled={loading}
+            autoFocus
+          />
+          {sortedMerchants.length > 0 && (
+            <datalist id="merchant-suggestions">
+              {sortedMerchants.map((merchant) => (
+                <option key={merchant.id} value={merchant.name} />
               ))}
-            </select>
-          ) : null}
-          {(!merchants.length || !formData.merchantId) && (
-            <input
-              type="text"
-              id="merchant"
-              value={formData.merchant}
-              onChange={(e) => setFormData({ ...formData, merchant: e.target.value })}
-              className="mt-1 block w-full rounded-control border-border bg-surface shadow-sm focus:ring-accent sm:text-sm"
-              placeholder="z.B. Amazon, Lidl, etc."
-              required
-              disabled={loading}
-              autoFocus
-            />
+            </datalist>
           )}
         </div>
       </div>

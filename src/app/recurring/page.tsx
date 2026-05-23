@@ -25,6 +25,7 @@ import EditTransactionForm from '@/components/EditTransactionForm'
 import PageLoader from '@/components/PageLoader'
 import PageError from '@/components/PageError'
 import SalaryMonthHint from '@/components/SalaryMonthHint'
+import RecurringAnchorHint from '@/components/RecurringAnchorHint'
 import { useToast } from '@/hooks/useToast'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { Button } from '@/components/Button'
@@ -213,10 +214,7 @@ export default function RecurringTransactionsPage() {
             {salaryDay !== null && (
               <div className="mt-2 space-y-1">
                 <SalaryMonthHint salaryDay={salaryDay} />
-                <p className="text-xs text-secondary">
-                  Nächste Zahlung basiert auf dem Fälligkeitstag der Anlage, nicht auf dem
-                  Bestätigungsdatum.
-                </p>
+                <RecurringAnchorHint />
               </div>
             )}
           </div>

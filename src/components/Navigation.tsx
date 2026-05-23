@@ -2,7 +2,7 @@
 
 import { useState, useEffect, type CSSProperties } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
   HomeIcon,
@@ -24,13 +24,23 @@ import { useToast } from '@/hooks/useToast'
 const labelTransition =
   'overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-in-out'
 
+function formatBadgeCount(count: number): string {
+  if (count > 99) return '99+'
+  return String(count)
+}
+
 export default function Navigation() {
   const pathname = usePathname()
+  const router = useRouter()
   const { data: session } = useSession()
   const { showToast } = useToast()
   const [isOpen, setIsOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(true)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [badges, setBadges] = useState({
+    unconfirmedTransactions: 0,
+    recurringAttention: 0,
+  })
 
   useEffect(() => {
     if (!session) {
@@ -43,16 +53,74 @@ export default function Navigation() {
     )
   }, [session, isCollapsed])
 
+  useEffect(() => {
+    if (!session) return
+
+    const loadBadges = async () => {
+      try {
+        const response = await fetch('/api/nav-badges')
+        if (!response.ok) return
+        const data = await response.json()
+        setBadges({
+          unconfirmedTransactions: data.unconfirmedTransactions ?? 0,
+          recurringAttention: data.recurringAttention ?? 0,
+        })
+      } catch {
+        // Badge ist optional – Fehler still ignorieren
+      }
+    }
+
+    loadBadges()
+    window.addEventListener('focus', loadBadges)
+    const interval = setInterval(loadBadges, 60_000)
+    return () => {
+      window.removeEventListener('focus', loadBadges)
+      clearInterval(interval)
+    }
+  }, [session])
+
+  useEffect(() => {
+    if (!session) return
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'n' || e.metaKey || e.ctrlKey || e.altKey) return
+      const el = e.target as HTMLElement
+      if (
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) ||
+        el.isContentEditable
+      ) {
+        return
+      }
+      e.preventDefault()
+      router.push('/transactions?new=1')
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [session, router])
+
   if (!session) {
     return null
   }
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: HomeIcon },
-    { name: 'Transaktionen', href: '/transactions', icon: BanknotesIcon },
-    { name: 'Wiederkehrend', href: '/recurring', icon: ArrowPathIcon },
-    { name: 'Statistiken', href: '/statistics', icon: ChartPieIcon },
-    { name: 'Einstellungen', href: '/settings', icon: Cog6ToothIcon },
+    { name: 'Dashboard', href: '/', icon: HomeIcon, badge: 0 },
+    {
+      name: 'Transaktionen',
+      href: '/transactions',
+      icon: BanknotesIcon,
+      badge: badges.unconfirmedTransactions,
+      badgeLabel: 'unbestätigte Buchungen',
+    },
+    {
+      name: 'Wiederkehrend',
+      href: '/recurring',
+      icon: ArrowPathIcon,
+      badge: badges.recurringAttention,
+      badgeLabel: 'fällige wiederkehrende Zahlungen',
+    },
+    { name: 'Statistiken', href: '/statistics', icon: ChartPieIcon, badge: 0 },
+    { name: 'Einstellungen', href: '/settings', icon: Cog6ToothIcon, badge: 0 },
   ]
 
   const isActive = (path: string) => {
@@ -173,11 +241,19 @@ export default function Navigation() {
           <nav className="flex-1 px-2 space-y-1 py-4 max-md:pt-2">
             {navigation.map((item, index) => {
               const isActivePath = isActive(item.href)
+              const showBadge = item.badge > 0
+              const badgeAria =
+                showBadge && item.badgeLabel
+                  ? `${item.badge} ${item.badgeLabel}`
+                  : undefined
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   title={iconOnlyMode ? item.name : undefined}
+                  aria-label={
+                    badgeAria ? `${item.name}, ${badgeAria}` : undefined
+                  }
                   className={`${navItemClasses(isActivePath)}${
                     isOpen ? ' max-md:mobile-nav-item-in' : ''
                   }`}
@@ -188,16 +264,34 @@ export default function Navigation() {
                   }
                   onClick={() => setIsOpen(false)}
                 >
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                  <span className="relative flex h-5 w-5 shrink-0 items-center justify-center">
                     <item.icon
                       className={`h-5 w-5 shrink-0 ${
                         isActivePath ? 'text-accent' : 'text-secondary'
                       }`}
                       aria-hidden="true"
                     />
+                    {showBadge && iconOnlyMode && (
+                      <span
+                        className="absolute -top-1.5 -right-1.5 flex min-w-[1.125rem] h-[1.125rem] items-center justify-center rounded-full bg-pending px-1 text-[10px] font-semibold leading-none text-canvas"
+                        aria-hidden="true"
+                      >
+                        {formatBadgeCount(item.badge)}
+                      </span>
+                    )}
                   </span>
-                  <span className={`text-sm font-medium ${labelTransition} ${labelVisibility}`}>
-                    {item.name}
+                  <span
+                    className={`flex flex-1 items-center gap-2 text-sm font-medium ${labelTransition} ${labelVisibility}`}
+                  >
+                    <span className="truncate">{item.name}</span>
+                    {showBadge && !iconOnlyMode && (
+                      <span
+                        className="ml-auto flex min-w-[1.125rem] h-[1.125rem] shrink-0 items-center justify-center rounded-full bg-pending px-1 text-[10px] font-semibold leading-none text-canvas"
+                        aria-hidden="true"
+                      >
+                        {formatBadgeCount(item.badge)}
+                      </span>
+                    )}
                   </span>
                 </Link>
               )

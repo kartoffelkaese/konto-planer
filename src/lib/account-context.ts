@@ -38,10 +38,11 @@ export async function getAccountContext(): Promise<AccountContext | NextResponse
 
   const { user, email } = authResult
   const session = await auth()
-  let activeAccountId = session?.activeAccountId
+  let activeAccountId: string | undefined = session?.activeAccountId
 
   if (!activeAccountId) {
-    activeAccountId = await getFirstAccountIdForUser(user.id)
+    activeAccountId =
+      (await getFirstAccountIdForUser(user.id)) ?? undefined
   }
 
   if (!activeAccountId) {
@@ -53,7 +54,8 @@ export async function getAccountContext(): Promise<AccountContext | NextResponse
 
   const hasAccess = await userHasAccountAccess(user.id, activeAccountId)
   if (!hasAccess) {
-    activeAccountId = await getFirstAccountIdForUser(user.id)
+    activeAccountId =
+      (await getFirstAccountIdForUser(user.id)) ?? undefined
     if (!activeAccountId) {
       return NextResponse.json({ error: 'Kein Zugriff auf Konto' }, { status: 403 })
     }

@@ -33,15 +33,18 @@ model User {
 }
 
 model Account {
-  id           String          @id @default(uuid())
-  name         String
-  salaryDay    Int
-  createdAt    DateTime        @default(now())
-  members      AccountMember[]
-  invites      AccountInvite[]
-  transactions Transaction[]
-  merchants    Merchant[]
-  categories   Category[]
+  id                 String          @id @default(uuid())
+  name               String
+  salaryDay          Int
+  transferSenderName String?
+  createdAt          DateTime        @default(now())
+  members         AccountMember[]
+  invites         AccountInvite[]
+  transactions    Transaction[]
+  merchants       Merchant[]
+  categories      Category[]
+  transferTargets Transaction[]   @relation("TransferTargets")
+  transferPairs   TransferPair[]
 
   @@map("accounts")
 }
@@ -74,27 +77,46 @@ model AccountInvite {
 }
 
 model Transaction {
-  id                  String        @id @default(uuid())
-  accountId           String
-  description         String?
-  merchant            String
-  merchantId          String?
-  merchantRef         Merchant?     @relation(fields: [merchantId], references: [id])
-  amount              Decimal       @db.Decimal(10, 2)
-  date                DateTime
-  isConfirmed         Boolean       @default(false)
-  isRecurring         Boolean       @default(false)
-  isRecurringPaused   Boolean       @default(false)
-  recurringInterval   String?
-  lastConfirmedDate   DateTime?
-  version             Int           @default(1)
-  parentTransactionId String?
-  parentTransaction   Transaction?  @relation("RecurringInstances", fields: [parentTransactionId], references: [id])
-  childTransactions   Transaction[] @relation("RecurringInstances")
-  createdAt           DateTime      @default(now())
-  account             Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  id                      String        @id @default(uuid())
+  accountId               String
+  description             String?
+  merchant                String
+  merchantId              String?
+  merchantRef             Merchant?     @relation(fields: [merchantId], references: [id])
+  amount                  Decimal       @db.Decimal(10, 2)
+  date                    DateTime
+  isConfirmed             Boolean       @default(false)
+  isRecurring             Boolean       @default(false)
+  isRecurringPaused       Boolean       @default(false)
+  recurringInterval       String?
+  lastConfirmedDate       DateTime?
+  version                 Int           @default(1)
+  parentTransactionId     String?
+  parentTransaction       Transaction?  @relation("RecurringInstances", fields: [parentTransactionId], references: [id])
+  childTransactions       Transaction[] @relation("RecurringInstances")
+  isTransfer              Boolean       @default(false)
+  transferTargetAccountId String?
+  transferTargetMerchant  String?
+  transferTargetAccount   Account?      @relation("TransferTargets", fields: [transferTargetAccountId], references: [id], onDelete: SetNull)
+  transferPairAsSource    TransferPair? @relation("TransferSource")
+  transferPairAsTarget    TransferPair? @relation("TransferTarget")
+  createdAt               DateTime      @default(now())
+  account                 Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@map("transactions")
+}
+
+model TransferPair {
+  id                  String       @id @default(uuid())
+  sourceTransactionId String       @unique
+  targetTransactionId String?      @unique
+  targetAccountId     String?
+  sourceTransaction   Transaction  @relation("TransferSource", fields: [sourceTransactionId], references: [id], onDelete: Cascade)
+  targetTransaction   Transaction? @relation("TransferTarget", fields: [targetTransactionId], references: [id], onDelete: SetNull)
+  targetAccount       Account?     @relation(fields: [targetAccountId], references: [id], onDelete: SetNull)
+  createdAt           DateTime     @default(now())
+
+  @@map("transfer_pairs")
 }
 
 model Merchant {

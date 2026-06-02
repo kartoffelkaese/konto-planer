@@ -8,13 +8,18 @@ import {
   assertMerchantOwned,
   isErrorResponse,
 } from '@/lib/api-auth'
-const transactionInclude = {
-  merchantRef: {
-    include: {
-      category: true,
-    },
-  },
-} as const
+import { resolveMerchantForTransaction } from '@/lib/resolveMerchantForTransaction'
+import {
+  assertTransferTargetAllowed,
+  clearTransferLinkForDeletedTarget,
+  createTransferPair,
+  isRecurringTemplate,
+  resolveTransferSenderName,
+  shouldCreateTransferPair,
+  syncTransferPair,
+  transactionTransferInclude,
+  unlinkTransfer,
+} from '@/lib/transfers'
 
 export async function GET(
   _request: NextRequest,
@@ -32,7 +37,7 @@ export async function GET(
 
     const full = await prisma.transaction.findUnique({
       where: { id },
-      include: transactionInclude,
+      include: transactionTransferInclude,
     })
 
     return NextResponse.json(full ?? transaction)
@@ -55,18 +60,52 @@ export async function PATCH(
     const ctx = await getAccountContext()
     if (isErrorResponse(ctx)) return ctx
 
-    const { account } = ctx
+    const { account, user } = ctx
     const existingTransaction = await getTransactionForAccount(id, account.id)
     if (isErrorResponse(existingTransaction)) return existingTransaction
 
     const updateData = await request.json()
 
-    if (updateData.merchantId !== undefined) {
-      const merchantError = await assertMerchantOwned(
-        updateData.merchantId,
-        account.id
+    if (updateData.isTransfer === false && existingTransaction.isTransfer) {
+      await unlinkTransfer(id)
+    }
+
+    const wantsTransfer =
+      updateData.isTransfer !== undefined
+        ? Boolean(updateData.isTransfer)
+        : existingTransaction.isTransfer
+
+    const targetAccountId =
+      updateData.transferTargetAccountId !== undefined
+        ? updateData.transferTargetAccountId
+        : existingTransaction.transferTargetAccountId
+
+    if (
+      wantsTransfer &&
+      targetAccountId &&
+      existingTransaction.transferTargetAccountId &&
+      existingTransaction.transferTargetAccountId !== targetAccountId
+    ) {
+      await unlinkTransfer(id)
+    }
+
+    if (wantsTransfer && targetAccountId) {
+      const transferError = await assertTransferTargetAllowed(
+        user.id,
+        account.id,
+        targetAccountId
       )
-      if (merchantError) return merchantError
+      if (transferError) return transferError
+    }
+
+    if (updateData.merchantId !== undefined || updateData.merchant !== undefined) {
+      if (!wantsTransfer) {
+        const merchantError = await assertMerchantOwned(
+          updateData.merchantId,
+          account.id
+        )
+        if (merchantError) return merchantError
+      }
     }
 
     const willBeRecurring =
@@ -74,11 +113,22 @@ export async function PATCH(
         ? Boolean(updateData.isRecurring)
         : existingTransaction.isRecurring
 
+    const sourceAccount = await prisma.account.findUnique({
+      where: { id: account.id },
+      select: { name: true, transferSenderName: true },
+    })
+    const targetIncomingMerchant = sourceAccount
+      ? resolveTransferSenderName(sourceAccount)
+      : account.name
+
     const allowedUpdateFields: Record<string, unknown> = {
       description: updateData.description,
-      merchant: updateData.merchant,
-      merchantId: updateData.merchantId,
-      amount: updateData.amount,
+      amount:
+        updateData.amount !== undefined
+          ? wantsTransfer
+            ? -Math.abs(Number(updateData.amount))
+            : updateData.amount
+          : undefined,
       date: updateData.date ? new Date(updateData.date) : undefined,
       isConfirmed: updateData.isConfirmed,
       isRecurring: updateData.isRecurring,
@@ -89,6 +139,31 @@ export async function PATCH(
             ? new Date(updateData.lastConfirmedDate)
             : null
           : undefined,
+    }
+
+    if (
+      updateData.isTransfer !== undefined ||
+      updateData.transferTargetAccountId !== undefined
+    ) {
+      allowedUpdateFields.isTransfer = wantsTransfer
+      allowedUpdateFields.transferTargetAccountId = wantsTransfer
+        ? targetAccountId
+        : null
+    }
+
+    if (
+      updateData.merchant !== undefined ||
+      updateData.merchantId !== undefined ||
+      updateData.createNewMerchant !== undefined
+    ) {
+      const resolvedMerchant = await resolveMerchantForTransaction(account.id, {
+        merchantId: updateData.merchantId ?? existingTransaction.merchantId,
+        merchant: updateData.merchant ?? existingTransaction.merchant,
+        createNewMerchant: updateData.createNewMerchant,
+      })
+      if (resolvedMerchant.error) return resolvedMerchant.error
+      allowedUpdateFields.merchant = resolvedMerchant.merchant
+      allowedUpdateFields.merchantId = resolvedMerchant.merchantId
     }
 
     if (updateData.isRecurringPaused !== undefined) {
@@ -108,7 +183,48 @@ export async function PATCH(
     const updatedTransaction = await prisma.transaction.update({
       where: { id },
       data: cleanedUpdateFields,
-      include: transactionInclude,
+      include: transactionTransferInclude,
+    })
+
+    if (
+      shouldCreateTransferPair(updatedTransaction) &&
+      !updatedTransaction.transferPairAsSource
+    ) {
+      if (targetAccountId) {
+        await prisma.$transaction(async (tx) => {
+          await createTransferPair(
+            tx,
+            updatedTransaction,
+            targetAccountId,
+            targetIncomingMerchant
+          )
+        })
+      }
+    }
+
+    const syncFields: {
+      amount?: number
+      date?: Date
+      description?: string | null
+      isConfirmed?: boolean
+    } = {}
+
+    if (updateData.amount !== undefined) syncFields.amount = Number(updateData.amount)
+    if (updateData.date !== undefined) syncFields.date = new Date(updateData.date)
+    if (updateData.description !== undefined) syncFields.description = updateData.description
+    if (updateData.isConfirmed !== undefined) syncFields.isConfirmed = updateData.isConfirmed
+
+    if (
+      updatedTransaction.isTransfer &&
+      !isRecurringTemplate(updatedTransaction) &&
+      Object.keys(syncFields).length > 0
+    ) {
+      await syncTransferPair(id, syncFields)
+    }
+
+    const finalTransaction = await prisma.transaction.findUnique({
+      where: { id },
+      include: transactionTransferInclude,
     })
 
     if (
@@ -131,7 +247,7 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json(updatedTransaction)
+    return NextResponse.json(finalTransaction ?? updatedTransaction)
   } catch (error) {
     console.error('Fehler beim Aktualisieren der Transaktion:', error)
     return NextResponse.json(
@@ -154,6 +270,8 @@ export async function DELETE(
     const { account } = ctx
     const existingTransaction = await getTransactionForAccount(id, account.id)
     if (isErrorResponse(existingTransaction)) return existingTransaction
+
+    await clearTransferLinkForDeletedTarget(id)
 
     await prisma.transaction.delete({
       where: { id },

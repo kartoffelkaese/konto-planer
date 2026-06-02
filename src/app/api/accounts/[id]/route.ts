@@ -11,6 +11,7 @@ import {
   getClientIp,
   RATE_LIMITS,
 } from '@/lib/rate-limit'
+import { unlinkTransfersTargetingAccount } from '@/lib/transfers'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -78,6 +79,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       { status: 400 }
     )
   }
+
+  await unlinkTransfersTargetingAccount(accountId)
 
   await prisma.account.delete({
     where: { id: accountId },

@@ -6,6 +6,7 @@ import { createTransaction } from '@/lib/api'
 import { formatDateForInput } from '@/lib/dateUtils'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
+import TransferAccountFields, { type TransferTarget } from '@/components/TransferAccountFields'
 import {
   findExactMerchantMatch,
   findSimilarMerchant,
@@ -48,9 +49,13 @@ export default function TransactionForm({
     recurringInterval: 'monthly'
   })
   const [forceNewMerchant, setForceNewMerchant] = useState(false)
+  const [transferTargets, setTransferTargets] = useState<TransferTarget[]>([])
+  const [isTransfer, setIsTransfer] = useState(false)
+  const [transferTargetAccountId, setTransferTargetAccountId] = useState('')
 
   useEffect(() => {
     loadMerchants()
+    loadTransferTargets()
   }, [])
 
   const loadMerchants = async () => {
@@ -67,12 +72,29 @@ export default function TransactionForm({
     }
   }
 
+  const loadTransferTargets = async () => {
+    try {
+      const response = await fetch('/api/accounts/transfer-targets')
+      if (!response.ok) return
+      const data = await response.json()
+      setTransferTargets(data)
+    } catch (err) {
+      console.error('Error loading transfer targets:', err)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
     try {
+      if (isTransfer && !transferTargetAccountId) {
+        setError('Bitte wählen Sie ein Zielkonto für die Umbuchung.')
+        setLoading(false)
+        return
+      }
+
       const trimmedMerchant = formData.merchant.trim()
       if (
         !formData.merchantId &&
@@ -84,9 +106,11 @@ export default function TransactionForm({
         return
       }
 
-      const amount = formData.type === 'income'
-        ? Math.abs(parseFloat(formData.amount))
-        : -Math.abs(parseFloat(formData.amount))
+      const amount = isTransfer
+        ? -Math.abs(parseFloat(formData.amount))
+        : formData.type === 'income'
+          ? Math.abs(parseFloat(formData.amount))
+          : -Math.abs(parseFloat(formData.amount))
 
       const selectedMerchant = merchants.find(m => m.id === formData.merchantId)
 
@@ -94,6 +118,8 @@ export default function TransactionForm({
         merchant: selectedMerchant?.name || trimmedMerchant,
         merchantId: formData.merchantId || undefined,
         createNewMerchant: forceNewMerchant || undefined,
+        isTransfer: isTransfer || undefined,
+        transferTargetAccountId: isTransfer ? transferTargetAccountId : undefined,
         description: formData.description,
         amount,
         date: new Date(formData.date).toISOString(),
@@ -272,11 +298,16 @@ export default function TransactionForm({
             value={formData.type}
             onChange={(e) => setFormData({ ...formData, type: e.target.value })}
             className="mt-1 block w-full rounded-control border-border bg-surface shadow-sm focus:ring-accent sm:text-sm"
-            disabled={loading}
+            disabled={loading || isTransfer}
           >
             <option value="expense">Ausgabe</option>
             <option value="income">Einnahme</option>
           </select>
+          {isTransfer && (
+            <p className="mt-1 text-xs text-secondary">
+              Umbuchungen werden immer als Ausgabe im aktiven Konto gebucht.
+            </p>
+          )}
         </div>
       </div>
 
@@ -327,6 +358,21 @@ export default function TransactionForm({
           </select>
         </div>
       )}
+
+      <TransferAccountFields
+        transferTargets={transferTargets}
+        isTransfer={isTransfer}
+        transferTargetAccountId={transferTargetAccountId}
+        onIsTransferChange={(value) => {
+          setIsTransfer(value)
+          if (value) {
+            setFormData((prev) => ({ ...prev, type: 'expense' }))
+          }
+        }}
+        onTargetChange={setTransferTargetAccountId}
+        disabled={loading}
+        idPrefix="create-transfer"
+      />
 
       <div className="flex justify-end gap-3">
         {onCancel && (

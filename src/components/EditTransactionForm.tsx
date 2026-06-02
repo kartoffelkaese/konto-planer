@@ -8,6 +8,12 @@ import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import TransferAccountFields, { type TransferTarget } from '@/components/TransferAccountFields'
+
+interface Merchant {
+  id: string
+  name: string
+}
 
 interface EditTransactionFormProps {
   id: string
@@ -20,9 +26,16 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
   const { showToast } = useToast()
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isRecurringTemplate, setIsRecurringTemplate] = useState(false)
+  const [transferTargets, setTransferTargets] = useState<TransferTarget[]>([])
+  const [isTransfer, setIsTransfer] = useState(false)
+  const [transferTargetAccountId, setTransferTargetAccountId] = useState('')
+  const [linkedTargetName, setLinkedTargetName] = useState<string | null>(null)
+  const [hasActivePair, setHasActivePair] = useState(false)
+  const [merchants, setMerchants] = useState<Merchant[]>([])
   const [formData, setFormData] = useState({
     merchant: '',
     description: '',
@@ -37,7 +50,30 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
 
   useEffect(() => {
     loadTransaction()
+    loadTransferTargets()
+    loadMerchants()
   }, [id])
+
+  const loadMerchants = async () => {
+    try {
+      const response = await fetch('/api/merchants')
+      if (!response.ok) return
+      setMerchants(await response.json())
+    } catch (err) {
+      console.error('Error loading merchants:', err)
+    }
+  }
+
+  const loadTransferTargets = async () => {
+    try {
+      const response = await fetch('/api/accounts/transfer-targets')
+      if (!response.ok) return
+      const data = await response.json()
+      setTransferTargets(data)
+    } catch (err) {
+      console.error('Error loading transfer targets:', err)
+    }
+  }
 
   const loadTransaction = async () => {
     try {
@@ -45,6 +81,10 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
       const isTemplate =
         transaction.isRecurring && !transaction.parentTransactionId
       setIsRecurringTemplate(isTemplate)
+      setIsTransfer(Boolean(transaction.isTransfer))
+      setTransferTargetAccountId(transaction.transferTargetAccountId || '')
+      setLinkedTargetName(transaction.transferTargetAccount?.name ?? null)
+      setHasActivePair(Boolean(transaction.transferPairAsSource?.targetTransactionId))
       setFormData({
         merchant: transaction.merchant || '',
         description: transaction.description || '',
@@ -56,10 +96,10 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
         recurringInterval: transaction.recurringInterval || 'monthly',
         isConfirmed: transaction.isConfirmed
       })
-      setError(null)
+      setLoadError(null)
     } catch (err) {
       console.error('Error loading transaction:', err)
-      setError('Fehler beim Laden der Transaktion')
+      setLoadError('Fehler beim Laden der Transaktion')
     } finally {
       setIsInitialLoading(false)
     }
@@ -67,7 +107,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
 
   const handleDelete = async () => {
     setIsSubmitting(true)
-    setError(null)
+    setSubmitError(null)
     try {
       await deleteTransaction(id)
       showToast('Transaktion gelöscht', 'success')
@@ -75,8 +115,31 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
       router.refresh()
     } catch (err) {
       console.error('Error deleting transaction:', err)
-      setError('Fehler beim Löschen der Transaktion')
+      setSubmitError('Fehler beim Löschen der Transaktion')
       showToast('Fehler beim Löschen der Transaktion', 'error')
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleUnlinkTransfer = async () => {
+    setIsSubmitting(true)
+    setSubmitError(null)
+    try {
+      await updateTransaction(id, {
+        isTransfer: false,
+        transferTargetAccountId: undefined,
+      })
+      setIsTransfer(false)
+      setTransferTargetAccountId('')
+      setLinkedTargetName(null)
+      setHasActivePair(false)
+      showToast('Umbuchung getrennt', 'success')
+      router.refresh()
+    } catch (err) {
+      console.error('Error unlinking transfer:', err)
+      setSubmitError('Fehler beim Trennen der Umbuchung')
+      showToast('Fehler beim Trennen der Umbuchung', 'error')
+    } finally {
       setIsSubmitting(false)
     }
   }
@@ -84,12 +147,20 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    setError(null)
+    setSubmitError(null)
 
     try {
-      const amount = formData.type === 'income'
-        ? Math.abs(parseFloat(formData.amount))
-        : -Math.abs(parseFloat(formData.amount))
+      if (isTransfer && !transferTargetAccountId) {
+        setSubmitError('Bitte wählen Sie ein Zielkonto für die Umbuchung.')
+        setIsSubmitting(false)
+        return
+      }
+
+      const amount = isTransfer
+        ? -Math.abs(parseFloat(formData.amount))
+        : formData.type === 'income'
+          ? Math.abs(parseFloat(formData.amount))
+          : -Math.abs(parseFloat(formData.amount))
 
       await updateTransaction(id, {
         merchant: formData.merchant,
@@ -101,14 +172,16 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
           isRecurringTemplate && formData.isRecurring
             ? formData.isRecurringPaused
             : false,
-        recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined
+        recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined,
+        isTransfer,
+        transferTargetAccountId: isTransfer ? transferTargetAccountId : undefined,
       })
       showToast('Transaktion gespeichert', 'success')
       onSuccess?.()
       router.refresh()
     } catch (err) {
       console.error('Error updating transaction:', err)
-      setError('Fehler beim Aktualisieren der Transaktion')
+      setSubmitError('Fehler beim Aktualisieren der Transaktion')
       showToast('Fehler beim Aktualisieren der Transaktion', 'error')
     } finally {
       setIsSubmitting(false)
@@ -123,10 +196,10 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
     )
   }
 
-  if (error) {
+  if (loadError) {
     return (
       <div className="p-4 flex items-center justify-center text-danger">
-        {error}
+        {loadError}
       </div>
     )
   }
@@ -147,6 +220,12 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
       />
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {submitError && (
+          <div className="rounded-control bg-danger-subtle p-4">
+            <p className="text-sm font-medium text-danger">{submitError}</p>
+          </div>
+        )}
+
         <div>
           <label htmlFor="merchant" className="block text-sm font-medium text-primary">
             Händler
@@ -154,6 +233,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
           <input
             type="text"
             id="merchant"
+            list={merchants.length > 0 ? 'edit-merchant-suggestions' : undefined}
             value={formData.merchant}
             onChange={(e) => setFormData({ ...formData, merchant: e.target.value })}
             className="mt-1 block w-full rounded-control border-border bg-surface shadow-sm focus:ring-accent"
@@ -162,6 +242,15 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
             disabled={isSubmitting}
             autoFocus
           />
+          {merchants.length > 0 && (
+            <datalist id="edit-merchant-suggestions">
+              {[...merchants]
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((merchant) => (
+                  <option key={merchant.id} value={merchant.name} />
+                ))}
+            </datalist>
+          )}
         </div>
 
         <div>
@@ -205,7 +294,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               className="mt-1 block w-full rounded-control border-border bg-surface shadow-sm focus:ring-accent"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isTransfer}
             >
               <option value="expense">Ausgabe</option>
               <option value="income">Einnahme</option>
@@ -279,6 +368,38 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
           </div>
         )}
 
+        <TransferAccountFields
+          transferTargets={transferTargets}
+          isTransfer={isTransfer}
+          transferTargetAccountId={transferTargetAccountId}
+          onIsTransferChange={(value) => {
+            setIsTransfer(value)
+            if (value) {
+              setFormData((prev) => ({ ...prev, type: 'expense' }))
+            }
+          }}
+          onTargetChange={setTransferTargetAccountId}
+          disabled={isSubmitting}
+          idPrefix="edit-transfer"
+        />
+
+        {isTransfer && hasActivePair && linkedTargetName && (
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-secondary">
+              Verknüpft mit Gegenbuchung in „{linkedTargetName}“
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={handleUnlinkTransfer}
+              disabled={isSubmitting}
+            >
+              Umbuchung trennen
+            </Button>
+          </div>
+        )}
+
         <div className="flex justify-end gap-3">
           <Button
             type="button"
@@ -300,4 +421,4 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
       </form>
     </>
   )
-} 
+}

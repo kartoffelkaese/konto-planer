@@ -30,6 +30,26 @@ export interface Transaction {
   version?: number
   parentTransactionId?: string | null
   childTransactions?: Transaction[]
+  isTransfer?: boolean
+  transferTargetAccountId?: string | null
+  transferTargetAccount?: {
+    id: string
+    name: string
+  } | null
+  transferTargetMerchant?: string | null
+  transferPairAsSource?: {
+    id: string
+    targetTransactionId: string | null
+  } | null
+  transferPairAsTarget?: {
+    id: string
+    sourceTransaction?: {
+      account: {
+        id: string
+        name: string
+      }
+    } | null
+  } | null
   createdAt: string
 }
 
@@ -37,6 +57,8 @@ export interface CreateTransactionData {
   merchant: string
   merchantId?: string
   createNewMerchant?: boolean
+  isTransfer?: boolean
+  transferTargetAccountId?: string
   description?: string
   amount: number
   date: string

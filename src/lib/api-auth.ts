@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import type { Transaction } from '@prisma/client'
+import { userHasAccountAccess } from '@/lib/accounts'
 
 export { getUserBySession } from '@/lib/account-context'
 
@@ -79,6 +80,20 @@ export async function assertCategoryOwned(
   return null
 }
 
+export async function assertAccountWritable(
+  userId: string,
+  accountId: string
+): Promise<NextResponse | null> {
+  const hasAccess = await userHasAccountAccess(userId, accountId)
+  if (!hasAccess) {
+    return NextResponse.json(
+      { error: 'Kein Zugriff auf Konto' },
+      { status: 403 }
+    )
+  }
+  return null
+}
+
 export function validateSalaryDay(salaryDay: unknown): number | NextResponse {
   const day = typeof salaryDay === 'number' ? salaryDay : Number(salaryDay)
   if (!Number.isInteger(day) || day < 1 || day > 31) {
@@ -116,6 +131,28 @@ export function validateAccountDisplayName(
     )
   }
   return trimmed
+}
+
+export function validateTransferSenderName(
+  name: unknown
+): string | null | NextResponse {
+  if (name === undefined || name === null || name === '') {
+    return null
+  }
+  if (typeof name !== 'string') {
+    return NextResponse.json(
+      { error: 'Ungültiger Absendername' },
+      { status: 400 }
+    )
+  }
+  const trimmed = name.trim()
+  if (trimmed.length > 100) {
+    return NextResponse.json(
+      { error: 'Absendername darf maximal 100 Zeichen lang sein' },
+      { status: 400 }
+    )
+  }
+  return trimmed.length > 0 ? trimmed : null
 }
 
 /** @deprecated use validateAccountDisplayName */

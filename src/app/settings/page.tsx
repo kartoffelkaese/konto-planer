@@ -21,6 +21,7 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null)
   const [salaryDay, setSalaryDay] = useState(1)
   const [accountName, setAccountName] = useState("Mein Konto")
+  const [transferSenderName, setTransferSenderName] = useState('')
   
   // Neue States für E-Mail-Änderung
   const [showEmailForm, setShowEmailForm] = useState(false)
@@ -51,6 +52,7 @@ export default function SettingsPage() {
       const data = await response.json()
       setSalaryDay(data.salaryDay)
       setAccountName(data.accountName || "Mein Konto")
+      setTransferSenderName(data.transferSenderName || '')
     } catch (err) {
       console.error('Error loading settings:', err)
       setError('Fehler beim Laden der Einstellungen')
@@ -70,6 +72,7 @@ export default function SettingsPage() {
         body: JSON.stringify({
           salaryDay,
           accountName,
+          transferSenderName,
         }),
       })
 
@@ -195,6 +198,27 @@ export default function SettingsPage() {
                       disabled={loading}
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label htmlFor="transferSenderName" className="block text-sm font-medium text-primary">
+                    Absendername für Umbuchungen
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      id="transferSenderName"
+                      value={transferSenderName}
+                      onChange={(e) => setTransferSenderName(e.target.value)}
+                      className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
+                      placeholder="z.B. Martin, Familie Müller"
+                      disabled={loading}
+                    />
+                  </div>
+                  <p className="mt-2 text-sm text-secondary">
+                    Erscheint als Händler bei eingehenden Umbuchungen in anderen Konten.
+                    Wenn leer, wird die Kontobezeichnung verwendet.
+                  </p>
                 </div>
 
                 <div>

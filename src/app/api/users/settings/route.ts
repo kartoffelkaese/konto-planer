@@ -6,6 +6,7 @@ import {
   isErrorResponse,
   validateSalaryDay,
   validateAccountDisplayName,
+  validateTransferSenderName,
 } from '@/lib/api-auth'
 
 export async function PATCH(request: NextRequest) {
@@ -16,7 +17,11 @@ export async function PATCH(request: NextRequest) {
     const { user, account, membership } = ctx
     const body = await request.json()
 
-    const data: { salaryDay?: number; name?: string } = {}
+    const data: {
+      salaryDay?: number
+      name?: string
+      transferSenderName?: string | null
+    } = {}
 
     if (body.salaryDay !== undefined) {
       const salaryDay = validateSalaryDay(body.salaryDay)
@@ -28,6 +33,12 @@ export async function PATCH(request: NextRequest) {
       const name = validateAccountDisplayName(body.accountName ?? body.name)
       if (isErrorResponse(name)) return name
       if (name) data.name = name
+    }
+
+    if (body.transferSenderName !== undefined) {
+      const senderName = validateTransferSenderName(body.transferSenderName)
+      if (isErrorResponse(senderName)) return senderName
+      data.transferSenderName = senderName
     }
 
     if (Object.keys(data).length === 0) {
@@ -44,6 +55,7 @@ export async function PATCH(request: NextRequest) {
       email: user.email,
       salaryDay: updated.salaryDay,
       accountName: updated.name,
+      transferSenderName: updated.transferSenderName,
       createdAt: updated.createdAt,
       activeAccountId: account.id,
       role: membership.role,
@@ -69,6 +81,7 @@ export async function GET() {
       email: user.email,
       salaryDay: account.salaryDay,
       accountName: account.name,
+      transferSenderName: account.transferSenderName,
       createdAt: account.createdAt,
       activeAccountId: account.id,
       role: membership.role,

@@ -9,6 +9,7 @@ import { useState } from 'react'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { getContrastColor } from '@/lib/colorUtils'
 import { useToast } from '@/hooks/useToast'
+import TransferBadge from '@/components/TransferBadge'
 import EmptyState from '@/components/EmptyState'
 
 type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
@@ -356,7 +357,8 @@ export default function TransactionList({
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-primary">
-                    {transaction.merchant}
+                    <span>{transaction.merchant}</span>
+                    <TransferBadge transaction={transaction} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {transaction.merchantRef?.category ? (
@@ -425,7 +427,10 @@ export default function TransactionList({
                   >
                     {formatDate(transaction.date)}
                   </button>
-                  <div className="text-sm text-secondary">{transaction.merchant}</div>
+                  <div className="text-sm text-secondary">
+                    {transaction.merchant}
+                    <TransferBadge transaction={transaction} />
+                  </div>
                 </div>
                 <span className={`text-sm font-medium ${
                   transaction.amount > 0 ? 'text-income' : transaction.amount < 0 ? 'text-expense' : 'text-primary'

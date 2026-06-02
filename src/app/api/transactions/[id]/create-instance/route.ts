@@ -7,6 +7,11 @@ import {
 } from '@/lib/dateUtils'
 import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
+import {
+  createTransferPair,
+  resolveTransferSenderName,
+  transactionTransferInclude,
+} from '@/lib/transfers'
 
 export async function POST(
   _request: NextRequest,
@@ -60,25 +65,45 @@ export async function POST(
         )
       : getNextRecurringDueDate(originalTransaction.date, interval)
 
-    const newTransaction = await prisma.transaction.create({
-      data: {
-        accountId: account.id,
-        description: originalTransaction.description,
-        merchant: originalTransaction.merchant,
-        merchantId: originalTransaction.merchantId,
-        amount: originalTransaction.amount,
-        date: nextDueDate,
-        isConfirmed: false,
-        isRecurring: false,
-        parentTransactionId: originalTransaction.id,
-      },
-      include: {
-        merchantRef: {
-          include: {
-            category: true,
-          },
+    const newTransaction = await prisma.$transaction(async (tx) => {
+      const instance = await tx.transaction.create({
+        data: {
+          accountId: account.id,
+          description: originalTransaction.description,
+          merchant: originalTransaction.merchant,
+          merchantId: originalTransaction.merchantId,
+          amount: originalTransaction.amount,
+          date: nextDueDate,
+          isConfirmed: false,
+          isRecurring: false,
+          parentTransactionId: originalTransaction.id,
+          isTransfer: originalTransaction.isTransfer,
+          transferTargetAccountId: originalTransaction.transferTargetAccountId,
         },
-      },
+      })
+
+      if (
+        originalTransaction.isTransfer &&
+        originalTransaction.transferTargetAccountId
+      ) {
+        const sourceAccount = await tx.account.findUnique({
+          where: { id: account.id },
+          select: { name: true, transferSenderName: true },
+        })
+        if (sourceAccount) {
+          await createTransferPair(
+            tx,
+            instance,
+            originalTransaction.transferTargetAccountId,
+            resolveTransferSenderName(sourceAccount)
+          )
+        }
+      }
+
+      return tx.transaction.findUniqueOrThrow({
+        where: { id: instance.id },
+        include: transactionTransferInclude,
+      })
     })
 
     return NextResponse.json(newTransaction)

@@ -7,6 +7,12 @@ import { resolveSalaryDay } from '@/lib/salaryDay'
 import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { resolveMerchantForTransaction } from '@/lib/resolveMerchantForTransaction'
+import {
+  assertTransferTargetAllowed,
+  createTransferPair,
+  resolveTransferSenderName,
+  transactionTransferInclude,
+} from '@/lib/transfers'
 
 export async function GET(request: Request) {
   const ctx = await getAccountContext()
@@ -50,13 +56,7 @@ export async function GET(request: Request) {
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({
         where: whereClause,
-        include: {
-          merchantRef: {
-            include: {
-              category: true,
-            },
-          },
-        },
+        include: transactionTransferInclude,
         orderBy: [
           { date: 'desc' },
           { isConfirmed: 'asc' },
@@ -88,9 +88,10 @@ export async function POST(request: Request) {
   const ctx = await getAccountContext()
   if (isErrorResponse(ctx)) return ctx
 
-  const { account } = ctx
+  const { account, user } = ctx
 
   try {
+    const body = await request.json()
     const {
       merchant,
       merchantId,
@@ -100,7 +101,9 @@ export async function POST(request: Request) {
       date,
       isRecurring,
       recurringInterval,
-    } = await request.json()
+      isTransfer,
+      transferTargetAccountId,
+    } = body
 
     const resolvedMerchant = await resolveMerchantForTransaction(account.id, {
       merchantId,
@@ -108,6 +111,76 @@ export async function POST(request: Request) {
       createNewMerchant,
     })
     if (resolvedMerchant.error) return resolvedMerchant.error
+
+    if (isTransfer && transferTargetAccountId) {
+      const transferError = await assertTransferTargetAllowed(
+        user.id,
+        account.id,
+        transferTargetAccountId
+      )
+      if (transferError) return transferError
+
+      const sourceAccount = await prisma.account.findUnique({
+        where: { id: account.id },
+        select: { name: true, transferSenderName: true },
+      })
+      if (!sourceAccount) {
+        return NextResponse.json({ error: 'Konto nicht gefunden' }, { status: 404 })
+      }
+
+      const targetIncomingMerchant = resolveTransferSenderName(sourceAccount)
+      const transferAmount = -Math.abs(Number(amount))
+      const transactionDate = new Date(date)
+
+      if (isRecurring) {
+        const transaction = await prisma.transaction.create({
+          data: {
+            accountId: account.id,
+            merchant: resolvedMerchant.merchant,
+            merchantId: resolvedMerchant.merchantId,
+            description,
+            amount: transferAmount,
+            date: transactionDate,
+            isRecurring: true,
+            recurringInterval: recurringInterval || 'monthly',
+            isTransfer: true,
+            transferTargetAccountId,
+          },
+          include: transactionTransferInclude,
+        })
+        return NextResponse.json(transaction)
+      }
+
+      const transaction = await prisma.$transaction(async (tx) => {
+        const source = await tx.transaction.create({
+          data: {
+            accountId: account.id,
+            merchant: resolvedMerchant.merchant,
+            merchantId: resolvedMerchant.merchantId,
+            description,
+            amount: transferAmount,
+            date: transactionDate,
+            isRecurring: false,
+            isTransfer: true,
+            transferTargetAccountId,
+          },
+        })
+
+        await createTransferPair(
+          tx,
+          source,
+          transferTargetAccountId,
+          targetIncomingMerchant
+        )
+
+        return tx.transaction.findUniqueOrThrow({
+          where: { id: source.id },
+          include: transactionTransferInclude,
+        })
+      })
+
+      return NextResponse.json(transaction)
+    }
 
     const transaction = await prisma.transaction.create({
       data: {
@@ -120,13 +193,7 @@ export async function POST(request: Request) {
         isRecurring: isRecurring || false,
         recurringInterval: isRecurring ? recurringInterval : null,
       },
-      include: {
-        merchantRef: {
-          include: {
-            category: true,
-          },
-        },
-      },
+      include: transactionTransferInclude,
     })
 
     return NextResponse.json(transaction)

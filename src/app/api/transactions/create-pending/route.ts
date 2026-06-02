@@ -4,6 +4,11 @@ import { prisma } from '@/lib/prisma'
 import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { getRecurringDueDatesInRange, getSalaryMonthRange } from '@/lib/dateUtils'
+import {
+  createTransferPair,
+  resolveTransferSenderName,
+  transactionTransferInclude,
+} from '@/lib/transfers'
 
 export async function POST(_request: NextRequest) {
   try {
@@ -18,13 +23,7 @@ export async function POST(_request: NextRequest) {
         isRecurring: true,
         isRecurringPaused: false,
       },
-      include: {
-        merchantRef: {
-          include: {
-            category: true,
-          },
-        },
-      },
+      include: transactionTransferInclude,
     })
 
     const { startDate, endDate } = getSalaryMonthRange(account.salaryDay)
@@ -58,25 +57,42 @@ export async function POST(_request: NextRequest) {
         })
 
         if (!existingInstance) {
-          const newTransaction = await prisma.transaction.create({
-            data: {
-              description: transaction.description,
-              merchant: transaction.merchant,
-              merchantId: transaction.merchantId,
-              amount: transaction.amount,
-              date: dueDate,
-              isConfirmed: false,
-              isRecurring: false,
-              accountId: account.id,
-              parentTransactionId: transaction.id,
-            },
-            include: {
-              merchantRef: {
-                include: {
-                  category: true,
-                },
+          const newTransaction = await prisma.$transaction(async (tx) => {
+            const instance = await tx.transaction.create({
+              data: {
+                description: transaction.description,
+                merchant: transaction.merchant,
+                merchantId: transaction.merchantId,
+                amount: transaction.amount,
+                date: dueDate,
+                isConfirmed: false,
+                isRecurring: false,
+                accountId: account.id,
+                parentTransactionId: transaction.id,
+                isTransfer: transaction.isTransfer,
+                transferTargetAccountId: transaction.transferTargetAccountId,
               },
-            },
+            })
+
+            if (transaction.isTransfer && transaction.transferTargetAccountId) {
+              const sourceAccount = await tx.account.findUnique({
+                where: { id: account.id },
+                select: { name: true, transferSenderName: true },
+              })
+              if (sourceAccount) {
+                await createTransferPair(
+                  tx,
+                  instance,
+                  transaction.transferTargetAccountId,
+                  resolveTransferSenderName(sourceAccount)
+                )
+              }
+            }
+
+            return tx.transaction.findUniqueOrThrow({
+              where: { id: instance.id },
+              include: transactionTransferInclude,
+            })
           })
           newTransactions.push(newTransaction)
         }

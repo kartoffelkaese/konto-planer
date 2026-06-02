@@ -36,6 +36,7 @@ export interface Transaction {
 export interface CreateTransactionData {
   merchant: string
   merchantId?: string
+  createNewMerchant?: boolean
   description?: string
   amount: number
   date: string

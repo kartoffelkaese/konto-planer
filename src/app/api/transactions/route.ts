@@ -5,10 +5,8 @@ import { prisma } from '@/lib/prisma'
 import { getSalaryMonthRange } from '@/lib/dateUtils'
 import { resolveSalaryDay } from '@/lib/salaryDay'
 import { getAccountContext } from '@/lib/account-context'
-import {
-  assertMerchantOwned,
-  isErrorResponse,
-} from '@/lib/api-auth'
+import { isErrorResponse } from '@/lib/api-auth'
+import { resolveMerchantForTransaction } from '@/lib/resolveMerchantForTransaction'
 
 export async function GET(request: Request) {
   const ctx = await getAccountContext()
@@ -96,6 +94,7 @@ export async function POST(request: Request) {
     const {
       merchant,
       merchantId,
+      createNewMerchant,
       description,
       amount,
       date,
@@ -103,14 +102,18 @@ export async function POST(request: Request) {
       recurringInterval,
     } = await request.json()
 
-    const merchantError = await assertMerchantOwned(merchantId, account.id)
-    if (merchantError) return merchantError
+    const resolvedMerchant = await resolveMerchantForTransaction(account.id, {
+      merchantId,
+      merchant,
+      createNewMerchant,
+    })
+    if (resolvedMerchant.error) return resolvedMerchant.error
 
     const transaction = await prisma.transaction.create({
       data: {
         accountId: account.id,
-        merchant,
-        merchantId,
+        merchant: resolvedMerchant.merchant,
+        merchantId: resolvedMerchant.merchantId,
         description,
         amount,
         date: new Date(date),

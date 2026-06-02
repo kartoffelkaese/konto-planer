@@ -6,6 +6,10 @@ import { createTransaction } from '@/lib/api'
 import { formatDateForInput } from '@/lib/dateUtils'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
+import {
+  findExactMerchantMatch,
+  findSimilarMerchant,
+} from '@/lib/merchantMatching'
 
 interface Merchant {
   id: string
@@ -43,6 +47,7 @@ export default function TransactionForm({
     isRecurring: defaultIsRecurring,
     recurringInterval: 'monthly'
   })
+  const [forceNewMerchant, setForceNewMerchant] = useState(false)
 
   useEffect(() => {
     loadMerchants()
@@ -68,6 +73,17 @@ export default function TransactionForm({
     setError(null)
 
     try {
+      const trimmedMerchant = formData.merchant.trim()
+      if (
+        !formData.merchantId &&
+        similarMerchantSuggestion &&
+        !forceNewMerchant
+      ) {
+        setError('Bitte bestätigen Sie, ob der vorgeschlagene Händler gemeint ist.')
+        setLoading(false)
+        return
+      }
+
       const amount = formData.type === 'income'
         ? Math.abs(parseFloat(formData.amount))
         : -Math.abs(parseFloat(formData.amount))
@@ -75,8 +91,9 @@ export default function TransactionForm({
       const selectedMerchant = merchants.find(m => m.id === formData.merchantId)
 
       await createTransaction({
-        merchant: selectedMerchant?.name || formData.merchant,
+        merchant: selectedMerchant?.name || trimmedMerchant,
         merchantId: formData.merchantId || undefined,
+        createNewMerchant: forceNewMerchant || undefined,
         description: formData.description,
         amount,
         date: new Date(formData.date).toISOString(),
@@ -101,10 +118,9 @@ export default function TransactionForm({
   )
 
   const handleMerchantInput = (value: string) => {
+    setForceNewMerchant(false)
     const trimmed = value.trim()
-    const match = sortedMerchants.find(
-      (m) => m.name.toLowerCase() === trimmed.toLowerCase()
-    )
+    const match = findExactMerchantMatch(sortedMerchants, trimmed)
     if (match) {
       setFormData((prev) => ({
         ...prev,
@@ -121,11 +137,34 @@ export default function TransactionForm({
     }
   }
 
+  const handleUseSimilarMerchant = (merchant: Merchant) => {
+    setForceNewMerchant(false)
+    setFormData((prev) => ({
+      ...prev,
+      merchantId: merchant.id,
+      merchant: merchant.name,
+      description: prev.description || merchant.description || '',
+    }))
+  }
+
+  const handleCreateNewMerchant = () => {
+    setForceNewMerchant(true)
+    setFormData((prev) => ({
+      ...prev,
+      merchantId: '',
+    }))
+  }
+
   const merchantDisplay =
     formData.merchantId
       ? sortedMerchants.find((m) => m.id === formData.merchantId)?.name ??
         formData.merchant
       : formData.merchant
+
+  const similarMerchantSuggestion =
+    !formData.merchantId && !forceNewMerchant
+      ? findSimilarMerchant(sortedMerchants, formData.merchant)
+      : undefined
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -162,6 +201,32 @@ export default function TransactionForm({
                 <option key={merchant.id} value={merchant.name} />
               ))}
             </datalist>
+          )}
+          {similarMerchantSuggestion && (
+            <div className="mt-2 rounded-control border border-accent-border bg-accent-subtle p-3">
+              <p className="text-sm text-primary">
+                Meinst du „{similarMerchantSuggestion.name}"?
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => handleUseSimilarMerchant(similarMerchantSuggestion)}
+                  disabled={loading}
+                >
+                  Ja, {similarMerchantSuggestion.name} verwenden
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleCreateNewMerchant}
+                  disabled={loading}
+                >
+                  Nein, neu anlegen
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       </div>

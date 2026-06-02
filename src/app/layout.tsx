@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Navigation from '@/components/Navigation'
+import AccountSwitchTransition from '@/components/AccountSwitchTransition'
 import { Providers } from './providers'
 import {
   COLOR_SCHEMES_JSON,
@@ -47,7 +48,7 @@ export default function RootLayout({
             tabIndex={-1}
             className="md:ml-[var(--sidebar-width)] transition-[margin-left] duration-300 ease-in-out outline-none"
           >
-            {children}
+            <AccountSwitchTransition>{children}</AccountSwitchTransition>
           </main>
         </Providers>
       </body>

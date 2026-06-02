@@ -205,13 +205,11 @@ export async function PATCH(
     const syncFields: {
       amount?: number
       date?: Date
-      description?: string | null
       isConfirmed?: boolean
     } = {}
 
     if (updateData.amount !== undefined) syncFields.amount = Number(updateData.amount)
     if (updateData.date !== undefined) syncFields.date = new Date(updateData.date)
-    if (updateData.description !== undefined) syncFields.description = updateData.description
     if (updateData.isConfirmed !== undefined) syncFields.isConfirmed = updateData.isConfirmed
 
     if (

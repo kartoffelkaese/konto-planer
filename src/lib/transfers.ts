@@ -12,7 +12,6 @@ export type TransferTarget = {
 export type TransferSyncFields = {
   amount?: number | Prisma.Decimal
   date?: Date
-  description?: string | null
   isConfirmed?: boolean
 }
 
@@ -116,14 +115,24 @@ export async function createTransferPair(
   targetAccountId: string,
   targetIncomingMerchant: string
 ) {
+  const source = await tx.transaction.findUniqueOrThrow({
+    where: { id: sourceTransaction.id },
+    select: {
+      description: true,
+      amount: true,
+      date: true,
+      isConfirmed: true,
+    },
+  })
+
   const targetTransaction = await tx.transaction.create({
     data: {
       accountId: targetAccountId,
       merchant: targetIncomingMerchant,
-      description: sourceTransaction.description,
-      amount: invertAmount(sourceTransaction.amount),
-      date: sourceTransaction.date,
-      isConfirmed: sourceTransaction.isConfirmed,
+      description: source.description,
+      amount: invertAmount(source.amount),
+      date: source.date,
+      isConfirmed: source.isConfirmed,
       isRecurring: false,
     },
   })
@@ -167,9 +176,6 @@ export async function syncTransferPair(
   }
   if (fields.date !== undefined) {
     targetUpdate.date = fields.date
-  }
-  if (fields.description !== undefined) {
-    targetUpdate.description = fields.description
   }
   if (fields.isConfirmed !== undefined) {
     targetUpdate.isConfirmed = fields.isConfirmed

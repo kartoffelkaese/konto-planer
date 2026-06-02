@@ -6,6 +6,11 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import {
+  ACCOUNT_SWITCH_EXIT_MS,
+  dispatchAccountChanged,
+  dispatchAccountSwitching,
+} from '@/lib/accountSwitchEvents'
 
 type ReceivedInvite = {
   id: string
@@ -72,6 +77,8 @@ export default function AccountInvitations() {
           'success'
         )
         if (data.accountId) {
+          dispatchAccountSwitching()
+          await new Promise((resolve) => setTimeout(resolve, ACCOUNT_SWITCH_EXIT_MS))
           await fetch('/api/accounts/active', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -90,7 +97,7 @@ export default function AccountInvitations() {
       }
 
       await loadInvites()
-      window.dispatchEvent(new Event('account-changed'))
+      dispatchAccountChanged()
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : 'Aktion fehlgeschlagen',

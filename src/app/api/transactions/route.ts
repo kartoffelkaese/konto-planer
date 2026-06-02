@@ -131,6 +131,10 @@ export async function POST(request: Request) {
       const targetIncomingMerchant = resolveTransferSenderName(sourceAccount)
       const transferAmount = -Math.abs(Number(amount))
       const transactionDate = new Date(date)
+      const normalizedDescription =
+        typeof description === 'string'
+          ? description.trim() || null
+          : description ?? null
 
       if (isRecurring) {
         const transaction = await prisma.transaction.create({
@@ -138,7 +142,7 @@ export async function POST(request: Request) {
             accountId: account.id,
             merchant: resolvedMerchant.merchant,
             merchantId: resolvedMerchant.merchantId,
-            description,
+            description: normalizedDescription,
             amount: transferAmount,
             date: transactionDate,
             isRecurring: true,
@@ -157,7 +161,7 @@ export async function POST(request: Request) {
             accountId: account.id,
             merchant: resolvedMerchant.merchant,
             merchantId: resolvedMerchant.merchantId,
-            description,
+            description: normalizedDescription,
             amount: transferAmount,
             date: transactionDate,
             isRecurring: false,

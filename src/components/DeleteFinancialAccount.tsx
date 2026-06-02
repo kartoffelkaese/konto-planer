@@ -6,6 +6,11 @@ import { useRouter } from 'next/navigation'
 import { TrashIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
+import {
+  ACCOUNT_SWITCH_EXIT_MS,
+  dispatchAccountChanged,
+  dispatchAccountSwitching,
+} from '@/lib/accountSwitchEvents'
 
 export default function DeleteFinancialAccount() {
   const router = useRouter()
@@ -68,6 +73,8 @@ export default function DeleteFinancialAccount() {
       }
 
       if (data.nextAccountId) {
+        dispatchAccountSwitching()
+        await new Promise((resolve) => setTimeout(resolve, ACCOUNT_SWITCH_EXIT_MS))
         await update({ activeAccountId: data.nextAccountId })
       }
 
@@ -75,7 +82,7 @@ export default function DeleteFinancialAccount() {
       setShowConfirm(false)
       setConfirmName('')
       router.refresh()
-      window.dispatchEvent(new Event('account-changed'))
+      dispatchAccountChanged()
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Löschen fehlgeschlagen'

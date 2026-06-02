@@ -443,6 +443,52 @@ html[data-color-scheme="plum"] .page-title {
     transform var(--motion-duration-feedback) var(--motion-easing);
 }
 
+/* Kontowechsel – Microanimation */
+@keyframes account-switch-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0.72;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes account-switch-enter {
+  from {
+    opacity: 0.72;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes account-switch-avatar {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(0.86);
+  }
+}
+
+.account-switch-exit {
+  animation: account-switch-exit 120ms var(--motion-easing) forwards;
+  pointer-events: none;
+}
+
+.account-switch-enter {
+  animation: account-switch-enter 280ms var(--motion-easing) forwards;
+}
+
+.account-switch-avatar {
+  animation: account-switch-avatar 320ms var(--motion-easing) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

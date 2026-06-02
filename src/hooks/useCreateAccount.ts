@@ -4,6 +4,11 @@ import { useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/useToast'
+import {
+  dispatchAccountChanged,
+  dispatchAccountSwitching,
+  ACCOUNT_SWITCH_EXIT_MS,
+} from '@/lib/accountSwitchEvents'
 
 export function useCreateAccount() {
   const router = useRouter()
@@ -34,6 +39,8 @@ export function useCreateAccount() {
         }
 
         if (options?.switchToNew !== false) {
+          dispatchAccountSwitching()
+          await new Promise((resolve) => setTimeout(resolve, ACCOUNT_SWITCH_EXIT_MS))
           const switchRes = await fetch('/api/accounts/active', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -45,7 +52,7 @@ export function useCreateAccount() {
         }
 
         router.refresh()
-        window.dispatchEvent(new Event('account-changed'))
+        dispatchAccountChanged()
         showToast('Konto angelegt', 'success')
         return true
       } catch (err) {

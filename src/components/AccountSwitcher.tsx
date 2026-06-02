@@ -6,6 +6,11 @@ import { useRouter } from 'next/navigation'
 import { CheckIcon, WalletIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
 import Modal from '@/components/Modal'
+import {
+  ACCOUNT_SWITCH_EXIT_MS,
+  dispatchAccountChanged,
+  dispatchAccountSwitching,
+} from '@/lib/accountSwitchEvents'
 
 type AccountItem = {
   id: string
@@ -39,6 +44,7 @@ export default function AccountSwitcher({
   const [accounts, setAccounts] = useState<AccountItem[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [avatarAnimating, setAvatarAnimating] = useState(false)
 
   const loadAccounts = useCallback(async () => {
     try {
@@ -71,6 +77,8 @@ export default function AccountSwitcher({
       return
     }
     setLoading(true)
+    dispatchAccountSwitching()
+    await new Promise((resolve) => setTimeout(resolve, ACCOUNT_SWITCH_EXIT_MS))
     try {
       const res = await fetch('/api/accounts/active', {
         method: 'PATCH',
@@ -80,8 +88,10 @@ export default function AccountSwitcher({
       if (!res.ok) throw new Error('Wechsel fehlgeschlagen')
       await update({ activeAccountId: accountId })
       setModalOpen(false)
+      setAvatarAnimating(true)
       router.refresh()
-      window.dispatchEvent(new Event('account-changed'))
+      dispatchAccountChanged()
+      window.setTimeout(() => setAvatarAnimating(false), 320)
     } catch {
       showToast('Kontowechsel fehlgeschlagen', 'error')
     } finally {
@@ -111,7 +121,7 @@ export default function AccountSwitcher({
             isActive
               ? 'bg-accent text-accent-foreground'
               : 'bg-surface-muted text-secondary'
-          }`}
+          } ${isActive && avatarAnimating ? 'account-switch-avatar' : ''}`}
           aria-hidden
         >
           {accountInitial(acc.name)}
@@ -168,7 +178,11 @@ export default function AccountSwitcher({
           className="flex flex-col items-center gap-1 rounded-control p-2 text-accent hover:bg-accent-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent max-md:flex-row max-md:gap-2 max-md:px-3 max-md:w-full max-md:justify-start"
           aria-haspopup="dialog"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
+          <span
+            className={`flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground ${
+              avatarAnimating ? 'account-switch-avatar' : ''
+            }`}
+          >
             {active ? (
               accountInitial(active.name)
             ) : (

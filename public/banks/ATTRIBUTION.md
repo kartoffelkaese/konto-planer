@@ -22,5 +22,6 @@ Logos dienen der Identifikation des vom Nutzer gewählten Instituts in Konto-Pla
 | `c24.svg` | C24 Bank | Vereinfachte Darstellung in Markenfarbe Blau |
 | `sparda-bank.svg` | Sparda-Bank | Vereinfachte Darstellung in Markenfarbe Blau |
 | `psd-bank.svg` | PSD Bank | Vereinfachte Darstellung in Markenfarbe Blau |
+| `generic-bank.svg` | (fiktiv) | Generisches Bank-Symbol für Landing-Page-Vorschau |
 
 Offizielle Vektorlogos können bei Bedarf aus Pressebereichen der Institute oder Wikimedia Commons ersetzt werden. Markenrechte liegen bei den jeweiligen Instituten.

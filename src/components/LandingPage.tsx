@@ -2,14 +2,18 @@
 
 import Link from 'next/link'
 import {
-  ArrowPathIcon,
   ArrowDownTrayIcon,
+  ArrowPathIcon,
+  ArrowsRightLeftIcon,
   BanknotesIcon,
   BuildingStorefrontIcon,
   ChartBarIcon,
+  ChartPieIcon,
   CheckCircleIcon,
   ShieldCheckIcon,
+  SwatchIcon,
   TagIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline'
 import CategoryExpenseBars from '@/components/CategoryExpenseBars'
 
@@ -18,13 +22,13 @@ const features = [
     icon: ChartBarIcon,
     title: 'Dashboard auf einen Blick',
     description:
-      'Einnahmen, Ausgaben und Kategorien – übersichtlich visualisiert, ohne Tabellen-Chaos.',
+      'Einnahmen, Ausgaben und Kategorien – KPIs und Diagramme statt Tabellen-Chaos.',
   },
   {
     icon: BanknotesIcon,
-    title: 'Transaktionen im Griff',
+    title: 'Transaktionen & Gehaltsmonat',
     description:
-      'Buchen, filtern und sortieren. Gehaltsmonat-Ansicht für realistische Monatsplanung.',
+      'Buchen, filtern, bestätigen. Der Gehaltsmonat folgt Ihrem Einkommen – nicht dem Kalender.',
   },
   {
     icon: ArrowPathIcon,
@@ -33,59 +37,80 @@ const features = [
       'Miete, Abos und Gehalt einmal anlegen – fällige Buchungen werden automatisch vorbereitet.',
   },
   {
-    icon: TagIcon,
-    title: 'Eigene Kategorien',
+    icon: ChartPieIcon,
+    title: 'Statistiken',
     description:
-      'Farben und Namen nach Ihrem System – Ausgaben bleiben beim Blick ins Diagramm zuordenbar.',
+      'Trends nach Kategorie, Händler und Zeitraum – vom Monat bis zum Jahresüberblick.',
   },
   {
-    icon: BuildingStorefrontIcon,
-    title: 'Händler & Zuordnung',
+    icon: TagIcon,
+    title: 'Kategorien & Händler',
     description:
-      'Händler verwalten und Kategorien zuweisen – weniger Tipparbeit bei wiederkehenden Buchungen.',
+      'Eigene Farben und Namen, Händler mit mehreren Kategorien – weniger Tipparbeit beim Buchen.',
+  },
+  {
+    icon: ArrowsRightLeftIcon,
+    title: 'Mehrere Konten & Umbuchungen',
+    description:
+      'Giro, Sparkonto oder Haushalt parallel führen und Geld zwischen Konten umbuchen.',
+  },
+  {
+    icon: UserGroupIcon,
+    title: 'Gemeinsam nutzen',
+    description:
+      'Konten per Einladung teilen – mit vollem Zugriff oder Nur-Lesen für Partner und Familie.',
+  },
+  {
+    icon: SwatchIcon,
+    title: 'Bank-Logo & Farbschemen',
+    description:
+      'Deutsche Banken im Seitenmenü erkennen, zwischen sechs Farbschemen wählen – auch im Dunkelmodus.',
   },
   {
     icon: ShieldCheckIcon,
-    title: 'Ihre Daten, Ihr Konto',
+    title: 'Backup & Datenschutz',
     description:
-      'Anmeldung per E-Mail, verschlüsselte Verbindung – keine Werbung, kein Datenverkauf.',
-  },
-  {
-    icon: ArrowDownTrayIcon,
-    title: 'Backup & Export',
-    description:
-      'JSON-Backup erstellen und wiederherstellen – volle Kontrolle über Ihre Finanzhistorie.',
+      'JSON-Backup exportieren und wiederherstellen. Ihre Daten, Ihr Server – keine Werbung, kein Datenverkauf.',
   },
 ]
 
 const steps = [
   {
     number: '01',
-    title: 'Konto anlegen',
-    description: 'In wenigen Sekunden registrieren und direkt loslegen – ohne Kreditkarte.',
+    title: 'Registrieren',
+    description:
+      'In wenigen Sekunden starten – optional Bank zuordnen und Farbschema wählen.',
   },
   {
     number: '02',
-    title: 'Finanzen erfassen',
-    description: 'Transaktionen buchen, Kategorien und Händler nach Bedarf einrichten.',
+    title: 'Finanzen strukturieren',
+    description:
+      'Transaktionen erfassen, Kategorien und Händler anlegen, wiederkehrende Zahlungen definieren.',
   },
   {
     number: '03',
-    title: 'Überblick behalten',
-    description: 'Dashboard und Statistiken zeigen, wohin Ihr Geld fließt – Monat für Monat.',
+    title: 'Planen & teilen',
+    description:
+      'Dashboard und Statistiken nutzen, Konten verknüpfen oder mit anderen gemeinsam führen.',
   },
 ]
 
 const trustPoints = [
   'Kostenlos nutzbar',
   'Deutsche Oberfläche',
+  'Mehrere Konten',
   'Backup jederzeit',
 ]
 
 const previewFormatCurrency = (amount: number) =>
-  new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(
-    amount
-  )
+  new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(amount)
+
+const PREVIEW_ACCOUNT_NAME = 'Haushalt'
+const PREVIEW_BANK_NAME = 'Waldbank'
 
 function LandingPreview() {
   const categories = [
@@ -102,15 +127,29 @@ function LandingPreview() {
     >
       <div className="absolute -inset-4 rounded-[1.25rem] bg-accent/15 blur-2xl" />
       <div className="relative rounded-card border border-accent-border bg-surface p-5 shadow-[0_20px_50px_var(--shadow-color)]">
-        <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-secondary">
-              Vorschau
-            </p>
-            <p className="text-sm font-semibold text-primary">Ihr Dashboard</p>
+        <div className="mb-4 flex items-center justify-between gap-3 border-b border-border pb-3">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-white p-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/banks/generic-bank.svg"
+                alt=""
+                width={24}
+                height={24}
+                className="h-full w-full object-contain"
+              />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-medium uppercase tracking-wide text-secondary">
+                Vorschau
+              </p>
+              <p className="truncate text-sm font-semibold text-primary">
+                {PREVIEW_ACCOUNT_NAME} · {PREVIEW_BANK_NAME}
+              </p>
+            </div>
           </div>
-          <span className="rounded-full bg-income-bg px-2.5 py-1 text-xs font-medium text-income">
-            März 2026
+          <span className="shrink-0 rounded-full bg-income-bg px-2.5 py-1 text-xs font-medium text-income">
+            Gehaltsmonat
           </span>
         </div>
 
@@ -140,12 +179,21 @@ function LandingPreview() {
           <CategoryExpenseBars categories={categories} formatCurrency={previewFormatCurrency} />
         </div>
 
-        <div className="mt-3 flex items-center gap-2 rounded-control border border-pending/30 bg-pending-bg px-3 py-2">
-          <ArrowPathIcon className="h-4 w-4 shrink-0 text-pending" />
-          <p className="text-xs text-primary">
-            <span className="font-medium">3 wiederkehrende</span>
-            <span className="text-secondary"> · nächste in 4 Tagen</span>
-          </p>
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center gap-2 rounded-control border border-pending/30 bg-pending-bg px-3 py-2">
+            <ArrowPathIcon className="h-4 w-4 shrink-0 text-pending" />
+            <p className="text-xs text-primary">
+              <span className="font-medium">3 wiederkehrende</span>
+              <span className="text-secondary"> · nächste in 4 Tagen</span>
+            </p>
+          </div>
+          <div className="flex items-center gap-2 rounded-control border border-accent-border bg-accent-subtle px-3 py-2">
+            <ArrowsRightLeftIcon className="h-4 w-4 shrink-0 text-accent" />
+            <p className="text-xs text-primary">
+              <span className="font-medium">Umbuchung</span>
+              <span className="text-secondary"> · 200 € → Sparkonto</span>
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -167,14 +215,16 @@ export default function LandingPage() {
             >
               Anmelden
             </Link>
-            <Link href="/auth/register" className="btn-primary rounded-control px-4 py-2 text-sm font-medium">
+            <Link
+              href="/auth/register"
+              className="btn-primary rounded-control px-4 py-2 text-sm font-medium"
+            >
               Registrieren
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero */}
       <section className="landing-hero relative overflow-hidden border-b border-border">
         <div className="landing-hero-glow pointer-events-none absolute inset-0" aria-hidden="true" />
 
@@ -192,26 +242,27 @@ export default function LandingPage() {
               </h1>
 
               <p className="landing-fade-in landing-fade-in-delay-2 mx-auto mt-5 max-w-xl text-base leading-relaxed text-secondary sm:text-lg lg:mx-0">
-                KontoPlaner bündelt Einnahmen, Ausgaben und wiederkehrende Zahlungen in einer
-                ruhigen Oberfläche – damit Sie am Monatsende wissen, was übrig bleibt.
+                KontoPlaner bündelt Einnahmen, Ausgaben und wiederkehrende Zahlungen – für ein
+                Konto oder mehrere, allein oder gemeinsam. Mit Gehaltsmonat, Umbuchungen und klarem
+                Überblick statt Tabellen-Chaos.
               </p>
 
               <div className="landing-fade-in landing-fade-in-delay-3 mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
                 <Link
                   href="/auth/register"
-                  className="btn-primary inline-flex w-full items-center justify-center px-7 py-3.5 text-base font-medium rounded-control shadow-sm transition-transform duration-feedback hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
+                  className="btn-primary inline-flex w-full items-center justify-center rounded-control px-7 py-3.5 text-base font-medium shadow-sm transition-transform duration-feedback hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
                 >
                   Kostenlos starten
                 </Link>
                 <Link
                   href="/auth/login"
-                  className="btn-secondary inline-flex w-full items-center justify-center px-7 py-3.5 text-base font-medium rounded-control shadow-sm transition-transform duration-feedback hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
+                  className="btn-secondary inline-flex w-full items-center justify-center rounded-control px-7 py-3.5 text-base font-medium shadow-sm transition-transform duration-feedback hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
                 >
                   Anmelden
                 </Link>
               </div>
 
-              <ul className="landing-fade-in landing-fade-in-delay-4 mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 lg:justify-start">
+              <ul className="landing-fade-in landing-fade-in-delay-4 mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 lg:justify-start">
                 {trustPoints.map((point) => (
                   <li key={point} className="flex items-center gap-1.5 text-sm text-secondary">
                     <CheckCircleIcon className="h-4 w-4 shrink-0 text-income" aria-hidden="true" />
@@ -228,18 +279,15 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features */}
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-medium uppercase tracking-wide text-accent">
-              Funktionen
-            </p>
+            <p className="text-sm font-medium uppercase tracking-wide text-accent">Funktionen</p>
             <h2 className="mt-2 text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
-              Alles, was Sie für den Überblick brauchen
+              Alles für Ihren Finanzüberblick
             </h2>
             <p className="mt-3 text-secondary">
-              Von der ersten Buchung bis zum Jahresüberblick – ohne unnötige Komplexität.
+              Von der ersten Buchung bis zum gemeinsamen Haushaltskonto – ohne unnötige Komplexität.
             </p>
           </div>
 
@@ -260,7 +308,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* So funktioniert's */}
       <section className="border-y border-border bg-surface-muted/50 py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
@@ -292,7 +339,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="relative overflow-hidden py-16 sm:py-20">
         <div
           className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent via-accent-hover to-accent opacity-[0.97]"
@@ -312,8 +358,8 @@ export default function LandingPage() {
             Bereit für mehr Klarheit?
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-accent-foreground/90">
-            Legen Sie jetzt los und erfassen Sie Ihre erste Transaktion – in unter einer Minute
-            eingerichtet.
+            Legen Sie jetzt los – Konto anlegen, erste Buchung erfassen, optional Bank zuordnen und
+            Farbschema wählen. In unter einer Minute eingerichtet.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link

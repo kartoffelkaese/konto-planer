@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Bank">
+  <rect width="48" height="48" rx="6" fill="#fff"/>
+  <path fill="#4a5568" d="M24 10 8 18v2h32v-2L24 10zm-2 12v12h4V22h-4zm-8 0v12h4V22h-4zm16 0v12h4V22h-4z"/>
+  <rect x="8" y="34" width="32" height="3" rx="1" fill="#4a5568"/>
+</svg>

@@ -1,7 +1,7 @@
 export const COLOR_SCHEMES = [
   'nebel',
   'twilight',
-  'forest',
+  'kupfer',
   'plum',
   'lagoon',
   'heritage',
@@ -32,10 +32,10 @@ export const COLOR_SCHEME_LABELS: Record<
     description: 'Schiefer-UI, Salbei, Mauve & warmes Taupe',
     swatches: ['#22223b', '#4a4e69', '#2f5639', '#6b5436', '#5a3d46'],
   },
-  forest: {
-    title: 'Moos & Teal',
-    description: 'Warmes Moos & Salbei – erdig, ohne Blau',
-    swatches: ['#2a3530', '#456b70', '#4a6e58', '#556340', '#7a5c48'],
+  kupfer: {
+    title: 'Kupfer & Kreide',
+    description: 'Warmes Kupfer-UI, Grün, Rost & Ocker',
+    swatches: ['#2c2420', '#8f4a28', '#2f6b4f', '#7a5c18', '#8b3a32'],
   },
   plum: {
     title: 'Nachtviolett',
@@ -70,6 +70,10 @@ export function getStoredColorScheme(): ColorScheme {
   if (stored === 'ocean') {
     localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, 'lagoon')
     return 'lagoon'
+  }
+  if (stored === 'forest') {
+    localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, 'kupfer')
+    return 'kupfer'
   }
   return stored && COLOR_SCHEMES.includes(stored as ColorScheme)
     ? (stored as ColorScheme)

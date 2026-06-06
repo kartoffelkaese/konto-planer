@@ -19,7 +19,7 @@ import { dispatchAccountChanged } from '@/lib/accountSwitchEvents'
 
 export default function SettingsPage() {
   const { showToast } = useToast()
-  const { canWrite } = useUserSettings()
+  const { canWrite, role } = useUserSettings()
   const { data: session, update: updateSession } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -292,6 +292,7 @@ export default function SettingsPage() {
               <DeleteFinancialAccount />
             </div>
 
+            {role === 'OWNER' && (
             <div className="rounded-lg border border-border p-4 bg-surface">
               <h2 className="text-lg font-medium text-primary mb-4">Konto teilen</h2>
               <p className="text-sm text-secondary mb-4">
@@ -300,6 +301,7 @@ export default function SettingsPage() {
               </p>
               <AccountSharing />
             </div>
+            )}
 
             {/* E-Mail-Änderung */}
             <div id="email-settings" className="rounded-lg border border-border p-4 bg-surface">

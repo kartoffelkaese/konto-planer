@@ -152,11 +152,7 @@ export default function AccountSharing() {
   }
 
   if (role !== 'OWNER') {
-    return (
-      <p className="text-sm text-secondary">
-        Nur der Kontoinhaber kann Mitglieder einladen und verwalten.
-      </p>
-    )
+    return null
   }
 
   return (

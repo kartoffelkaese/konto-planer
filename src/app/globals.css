@@ -72,33 +72,33 @@ html[data-color-scheme="twilight"] {
 }
 
 /*
- * Moos & Teal – Coolors: c9e4ca · 87bba2 · 55828b · 3b6064 · 364958
- * Warmes Salbei/Moos (erdig-grün), ohne Cyan – UI aus #55828b/#87bba2.
+ * Kupfer & Kreide – warmes Split-komplementär (Kupfer-UI · kühles Grün · Rost/Ocker)
+ * Kupfer als UI-Akzent; semantische Farben bewusst getrennt von Nebel/Lagune/Abendlicht.
  * Semantik-Farben & Rahmen dunkler für WCAG AA (Text 4.5:1, UI-Komponenten 3:1).
  */
-html[data-color-scheme="forest"] {
-  --color-canvas: #e8efe4;
+html[data-color-scheme="kupfer"] {
+  --color-canvas: #faf4ef;
   --color-surface: #ffffff;
-  --color-surface-muted: #dde8d8;
-  --color-border: #7e967d;
-  --color-text-primary: #2a3530;
-  --color-text-secondary: #4a5f52;
-  --color-accent: #456b70;
-  --color-accent-hover: #3b6064;
-  --color-accent-subtle: #e0eadc;
-  --color-accent-muted: #e8efe4;
+  --color-surface-muted: #f2ebe4;
+  --color-border: #9a8b82;
+  --color-text-primary: #2c2420;
+  --color-text-secondary: #5c4f48;
+  --color-accent: #8f4a28;
+  --color-accent-hover: #6d381e;
+  --color-accent-subtle: #f5e8df;
+  --color-accent-muted: #faf4ef;
   --color-accent-foreground: #ffffff;
-  --color-accent-border: #5f8a75;
-  --color-income: #4a6e58;
-  --color-income-bg: #dce8d6;
-  --color-expense: #7a5c48;
-  --color-expense-bg: #f0e8e0;
-  --color-pending: #556340;
-  --color-pending-bg: #ebe8d4;
-  --color-danger: #8b5a4a;
-  --color-danger-hover: #6d4538;
-  --color-danger-subtle: #f0e8e0;
-  --shadow-color: rgba(42, 53, 48, 0.08);
+  --color-accent-border: #a86a48;
+  --color-income: #2f6b4f;
+  --color-income-bg: #e5f2eb;
+  --color-expense: #8b3a32;
+  --color-expense-bg: #faeae8;
+  --color-pending: #7a5c18;
+  --color-pending-bg: #f5eed8;
+  --color-danger: #8b3a32;
+  --color-danger-hover: #712f28;
+  --color-danger-subtle: #faeae8;
+  --shadow-color: rgba(44, 36, 32, 0.08);
 }
 
 /*
@@ -134,7 +134,7 @@ html[data-color-scheme="plum"] {
 
 /*
  * Lagune – Coolors: 001219 · 005f73 · 0a9396 · 94d2bd · e9d8a6 · ca6702 · 9b2226 · …
- * Kühl-aquatisch (Cyan/Navy); warme Amber/Koralle nur für Werte – klar von Moos getrennt.
+ * Kühl-aquatisch (Cyan/Navy); warme Amber/Koralle nur für Werte – klar von Kupfer getrennt.
  * Semantik-Farben & Rahmen dunkler für WCAG AA (Text 4.5:1, UI-Komponenten 3:1).
  */
 html[data-color-scheme="lagoon"] {

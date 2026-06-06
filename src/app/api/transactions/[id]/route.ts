@@ -21,6 +21,10 @@ import {
   unlinkTransfer,
 } from '@/lib/transfers'
 import { syncUnconfirmedRecurringInstanceAmounts } from '@/lib/recurringSync'
+import {
+  applyTransactionCategoryOnSave,
+  validateTransactionCategoryId,
+} from '@/lib/transactionCategory'
 
 export async function GET(
   _request: NextRequest,
@@ -175,16 +179,36 @@ export async function PATCH(
       allowedUpdateFields.isRecurringPaused = false
     }
 
+    if (updateData.categoryId !== undefined) {
+      const categoryValidation = await validateTransactionCategoryId(
+        updateData.categoryId,
+        account.id
+      )
+      if (categoryValidation.error) return categoryValidation.error
+      allowedUpdateFields.categoryId = categoryValidation.categoryId ?? null
+    }
+
     const cleanedUpdateFields = Object.fromEntries(
       Object.entries(allowedUpdateFields).filter(
         ([, value]) => value !== undefined
       )
     ) as Prisma.TransactionUpdateInput
 
-    const updatedTransaction = await prisma.transaction.update({
-      where: { id },
-      data: cleanedUpdateFields,
-      include: transactionTransferInclude,
+    const updatedTransaction = await prisma.$transaction(async (tx) => {
+      const updated = await tx.transaction.update({
+        where: { id },
+        data: cleanedUpdateFields,
+        include: transactionTransferInclude,
+      })
+
+      if (updateData.categoryId !== undefined && updated.categoryId && updated.merchantId) {
+        await applyTransactionCategoryOnSave(tx, {
+          merchantId: updated.merchantId,
+          categoryId: updated.categoryId,
+        })
+      }
+
+      return updated
     })
 
     if (

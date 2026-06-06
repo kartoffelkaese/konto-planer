@@ -15,6 +15,7 @@ const template = {
   | 'merchant'
   | 'merchantId'
   | 'amount'
+  | 'categoryId'
   | 'isTransfer'
   | 'transferTargetAccountId'
 >
@@ -30,6 +31,16 @@ describe('buildRecurringInstanceData', () => {
     expect(data.amount).toBe(-500)
     expect(data.parentTransactionId).toBe('parent-1')
     expect(data.isRecurring).toBe(false)
+  })
+
+  it('kopiert categoryId aus der Vorlage', () => {
+    const data = buildRecurringInstanceData(
+      { ...template, categoryId: 'cat-miete' },
+      new Date('2025-06-01'),
+      'acc-1',
+      'parent-1'
+    )
+    expect(data.categoryId).toBe('cat-miete')
   })
 
   it('nutzt den geänderten Vorlagenbetrag für neue Instanzen', () => {

@@ -1,25 +1,44 @@
 import { describe, it, expect } from 'vitest'
 import {
   resolveMerchantCategory,
+  resolveMerchantCategories,
   resolveTransactionCategory,
   serializeMerchant,
+  normalizeCategoryIds,
 } from './merchantCategories'
 import type { Category } from '@/types'
 
-const category: Category = {
-  id: 'cat-1',
+const categoryA: Category = {
+  id: 'cat-a',
   name: 'Lebensmittel',
   color: '#A8E6CF',
   createdAt: '2025-01-01',
 }
 
+const categoryB: Category = {
+  id: 'cat-b',
+  name: 'Miete',
+  color: '#FFD3B6',
+  createdAt: '2025-01-01',
+}
+
+describe('resolveMerchantCategories', () => {
+  it('liefert alle Kategorien sortiert nach id', () => {
+    expect(
+      resolveMerchantCategories({
+        categories: [{ category: categoryB }, { category: categoryA }],
+      })
+    ).toEqual([categoryA, categoryB])
+  })
+})
+
 describe('resolveMerchantCategory', () => {
-  it('liefert erste verknüpfte Kategorie', () => {
+  it('liefert erste Kategorie nach stabiler Sortierung', () => {
     expect(
       resolveMerchantCategory({
-        categories: [{ category }],
+        categories: [{ category: categoryB }, { category: categoryA }],
       })
-    ).toEqual(category)
+    ).toEqual(categoryA)
   })
 })
 
@@ -34,33 +53,63 @@ describe('resolveTransactionCategory', () => {
     expect(
       resolveTransactionCategory({
         categoryRef: direct,
-        merchantRef: { categories: [{ category }] },
+        merchantRef: { categories: [{ category: categoryA }] },
       })
     ).toEqual(direct)
   })
 
-  it('fällt auf Händler-Kategorie zurück', () => {
+  it('fällt auf Händler-Kategorie zurück wenn categoryId null', () => {
     expect(
       resolveTransactionCategory({
-        merchantRef: { categories: [{ category }] },
+        categoryId: null,
+        categoryRef: null,
+        merchantRef: { categories: [{ category: categoryB }, { category: categoryA }] },
       })
-    ).toEqual(category)
+    ).toEqual(categoryA)
+  })
+
+  it('Regression: gleiche Auflösung bei mehreren Händler-Kategorien', () => {
+    const merchantRef = {
+      categories: [{ category: categoryB }, { category: categoryA }],
+    }
+    const first = resolveTransactionCategory({
+      categoryId: null,
+      merchantRef,
+    })
+    const second = resolveTransactionCategory({
+      categoryId: null,
+      merchantRef,
+    })
+    expect(first).toEqual(categoryA)
+    expect(second).toEqual(first)
   })
 })
 
 describe('serializeMerchant', () => {
-  it('mappt categoryId für die UI', () => {
+  it('mappt categories und categoryIds für die UI', () => {
     expect(
       serializeMerchant({
         id: 'm1',
-        name: 'Rewe',
+        name: 'Peter',
         accountId: 'acc',
         createdAt: '2025-01-01',
-        categories: [{ category }],
+        categories: [{ category: categoryB }, { category: categoryA }],
       })
     ).toMatchObject({
-      categoryId: 'cat-1',
-      category,
+      categoryIds: ['cat-a', 'cat-b'],
+      categories: [categoryA, categoryB],
+      categoryId: 'cat-a',
+      category: categoryA,
     })
+  })
+})
+
+describe('normalizeCategoryIds', () => {
+  it('bevorzugt categoryIds Array', () => {
+    expect(normalizeCategoryIds(['a', 'b'], 'c')).toEqual(['a', 'b'])
+  })
+
+  it('wandelt einzelnes categoryId in Array um', () => {
+    expect(normalizeCategoryIds(undefined, 'c')).toEqual(['c'])
   })
 })

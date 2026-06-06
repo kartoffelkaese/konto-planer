@@ -13,6 +13,10 @@ import {
   resolveTransferSenderName,
   transactionTransferInclude,
 } from '@/lib/transfers'
+import {
+  applyTransactionCategoryOnSave,
+  validateTransactionCategoryId,
+} from '@/lib/transactionCategory'
 
 export async function GET(request: Request) {
   const ctx = await getAccountContext()
@@ -99,11 +103,19 @@ export async function POST(request: Request) {
       description,
       amount,
       date,
+      categoryId: rawCategoryId,
       isRecurring,
       recurringInterval,
       isTransfer,
       transferTargetAccountId,
     } = body
+
+    const categoryValidation = await validateTransactionCategoryId(
+      rawCategoryId,
+      account.id
+    )
+    if (categoryValidation.error) return categoryValidation.error
+    const categoryId = categoryValidation.categoryId ?? null
 
     const resolvedMerchant = await resolveMerchantForTransaction(account.id, {
       merchantId,
@@ -137,20 +149,30 @@ export async function POST(request: Request) {
           : description ?? null
 
       if (isRecurring) {
-        const transaction = await prisma.transaction.create({
-          data: {
-            accountId: account.id,
-            merchant: resolvedMerchant.merchant,
-            merchantId: resolvedMerchant.merchantId,
-            description: normalizedDescription,
-            amount: transferAmount,
-            date: transactionDate,
-            isRecurring: true,
-            recurringInterval: recurringInterval || 'monthly',
-            isTransfer: true,
-            transferTargetAccountId,
-          },
-          include: transactionTransferInclude,
+        const transaction = await prisma.$transaction(async (tx) => {
+          const created = await tx.transaction.create({
+            data: {
+              accountId: account.id,
+              merchant: resolvedMerchant.merchant,
+              merchantId: resolvedMerchant.merchantId,
+              description: normalizedDescription,
+              amount: transferAmount,
+              date: transactionDate,
+              categoryId,
+              isRecurring: true,
+              recurringInterval: recurringInterval || 'monthly',
+              isTransfer: true,
+              transferTargetAccountId,
+            },
+          })
+          await applyTransactionCategoryOnSave(tx, {
+            merchantId: created.merchantId,
+            categoryId: created.categoryId,
+          })
+          return tx.transaction.findUniqueOrThrow({
+            where: { id: created.id },
+            include: transactionTransferInclude,
+          })
         })
         return NextResponse.json(transaction)
       }
@@ -164,10 +186,16 @@ export async function POST(request: Request) {
             description: normalizedDescription,
             amount: transferAmount,
             date: transactionDate,
+            categoryId,
             isRecurring: false,
             isTransfer: true,
             transferTargetAccountId,
           },
+        })
+
+        await applyTransactionCategoryOnSave(tx, {
+          merchantId: source.merchantId,
+          categoryId: source.categoryId,
         })
 
         await createTransferPair(
@@ -186,18 +214,30 @@ export async function POST(request: Request) {
       return NextResponse.json(transaction)
     }
 
-    const transaction = await prisma.transaction.create({
-      data: {
-        accountId: account.id,
-        merchant: resolvedMerchant.merchant,
-        merchantId: resolvedMerchant.merchantId,
-        description,
-        amount,
-        date: new Date(date),
-        isRecurring: isRecurring || false,
-        recurringInterval: isRecurring ? recurringInterval : null,
-      },
-      include: transactionTransferInclude,
+    const transaction = await prisma.$transaction(async (tx) => {
+      const created = await tx.transaction.create({
+        data: {
+          accountId: account.id,
+          merchant: resolvedMerchant.merchant,
+          merchantId: resolvedMerchant.merchantId,
+          description,
+          amount,
+          date: new Date(date),
+          categoryId,
+          isRecurring: isRecurring || false,
+          recurringInterval: isRecurring ? recurringInterval : null,
+        },
+      })
+
+      await applyTransactionCategoryOnSave(tx, {
+        merchantId: created.merchantId,
+        categoryId: created.categoryId,
+      })
+
+      return tx.transaction.findUniqueOrThrow({
+        where: { id: created.id },
+        include: transactionTransferInclude,
+      })
     })
 
     return NextResponse.json(transaction)

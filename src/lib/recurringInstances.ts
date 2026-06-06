@@ -6,6 +6,7 @@ export type RecurringTemplate = Pick<
   | 'merchant'
   | 'merchantId'
   | 'amount'
+  | 'categoryId'
   | 'isTransfer'
   | 'transferTargetAccountId'
 >
@@ -23,6 +24,7 @@ export function buildRecurringInstanceData(
     description: template.description,
     merchant: template.merchant,
     merchantId: template.merchantId,
+    categoryId: template.categoryId,
     amount: template.amount,
     date: dueDate,
     isConfirmed: false,

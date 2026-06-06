@@ -6,6 +6,7 @@ import {
   BACKUP_MAX_BYTES,
   validateBackupPayload,
 } from '@/lib/backup-validation'
+import { setMerchantCategories } from '@/lib/merchantCategories'
 
 export async function GET() {
   try {
@@ -24,7 +25,12 @@ export async function GET() {
     ])
 
     const merchantsWithCategories = merchants.map((merchant) => ({
-      ...merchant,
+      id: merchant.id,
+      name: merchant.name,
+      categoryIds: merchantCategories
+        .filter((link) => link.merchantId === merchant.id)
+        .map((link) => link.categoryId)
+        .sort(),
       categoryId:
         merchantCategories.find((link) => link.merchantId === merchant.id)
           ?.categoryId ?? null,
@@ -89,7 +95,12 @@ export async function POST(request: Request) {
 
     const b = backup as {
       categories: Array<{ id: string; name: string; color: string }>
-      merchants: Array<{ id: string; name: string; categoryId: string | null }>
+      merchants: Array<{
+        id: string
+        name: string
+        categoryId?: string | null
+        categoryIds?: string[]
+      }>
       transactions: Array<{
         id: string
         amount: unknown
@@ -102,6 +113,7 @@ export async function POST(request: Request) {
         lastConfirmedDate?: string | null
         merchant: string
         merchantId: string | null
+        categoryId?: string | null
       }>
     }
 
@@ -136,17 +148,16 @@ export async function POST(request: Request) {
             accountId: account.id,
           },
         })
-        if (merchant.categoryId) {
-          const mappedCategoryId = categoryMap.get(merchant.categoryId)
-          if (mappedCategoryId) {
-            await tx.merchantCategory.create({
-              data: {
-                merchantId: newMerchant.id,
-                categoryId: mappedCategoryId,
-              },
-            })
-          }
-        }
+
+        const sourceCategoryIds =
+          merchant.categoryIds ??
+          (merchant.categoryId ? [merchant.categoryId] : [])
+        const mappedCategoryIds = sourceCategoryIds
+          .map((categoryId) => categoryMap.get(categoryId))
+          .filter((id): id is string => Boolean(id))
+
+        await setMerchantCategories(tx, newMerchant.id, mappedCategoryIds)
+
         merchantMap.set(merchant.id, newMerchant.id)
       }
 
@@ -166,6 +177,9 @@ export async function POST(request: Request) {
             merchant: transaction.merchant,
             merchantId: transaction.merchantId
               ? merchantMap.get(transaction.merchantId) ?? null
+              : null,
+            categoryId: transaction.categoryId
+              ? categoryMap.get(transaction.categoryId) ?? null
               : null,
             accountId: account.id,
           },

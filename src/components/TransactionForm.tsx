@@ -7,6 +7,8 @@ import { formatDateForInput } from '@/lib/dateUtils'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
 import TransferAccountFields, { type TransferTarget } from '@/components/TransferAccountFields'
+import CategorySelect from '@/components/CategorySelect'
+import { suggestCategoryIdForMerchant } from '@/lib/suggestCategoryId'
 import {
   findExactMerchantMatch,
   findSimilarMerchant,
@@ -16,6 +18,8 @@ interface Merchant {
   id: string
   name: string
   description?: string | null
+  categoryIds?: string[]
+  categories?: Array<{ id: string; name: string; color?: string }>
   category?: {
     id: string
     name: string
@@ -41,6 +45,7 @@ export default function TransactionForm({
   const [formData, setFormData] = useState({
     merchant: '',
     merchantId: '',
+    categoryId: '',
     description: '',
     amount: '',
     type: 'expense',
@@ -118,6 +123,7 @@ export default function TransactionForm({
         merchant: selectedMerchant?.name || trimmedMerchant,
         merchantId: formData.merchantId || undefined,
         createNewMerchant: forceNewMerchant || undefined,
+        categoryId: formData.categoryId || null,
         isTransfer: isTransfer || undefined,
         transferTargetAccountId: isTransfer ? transferTargetAccountId : undefined,
         description: formData.description,
@@ -143,6 +149,23 @@ export default function TransactionForm({
     a.name.localeCompare(b.name)
   )
 
+  const applyMerchantCategorySuggestion = (merchant: Merchant | undefined) => {
+    const suggested = suggestCategoryIdForMerchant(
+      merchant
+        ? {
+            categoryIds: merchant.categoryIds,
+            categories: merchant.categories?.map((c) => ({
+              id: c.id,
+              name: c.name,
+              color: '',
+              createdAt: '',
+            })),
+          }
+        : null
+    )
+    setFormData((prev) => ({ ...prev, categoryId: suggested }))
+  }
+
   const handleMerchantInput = (value: string) => {
     setForceNewMerchant(false)
     const trimmed = value.trim()
@@ -154,11 +177,13 @@ export default function TransactionForm({
         merchant: match.name,
         description: prev.description || match.description || '',
       }))
+      applyMerchantCategorySuggestion(match)
     } else {
       setFormData((prev) => ({
         ...prev,
         merchantId: '',
         merchant: value,
+        categoryId: '',
       }))
     }
   }
@@ -171,6 +196,7 @@ export default function TransactionForm({
       merchant: merchant.name,
       description: prev.description || merchant.description || '',
     }))
+    applyMerchantCategorySuggestion(merchant)
   }
 
   const handleCreateNewMerchant = () => {
@@ -178,8 +204,18 @@ export default function TransactionForm({
     setFormData((prev) => ({
       ...prev,
       merchantId: '',
+      categoryId: '',
     }))
   }
+
+  const selectedMerchantRecord = formData.merchantId
+    ? sortedMerchants.find((m) => m.id === formData.merchantId)
+    : undefined
+
+  const suggestedCategoryIds =
+    selectedMerchantRecord?.categoryIds ??
+    selectedMerchantRecord?.categories?.map((c) => c.id) ??
+    []
 
   const merchantDisplay =
     formData.merchantId
@@ -256,6 +292,16 @@ export default function TransactionForm({
           )}
         </div>
       </div>
+
+      <CategorySelect
+        id="categoryId"
+        value={formData.categoryId}
+        onChange={(categoryId) =>
+          setFormData((prev) => ({ ...prev, categoryId }))
+        }
+        suggestedCategoryIds={suggestedCategoryIds}
+        disabled={loading}
+      />
 
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-primary">

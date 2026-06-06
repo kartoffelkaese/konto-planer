@@ -9,8 +9,9 @@ import {
 } from '@/lib/api-auth'
 import {
   merchantCategoriesInclude,
+  normalizeCategoryIds,
   serializeMerchant,
-  setMerchantCategory,
+  setMerchantCategories,
 } from '@/lib/merchantCategories'
 
 export async function GET() {
@@ -44,7 +45,9 @@ export async function POST(request: Request) {
 
     const { account } = ctx
 
-    const { name, categoryId } = await request.json()
+    const body = await request.json()
+    const { name, categoryId, categoryIds: rawCategoryIds } = body
+    const categoryIds = normalizeCategoryIds(rawCategoryIds, categoryId)
 
     if (!name) {
       return new Response(
@@ -55,8 +58,10 @@ export async function POST(request: Request) {
       )
     }
 
-    const categoryError = await assertCategoryOwned(categoryId, account.id)
-    if (categoryError) return categoryError
+    for (const id of categoryIds) {
+      const categoryError = await assertCategoryOwned(id, account.id)
+      if (categoryError) return categoryError
+    }
 
     const existingMerchant = await prisma.merchant.findFirst({
       where: {
@@ -80,7 +85,7 @@ export async function POST(request: Request) {
         },
       })
 
-      await setMerchantCategory(tx, created.id, categoryId)
+      await setMerchantCategories(tx, created.id, categoryIds)
 
       return tx.merchant.findUniqueOrThrow({
         where: { id: created.id },

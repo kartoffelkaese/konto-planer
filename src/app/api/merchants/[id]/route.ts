@@ -9,8 +9,9 @@ import {
 } from '@/lib/api-auth'
 import {
   merchantCategoriesInclude,
+  normalizeCategoryIds,
   serializeMerchant,
-  setMerchantCategory,
+  setMerchantCategories,
 } from '@/lib/merchantCategories'
 
 export async function GET(
@@ -58,7 +59,12 @@ export async function PATCH(
 
   const { account } = ctx
 
-  const { name, categoryId } = await request.json()
+  const body = await request.json()
+  const { name, categoryId, categoryIds: rawCategoryIds } = body
+  const categoryIds =
+    rawCategoryIds !== undefined || categoryId !== undefined
+      ? normalizeCategoryIds(rawCategoryIds, categoryId)
+      : undefined
 
   if (!name) {
     return NextResponse.json(
@@ -84,8 +90,12 @@ export async function PATCH(
     )
   }
 
-  const categoryError = await assertCategoryOwned(categoryId, account.id)
-  if (categoryError) return categoryError
+  if (categoryIds !== undefined) {
+    for (const catId of categoryIds) {
+      const categoryError = await assertCategoryOwned(catId, account.id)
+      if (categoryError) return categoryError
+    }
+  }
 
   const merchant = await prisma.$transaction(async (tx) => {
     await tx.merchant.update({
@@ -96,7 +106,9 @@ export async function PATCH(
       data: { name },
     })
 
-    await setMerchantCategory(tx, id, categoryId)
+    if (categoryIds !== undefined) {
+      await setMerchantCategories(tx, id, categoryIds)
+    }
 
     return tx.merchant.findUniqueOrThrow({
       where: { id },

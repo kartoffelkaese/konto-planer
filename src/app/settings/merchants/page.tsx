@@ -36,6 +36,8 @@ interface Merchant {
   name: string
   categoryId?: string | null
   category?: Category | null
+  categories?: Category[]
+  categoryIds?: string[]
   createdAt: string
 }
 
@@ -51,7 +53,7 @@ export default function MerchantsPage() {
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null)
   const [formData, setFormData] = useState({
     name: '',
-    categoryId: ''
+    categoryIds: [] as string[],
   })
   const [filters, setFilters] = useState({
     search: '',
@@ -115,7 +117,7 @@ export default function MerchantsPage() {
 
       await loadMerchants()
       setShowAddModal(false)
-      setFormData({ name: '', categoryId: '' })
+      setFormData({ name: '', categoryIds: [] })
       showToast('Händler erstellt', 'success')
     } catch (err) {
       console.error('Error creating merchant:', err)
@@ -150,7 +152,7 @@ export default function MerchantsPage() {
       await loadMerchants()
       setShowEditModal(false)
       setSelectedMerchant(null)
-      setFormData({ name: '', categoryId: '' })
+      setFormData({ name: '', categoryIds: [] })
       showToast('Händler gespeichert', 'success')
     } catch (err) {
       console.error('Error updating merchant:', err)
@@ -191,12 +193,30 @@ export default function MerchantsPage() {
     }
   }
 
+  const getMerchantCategoryIds = (merchant: Merchant): string[] =>
+    merchant.categoryIds ??
+    merchant.categories?.map((category) => category.id) ??
+    (merchant.categoryId ? [merchant.categoryId] : [])
+
+  const toggleCategoryId = (categoryId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      categoryIds: prev.categoryIds.includes(categoryId)
+        ? prev.categoryIds.filter((id) => id !== categoryId)
+        : [...prev.categoryIds, categoryId],
+    }))
+  }
+
   const filteredMerchants = merchants
-    .filter(merchant => {
-    const matchesSearch = merchant.name.toLowerCase().includes(filters.search.toLowerCase())
-    const matchesCategory = !filters.categoryId || merchant.categoryId === filters.categoryId
-    return matchesSearch && matchesCategory
-  })
+    .filter((merchant) => {
+      const matchesSearch = merchant.name
+        .toLowerCase()
+        .includes(filters.search.toLowerCase())
+      const merchantCategoryIds = getMerchantCategoryIds(merchant)
+      const matchesCategory =
+        !filters.categoryId || merchantCategoryIds.includes(filters.categoryId)
+      return matchesSearch && matchesCategory
+    })
     .sort((a, b) => a.name.localeCompare(b.name))
 
   if (loading) {
@@ -271,28 +291,27 @@ export default function MerchantsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-1">
-            {filteredMerchants.map((merchant) => (
+            {filteredMerchants.map((merchant) => {
+              const merchantCategories =
+                merchant.categories ??
+                (merchant.category ? [merchant.category] : [])
+              return (
               <div
                 key={merchant.id}
                 className="bg-surface rounded-lg shadow-sm border border-border p-4"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-2">
-                    {merchant.category && (
-                      <div
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: merchant.category.color }}
-                      />
-                    )}
-                    <h3 className="text-lg font-medium text-primary">
-                      {merchant.name}
-                    </h3>
-                  </div>
+                  <h3 className="text-lg font-medium text-primary">
+                    {merchant.name}
+                  </h3>
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => {
                         setSelectedMerchant(merchant)
-                        setFormData({ name: merchant.name, categoryId: merchant.categoryId || '' })
+                        setFormData({
+                          name: merchant.name,
+                          categoryIds: getMerchantCategoryIds(merchant),
+                        })
                         setShowEditModal(true)
                       }}
                       className="text-secondary hover:text-primary"
@@ -310,13 +329,24 @@ export default function MerchantsPage() {
                     </button>
                   </div>
                 </div>
-                {merchant.category && (
-                  <p className="text-sm text-secondary">
-                    {merchant.category.name}
-                  </p>
+                {merchantCategories.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {merchantCategories.map((category) => (
+                      <span
+                        key={category.id}
+                        className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                        style={{
+                          backgroundColor: category.color,
+                          color: getContrastColor(category.color),
+                        }}
+                      >
+                        {category.name}
+                      </span>
+                    ))}
+                  </div>
                 )}
               </div>
-            ))}
+            )})}
           </div>
         )}
       </div>
@@ -342,22 +372,26 @@ export default function MerchantsPage() {
             />
           </div>
           <div>
-            <label htmlFor="categoryId" className="block text-sm font-medium text-primary">
-              Kategorie
-            </label>
-            <select
-              id="categoryId"
-              value={formData.categoryId}
-              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface sm:text-sm"
-            >
-              <option value="">Kategorie auswählen</option>
+            <span className="block text-sm font-medium text-primary mb-2">
+              Kategorien
+            </span>
+            <div className="space-y-2 max-h-48 overflow-y-auto rounded-control border border-border p-3">
               {[...categories].sort((a, b) => a.name.localeCompare(b.name)).map((category) => (
-                <option key={category.id} value={category.id}>
+                <label key={category.id} className="flex items-center gap-2 text-sm text-primary">
+                  <input
+                    type="checkbox"
+                    checked={formData.categoryIds.includes(category.id)}
+                    onChange={() => toggleCategoryId(category.id)}
+                    className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
+                  />
+                  <span
+                    className="inline-block w-3 h-3 rounded-full shrink-0"
+                    style={{ backgroundColor: category.color }}
+                  />
                   {category.name}
-                </option>
+                </label>
               ))}
-            </select>
+            </div>
           </div>
           <div className="flex justify-end gap-3">
             <Button type="button" variant="secondary" onClick={() => setShowAddModal(false)} disabled={isSaving}>
@@ -391,22 +425,26 @@ export default function MerchantsPage() {
             />
           </div>
           <div>
-            <label htmlFor="edit-categoryId" className="block text-sm font-medium text-primary">
-              Kategorie
-            </label>
-            <select
-              id="edit-categoryId"
-              value={formData.categoryId}
-              onChange={(e) => setFormData(prev => ({ ...prev, categoryId: e.target.value }))}
-              className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent sm:text-sm bg-surface text-primary"
-            >
-              <option value="">Keine Kategorie</option>
+            <span className="block text-sm font-medium text-primary mb-2">
+              Kategorien
+            </span>
+            <div className="space-y-2 max-h-48 overflow-y-auto rounded-control border border-border p-3">
               {categories.map((category) => (
-                <option key={category.id} value={category.id}>
+                <label key={category.id} className="flex items-center gap-2 text-sm text-primary">
+                  <input
+                    type="checkbox"
+                    checked={formData.categoryIds.includes(category.id)}
+                    onChange={() => toggleCategoryId(category.id)}
+                    className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
+                  />
+                  <span
+                    className="inline-block w-3 h-3 rounded-full shrink-0"
+                    style={{ backgroundColor: category.color }}
+                  />
                   {category.name}
-                </option>
+                </label>
               ))}
-            </select>
+            </div>
           </div>
           <div className="flex justify-end gap-3">
             <Button type="button" variant="secondary" onClick={() => setShowEditModal(false)} disabled={isSaving}>

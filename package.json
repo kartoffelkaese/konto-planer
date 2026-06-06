@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "5.1.1",
+  "version": "5.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
@@ -52,5 +52,12 @@
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.8"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.8.0": true,
+    "fsevents@2.3.3": true,
+    "prisma@7.8.0": true,
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.11.1": true
   }
 }

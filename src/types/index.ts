@@ -10,7 +10,8 @@ export interface Merchant {
   name: string
   categoryId?: string | null
   category?: Category | null
-  categories?: Array<{ category: Category }>
+  categories?: Category[]
+  categoryIds?: string[]
   createdAt: string
 }
 
@@ -60,6 +61,7 @@ export interface CreateTransactionData {
   merchant: string
   merchantId?: string
   createNewMerchant?: boolean
+  categoryId?: string | null
   isTransfer?: boolean
   transferTargetAccountId?: string
   description?: string

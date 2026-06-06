@@ -9,10 +9,14 @@ import { Button } from '@/components/Button'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import TransferAccountFields, { type TransferTarget } from '@/components/TransferAccountFields'
+import CategorySelect from '@/components/CategorySelect'
+import { resolveMerchantCategories, resolveTransactionCategory } from '@/lib/merchantCategories'
 
 interface Merchant {
   id: string
   name: string
+  categoryIds?: string[]
+  categories?: Array<{ id: string; name: string }>
 }
 
 interface EditTransactionFormProps {
@@ -36,6 +40,11 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
   const [linkedTargetName, setLinkedTargetName] = useState<string | null>(null)
   const [hasActivePair, setHasActivePair] = useState(false)
   const [merchants, setMerchants] = useState<Merchant[]>([])
+  const [categoryId, setCategoryId] = useState('')
+  const [categoryTouched, setCategoryTouched] = useState(false)
+  const [resolvedSuggestion, setResolvedSuggestion] = useState<string | null>(null)
+  const [storedCategoryId, setStoredCategoryId] = useState<string | null>(null)
+  const [suggestedCategoryIds, setSuggestedCategoryIds] = useState<string[]>([])
   const [formData, setFormData] = useState({
     merchant: '',
     description: '',
@@ -85,6 +94,17 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
       setTransferTargetAccountId(transaction.transferTargetAccountId || '')
       setLinkedTargetName(transaction.transferTargetAccount?.name ?? null)
       setHasActivePair(Boolean(transaction.transferPairAsSource?.targetTransactionId))
+      const savedCategoryId = transaction.categoryId ?? null
+      setStoredCategoryId(savedCategoryId)
+      setCategoryId(savedCategoryId ?? '')
+      setCategoryTouched(false)
+      const resolved = savedCategoryId
+        ? null
+        : resolveTransactionCategory(transaction)?.id ?? null
+      setResolvedSuggestion(resolved)
+      setSuggestedCategoryIds(
+        resolveMerchantCategories(transaction.merchantRef).map((category) => category.id)
+      )
       setFormData({
         merchant: transaction.merchant || '',
         description: transaction.description || '',
@@ -175,6 +195,9 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
         recurringInterval: formData.isRecurring ? formData.recurringInterval : undefined,
         isTransfer,
         transferTargetAccountId: isTransfer ? transferTargetAccountId : undefined,
+        ...(categoryTouched
+          ? { categoryId: categoryId || null }
+          : {}),
       })
       showToast('Transaktion gespeichert', 'success')
       onSuccess?.()
@@ -252,6 +275,22 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
             </datalist>
           )}
         </div>
+
+        <CategorySelect
+          id="edit-categoryId"
+          value={
+            categoryTouched
+              ? categoryId
+              : categoryId || resolvedSuggestion || ''
+          }
+          onChange={(nextCategoryId) => {
+            setCategoryTouched(true)
+            setCategoryId(nextCategoryId)
+          }}
+          suggestedCategoryIds={suggestedCategoryIds}
+          disabled={isSubmitting}
+          isSuggestion={!storedCategoryId && !categoryTouched && Boolean(resolvedSuggestion)}
+        />
 
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-primary">

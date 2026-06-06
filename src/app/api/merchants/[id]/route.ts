@@ -2,7 +2,7 @@
 
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getAccountContext } from '@/lib/account-context'
+import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import {
   assertCategoryOwned,
   isErrorResponse,
@@ -56,6 +56,9 @@ export async function PATCH(
 
   const ctx = await getAccountContext()
   if (isErrorResponse(ctx)) return ctx
+
+  const writeError = requireWritableContext(ctx)
+  if (writeError) return writeError
 
   const { account } = ctx
 
@@ -127,6 +130,9 @@ export async function DELETE(
 
   const ctx = await getAccountContext()
   if (isErrorResponse(ctx)) return ctx
+
+  const writeError = requireWritableContext(ctx)
+  if (writeError) return writeError
 
   const { account } = ctx
 

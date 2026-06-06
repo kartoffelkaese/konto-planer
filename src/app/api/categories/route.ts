@@ -2,7 +2,7 @@
 
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getAccountContext } from '@/lib/account-context'
+import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 
 export async function GET() {
@@ -28,6 +28,9 @@ export async function GET() {
 export async function POST(request: Request) {
   const ctx = await getAccountContext()
   if (isErrorResponse(ctx)) return ctx
+
+  const writeError = requireWritableContext(ctx)
+  if (writeError) return writeError
 
   const { account } = ctx
 

@@ -29,6 +29,7 @@ export async function GET() {
       accountId: i.account.id,
       accountName: i.account.name,
       invitedByEmail: i.invitedBy.email,
+      role: i.role,
       createdAt: i.createdAt,
     }))
   )

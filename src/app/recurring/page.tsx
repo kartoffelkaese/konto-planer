@@ -33,7 +33,7 @@ import { Button } from '@/components/Button'
 
 export default function RecurringTransactionsPage() {
   const { showToast } = useToast()
-  const { salaryDay } = useUserSettings()
+  const { salaryDay, canWrite } = useUserSettings()
   const [transactions, setTransactions] = useState<RecurringWithStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -193,7 +193,7 @@ export default function RecurringTransactionsPage() {
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            {hasDueWithoutInstance && (
+            {canWrite && hasDueWithoutInstance && (
               <Button
                 type="button"
                 variant="secondary"
@@ -205,6 +205,7 @@ export default function RecurringTransactionsPage() {
                 Ausstehende erstellen
               </Button>
             )}
+          {canWrite && (
           <button
             onClick={() => setShowNewTransactionModal(true)}
             className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent focus:ring-offset-canvas transition-colors duration-150"
@@ -214,6 +215,7 @@ export default function RecurringTransactionsPage() {
             </svg>
             Neue wiederkehrende Zahlung
           </button>
+          )}
           </div>
         </div>
 
@@ -267,13 +269,15 @@ export default function RecurringTransactionsPage() {
                   <th className="text-center p-4 text-secondary">Letzte Bestätigung</th>
                   <th className="text-center p-4 text-secondary">Nächste Zahlung</th>
                   <th className="text-center p-4 text-secondary">Gehaltsmonat</th>
-                  <th className="text-right p-4 text-secondary">Aktionen</th>
+                  {canWrite && (
+                    <th className="text-right p-4 text-secondary">Aktionen</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="text-center p-4 text-sm text-secondary">
+                    <td colSpan={canWrite ? 9 : 8} className="text-center p-4 text-sm text-secondary">
                       Keine wiederkehrenden Zahlungen vorhanden
                     </td>
                   </tr>
@@ -331,6 +335,7 @@ export default function RecurringTransactionsPage() {
                           {salaryStatus.label}
                         </span>
                       </td>
+                      {canWrite && (
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <button
@@ -376,6 +381,7 @@ export default function RecurringTransactionsPage() {
                           </button>
                         </div>
                       </td>
+                      )}
                     </tr>
                   )})
                 )}
@@ -460,6 +466,7 @@ export default function RecurringTransactionsPage() {
                       </div>
                     </div>
 
+                    {canWrite && (
                     <div className="flex flex-wrap justify-end gap-2">
                       <button
                         type="button"
@@ -500,6 +507,7 @@ export default function RecurringTransactionsPage() {
                         Bearbeiten
                       </button>
                     </div>
+                    )}
                   </div>
                 )})
               )}

@@ -5,7 +5,7 @@ import {
   getNextRecurringDueDate,
   getNextRecurringDueDateAfter,
 } from '@/lib/dateUtils'
-import { getAccountContext } from '@/lib/account-context'
+import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import {
   createTransferPair,
@@ -22,6 +22,9 @@ export async function POST(
   try {
     const ctx = await getAccountContext()
     if (isErrorResponse(ctx)) return ctx
+
+    const writeError = requireWritableContext(ctx)
+    if (writeError) return writeError
 
     const { account } = ctx
 

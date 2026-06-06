@@ -1,13 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import type { AccountMemberRole } from '@prisma/client'
+import { isAccountWritable } from '@/lib/accountPermissions'
 
 export type UserSettings = {
   id: string
   email: string
   salaryDay: number
   accountName: string | null
+  transferSenderName?: string | null
   createdAt: string
+  activeAccountId?: string
+  role?: AccountMemberRole
 }
 
 export function useUserSettings() {
@@ -45,8 +50,16 @@ export function useUserSettings() {
     return () => window.removeEventListener('account-changed', onAccountChanged)
   }, [load])
 
+  const role = settings?.role
+  const canWrite = useMemo(
+    () => (role ? isAccountWritable(role) : true),
+    [role]
+  )
+
   return {
     settings,
+    role,
+    canWrite,
     salaryDay: settings?.salaryDay ?? null,
     accountName: settings?.accountName ?? 'Mein Konto',
     loading,

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { getAccountContext } from '@/lib/account-context'
+import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import {
   getTransactionForAccount,
   assertMerchantOwned,
@@ -64,6 +64,9 @@ export async function PATCH(
   try {
     const ctx = await getAccountContext()
     if (isErrorResponse(ctx)) return ctx
+
+    const writeError = requireWritableContext(ctx)
+    if (writeError) return writeError
 
     const { account, user } = ctx
     const existingTransaction = await getTransactionForAccount(id, account.id)
@@ -300,6 +303,9 @@ export async function DELETE(
   try {
     const ctx = await getAccountContext()
     if (isErrorResponse(ctx)) return ctx
+
+    const writeError = requireWritableContext(ctx)
+    if (writeError) return writeError
 
     const { account } = ctx
     const existingTransaction = await getTransactionForAccount(id, account.id)

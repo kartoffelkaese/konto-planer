@@ -140,6 +140,9 @@ export default function AccountSwitcher({
           {acc.role === 'MEMBER' && (
             <span className="block text-xs text-secondary">Geteilt</span>
           )}
+          {acc.role === 'READ_ONLY' && (
+            <span className="block text-xs text-secondary">Nur Lesen</span>
+          )}
         </span>
         {isActive && (
           <CheckIcon className="h-5 w-5 shrink-0 text-accent" aria-hidden />

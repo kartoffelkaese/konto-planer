@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import type { Transaction } from '@prisma/client'
 import { userHasAccountAccess } from '@/lib/accounts'
+import { assertCanWriteAccount } from '@/lib/accountPermissions'
 
 export { getUserBySession } from '@/lib/account-context'
 
@@ -84,14 +85,20 @@ export async function assertAccountWritable(
   userId: string,
   accountId: string
 ): Promise<NextResponse | null> {
-  const hasAccess = await userHasAccountAccess(userId, accountId)
-  if (!hasAccess) {
+  const membership = await prisma.accountMember.findUnique({
+    where: {
+      accountId_userId: { accountId, userId },
+    },
+  })
+
+  if (!membership) {
     return NextResponse.json(
       { error: 'Kein Zugriff auf Konto' },
       { status: 403 }
     )
   }
-  return null
+
+  return assertCanWriteAccount(membership)
 }
 
 export function validateSalaryDay(salaryDay: unknown): number | NextResponse {

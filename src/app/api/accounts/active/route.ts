@@ -4,6 +4,7 @@ import {
   getAccountContext,
   getUserBySession,
 } from '@/lib/account-context'
+import { isAccountWritable } from '@/lib/accountPermissions'
 import {
   ACCOUNT_SETTINGS_SELECT,
   isErrorResponse,
@@ -55,8 +56,8 @@ export async function PATCH(request: NextRequest) {
 
   const { account, membership } = ctx
 
-  if (membership.role !== 'OWNER' && membership.role !== 'MEMBER') {
-    return NextResponse.json({ error: 'Kein Zugriff' }, { status: 403 })
+  if (!isAccountWritable(membership.role)) {
+    return NextResponse.json({ error: 'Für dieses Konto haben Sie nur Lesezugriff' }, { status: 403 })
   }
 
   const data: { name?: string; salaryDay?: number } = {}

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSalaryMonthRange } from '@/lib/dateUtils'
 import { resolveSalaryDay } from '@/lib/salaryDay'
-import { getAccountContext } from '@/lib/account-context'
+import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { resolveMerchantForTransaction } from '@/lib/resolveMerchantForTransaction'
 import {
@@ -91,6 +91,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const ctx = await getAccountContext()
   if (isErrorResponse(ctx)) return ctx
+
+  const writeError = requireWritableContext(ctx)
+  if (writeError) return writeError
 
   const { account, user } = ctx
 

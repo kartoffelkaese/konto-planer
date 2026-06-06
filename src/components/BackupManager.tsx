@@ -5,7 +5,7 @@ import { ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
 import { Button, getButtonClassName } from '@/components/Button'
 
-export default function BackupManager() {
+export default function BackupManager({ allowRestore = true }: { allowRestore?: boolean }) {
   const { showToast } = useToast()
   const [isBackingUp, setIsBackingUp] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
@@ -115,6 +115,7 @@ export default function BackupManager() {
           Backup erstellen
         </Button>
 
+        {allowRestore && (
         <label
           className={`${getButtonClassName({ variant: 'primary' })} cursor-pointer ${isBusy ? 'pointer-events-none opacity-50' : ''}`}
         >
@@ -137,6 +138,7 @@ export default function BackupManager() {
             className="hidden"
           />
         </label>
+        )}
       </div>
     </div>
   )

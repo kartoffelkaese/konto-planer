@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getAccountContext } from '@/lib/account-context'
+import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import {
   isErrorResponse,
   validateSalaryDay,
@@ -13,6 +13,9 @@ export async function PATCH(request: NextRequest) {
   try {
     const ctx = await getAccountContext()
     if (isErrorResponse(ctx)) return ctx
+
+    const writeError = requireWritableContext(ctx)
+    if (writeError) return writeError
 
     const { user, account, membership } = ctx
     const body = await request.json()

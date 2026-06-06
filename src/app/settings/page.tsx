@@ -12,10 +12,12 @@ import ColorSchemeSwitcher from '@/components/ColorSchemeSwitcher'
 import AccountSharing from '@/components/AccountSharing'
 import AccountInvitations from '@/components/AccountInvitations'
 import CreateAdditionalAccount from '@/components/CreateAdditionalAccount'
+import { useUserSettings } from '@/hooks/useUserSettings'
 import { Button } from '@/components/Button'
 
 export default function SettingsPage() {
   const { showToast } = useToast()
+  const { canWrite } = useUserSettings()
   const { data: session, update: updateSession } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -61,6 +63,7 @@ export default function SettingsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!canWrite) return
     setLoading(true)
     setError(null)
     try {
@@ -178,6 +181,13 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {!canWrite && (
+              <div className="rounded-lg border border-accent-border bg-accent-subtle p-4 text-sm text-primary">
+                Sie haben für dieses Konto nur Lesezugriff. Einstellungen und
+                Buchungen können nicht geändert werden.
+              </div>
+            )}
+
             {/* Allgemeine Einstellungen */}
             <form id="general-settings" onSubmit={handleSubmit} className="rounded-lg border border-border p-4 bg-surface">
               <h2 className="text-lg font-medium text-primary mb-4">Allgemeine Einstellungen</h2>
@@ -195,7 +205,7 @@ export default function SettingsPage() {
                       onChange={(e) => setAccountName(e.target.value)}
                       className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
                       placeholder="z.B. Girokonto"
-                      disabled={loading}
+                      disabled={loading || !canWrite}
                     />
                   </div>
                 </div>
@@ -212,7 +222,7 @@ export default function SettingsPage() {
                       onChange={(e) => setTransferSenderName(e.target.value)}
                       className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
                       placeholder="z.B. Martin, Familie Müller"
-                      disabled={loading}
+                      disabled={loading || !canWrite}
                     />
                   </div>
                   <p className="mt-2 text-sm text-secondary">
@@ -231,7 +241,7 @@ export default function SettingsPage() {
                       value={salaryDay}
                       onChange={(e) => setSalaryDay(parseInt(e.target.value))}
                       className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
-                      disabled={loading}
+                      disabled={loading || !canWrite}
                     >
                       {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
                         <option key={day} value={day}>
@@ -245,11 +255,13 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
+                {canWrite && (
                 <div className="flex justify-end">
                   <Button type="submit" loading={loading} loadingText="Wird gespeichert…">
                     Speichern
                   </Button>
                 </div>
+                )}
               </div>
             </form>
 
@@ -262,8 +274,8 @@ export default function SettingsPage() {
             <div className="rounded-lg border border-border p-4 bg-surface">
               <h2 className="text-lg font-medium text-primary mb-4">Konto teilen</h2>
               <p className="text-sm text-secondary mb-4">
-                Laden Sie andere Nutzer per E-Mail ein. Sie erhalten vollen Zugriff auf
-                das aktuell gewählte Konto (Transaktionen, Kategorien, Backup).
+                Laden Sie andere Nutzer per E-Mail ein. Sie können vollen Zugriff
+                oder Nur-Lese-Zugriff auf das aktuell gewählte Konto vergeben.
               </p>
               <AccountSharing />
             </div>
@@ -342,7 +354,7 @@ export default function SettingsPage() {
 
             {/* Backup-Manager */}
             <div id="backup-settings" className="rounded-lg border border-border p-4 bg-surface">
-              <BackupManager />
+              <BackupManager allowRestore={canWrite} />
             </div>
 
             <div id="delete-user-account" className="rounded-lg border border-border p-4 bg-surface">

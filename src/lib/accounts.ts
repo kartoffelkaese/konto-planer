@@ -60,7 +60,7 @@ export async function acceptPendingInvites(
       create: {
         accountId: invite.accountId,
         userId,
-        role: AccountMemberRole.MEMBER,
+        role: invite.role === AccountMemberRole.OWNER ? AccountMemberRole.MEMBER : invite.role,
       },
       update: {},
     })

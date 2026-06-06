@@ -13,6 +13,7 @@ datasource db {
 enum AccountMemberRole {
   OWNER
   MEMBER
+  READ_ONLY
 }
 
 enum AccountInviteStatus {
@@ -67,6 +68,7 @@ model AccountInvite {
   accountId       String
   email           String
   invitedByUserId String
+  role            AccountMemberRole   @default(MEMBER)
   status          AccountInviteStatus @default(PENDING)
   createdAt       DateTime            @default(now())
   account         Account             @relation(fields: [accountId], references: [id], onDelete: Cascade)

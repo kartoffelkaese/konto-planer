@@ -35,7 +35,7 @@ function TransactionsPageContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { salaryDay, accountName, loading: settingsLoading } = useUserSettings()
+  const { salaryDay, accountName, loading: settingsLoading, canWrite } = useUserSettings()
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [sortField, setSortField] = useState<SortField>(() => {
@@ -327,7 +327,7 @@ function TransactionsPageContent() {
   }
 
   const hasPendingInList = transactions.some(isTransactionPending)
-  const showPendingAction = totals.totalPendingExpenses > 0 || hasPendingInList
+  const showPendingAction = canWrite && (totals.totalPendingExpenses > 0 || hasPendingInList)
 
   if ((loading || settingsLoading) && transactions.length === 0 && !error) {
     return <PageLoader message="Transaktionen werden geladen…" />
@@ -403,6 +403,7 @@ function TransactionsPageContent() {
               />
               <span className="text-sm text-primary">Nur Gehaltsmonat</span>
             </label>
+            {canWrite && (
             <Button
               type="button"
               className="hidden md:inline-flex shrink-0"
@@ -410,6 +411,7 @@ function TransactionsPageContent() {
             >
               Neue Transaktion
             </Button>
+            )}
           </div>
         </div>
 
@@ -453,16 +455,17 @@ function TransactionsPageContent() {
           <TransactionList
             transactions={transactions}
             onTransactionChange={handleTransactionChange}
-            onToggleConfirmation={handleToggleConfirmation}
+            onToggleConfirmation={canWrite ? handleToggleConfirmation : undefined}
             togglingTransactionIds={togglingTransactionIds}
             lastElementRef={lastElementRef}
             sortField={sortField}
             sortDirection={sortDirection}
             onSort={handleSort}
             salaryDay={salaryDay}
-            onAddTransaction={() => setShowNewTransactionModal(true)}
-            onEditTransaction={handleEditTransaction}
+            onAddTransaction={canWrite ? () => setShowNewTransactionModal(true) : undefined}
+            onEditTransaction={canWrite ? handleEditTransaction : undefined}
             isSearchActive={debouncedSearch.trim().length > 0}
+            readOnly={!canWrite}
           />
           {hasMore && (
             <div ref={loadingRef} className="flex justify-center items-center gap-2 mt-8">
@@ -502,6 +505,7 @@ function TransactionsPageContent() {
         )}
       </Modal>
 
+      {canWrite && (
       <Button
         type="button"
         className="md:hidden fixed bottom-6 right-6 z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
@@ -510,6 +514,7 @@ function TransactionsPageContent() {
       >
         <PlusIcon className="h-6 w-6" aria-hidden="true" />
       </Button>
+      )}
     </div>
   )
 }

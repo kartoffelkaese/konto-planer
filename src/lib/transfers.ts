@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { Prisma, Transaction } from '@prisma/client'
+import { AccountMemberRole } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { assertAccountWritable } from '@/lib/api-auth'
 import { transactionCategoryInclude } from '@/lib/merchantCategories'
@@ -67,6 +68,7 @@ export async function getTransferTargets(
     where: {
       userId,
       accountId: { not: activeAccountId },
+      role: { not: AccountMemberRole.READ_ONLY },
     },
     include: {
       account: {

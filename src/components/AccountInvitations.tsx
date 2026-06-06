@@ -12,11 +12,14 @@ import {
   dispatchAccountSwitching,
 } from '@/lib/accountSwitchEvents'
 
+import { inviteRoleLabel } from '@/lib/accountPermissions'
+
 type ReceivedInvite = {
   id: string
   accountId: string
   accountName: string
   invitedByEmail: string
+  role: string
   createdAt: string
 }
 
@@ -139,6 +142,9 @@ export default function AccountInvitations() {
                 </p>
                 <p className="text-sm text-secondary truncate">
                   Eingeladen von {invite.invitedByEmail}
+                </p>
+                <p className="text-xs text-secondary mt-1">
+                  Zugriff: {inviteRoleLabel(invite.role)}
                 </p>
               </div>
               <div className="flex shrink-0 gap-2">

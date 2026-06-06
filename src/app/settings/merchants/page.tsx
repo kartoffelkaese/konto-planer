@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
 import PageLoader from '@/components/PageLoader'
 import SettingsBreadcrumb from '@/components/SettingsBreadcrumb'
+import { useUserSettings } from '@/hooks/useUserSettings'
 
 // Funktion zur Berechnung der Textfarbe basierend auf der Hintergrundfarbe
 function getContrastColor(hexcolor: string) {
@@ -43,6 +44,7 @@ interface Merchant {
 
 export default function MerchantsPage() {
   const { showToast } = useToast()
+  const { canWrite } = useUserSettings()
   const [merchants, setMerchants] = useState<Merchant[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -228,6 +230,7 @@ export default function MerchantsPage() {
       <SettingsBreadcrumb current="Händler" />
       <div className="flex justify-between items-center mb-6">
         <h1 className="page-title">Händler verwalten</h1>
+        {canWrite && (
         <button
           onClick={() => setShowAddModal(true)}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-control shadow-sm text-white bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
@@ -235,6 +238,7 @@ export default function MerchantsPage() {
           <PlusIcon className="h-5 w-5 mr-2" />
           Händler hinzufügen
         </button>
+        )}
       </div>
 
       {error && (
@@ -305,6 +309,8 @@ export default function MerchantsPage() {
                     {merchant.name}
                   </h3>
                   <div className="flex items-center space-x-2">
+                    {canWrite && (
+                    <>
                     <button
                       onClick={() => {
                         setSelectedMerchant(merchant)
@@ -327,6 +333,8 @@ export default function MerchantsPage() {
                     >
                       <TrashIcon className="h-5 w-5" />
                     </button>
+                    </>
+                    )}
                   </div>
                 </div>
                 {merchantCategories.length > 0 && (

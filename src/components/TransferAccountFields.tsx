@@ -63,7 +63,11 @@ export default function TransferAccountFields({
             {transferTargets.map((target) => (
               <option key={target.id} value={target.id}>
                 {target.name}
-                {target.role === 'MEMBER' ? ' (geteilt)' : ''}
+                {target.role === 'MEMBER'
+                  ? ' (geteilt)'
+                  : target.role === 'READ_ONLY'
+                    ? ' (nur lesen)'
+                    : ''}
               </option>
             ))}
           </select>

@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getFirstAccountIdForUser, userHasAccountAccess } from '@/lib/accounts'
 import { isErrorResponse } from '@/lib/api-auth'
+import { assertCanWriteAccount } from '@/lib/accountPermissions'
 
 export type AccountContext = {
   user: User
@@ -111,4 +112,10 @@ export async function getAccountContextForAccountId(
   }
 
   return { user, account, membership, email }
+}
+
+export function requireWritableContext(
+  ctx: AccountContext
+): NextResponse | null {
+  return assertCanWriteAccount(ctx.membership)
 }

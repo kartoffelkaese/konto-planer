@@ -9,6 +9,10 @@ import { getAccountContextForAccountId } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { normalizeEmail } from '@/lib/accounts'
 import {
+  isInvitableMemberRole,
+  parseInvitableMemberRole,
+} from '@/lib/accountPermissions'
+import {
   checkRateLimit,
   getClientIp,
   RATE_LIMITS,
@@ -16,17 +20,23 @@ import {
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  const { id: accountId } = await params
-  const ctx = await getAccountContextForAccountId(accountId)
-  if (isErrorResponse(ctx)) return ctx
-
+function assertOwner(ctx: { membership: { role: AccountMemberRole } }) {
   if (ctx.membership.role !== AccountMemberRole.OWNER) {
     return NextResponse.json(
       { error: 'Nur Kontoinhaber können Mitglieder verwalten' },
       { status: 403 }
     )
   }
+  return null
+}
+
+export async function GET(_request: NextRequest, { params }: RouteParams) {
+  const { id: accountId } = await params
+  const ctx = await getAccountContextForAccountId(accountId)
+  if (isErrorResponse(ctx)) return ctx
+
+  const ownerError = assertOwner(ctx)
+  if (ownerError) return ownerError
 
   const members = await prisma.accountMember.findMany({
     where: { accountId },
@@ -55,6 +65,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     pendingInvites: invites.map((i) => ({
       id: i.id,
       email: i.email,
+      role: i.role,
       createdAt: i.createdAt,
     })),
   })
@@ -65,12 +76,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   const ctx = await getAccountContextForAccountId(accountId)
   if (isErrorResponse(ctx)) return ctx
 
-  if (ctx.membership.role !== AccountMemberRole.OWNER) {
-    return NextResponse.json(
-      { error: 'Nur Kontoinhaber können einladen' },
-      { status: 403 }
-    )
-  }
+  const ownerError = assertOwner(ctx)
+  if (ownerError) return ownerError
 
   const ip = getClientIp(request.headers)
   const { allowed } = checkRateLimit(
@@ -89,6 +96,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   if (!rawEmail || typeof rawEmail !== 'string') {
     return NextResponse.json({ error: 'E-Mail erforderlich' }, { status: 400 })
   }
+
+  const inviteRole = isInvitableMemberRole(body.role)
+    ? body.role
+    : parseInvitableMemberRole(body.role)
 
   const email = normalizeEmail(rawEmail)
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -122,9 +133,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   const existingInvite = await prisma.accountInvite.findUnique({
     where: { accountId_email: { accountId, email } },
   })
-  if (
-    existingInvite?.status === AccountInviteStatus.PENDING
-  ) {
+  if (existingInvite?.status === AccountInviteStatus.PENDING) {
     return NextResponse.json(
       { error: 'Für diese E-Mail liegt bereits eine ausstehende Einladung vor' },
       { status: 400 }
@@ -139,11 +148,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       accountId,
       email,
       invitedByUserId: ctx.user.id,
+      role: inviteRole,
       status: AccountInviteStatus.PENDING,
     },
     update: {
       status: AccountInviteStatus.PENDING,
       invitedByUserId: ctx.user.id,
+      role: inviteRole,
     },
   })
 
@@ -154,17 +165,73 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   })
 }
 
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  const { id: accountId } = await params
+  const ctx = await getAccountContextForAccountId(accountId)
+  if (isErrorResponse(ctx)) return ctx
+
+  const ownerError = assertOwner(ctx)
+  if (ownerError) return ownerError
+
+  const body = await request.json()
+  const { memberId } = body
+
+  if (!memberId || typeof memberId !== 'string') {
+    return NextResponse.json({ error: 'memberId erforderlich' }, { status: 400 })
+  }
+
+  if (!isInvitableMemberRole(body.role)) {
+    return NextResponse.json(
+      { error: 'Ungültige Rolle. Erlaubt: MEMBER oder READ_ONLY' },
+      { status: 400 }
+    )
+  }
+
+  const target = await prisma.accountMember.findFirst({
+    where: { id: memberId, accountId },
+  })
+
+  if (!target) {
+    return NextResponse.json({ error: 'Mitglied nicht gefunden' }, { status: 404 })
+  }
+
+  if (target.role === AccountMemberRole.OWNER) {
+    return NextResponse.json(
+      { error: 'Die Rolle des Inhabers kann nicht geändert werden' },
+      { status: 400 }
+    )
+  }
+
+  if (target.userId === ctx.user.id) {
+    return NextResponse.json(
+      { error: 'Sie können Ihre eigene Rolle nicht ändern' },
+      { status: 400 }
+    )
+  }
+
+  const updated = await prisma.accountMember.update({
+    where: { id: memberId },
+    data: { role: body.role },
+    include: {
+      user: { select: { email: true } },
+    },
+  })
+
+  return NextResponse.json({
+    id: updated.id,
+    userId: updated.userId,
+    email: updated.user.email,
+    role: updated.role,
+  })
+}
+
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const { id: accountId } = await params
   const ctx = await getAccountContextForAccountId(accountId)
   if (isErrorResponse(ctx)) return ctx
 
-  if (ctx.membership.role !== AccountMemberRole.OWNER) {
-    return NextResponse.json(
-      { error: 'Nur Kontoinhaber können Zugriff entziehen' },
-      { status: 403 }
-    )
-  }
+  const ownerError = assertOwner(ctx)
+  if (ownerError) return ownerError
 
   const body = await request.json()
   const { memberId, inviteId } = body

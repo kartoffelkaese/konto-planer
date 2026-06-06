@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
 import PageLoader from '@/components/PageLoader'
 import SettingsBreadcrumb from '@/components/SettingsBreadcrumb'
+import { useUserSettings } from '@/hooks/useUserSettings'
 
 const PRESET_COLORS = [
   '#FF6B6B', // Rot
@@ -82,6 +83,7 @@ interface Category {
 
 export default function CategoriesPage() {
   const { showToast } = useToast()
+  const { canWrite } = useUserSettings()
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -230,6 +232,7 @@ export default function CategoriesPage() {
       <SettingsBreadcrumb current="Kategorien" />
       <div className="flex justify-between items-center mb-6">
         <h1 className="page-title">Kategorien verwalten</h1>
+        {canWrite && (
         <button
           onClick={() => setShowAddModal(true)}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-control shadow-sm text-white bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
@@ -237,6 +240,7 @@ export default function CategoriesPage() {
           <PlusIcon className="h-5 w-5 mr-2" />
           Kategorie hinzufügen
         </button>
+        )}
       </div>
 
       {error && (
@@ -289,6 +293,8 @@ export default function CategoriesPage() {
                     </h3>
                   </div>
                   <div className="flex items-center space-x-2">
+                    {canWrite && (
+                    <>
                     <button
                       onClick={() => {
                         setSelectedCategory(category)
@@ -308,6 +314,8 @@ export default function CategoriesPage() {
                     >
                       <TrashIcon className="h-5 w-5" />
                     </button>
+                    </>
+                    )}
                   </div>
                 </div>
                 <p className="text-sm text-secondary">

@@ -29,6 +29,7 @@ interface TransactionListProps {
   onAddTransaction?: () => void
   onEditTransaction?: (id: string) => void
   isSearchActive?: boolean
+  readOnly?: boolean
 }
 
 export default function TransactionList({ 
@@ -44,6 +45,7 @@ export default function TransactionList({
   onAddTransaction,
   onEditTransaction,
   isSearchActive = false,
+  readOnly = false,
 }: TransactionListProps) {
   const { showToast } = useToast()
   const [editingDate, setEditingDate] = useState<string | null>(null)
@@ -148,9 +150,9 @@ export default function TransactionList({
           : 'Erfassen Sie Ihre erste Einnahme oder Ausgabe.'
       }
       actionLabel={
-        isSearchActive ? undefined : onAddTransaction ? 'Erste Transaktion anlegen' : undefined
+        isSearchActive ? undefined : !readOnly && onAddTransaction ? 'Erste Transaktion anlegen' : undefined
       }
-      onAction={isSearchActive ? undefined : onAddTransaction}
+      onAction={isSearchActive || readOnly ? undefined : onAddTransaction}
     />
   )
 
@@ -258,6 +260,7 @@ export default function TransactionList({
   }
 
   const handleEditClick = (transactionId: string) => {
+    if (readOnly) return
     if (onEditTransaction) {
       onEditTransaction(transactionId)
     }
@@ -332,13 +335,15 @@ export default function TransactionList({
               <SortableHeader field="description" label="Beschreibung" />
               <SortableHeader field="amount" label="Betrag" align="right" />
               <SortableHeader field="status" label="Status" align="center" />
-              <th className="text-right p-4 text-secondary text-sm font-medium">Aktionen</th>
+              {!readOnly && (
+                <th className="text-right p-4 text-secondary text-sm font-medium">Aktionen</th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-border bg-canvas">
             {sortedTransactions.length === 0 ? (
               <tr>
-                <td colSpan={7}>{emptyList}</td>
+                <td colSpan={readOnly ? 6 : 7}>{emptyList}</td>
               </tr>
             ) : (
               sortedTransactions.map((transaction, index) => (
@@ -349,12 +354,16 @@ export default function TransactionList({
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-primary">
                     <div className="flex items-center">
-                      <button
-                        onClick={() => handleEditClick(transaction.id)}
-                        className="text-secondary hover:text-primary"
-                      >
-                        {formatDate(transaction.date)}
-                      </button>
+                      {readOnly ? (
+                        <span>{formatDate(transaction.date)}</span>
+                      ) : (
+                        <button
+                          onClick={() => handleEditClick(transaction.id)}
+                          className="text-secondary hover:text-primary"
+                        >
+                          {formatDate(transaction.date)}
+                        </button>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-primary">
@@ -388,14 +397,21 @@ export default function TransactionList({
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                    <button
-                      onClick={() => handleToggleConfirmation(transaction)}
-                      title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
-                      className={getStatusPillClasses(transaction)}
-                    >
-                      {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
-                    </button>
+                    {readOnly ? (
+                      <span className={getStatusPillClasses(transaction)}>
+                        {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleToggleConfirmation(transaction)}
+                        title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
+                        className={getStatusPillClasses(transaction)}
+                      >
+                        {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
+                      </button>
+                    )}
                   </td>
+                  {!readOnly && (
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => handleEditClick(transaction.id)}
@@ -405,6 +421,7 @@ export default function TransactionList({
                       <PencilIcon className="h-5 w-5" />
                     </button>
                   </td>
+                  )}
                 </tr>
               ))
             )}
@@ -425,12 +442,18 @@ export default function TransactionList({
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <button
-                    onClick={() => handleEditClick(transaction.id)}
-                    className="text-sm font-medium text-primary"
-                  >
-                    {formatDate(transaction.date)}
-                  </button>
+                  {readOnly ? (
+                    <span className="text-sm font-medium text-primary">
+                      {formatDate(transaction.date)}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleEditClick(transaction.id)}
+                      className="text-sm font-medium text-primary"
+                    >
+                      {formatDate(transaction.date)}
+                    </button>
+                  )}
                   <div className="text-sm text-secondary">
                     {transaction.merchant}
                     <TransferBadge transaction={transaction} />
@@ -463,20 +486,28 @@ export default function TransactionList({
                   <span className="text-sm text-secondary">{transaction.description}</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => handleToggleConfirmation(transaction)}
-                    title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
-                    className={getStatusPillClasses(transaction)}
-                  >
-                    {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
-                  </button>
-                  <button
-                    onClick={() => handleEditClick(transaction.id)}
-                    title="Transaktion bearbeiten"
-                    className="text-accent hover:opacity-80"
-                  >
-                    <PencilIcon className="h-5 w-5" />
-                  </button>
+                  {readOnly ? (
+                    <span className={getStatusPillClasses(transaction)}>
+                      {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
+                    </span>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleToggleConfirmation(transaction)}
+                        title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
+                        className={getStatusPillClasses(transaction)}
+                      >
+                        {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
+                      </button>
+                      <button
+                        onClick={() => handleEditClick(transaction.id)}
+                        title="Transaktion bearbeiten"
+                        className="text-accent hover:opacity-80"
+                      >
+                        <PencilIcon className="h-5 w-5" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

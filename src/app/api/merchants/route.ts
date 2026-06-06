@@ -2,7 +2,7 @@
 
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getAccountContext } from '@/lib/account-context'
+import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import {
   assertCategoryOwned,
   isErrorResponse,
@@ -42,6 +42,9 @@ export async function POST(request: Request) {
   try {
     const ctx = await getAccountContext()
     if (isErrorResponse(ctx)) return ctx
+
+    const writeError = requireWritableContext(ctx)
+    if (writeError) return writeError
 
     const { account } = ctx
 

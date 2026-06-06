@@ -79,11 +79,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   }
 
   await prisma.$transaction(async (tx) => {
+    const memberRole =
+      invite.role === AccountMemberRole.OWNER
+        ? AccountMemberRole.MEMBER
+        : invite.role
     await tx.accountMember.create({
       data: {
         accountId: invite.accountId,
         userId: user.id,
-        role: AccountMemberRole.MEMBER,
+        role: memberRole,
       },
     })
     await tx.accountInvite.update({

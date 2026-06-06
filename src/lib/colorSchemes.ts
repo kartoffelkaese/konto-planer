@@ -25,7 +25,7 @@ export const COLOR_SCHEME_LABELS: Record<
   nebel: {
     title: 'Nebel & Veilchen',
     description: 'Violett-UI, Grün & Rost für Werte',
-    swatches: ['#1c1b28', '#4e58b8', '#2f7a5c', '#9a7d2e', '#b85a4c'],
+    swatches: ['#1c1b28', '#4e58b8', '#2d7457', '#7a6324', '#9e4a3c'],
   },
   twilight: {
     title: 'Abendlicht',
@@ -35,22 +35,22 @@ export const COLOR_SCHEME_LABELS: Record<
   forest: {
     title: 'Moos & Teal',
     description: 'Warmes Moos & Salbei – erdig, ohne Blau',
-    swatches: ['#c9e4ca', '#87bba2', '#55828b', '#6b7d52', '#7a5c48'],
+    swatches: ['#2a3530', '#456b70', '#4a6e58', '#556340', '#7a5c48'],
   },
   plum: {
     title: 'Nachtviolett',
     description: 'Dunkelmodus – Pflaume, Mint, Lilac & Beere',
-    swatches: ['#050404', '#4a1942', '#6ecf9a', '#d4b0e0', '#e88aaa'],
+    swatches: ['#050404', '#b87aa0', '#6ecf9a', '#d4b0e0', '#e88aaa'],
   },
   lagoon: {
     title: 'Lagune',
     description: 'Aquatisches Cyan – kühl, Amber & Koralle',
-    swatches: ['#001219', '#0077b6', '#94d2bd', '#ca6702', '#9b2226'],
+    swatches: ['#001219', '#0077b6', '#087478', '#9a4f02', '#9b2226'],
   },
   heritage: {
     title: 'Heritage',
     description: 'Dunkelmodus – Marine-UI, Mint, Amber & Koralle',
-    swatches: ['#001a28', '#669bbc', '#6ecf9a', '#e0b060', '#c1121f'],
+    swatches: ['#001a28', '#669bbc', '#6ecf9a', '#e0b060', '#e07078'],
   },
 }
 

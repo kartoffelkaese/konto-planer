@@ -13,13 +13,14 @@
 /*
  * Nebel & Veilchen – kühl-violett (UI), Grün/Rost für Werte
  * Canvas neutral; Akzent dunkler als Einnahmen-Grün.
+ * Semantik-Farben & Rahmen dunkler für WCAG AA (Text 4.5:1, UI-Komponenten 3:1).
  */
 html[data-color-scheme="nebel"],
 html:not([data-color-scheme]) {
   --color-canvas: #f3f2f8;
   --color-surface: #ffffff;
   --color-surface-muted: #ecebf3;
-  --color-border: #ccc9db;
+  --color-border: #9693a2;
   --color-text-primary: #1c1b28;
   --color-text-secondary: #5e5c70;
   --color-accent: #4e58b8;
@@ -28,14 +29,14 @@ html:not([data-color-scheme]) {
   --color-accent-muted: #f3f2f8;
   --color-accent-foreground: #ffffff;
   --color-accent-border: #7a85c9;
-  --color-income: #2f7a5c;
+  --color-income: #2d7457;
   --color-income-bg: #e3f2eb;
-  --color-expense: #b85a4c;
+  --color-expense: #9e4a3c;
   --color-expense-bg: #faece9;
-  --color-pending: #9a7d2e;
+  --color-pending: #7a6324;
   --color-pending-bg: #f8f0e0;
-  --color-danger: #a85548;
-  --color-danger-hover: #8f463b;
+  --color-danger: #9e4a3c;
+  --color-danger-hover: #853f33;
   --color-danger-subtle: #faece9;
   --shadow-color: rgba(28, 27, 40, 0.06);
 }
@@ -49,7 +50,7 @@ html[data-color-scheme="twilight"] {
   --color-canvas: #f5f2f0;
   --color-surface: #ffffff;
   --color-surface-muted: #ebe6e2;
-  --color-border: #a89f98;
+  --color-border: #928a83;
   --color-text-primary: #22223b;
   --color-text-secondary: #3f4358;
   --color-accent: #4a4e69;
@@ -73,25 +74,26 @@ html[data-color-scheme="twilight"] {
 /*
  * Moos & Teal – Coolors: c9e4ca · 87bba2 · 55828b · 3b6064 · 364958
  * Warmes Salbei/Moos (erdig-grün), ohne Cyan – UI aus #55828b/#87bba2.
+ * Semantik-Farben & Rahmen dunkler für WCAG AA (Text 4.5:1, UI-Komponenten 3:1).
  */
 html[data-color-scheme="forest"] {
   --color-canvas: #e8efe4;
   --color-surface: #ffffff;
   --color-surface-muted: #dde8d8;
-  --color-border: #9bb89a;
+  --color-border: #7e967d;
   --color-text-primary: #2a3530;
   --color-text-secondary: #4a5f52;
-  --color-accent: #55828b;
-  --color-accent-hover: #4a6e58;
+  --color-accent: #456b70;
+  --color-accent-hover: #3b6064;
   --color-accent-subtle: #e0eadc;
   --color-accent-muted: #e8efe4;
   --color-accent-foreground: #ffffff;
-  --color-accent-border: #87bba2;
+  --color-accent-border: #5f8a75;
   --color-income: #4a6e58;
   --color-income-bg: #dce8d6;
   --color-expense: #7a5c48;
   --color-expense-bg: #f0e8e0;
-  --color-pending: #6b7d52;
+  --color-pending: #556340;
   --color-pending-bg: #ebe8d4;
   --color-danger: #8b5a4a;
   --color-danger-hover: #6d4538;
@@ -102,13 +104,14 @@ html[data-color-scheme="forest"] {
 /*
  * Nachtviolett (Dunkel) – Coolors: eaeaea · 893168 · 4a1942 · 2e1c2b · 050404
  * Tiefe Violett-Stufen; helles Grau Text; Beere UI; Mint/Lilac/Rosa semantisch.
+ * Rahmen heller für WCAG AA (UI-Komponenten 3:1 auf dunklen Flächen).
  */
 html[data-color-scheme="plum"] {
   color-scheme: dark;
   --color-canvas: #050404;
   --color-surface: #2e1c2b;
   --color-surface-muted: #4a1942;
-  --color-border: #5c3d55;
+  --color-border: #8a7285;
   --color-text-primary: #eaeaea;
   --color-text-secondary: #c4b0bc;
   --color-accent: #b87aa0;
@@ -116,7 +119,7 @@ html[data-color-scheme="plum"] {
   --color-accent-subtle: #3d1e32;
   --color-accent-muted: #2e1c2b;
   --color-accent-foreground: #050404;
-  --color-accent-border: #893168;
+  --color-accent-border: #a85a88;
   --color-income: #6ecf9a;
   --color-income-bg: #0d2e22;
   --color-expense: #e88aaa;
@@ -132,12 +135,13 @@ html[data-color-scheme="plum"] {
 /*
  * Lagune – Coolors: 001219 · 005f73 · 0a9396 · 94d2bd · e9d8a6 · ca6702 · 9b2226 · …
  * Kühl-aquatisch (Cyan/Navy); warme Amber/Koralle nur für Werte – klar von Moos getrennt.
+ * Semantik-Farben & Rahmen dunkler für WCAG AA (Text 4.5:1, UI-Komponenten 3:1).
  */
 html[data-color-scheme="lagoon"] {
   --color-canvas: #e8f6fa;
   --color-surface: #ffffff;
   --color-surface-muted: #dff5f8;
-  --color-border: #94d2bd;
+  --color-border: #6d9b8b;
   --color-text-primary: #001219;
   --color-text-secondary: #005f73;
   --color-accent: #0077b6;
@@ -146,11 +150,11 @@ html[data-color-scheme="lagoon"] {
   --color-accent-muted: #e8f6fa;
   --color-accent-foreground: #ffffff;
   --color-accent-border: #0a9396;
-  --color-income: #0a9396;
+  --color-income: #087478;
   --color-income-bg: #d4f5f0;
   --color-expense: #9b2226;
   --color-expense-bg: #fcecea;
-  --color-pending: #ca6702;
+  --color-pending: #9a4f02;
   --color-pending-bg: #faf0d8;
   --color-danger: #ae2012;
   --color-danger-hover: #9b2226;
@@ -161,13 +165,14 @@ html[data-color-scheme="lagoon"] {
 /*
  * Heritage (Dunkel) – Coolors: 780000 · c1121f · fdf0d5 · 003049 · 669bbc
  * Marine-Stufen für Flächen; Stahlblau UI; Creme Text; Rot/Amber semantisch.
+ * Rahmen & Gefahr heller für WCAG AA (UI 3:1, semantischer Text 4.5:1 auf dunklen Flächen).
  */
 html[data-color-scheme="heritage"] {
   color-scheme: dark;
   --color-canvas: #001a28;
   --color-surface: #002438;
   --color-surface-muted: #003049;
-  --color-border: #1e5575;
+  --color-border: #48758f;
   --color-text-primary: #fdf0d5;
   --color-text-secondary: #9ec4dc;
   --color-accent: #669bbc;
@@ -182,8 +187,8 @@ html[data-color-scheme="heritage"] {
   --color-expense-bg: #3d1018;
   --color-pending: #e0b060;
   --color-pending-bg: #2a3a18;
-  --color-danger: #c1121f;
-  --color-danger-hover: #e85a68;
+  --color-danger: #e07078;
+  --color-danger-hover: #f08890;
   --color-danger-subtle: #3d1018;
   --shadow-color: rgba(0, 0, 0, 0.35);
 }

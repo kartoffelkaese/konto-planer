@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { isGermanBankId } from '@/lib/germanBanks'
+
 import { prisma } from '@/lib/prisma'
 import type { Transaction } from '@prisma/client'
 import { userHasAccountAccess } from '@/lib/accounts'
@@ -10,6 +12,7 @@ export const ACCOUNT_SETTINGS_SELECT = {
   id: true,
   name: true,
   salaryDay: true,
+  bankId: true,
   createdAt: true,
 } as const
 
@@ -160,6 +163,31 @@ export function validateTransferSenderName(
     )
   }
   return trimmed.length > 0 ? trimmed : null
+}
+
+export function validateBankId(
+  bankId: unknown
+): string | null | undefined | NextResponse {
+  if (bankId === undefined) {
+    return undefined
+  }
+  if (bankId === null || bankId === '') {
+    return null
+  }
+  if (typeof bankId !== 'string') {
+    return NextResponse.json(
+      { error: 'Ungültige Bank' },
+      { status: 400 }
+    )
+  }
+  const trimmed = bankId.trim()
+  if (!isGermanBankId(trimmed)) {
+    return NextResponse.json(
+      { error: 'Unbekannte Bank' },
+      { status: 400 }
+    )
+  }
+  return trimmed
 }
 
 /** @deprecated use validateAccountDisplayName */

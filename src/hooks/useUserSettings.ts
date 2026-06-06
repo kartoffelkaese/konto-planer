@@ -10,6 +10,7 @@ export type UserSettings = {
   salaryDay: number
   accountName: string | null
   transferSenderName?: string | null
+  bankId?: string | null
   createdAt: string
   activeAccountId?: string
   role?: AccountMemberRole

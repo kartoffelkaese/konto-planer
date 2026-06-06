@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { CheckIcon, WalletIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
 import Modal from '@/components/Modal'
+import AccountAvatar from '@/components/AccountAvatar'
+import { getDuplicateBankIds } from '@/lib/accountBankBadge'
 import {
   ACCOUNT_SWITCH_EXIT_MS,
   dispatchAccountChanged,
@@ -17,21 +19,12 @@ type AccountItem = {
   name: string
   role: string
   isActive: boolean
+  bankId?: string | null
 }
 
 interface AccountSwitcherProps {
   showExpanded: boolean
   iconOnlyMode: boolean
-}
-
-function accountInitial(name: string): string {
-  const trimmed = name.trim()
-  if (!trimmed) return '?'
-  const parts = trimmed.split(/\s+/).filter(Boolean)
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase()
-  }
-  return trimmed.slice(0, 2).toUpperCase()
 }
 
 export default function AccountSwitcher({
@@ -70,6 +63,14 @@ export default function AccountSwitcher({
   const active = accounts.find((a) => a.isActive) ?? accounts[0]
   const listMode = showExpanded && !iconOnlyMode
   const showSwitcher = accounts.length > 1
+
+  const duplicateBankIds = useMemo(
+    () => getDuplicateBankIds(accounts),
+    [accounts]
+  )
+
+  const showInitialBadge = (bankId?: string | null) =>
+    iconOnlyMode && !!bankId && duplicateBankIds.has(bankId)
 
   const switchAccount = async (accountId: string) => {
     if (accountId === active?.id) {
@@ -116,16 +117,13 @@ export default function AccountSwitcher({
         }`}
         aria-current={isActive ? 'true' : undefined}
       >
-        <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-            isActive
-              ? 'bg-accent text-accent-foreground'
-              : 'bg-surface-muted text-secondary'
-          } ${isActive && avatarAnimating ? 'account-switch-avatar' : ''}`}
-          aria-hidden
-        >
-          {accountInitial(acc.name)}
-        </span>
+        <AccountAvatar
+          name={acc.name}
+          bankId={acc.bankId}
+          active={isActive}
+          animating={isActive && avatarAnimating}
+          showInitialBadge={showInitialBadge(acc.bankId)}
+        />
         <span className="min-w-0 flex-1">
           <span
             className={`block truncate text-sm ${
@@ -181,17 +179,20 @@ export default function AccountSwitcher({
           className="flex flex-col items-center gap-1 rounded-control p-2 text-accent hover:bg-accent-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent max-md:flex-row max-md:gap-2 max-md:px-3 max-md:w-full max-md:justify-start"
           aria-haspopup="dialog"
         >
-          <span
-            className={`flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground ${
-              avatarAnimating ? 'account-switch-avatar' : ''
-            }`}
-          >
-            {active ? (
-              accountInitial(active.name)
-            ) : (
+          {active ? (
+            <AccountAvatar
+              name={active.name}
+              bankId={active.bankId}
+              size="md"
+              active
+              animating={avatarAnimating}
+              showInitialBadge={showInitialBadge(active.bankId)}
+            />
+          ) : (
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-accent-foreground">
               <WalletIcon className="h-5 w-5" aria-hidden />
-            )}
-          </span>
+            </span>
+          )}
           <span className="md:sr-only text-sm font-medium text-primary truncate max-w-[10rem]">
             {active?.name ?? 'Konto'}
           </span>

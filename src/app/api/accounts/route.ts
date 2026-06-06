@@ -8,6 +8,7 @@ import {
   isErrorResponse,
   validateSalaryDay,
   validateAccountDisplayName,
+  validateBankId,
 } from '@/lib/api-auth'
 
 export async function GET() {
@@ -22,7 +23,7 @@ export async function GET() {
     where: { userId: user.id },
     include: {
       account: {
-        select: { id: true, name: true, salaryDay: true, createdAt: true },
+        select: { id: true, name: true, salaryDay: true, bankId: true, createdAt: true },
       },
     },
     orderBy: { createdAt: 'asc' },
@@ -33,6 +34,7 @@ export async function GET() {
       id: m.account.id,
       name: m.account.name,
       salaryDay: m.account.salaryDay,
+      bankId: m.account.bankId,
       role: m.role,
       isActive: m.account.id === activeAccountId,
       createdAt: m.account.createdAt,
@@ -51,6 +53,13 @@ export async function POST(request: NextRequest) {
   if (isErrorResponse(nameResult)) return nameResult
   const name = nameResult ?? 'Neues Konto'
 
+  let bankId: string | null = null
+  if (body.bankId !== undefined) {
+    const validatedBankId = validateBankId(body.bankId)
+    if (isErrorResponse(validatedBankId)) return validatedBankId
+    bankId = validatedBankId ?? null
+  }
+
   let salaryDay = 1
   if (body.salaryDay !== undefined) {
     const validated = validateSalaryDay(body.salaryDay)
@@ -67,7 +76,7 @@ export async function POST(request: NextRequest) {
 
   const account = await prisma.$transaction(async (tx) => {
     const created = await tx.account.create({
-      data: { name, salaryDay },
+      data: { name, salaryDay, bankId },
     })
     await tx.accountMember.create({
       data: {
@@ -84,6 +93,7 @@ export async function POST(request: NextRequest) {
       id: account.id,
       name: account.name,
       salaryDay: account.salaryDay,
+      bankId: account.bankId,
       role: AccountMemberRole.OWNER,
       isActive: false,
       createdAt: account.createdAt,

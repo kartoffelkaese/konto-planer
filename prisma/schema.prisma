@@ -38,6 +38,7 @@ model Account {
   name               String
   salaryDay          Int
   transferSenderName String?
+  bankId             String?
   createdAt          DateTime        @default(now())
   members         AccountMember[]
   invites         AccountInvite[]

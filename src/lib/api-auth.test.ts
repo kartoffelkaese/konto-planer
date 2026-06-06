@@ -7,6 +7,7 @@ vi.mock('@/lib/prisma', () => ({ prisma: {} }))
 import {
   validateSalaryDay,
   validateAccountName,
+  validateBankId,
   isErrorResponse,
 } from './api-auth'
 
@@ -33,5 +34,29 @@ describe('validateAccountName', () => {
 
   it('lehnt leeren Namen ab', () => {
     expect(isErrorResponse(validateAccountName('   '))).toBe(true)
+  })
+})
+
+describe('validateBankId', () => {
+  it('lässt undefined unverändert', () => {
+    expect(validateBankId(undefined)).toBeUndefined()
+  })
+
+  it('akzeptiert null und leeren String als keine Zuordnung', () => {
+    expect(validateBankId(null)).toBeNull()
+    expect(validateBankId('')).toBeNull()
+  })
+
+  it('akzeptiert bekannte Bank-Slugs', () => {
+    expect(validateBankId('ing')).toBe('ing')
+    expect(validateBankId(' trade-republic ')).toBe('trade-republic')
+  })
+
+  it('lehnt unbekannte Banken ab', () => {
+    expect(isErrorResponse(validateBankId('paypal'))).toBe(true)
+  })
+
+  it('lehnt ungültige Typen ab', () => {
+    expect(isErrorResponse(validateBankId(42))).toBe(true)
   })
 })

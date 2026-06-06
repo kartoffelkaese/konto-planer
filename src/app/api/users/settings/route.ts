@@ -7,6 +7,7 @@ import {
   validateSalaryDay,
   validateAccountDisplayName,
   validateTransferSenderName,
+  validateBankId,
 } from '@/lib/api-auth'
 
 export async function PATCH(request: NextRequest) {
@@ -24,6 +25,7 @@ export async function PATCH(request: NextRequest) {
       salaryDay?: number
       name?: string
       transferSenderName?: string | null
+      bankId?: string | null
     } = {}
 
     if (body.salaryDay !== undefined) {
@@ -44,6 +46,12 @@ export async function PATCH(request: NextRequest) {
       data.transferSenderName = senderName
     }
 
+    if (body.bankId !== undefined) {
+      const bankId = validateBankId(body.bankId)
+      if (isErrorResponse(bankId)) return bankId
+      data.bankId = bankId ?? null
+    }
+
     if (Object.keys(data).length === 0) {
       return NextResponse.json({ error: 'Keine Änderungen angegeben' }, { status: 400 })
     }
@@ -59,6 +67,7 @@ export async function PATCH(request: NextRequest) {
       salaryDay: updated.salaryDay,
       accountName: updated.name,
       transferSenderName: updated.transferSenderName,
+      bankId: updated.bankId,
       createdAt: updated.createdAt,
       activeAccountId: account.id,
       role: membership.role,
@@ -85,6 +94,7 @@ export async function GET() {
       salaryDay: account.salaryDay,
       accountName: account.name,
       transferSenderName: account.transferSenderName,
+      bankId: account.bankId,
       createdAt: account.createdAt,
       activeAccountId: account.id,
       role: membership.role,

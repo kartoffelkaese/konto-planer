@@ -17,7 +17,10 @@ export function useCreateAccount() {
   const [loading, setLoading] = useState(false)
 
   const createAccount = useCallback(
-    async (name: string, options?: { switchToNew?: boolean }) => {
+    async (
+      name: string,
+      options?: { switchToNew?: boolean; bankId?: string | null }
+    ) => {
       const trimmed = name.trim()
       if (!trimmed) {
         showToast('Bitte einen Kontonamen eingeben', 'error')
@@ -29,7 +32,10 @@ export function useCreateAccount() {
         const res = await fetch('/api/accounts', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: trimmed }),
+          body: JSON.stringify({
+            name: trimmed,
+            ...(options?.bankId ? { bankId: options.bankId } : {}),
+          }),
         })
         const data = await res.json()
         if (!res.ok) {

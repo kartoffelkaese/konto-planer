@@ -3,17 +3,20 @@
 import { useState } from 'react'
 import { useCreateAccount } from '@/hooks/useCreateAccount'
 import { Button } from '@/components/Button'
+import BankSelect from '@/components/BankSelect'
 
 export default function CreateAdditionalAccount() {
   const { createAccount, loading } = useCreateAccount()
   const [name, setName] = useState('')
+  const [bankId, setBankId] = useState<string | null>(null)
   const [expanded, setExpanded] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const ok = await createAccount(name)
+    const ok = await createAccount(name, { bankId })
     if (ok) {
       setName('')
+      setBankId(null)
       setExpanded(false)
     }
   }
@@ -53,6 +56,20 @@ export default function CreateAdditionalAccount() {
           autoFocus
         />
       </div>
+      <div>
+        <label htmlFor="additional-account-bank" className="block text-sm font-medium text-primary">
+          Bank (optional)
+        </label>
+        <p className="mt-1 mb-2 text-sm text-secondary">
+          Kann später in den Einstellungen geändert werden.
+        </p>
+        <BankSelect
+          id="additional-account-bank"
+          value={bankId}
+          onChange={setBankId}
+          disabled={loading}
+        />
+      </div>
       <div className="flex flex-wrap gap-2 justify-end">
         <Button
           type="button"
@@ -60,6 +77,7 @@ export default function CreateAdditionalAccount() {
           onClick={() => {
             setExpanded(false)
             setName('')
+            setBankId(null)
           }}
           disabled={loading}
         >

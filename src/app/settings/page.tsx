@@ -12,8 +12,10 @@ import ColorSchemeSwitcher from '@/components/ColorSchemeSwitcher'
 import AccountSharing from '@/components/AccountSharing'
 import AccountInvitations from '@/components/AccountInvitations'
 import CreateAdditionalAccount from '@/components/CreateAdditionalAccount'
+import BankSelect from '@/components/BankSelect'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { Button } from '@/components/Button'
+import { dispatchAccountChanged } from '@/lib/accountSwitchEvents'
 
 export default function SettingsPage() {
   const { showToast } = useToast()
@@ -24,6 +26,7 @@ export default function SettingsPage() {
   const [salaryDay, setSalaryDay] = useState(1)
   const [accountName, setAccountName] = useState("Mein Konto")
   const [transferSenderName, setTransferSenderName] = useState('')
+  const [bankId, setBankId] = useState<string | null>(null)
   
   // Neue States für E-Mail-Änderung
   const [showEmailForm, setShowEmailForm] = useState(false)
@@ -55,6 +58,7 @@ export default function SettingsPage() {
       setSalaryDay(data.salaryDay)
       setAccountName(data.accountName || "Mein Konto")
       setTransferSenderName(data.transferSenderName || '')
+      setBankId(data.bankId ?? null)
     } catch (err) {
       console.error('Error loading settings:', err)
       setError('Fehler beim Laden der Einstellungen')
@@ -76,6 +80,7 @@ export default function SettingsPage() {
           salaryDay,
           accountName,
           transferSenderName,
+          bankId,
         }),
       })
 
@@ -84,6 +89,7 @@ export default function SettingsPage() {
       }
 
       showToast('Einstellungen gespeichert', 'success')
+      dispatchAccountChanged()
     } catch (err) {
       console.error('Error saving settings:', err)
       setError('Fehler beim Speichern der Einstellungen')
@@ -208,6 +214,21 @@ export default function SettingsPage() {
                       disabled={loading || !canWrite}
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label htmlFor="bankId" className="block text-sm font-medium text-primary">
+                    Bank
+                  </label>
+                  <p className="mt-1 mb-2 text-sm text-secondary">
+                    Optional – wird als Logo im Seitenmenü angezeigt.
+                  </p>
+                  <BankSelect
+                    id="bankId"
+                    value={bankId}
+                    onChange={setBankId}
+                    disabled={loading || !canWrite}
+                  />
                 </div>
 
                 <div>

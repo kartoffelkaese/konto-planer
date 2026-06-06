@@ -112,6 +112,19 @@ const previewFormatCurrency = (amount: number) =>
 const PREVIEW_ACCOUNT_NAME = 'Haushalt'
 const PREVIEW_BANK_NAME = 'Waldbank'
 
+function PreviewBankLogo() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-full w-full text-secondary"
+      fill="currentColor"
+      aria-hidden
+    >
+      <path d="M12 3 4 9v1h16V9l-8-6zm-1 10v6h2v-6h-2zm-4 0v6h2v-6H7zm8 0v6h2v-6h-2zM4 19h16v2H4v-2z" />
+    </svg>
+  )
+}
+
 function LandingPreview() {
   const categories = [
     { name: 'Wohnen', value: 720, color: 'var(--color-accent)' },
@@ -129,15 +142,8 @@ function LandingPreview() {
       <div className="relative rounded-card border border-accent-border bg-surface p-5 shadow-[0_20px_50px_var(--shadow-color)]">
         <div className="mb-4 flex items-center justify-between gap-3 border-b border-border pb-3">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-white p-1">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/banks/generic-bank.svg"
-                alt=""
-                width={24}
-                height={24}
-                className="h-full w-full object-contain"
-              />
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-muted p-1.5">
+              <PreviewBankLogo />
             </span>
             <div className="min-w-0">
               <p className="text-xs font-medium uppercase tracking-wide text-secondary">

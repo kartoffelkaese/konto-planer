@@ -12,6 +12,7 @@ import {
   resolveTransferSenderName,
   transactionTransferInclude,
 } from '@/lib/transfers'
+import { buildRecurringInstanceData } from '@/lib/recurringInstances'
 
 export async function POST(
   _request: NextRequest,
@@ -67,19 +68,12 @@ export async function POST(
 
     const newTransaction = await prisma.$transaction(async (tx) => {
       const instance = await tx.transaction.create({
-        data: {
-          accountId: account.id,
-          description: originalTransaction.description,
-          merchant: originalTransaction.merchant,
-          merchantId: originalTransaction.merchantId,
-          amount: originalTransaction.amount,
-          date: nextDueDate,
-          isConfirmed: false,
-          isRecurring: false,
-          parentTransactionId: originalTransaction.id,
-          isTransfer: originalTransaction.isTransfer,
-          transferTargetAccountId: originalTransaction.transferTargetAccountId,
-        },
+        data: buildRecurringInstanceData(
+          originalTransaction,
+          nextDueDate,
+          account.id,
+          originalTransaction.id
+        ),
       })
 
       if (

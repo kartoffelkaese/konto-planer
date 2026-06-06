@@ -84,6 +84,11 @@ describe('getNextRecurringDueDate (Anker)', () => {
     const next = getNextRecurringDueDate('2025-03-15', 'quarterly', '2025-06-20')
     expect(dayjs(next).tz('Europe/Berlin').format('YYYY-MM-DD')).toBe('2025-09-15')
   })
+
+  it('bleibt korrekt nach Vorlagen-Anker-Wechsel (neuer Anker)', () => {
+    const next = getNextRecurringDueDate('2025-06-15', 'monthly', '2025-06-20')
+    expect(dayjs(next).tz('Europe/Berlin').format('YYYY-MM-DD')).toBe('2025-07-15')
+  })
 })
 
 describe('getNextRecurringDueDateAfter', () => {

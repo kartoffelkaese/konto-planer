@@ -6,21 +6,18 @@ import KpiCard from '@/components/KpiCard'
 interface MonthlyOverviewProps {
   currentIncome: number
   currentExpenses: number
-  totalIncome: number
-  totalExpenses: number
+  clearedBalance: number
   totalPendingExpenses: number
   available: number
 }
 
 export default function MonthlyOverview({
   currentIncome,
-  totalIncome,
-  totalExpenses,
+  clearedBalance,
   totalPendingExpenses,
   available,
 }: MonthlyOverviewProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const clearedBalance = totalIncome - totalExpenses
 
   const kpiItems = (
     <>

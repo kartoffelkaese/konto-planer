@@ -10,6 +10,7 @@ export interface Merchant {
   name: string
   categoryId?: string | null
   category?: Category | null
+  categories?: Array<{ category: Category }>
   createdAt: string
 }
 
@@ -19,6 +20,8 @@ export interface Transaction {
   merchant: string
   merchantId?: string | null
   merchantRef?: Merchant | null
+  categoryId?: string | null
+  categoryRef?: Category | null
   description: string | null
   amount: number
   date: string

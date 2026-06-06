@@ -22,7 +22,9 @@ export async function GET(
         accountId: account.id,
       },
       include: {
-        merchants: true,
+        merchants: {
+          include: { merchant: true },
+        },
       },
     })
 
@@ -117,18 +119,6 @@ export async function DELETE(
 
     if (!category) {
       return NextResponse.json({ error: 'Kategorie nicht gefunden' }, { status: 404 })
-    }
-
-    if (category._count.merchants > 0) {
-      await prisma.merchant.updateMany({
-        where: {
-          categoryId: id,
-          accountId: account.id,
-        },
-        data: {
-          categoryId: null,
-        },
-      })
     }
 
     await prisma.category.delete({

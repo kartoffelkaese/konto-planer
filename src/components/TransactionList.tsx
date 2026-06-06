@@ -11,6 +11,7 @@ import { getContrastColor } from '@/lib/colorUtils'
 import { useToast } from '@/hooks/useToast'
 import TransferBadge from '@/components/TransferBadge'
 import EmptyState from '@/components/EmptyState'
+import { resolveTransactionCategory } from '@/lib/merchantCategories'
 
 type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
 type SortDirection = 'asc' | 'desc'
@@ -76,8 +77,8 @@ export default function TransactionList({
         comparison = (a.merchant || '').localeCompare(b.merchant || '')
         break
       case 'category':
-        const categoryA = a.merchantRef?.category?.name || ''
-        const categoryB = b.merchantRef?.category?.name || ''
+        const categoryA = resolveTransactionCategory(a)?.name || ''
+        const categoryB = resolveTransactionCategory(b)?.name || ''
         comparison = categoryA.localeCompare(categoryB)
         break
       case 'description':
@@ -361,19 +362,22 @@ export default function TransactionList({
                     <TransferBadge transaction={transaction} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {transaction.merchantRef?.category ? (
+                    {(() => {
+                      const category = resolveTransactionCategory(transaction)
+                      return category ? (
                       <span 
                         className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                         style={{
-                          backgroundColor: transaction.merchantRef.category.color,
-                          color: getContrastColor(transaction.merchantRef.category.color)
+                          backgroundColor: category.color,
+                          color: getContrastColor(category.color)
                         }}
                       >
-                        {transaction.merchantRef.category.name}
+                        {category.name}
                       </span>
                     ) : (
                       <span className="text-secondary">-</span>
-                    )}
+                    )
+                    })()}
                   </td>
                   <td className="px-6 py-4 text-sm text-primary">
                     {transaction.description}
@@ -440,19 +444,22 @@ export default function TransactionList({
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  {transaction.merchantRef?.category ? (
+                  {(() => {
+                    const category = resolveTransactionCategory(transaction)
+                    return category ? (
                       <span 
                         className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                         style={{
-                          backgroundColor: transaction.merchantRef.category.color,
-                          color: getContrastColor(transaction.merchantRef.category.color)
+                          backgroundColor: category.color,
+                          color: getContrastColor(category.color)
                         }}
                       >
-                        {transaction.merchantRef.category.name}
+                        {category.name}
                       </span>
                   ) : (
                     <span className="text-secondary">-</span>
-                  )}
+                  )
+                  })()}
                   <span className="text-sm text-secondary">{transaction.description}</span>
                 </div>
                 <div className="flex items-center space-x-2">

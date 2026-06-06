@@ -7,6 +7,11 @@ import {
   assertCategoryOwned,
   isErrorResponse,
 } from '@/lib/api-auth'
+import {
+  merchantCategoriesInclude,
+  serializeMerchant,
+  setMerchantCategory,
+} from '@/lib/merchantCategories'
 
 export async function GET(
   _request: Request,
@@ -25,13 +30,14 @@ export async function GET(
         id,
         accountId: account.id,
       },
+      include: merchantCategoriesInclude,
     })
 
     if (!merchant) {
       return NextResponse.json({ error: 'Händler nicht gefunden' }, { status: 404 })
     }
 
-    return NextResponse.json(merchant)
+    return NextResponse.json(serializeMerchant(merchant))
   } catch (error) {
     console.error('Error fetching merchant:', error)
     return NextResponse.json(
@@ -81,21 +87,24 @@ export async function PATCH(
   const categoryError = await assertCategoryOwned(categoryId, account.id)
   if (categoryError) return categoryError
 
-  const merchant = await prisma.merchant.update({
-    where: {
-      id,
-      accountId: account.id,
-    },
-    data: {
-      name,
-      categoryId,
-    },
-    include: {
-      category: true,
-    },
+  const merchant = await prisma.$transaction(async (tx) => {
+    await tx.merchant.update({
+      where: {
+        id,
+        accountId: account.id,
+      },
+      data: { name },
+    })
+
+    await setMerchantCategory(tx, id, categoryId)
+
+    return tx.merchant.findUniqueOrThrow({
+      where: { id },
+      include: merchantCategoriesInclude,
+    })
   })
 
-  return NextResponse.json(merchant)
+  return NextResponse.json(serializeMerchant(merchant))
 }
 
 export async function DELETE(

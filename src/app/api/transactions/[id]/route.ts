@@ -20,6 +20,7 @@ import {
   transactionTransferInclude,
   unlinkTransfer,
 } from '@/lib/transfers'
+import { syncUnconfirmedRecurringInstanceAmounts } from '@/lib/recurringSync'
 
 export async function GET(
   _request: NextRequest,
@@ -185,6 +186,17 @@ export async function PATCH(
       data: cleanedUpdateFields,
       include: transactionTransferInclude,
     })
+
+    if (
+      isRecurringTemplate(updatedTransaction) &&
+      updateData.amount !== undefined &&
+      Number(existingTransaction.amount) !== Number(updatedTransaction.amount)
+    ) {
+      await syncUnconfirmedRecurringInstanceAmounts(
+        id,
+        updatedTransaction.amount
+      )
+    }
 
     if (
       shouldCreateTransferPair(updatedTransaction) &&

@@ -14,11 +14,21 @@ export async function GET() {
 
     const { account, user } = ctx
 
-    const [categories, merchants, transactions] = await Promise.all([
+    const [categories, merchants, merchantCategories, transactions] = await Promise.all([
       prisma.category.findMany({ where: { accountId: account.id } }),
       prisma.merchant.findMany({ where: { accountId: account.id } }),
+      prisma.merchantCategory.findMany({
+        where: { merchant: { accountId: account.id } },
+      }),
       prisma.transaction.findMany({ where: { accountId: account.id } }),
     ])
+
+    const merchantsWithCategories = merchants.map((merchant) => ({
+      ...merchant,
+      categoryId:
+        merchantCategories.find((link) => link.merchantId === merchant.id)
+          ?.categoryId ?? null,
+    }))
 
     const backup = {
       version: '1.0',
@@ -29,7 +39,7 @@ export async function GET() {
         accountName: account.name,
       },
       categories,
-      merchants,
+      merchants: merchantsWithCategories,
       transactions,
     }
 
@@ -123,12 +133,20 @@ export async function POST(request: Request) {
         const newMerchant = await tx.merchant.create({
           data: {
             name: merchant.name,
-            categoryId: merchant.categoryId
-              ? categoryMap.get(merchant.categoryId) ?? null
-              : null,
             accountId: account.id,
           },
         })
+        if (merchant.categoryId) {
+          const mappedCategoryId = categoryMap.get(merchant.categoryId)
+          if (mappedCategoryId) {
+            await tx.merchantCategory.create({
+              data: {
+                merchantId: newMerchant.id,
+                categoryId: mappedCategoryId,
+              },
+            })
+          }
+        }
         merchantMap.set(merchant.id, newMerchant.id)
       }
 

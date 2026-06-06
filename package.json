@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "5.0.0",
+  "version": "5.1.1",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
+    "postinstall": "prisma generate",
     "pm2:start": "pm2 start ecosystem.config.js --env production",
     "pm2:stop": "pm2 stop konto-planer",
     "pm2:restart": "pm2 restart konto-planer",
@@ -40,8 +41,8 @@
   "devDependencies": {
     "@eslint/compat": "^2.1.0",
     "@tailwindcss/postcss": "^4.3.0",
-    "@types/node": "^25.9.1",
-    "@types/react": "^19.2.16",
+    "@types/node": "^25.9.2",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.5.0",
     "dotenv": "^17.4.2",

@@ -6,6 +6,10 @@ import {
   assertMerchantOwned,
   isErrorResponse,
 } from '@/lib/api-auth'
+import {
+  resolveTransactionCategory,
+  transactionCategoryInclude,
+} from '@/lib/merchantCategories'
 
 export async function GET(request: Request) {
   try {
@@ -58,9 +62,16 @@ export async function GET(request: Request) {
       where: {
         accountId: account.id,
         ...(category && {
-          merchantRef: {
-            categoryId: category,
-          },
+          OR: [
+            { categoryId: category },
+            {
+              merchantRef: {
+                categories: {
+                  some: { categoryId: category },
+                },
+              },
+            },
+          ],
         }),
         ...(merchant && {
           merchantId: merchant,
@@ -69,13 +80,7 @@ export async function GET(request: Request) {
           gte: startDateObj,
         },
       },
-      include: {
-        merchantRef: {
-          include: {
-            category: true,
-          },
-        },
-      },
+      include: transactionCategoryInclude,
       orderBy: {
         date: 'asc',
       },
@@ -98,11 +103,14 @@ export async function GET(request: Request) {
         const tMonthKey = `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, '0')}`
         return tMonthKey === date
       })
+      const resolvedCategory = transaction
+        ? resolveTransactionCategory(transaction)
+        : null
       return {
         date,
         amount,
-        category: transaction?.merchantRef?.category?.name || '',
-        color: transaction?.merchantRef?.category?.color || '#A7C7E7',
+        category: resolvedCategory?.name || '',
+        color: resolvedCategory?.color || '#A7C7E7',
       }
     })
 

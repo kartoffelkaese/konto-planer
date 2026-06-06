@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { Prisma, Transaction } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { assertAccountWritable } from '@/lib/api-auth'
+import { transactionCategoryInclude } from '@/lib/merchantCategories'
 
 export type TransferTarget = {
   id: string
@@ -16,11 +17,7 @@ export type TransferSyncFields = {
 }
 
 export const transactionTransferInclude = {
-  merchantRef: {
-    include: {
-      category: true,
-    },
-  },
+  ...transactionCategoryInclude,
   transferTargetAccount: {
     select: {
       id: true,

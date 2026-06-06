@@ -7,6 +7,11 @@ import {
   assertCategoryOwned,
   isErrorResponse,
 } from '@/lib/api-auth'
+import {
+  merchantCategoriesInclude,
+  serializeMerchant,
+  setMerchantCategory,
+} from '@/lib/merchantCategories'
 
 export async function GET() {
   try {
@@ -19,12 +24,10 @@ export async function GET() {
       where: {
         accountId: account.id,
       },
-      include: {
-        category: true,
-      },
+      include: merchantCategoriesInclude,
     })
 
-    return NextResponse.json(merchants)
+    return NextResponse.json(merchants.map(serializeMerchant))
   } catch (error) {
     console.error('Detaillierter Fehler beim Laden der Händler:', error)
     return NextResponse.json(
@@ -69,18 +72,23 @@ export async function POST(request: Request) {
       )
     }
 
-    const merchant = await prisma.merchant.create({
-      data: {
-        name,
-        categoryId,
-        accountId: account.id,
-      },
-      include: {
-        category: true,
-      }
+    const merchant = await prisma.$transaction(async (tx) => {
+      const created = await tx.merchant.create({
+        data: {
+          name,
+          accountId: account.id,
+        },
+      })
+
+      await setMerchantCategory(tx, created.id, categoryId)
+
+      return tx.merchant.findUniqueOrThrow({
+        where: { id: created.id },
+        include: merchantCategoriesInclude,
+      })
     })
 
-    return NextResponse.json(merchant)
+    return NextResponse.json(serializeMerchant(merchant))
   } catch (error) {
     console.error('Detaillierter Fehler beim Erstellen des Händlers:', error)
     return NextResponse.json(
@@ -88,4 +96,4 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   }
-} 
+}

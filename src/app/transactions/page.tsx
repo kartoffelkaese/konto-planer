@@ -55,6 +55,7 @@ function TransactionsPageContent() {
     currentExpenses: 0,
     totalIncome: 0,
     totalExpenses: 0,
+    clearedBalance: 0,
     totalPendingExpenses: 0,
     available: 0,
   })
@@ -439,8 +440,7 @@ function TransactionsPageContent() {
           <MonthlyOverview
             currentIncome={totals.currentIncome}
             currentExpenses={totals.currentExpenses}
-            totalIncome={totals.totalIncome}
-            totalExpenses={totals.totalExpenses}
+            clearedBalance={totals.clearedBalance}
             totalPendingExpenses={totals.totalPendingExpenses}
             available={totals.available}
           />

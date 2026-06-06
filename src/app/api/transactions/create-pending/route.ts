@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { getRecurringDueDatesInRange, getSalaryMonthRange } from '@/lib/dateUtils'
+import { buildRecurringInstanceData } from '@/lib/recurringInstances'
 import {
   createTransferPair,
   resolveTransferSenderName,
@@ -59,19 +60,12 @@ export async function POST(_request: NextRequest) {
         if (!existingInstance) {
           const newTransaction = await prisma.$transaction(async (tx) => {
             const instance = await tx.transaction.create({
-              data: {
-                description: transaction.description,
-                merchant: transaction.merchant,
-                merchantId: transaction.merchantId,
-                amount: transaction.amount,
-                date: dueDate,
-                isConfirmed: false,
-                isRecurring: false,
-                accountId: account.id,
-                parentTransactionId: transaction.id,
-                isTransfer: transaction.isTransfer,
-                transferTargetAccountId: transaction.transferTargetAccountId,
-              },
+              data: buildRecurringInstanceData(
+                transaction,
+                dueDate,
+                account.id,
+                transaction.id
+              ),
             })
 
             if (transaction.isTransfer && transaction.transferTargetAccountId) {

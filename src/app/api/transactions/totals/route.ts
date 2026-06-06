@@ -68,13 +68,15 @@ export async function GET(request: Request) {
       0
     )
 
-    const available = totalIncome - (totalExpenses + totalPendingExpenses)
+    const clearedBalance = totalIncome - totalExpenses
+    const available = clearedBalance - totalPendingExpenses
 
     return NextResponse.json({
       currentIncome,
       currentExpenses,
       totalIncome,
       totalExpenses,
+      clearedBalance,
       totalPendingExpenses,
       available,
     })

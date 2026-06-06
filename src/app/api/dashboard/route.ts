@@ -8,6 +8,8 @@ import {
 import { logger } from '@/lib/logger'
 import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
+import { transactionTransferInclude } from '@/lib/transfers'
+import { resolveTransactionCategory } from '@/lib/merchantCategories'
 
 export async function GET() {
   try {
@@ -98,13 +100,7 @@ export async function GET() {
           lt: 0
         }
       },
-      include: {
-        merchantRef: {
-          include: {
-            category: true
-          }
-        }
-      }
+      include: transactionTransferInclude,
     })
 
     // Berechne das nächste Zahlungsdatum für jede wiederkehrende Zahlung
@@ -120,7 +116,7 @@ export async function GET() {
         id: transaction.id,
         amount: Math.abs(transaction.amount.toNumber()),
         date: nextDate.toISOString(),
-        category: transaction.merchantRef?.category?.name || 'Unkategorisiert',
+        category: resolveTransactionCategory(transaction)?.name || 'Unkategorisiert',
         merchant: transaction.merchant,
         description: transaction.description
       }
@@ -152,21 +148,16 @@ export async function GET() {
         },
         isConfirmed: true
       },
-      include: {
-        merchantRef: {
-          include: {
-            category: true
-          }
-        }
-      }
+      include: transactionTransferInclude,
     })
 
     // Gruppiere nach Kategorie und summiere die Beträge
     const categoryMap = new Map<string, { name: string; value: number; color: string }>()
 
     transactionsWithCategories.forEach(transaction => {
-      const categoryName = transaction.merchantRef?.category?.name || 'Unkategorisiert'
-      const categoryColor = transaction.merchantRef?.category?.color || '#6B7280'
+      const resolvedCategory = resolveTransactionCategory(transaction)
+      const categoryName = resolvedCategory?.name || 'Unkategorisiert'
+      const categoryColor = resolvedCategory?.color || '#6B7280'
       const amount = Math.abs(transaction.amount.toNumber())
 
       if (categoryMap.has(categoryName)) {

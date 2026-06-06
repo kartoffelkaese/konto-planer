@@ -8,6 +8,7 @@ import {
   setRecurringPaused,
 } from '@/lib/api'
 import { getNextRecurringDueDate, formatDate } from '@/lib/dateUtils'
+import { computeRecurringTotals } from '@/lib/recurringTotals'
 import {
   getRecurringSalaryMonthStatus,
   type RecurringWithStatus,
@@ -172,35 +173,8 @@ export default function RecurringTransactionsPage() {
   })
 
   const activeForTotals = sortedTransactions.filter((t) => !t.isRecurringPaused)
-
-  const totals = {
-    monthly: {
-      total: activeForTotals
-        .filter(t => t.recurringInterval === 'monthly')
-        .reduce((acc, t) => acc + t.amount, 0),
-      perMonth: activeForTotals
-        .filter(t => t.recurringInterval === 'monthly')
-        .reduce((acc, t) => acc + t.amount, 0)
-    },
-    quarterly: {
-      total: activeForTotals
-        .filter(t => t.recurringInterval === 'quarterly')
-        .reduce((acc, t) => acc + t.amount, 0),
-      perMonth: activeForTotals
-        .filter(t => t.recurringInterval === 'quarterly')
-        .reduce((acc, t) => acc + t.amount / 3, 0)
-    },
-    yearly: {
-      total: activeForTotals
-        .filter(t => t.recurringInterval === 'yearly')
-        .reduce((acc, t) => acc + t.amount, 0),
-      perMonth: activeForTotals
-        .filter(t => t.recurringInterval === 'yearly')
-        .reduce((acc, t) => acc + t.amount / 12, 0)
-    }
-  }
-
-  const totalMonthly = totals.monthly.perMonth + totals.quarterly.perMonth + totals.yearly.perMonth
+  const totals = computeRecurringTotals(activeForTotals)
+  const totalMonthly = totals.totalMonthly
 
   return (
     <div id="recurring-page" className="min-h-screen">

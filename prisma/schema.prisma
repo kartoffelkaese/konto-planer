@@ -83,6 +83,8 @@ model Transaction {
   merchant                String
   merchantId              String?
   merchantRef             Merchant?     @relation(fields: [merchantId], references: [id])
+  categoryId              String?
+  categoryRef             Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   amount                  Decimal       @db.Decimal(10, 2)
   date                    DateTime
   isConfirmed             Boolean       @default(false)
@@ -120,27 +122,38 @@ model TransferPair {
 }
 
 model Merchant {
-  id           String        @id @default(uuid())
+  id           String             @id @default(uuid())
   accountId    String
   name         String
-  categoryId   String?
-  category     Category?     @relation(fields: [categoryId], references: [id])
-  createdAt    DateTime      @default(now())
-  account      Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  createdAt    DateTime           @default(now())
+  account      Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  categories   MerchantCategory[]
   transactions Transaction[]
 
   @@unique([accountId, name])
   @@map("merchants")
 }
 
+model MerchantCategory {
+  merchantId String
+  categoryId String
+  merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([merchantId, categoryId])
+  @@index([categoryId])
+  @@map("merchant_categories")
+}
+
 model Category {
-  id        String     @id @default(uuid())
-  accountId String
-  name      String
-  color     String     @default("#A7C7E7")
-  createdAt DateTime   @default(now())
-  account   Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  merchants Merchant[]
+  id           String             @id @default(uuid())
+  accountId    String
+  name         String
+  color        String             @default("#A7C7E7")
+  createdAt    DateTime           @default(now())
+  account      Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  merchants    MerchantCategory[]
+  transactions Transaction[]
 
   @@unique([accountId, name])
   @@map("categories")

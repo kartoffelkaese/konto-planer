@@ -12,6 +12,19 @@ const baseSecurityHeaders = [
 ]
 
 /** CSP nur in Produktion – in Dev blockiert sie RSC/HMR/Turbopack. */
+function buildConnectSrc() {
+  const sources = new Set(["'self'"])
+  const authUrl = process.env.AUTH_URL || process.env.NEXTAUTH_URL
+  if (authUrl) {
+    try {
+      sources.add(new URL(authUrl).origin)
+    } catch {
+      // Ungültige URL ignorieren
+    }
+  }
+  return [...sources].join(' ')
+}
+
 const productionSecurityHeaders = [
   ...baseSecurityHeaders,
   {
@@ -26,7 +39,7 @@ const productionSecurityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
-      "connect-src 'self'",
+      "connect-src " + buildConnectSrc(),
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

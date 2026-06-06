@@ -164,7 +164,19 @@ export const authConfig: NextAuthConfig = {
     },
     async redirect({ url, baseUrl }) {
       if (url.includes('signout')) {
-        return `${baseUrl}/auth/login`
+        try {
+          const signOutUrl = new URL(url, baseUrl)
+          const callbackUrl = signOutUrl.searchParams.get('callbackUrl')
+          if (callbackUrl) {
+            const target = new URL(callbackUrl, baseUrl)
+            if (target.origin === new URL(baseUrl).origin) {
+              return target.href
+            }
+          }
+        } catch {
+          // Fallback unten
+        }
+        return `${baseUrl}/`
       }
       try {
         const target = new URL(url, baseUrl)

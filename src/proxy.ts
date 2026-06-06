@@ -34,7 +34,7 @@ export default auth((req) => {
     return NextResponse.redirect(new URL('/', req.url))
   }
 
-  // Eingeloggte Nutzer dürfen /auth/login sehen (wichtig direkt nach signOut)
+  // Eingeloggte Nutzer dürfen /auth/login sehen (z. B. direkt nach Abmelden mit Lesezeichen)
   if (token && pathname.startsWith('/auth/register')) {
     return NextResponse.redirect(new URL('/', req.url))
   }

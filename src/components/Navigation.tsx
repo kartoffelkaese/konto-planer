@@ -378,7 +378,9 @@ export default function Navigation() {
         onClose={() => setShowLogoutConfirm(false)}
         onConfirm={async () => {
           try {
-            await signOut({ callbackUrl: '/auth/login', redirect: true })
+            await signOut({ redirect: false })
+            router.push('/')
+            router.refresh()
           } catch {
             showToast('Abmelden fehlgeschlagen. Bitte erneut versuchen.', 'error')
             throw new Error('signOut failed')

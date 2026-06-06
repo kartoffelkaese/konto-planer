@@ -39,7 +39,8 @@ export default function DeleteUserAccount() {
         )
       }
 
-      await signOut({ callbackUrl: '/' })
+      await signOut({ redirect: false })
+      window.location.href = '/'
     } catch (err) {
       console.error('Fehler beim Löschen der Anmeldung:', err)
       setError(

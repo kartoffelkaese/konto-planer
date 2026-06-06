@@ -43,28 +43,29 @@ html:not([data-color-scheme]) {
 /*
  * Abendlicht – Coolors: 22223b · 4a4e69 · 9a8c98 · c9ada7 · f2e9e4
  * Analog Schiefer/Lila-Grau (UI); Salbei/Mauve/Amber-Taupe semantisch getrennt.
+ * Semantik-Farben & Rahmen dunkler für WCAG AA (Text 4.5:1, UI-Komponenten 3:1).
  */
 html[data-color-scheme="twilight"] {
   --color-canvas: #f5f2f0;
   --color-surface: #ffffff;
   --color-surface-muted: #ebe6e2;
-  --color-border: #d4ccc6;
+  --color-border: #a89f98;
   --color-text-primary: #22223b;
-  --color-text-secondary: #4a4e69;
+  --color-text-secondary: #3f4358;
   --color-accent: #4a4e69;
   --color-accent-hover: #22223b;
   --color-accent-subtle: #ede8e4;
   --color-accent-muted: #f5f2f0;
   --color-accent-foreground: #ffffff;
-  --color-accent-border: #9a8c98;
-  --color-income: #3d6b4a;
+  --color-accent-border: #756a72;
+  --color-income: #2f5639;
   --color-income-bg: #e8f0ea;
-  --color-expense: #7a5560;
+  --color-expense: #5a3d46;
   --color-expense-bg: #f0e8ea;
-  --color-pending: #8f7a5c;
+  --color-pending: #6b5436;
   --color-pending-bg: #f3ebe0;
-  --color-danger: #6d4f57;
-  --color-danger-hover: #5a4148;
+  --color-danger: #5a3a42;
+  --color-danger-hover: #452e34;
   --color-danger-subtle: #f0e8ea;
   --shadow-color: rgba(34, 34, 59, 0.08);
 }

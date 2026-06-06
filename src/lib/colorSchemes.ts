@@ -30,7 +30,7 @@ export const COLOR_SCHEME_LABELS: Record<
   twilight: {
     title: 'Abendlicht',
     description: 'Schiefer-UI, Salbei, Mauve & warmes Taupe',
-    swatches: ['#22223b', '#4a4e69', '#3d6b4a', '#8f7a5c', '#7a5560'],
+    swatches: ['#22223b', '#4a4e69', '#2f5639', '#6b5436', '#5a3d46'],
   },
   forest: {
     title: 'Moos & Teal',

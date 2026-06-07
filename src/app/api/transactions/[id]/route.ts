@@ -25,6 +25,7 @@ import {
   applyTransactionCategoryOnSave,
   validateTransactionCategoryId,
 } from '@/lib/transactionCategory'
+import { assertRecurringNotAllowed } from '@/lib/simpleAccount'
 
 export async function GET(
   _request: NextRequest,
@@ -73,6 +74,24 @@ export async function PATCH(
     if (isErrorResponse(existingTransaction)) return existingTransaction
 
     const updateData = await request.json()
+
+    if (account.isSimpleAccount) {
+      if (updateData.isRecurring === true) {
+        const planningError = assertRecurringNotAllowed(account)
+        if (planningError) return planningError
+      }
+      if (updateData.isRecurringPaused !== undefined) {
+        const planningError = assertRecurringNotAllowed(account)
+        if (planningError) return planningError
+      }
+      if (
+        updateData.recurringInterval !== undefined &&
+        updateData.isRecurring !== false
+      ) {
+        const planningError = assertRecurringNotAllowed(account)
+        if (planningError) return planningError
+      }
+    }
 
     if (updateData.isTransfer === false && existingTransaction.isTransfer) {
       await unlinkTransfer(id)

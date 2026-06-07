@@ -4,6 +4,8 @@ import {
   getSalaryMonthRange,
   getSalaryMonthPeriodInfo,
   getNextRecurringDueDate,
+  getCalendarMonthRange,
+  getCalendarMonthLabel,
 } from '@/lib/dateUtils'
 import { logger } from '@/lib/logger'
 import { getAccountContext } from '@/lib/account-context'
@@ -22,6 +24,70 @@ export async function GET() {
     }
 
     const { account } = ctx
+
+    if (account.isSimpleAccount) {
+      const { startDate, endDate } = getCalendarMonthRange()
+      const monthLabel = getCalendarMonthLabel()
+
+      const [monthlyIncome, monthlyExpenses, totalBalance, recentRaw] =
+        await Promise.all([
+          prisma.transaction.aggregate({
+            where: {
+              accountId: account.id,
+              amount: { gt: 0 },
+              date: { gte: startDate, lte: endDate },
+              isRecurring: false,
+            },
+            _sum: { amount: true },
+          }),
+          prisma.transaction.aggregate({
+            where: {
+              accountId: account.id,
+              amount: { lt: 0 },
+              date: { gte: startDate, lte: endDate },
+              isRecurring: false,
+            },
+            _sum: { amount: true },
+          }),
+          prisma.transaction.aggregate({
+            where: { accountId: account.id, isRecurring: false },
+            _sum: { amount: true },
+          }),
+          prisma.transaction.findMany({
+            where: { accountId: account.id, isRecurring: false },
+            orderBy: { date: 'desc' },
+            take: 6,
+            select: {
+              id: true,
+              merchant: true,
+              amount: true,
+              date: true,
+              description: true,
+            },
+          }),
+        ])
+
+      const income = monthlyIncome._sum.amount?.toNumber() || 0
+      const expenses = Math.abs(monthlyExpenses._sum.amount?.toNumber() || 0)
+
+      return NextResponse.json({
+        monthlyIncome: income,
+        monthlyExpenses: expenses,
+        recurringExpenses: 0,
+        savingsRate: 0,
+        totalBalance: totalBalance._sum.amount?.toNumber() || 0,
+        recurringTransactions: [],
+        categoryDistribution: [],
+        monthLabel,
+        recentTransactions: recentRaw.map((t) => ({
+          id: t.id,
+          merchant: t.merchant,
+          amount: t.amount.toNumber(),
+          date: t.date.toISOString(),
+          description: t.description,
+        })),
+      })
+    }
 
     const { startDate, endDate } = getSalaryMonthRange(account.salaryDay)
     const categoryPeriod = getSalaryMonthPeriodInfo(account.salaryDay)
@@ -179,17 +245,23 @@ export async function GET() {
     return NextResponse.json({
       monthlyIncome: income,
       monthlyExpenses: expenses,
-      recurringExpenses: Math.abs(recurringExpenses._sum.amount?.toNumber() || 0),
+      recurringExpenses: account.isSimpleAccount
+        ? 0
+        : Math.abs(recurringExpenses._sum.amount?.toNumber() || 0),
       savingsRate: Math.max(0, savingsRate),
       totalBalance: totalBalance._sum.amount?.toNumber() || 0,
-      recurringTransactions: upcomingTransactions,
-      categoryDistribution: kumulatedCategoryData,
-      categoryPeriod: {
-        startDate: categoryPeriod.startDate.toISOString(),
-        endDate: categoryPeriod.endDate.toISOString(),
-        rangeLabel: categoryPeriod.rangeLabel,
-        salaryDay: account.salaryDay,
-      },
+      recurringTransactions: account.isSimpleAccount ? [] : upcomingTransactions,
+      categoryDistribution: account.isSimpleAccount ? [] : kumulatedCategoryData,
+      categoryPeriod: account.isSimpleAccount
+        ? undefined
+        : {
+            startDate: categoryPeriod.startDate.toISOString(),
+            endDate: categoryPeriod.endDate.toISOString(),
+            rangeLabel: categoryPeriod.rangeLabel,
+            salaryDay: account.salaryDay,
+          },
+      monthLabel: undefined,
+      recentTransactions: [],
     })
   } catch (error) {
     logger.error('Fehler beim Laden der Dashboard-Daten', error, {

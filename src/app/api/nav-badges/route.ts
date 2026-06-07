@@ -33,6 +33,9 @@ export async function GET() {
       },
     })
 
+    let recurringAttention = 0
+
+    if (!account.isSimpleAccount) {
     const recurringParents = await prisma.transaction.findMany({
       where: {
         accountId: account.id,
@@ -67,7 +70,6 @@ export async function GET() {
         .filter((id): id is string => id != null)
     )
 
-    let recurringAttention = 0
     for (const t of recurringParents) {
       const due = isTransactionDueInSalaryMonth(
         {
@@ -82,6 +84,7 @@ export async function GET() {
       if (due && !parentsWithInstance.has(t.id)) {
         recurringAttention += 1
       }
+    }
     }
 
     return NextResponse.json({

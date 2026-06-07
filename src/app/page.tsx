@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useSession } from 'next-auth/react'
-import { CalendarIcon } from '@heroicons/react/24/outline'
+import { CalendarIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 import LandingPage from '@/components/LandingPage'
 import PageLoader from '@/components/PageLoader'
 import PageError from '@/components/PageError'
 import EmptyState from '@/components/EmptyState'
 import CategoryExpenseBars from '@/components/CategoryExpenseBars'
+import KpiCard from '@/components/KpiCard'
+import { useUserSettings } from '@/hooks/useUserSettings'
 
 interface DashboardData {
   monthlyIncome: number
@@ -34,10 +37,19 @@ interface DashboardData {
     rangeLabel: string
     salaryDay: number
   }
+  monthLabel?: string
+  recentTransactions?: Array<{
+    id: string
+    merchant: string
+    amount: number
+    date: string
+    description: string | null
+  }>
 }
 
 export default function DashboardPage() {
   const { data: session } = useSession()
+  const { isSimpleAccount, accountName } = useUserSettings()
   const [data, setData] = useState<DashboardData>({
     monthlyIncome: 0,
     monthlyExpenses: 0,
@@ -45,7 +57,7 @@ export default function DashboardPage() {
     savingsRate: 0,
     totalBalance: 0,
     recurringTransactions: [],
-    categoryDistribution: []
+    categoryDistribution: [],
   })
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -70,7 +82,7 @@ export default function DashboardPage() {
     if (session) {
       fetchDashboardData()
     }
-  }, [session])
+  }, [session, isSimpleAccount])
 
   if (!session) {
     return <LandingPage />
@@ -101,11 +113,110 @@ export default function DashboardPage() {
     })
   }
 
+  const monthLabel = data.monthLabel ?? 'Aktueller Monat'
+  const monthNet = data.monthlyIncome - data.monthlyExpenses
+  const recentTransactions = data.recentTransactions ?? []
+
   return (
     <div className="p-6">
-      <h1 className="page-title mb-6">Dashboard</h1>
+      <div className="mb-6">
+        <h1 className="page-title">{isSimpleAccount ? accountName : 'Dashboard'}</h1>
+        {isSimpleAccount && (
+          <p className="mt-1 text-sm text-secondary">
+            Einfaches Konto · Übersicht nach Kalendermonat
+          </p>
+        )}
+      </div>
 
-      {/* Kategorieverteilung und wiederkehrende Zahlungen */}
+      {isSimpleAccount ? (
+        <div className="space-y-8 max-w-4xl">
+          <div className="rounded-card border border-accent bg-accent-subtle border-l-4 border-l-accent p-6">
+            <p className="text-sm font-medium text-secondary">Kontostand</p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums text-accent">
+              {formatCurrency(data.totalBalance)}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <KpiCard
+              label="Einnahmen"
+              subtitle={monthLabel}
+              amount={data.monthlyIncome}
+              stripe="income"
+            />
+            <KpiCard
+              label="Ausgaben"
+              subtitle={monthLabel}
+              amount={data.monthlyExpenses}
+              stripe="expense"
+            />
+          </div>
+
+          {(data.monthlyIncome > 0 || data.monthlyExpenses > 0) && (
+            <p className="text-sm text-secondary">
+              Saldo im Monat:{' '}
+              <span
+                className={`font-medium tabular-nums ${
+                  monthNet >= 0 ? 'text-income' : 'text-expense'
+                }`}
+              >
+                {monthNet >= 0 ? '+' : ''}
+                {formatCurrency(monthNet)}
+              </span>
+            </p>
+          )}
+
+          <div className="bg-surface rounded-lg border border-border p-6">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <h2 className="text-lg font-medium text-primary">Letzte Buchungen</h2>
+              <Link
+                href="/transactions"
+                className="inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline"
+              >
+                Alle anzeigen
+                <ArrowRightIcon className="h-4 w-4" aria-hidden />
+              </Link>
+            </div>
+
+            {recentTransactions.length === 0 ? (
+              <EmptyState
+                title="Noch keine Buchungen"
+                description="Erfassen Sie Ihre erste Transaktion, um den Kontostand zu führen."
+                actionLabel="Transaktion erfassen"
+                actionHref="/transactions?new=1"
+              />
+            ) : (
+              <ul className="divide-y divide-border">
+                {recentTransactions.map((transaction) => (
+                  <li
+                    key={transaction.id}
+                    className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium text-primary truncate">
+                        {transaction.merchant}
+                      </p>
+                      <p className="text-sm text-secondary">
+                        {formatDate(transaction.date)}
+                        {transaction.description && (
+                          <span className="truncate"> · {transaction.description}</span>
+                        )}
+                      </p>
+                    </div>
+                    <p
+                      className={`shrink-0 font-medium tabular-nums ${
+                        transaction.amount >= 0 ? 'text-income' : 'text-expense'
+                      }`}
+                    >
+                      {formatCurrency(transaction.amount)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Kategorieverteilung */}
         <div className="bg-surface rounded-lg border border-border p-6">
@@ -167,6 +278,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      )}
     </div>
   )
 }

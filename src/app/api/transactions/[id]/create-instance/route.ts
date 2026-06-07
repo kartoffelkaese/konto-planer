@@ -13,6 +13,7 @@ import {
   transactionTransferInclude,
 } from '@/lib/transfers'
 import { buildRecurringInstanceData } from '@/lib/recurringInstances'
+import { assertPlanningAccount } from '@/lib/simpleAccount'
 
 export async function POST(
   _request: NextRequest,
@@ -27,6 +28,9 @@ export async function POST(
     if (writeError) return writeError
 
     const { account } = ctx
+
+    const planningError = assertPlanningAccount(account)
+    if (planningError) return planningError
 
     const originalTransaction = await prisma.transaction.findFirst({
       where: { id, accountId: account.id },

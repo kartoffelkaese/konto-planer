@@ -2,21 +2,28 @@
 
 import { useState } from 'react'
 import { useCreateAccount } from '@/hooks/useCreateAccount'
+import { useUserSettings } from '@/hooks/useUserSettings'
 import { Button } from '@/components/Button'
 import BankSelect from '@/components/BankSelect'
 
 export default function CreateAdditionalAccount() {
   const { createAccount, loading } = useCreateAccount()
+  const { role } = useUserSettings()
   const [name, setName] = useState('')
   const [bankId, setBankId] = useState<string | null>(null)
+  const [isSimpleAccount, setIsSimpleAccount] = useState(false)
   const [expanded, setExpanded] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const ok = await createAccount(name, { bankId })
+    const ok = await createAccount(name, {
+      bankId,
+      isSimpleAccount: role === 'OWNER' ? isSimpleAccount : false,
+    })
     if (ok) {
       setName('')
       setBankId(null)
+      setIsSimpleAccount(false)
       setExpanded(false)
     }
   }
@@ -70,6 +77,21 @@ export default function CreateAdditionalAccount() {
           disabled={loading}
         />
       </div>
+      {role === 'OWNER' && (
+        <div className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            id="additional-account-simple"
+            checked={isSimpleAccount}
+            onChange={(e) => setIsSimpleAccount(e.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-border text-accent focus:ring-accent bg-surface"
+            disabled={loading}
+          />
+          <label htmlFor="additional-account-simple" className="text-sm text-primary">
+            Als einfaches Konto anlegen (ohne Gehaltsmonat und wiederkehrende Zahlungen)
+          </label>
+        </div>
+      )}
       <div className="flex flex-wrap gap-2 justify-end">
         <Button
           type="button"

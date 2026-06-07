@@ -13,6 +13,7 @@ export const ACCOUNT_SETTINGS_SELECT = {
   name: true,
   salaryDay: true,
   bankId: true,
+  isSimpleAccount: true,
   createdAt: true,
 } as const
 

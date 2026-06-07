@@ -185,6 +185,24 @@ export function getSalaryMonthRange(salaryDay: number) {
   }
 }
 
+/** Kalendermonat (1. bis letzter Tag) – für einfache Konten */
+export function getCalendarMonthRange(reference = new Date()) {
+  const ref = dayjs(reference).tz(DEFAULT_TIMEZONE)
+  const startDate = ref.startOf('month').startOf('day')
+  const endDate = ref.endOf('month').endOf('day')
+  return {
+    startDate: startDate.utc().toDate(),
+    endDate: endDate.utc().toDate(),
+  }
+}
+
+export function getCalendarMonthLabel(reference = new Date()) {
+  return new Intl.DateTimeFormat('de-DE', {
+    month: 'long',
+    year: 'numeric',
+  }).format(reference)
+}
+
 /** Lesbare Angabe des aktuellen Gehaltsmonats (für Dashboard & Co.) */
 export function getSalaryMonthPeriodInfo(salaryDay: number) {
   const { startDate, endDate } = getSalaryMonthRange(salaryDay)

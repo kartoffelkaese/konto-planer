@@ -21,6 +21,7 @@ import { signOut } from 'next-auth/react'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import AccountSwitcher from '@/components/AccountSwitcher'
 import { useToast } from '@/hooks/useToast'
+import { useUserSettings } from '@/hooks/useUserSettings'
 
 const labelTransition =
   'overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-in-out'
@@ -35,6 +36,7 @@ export default function Navigation() {
   const router = useRouter()
   const { data: session } = useSession()
   const { showToast } = useToast()
+  const { isSimpleAccount } = useUserSettings()
   const [isOpen, setIsOpen] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(true)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
@@ -115,13 +117,17 @@ export default function Navigation() {
       badge: badges.unconfirmedTransactions,
       badgeLabel: 'unbestätigte Buchungen',
     },
-    {
-      name: 'Wiederkehrend',
-      href: '/recurring',
-      icon: ArrowPathIcon,
-      badge: badges.recurringAttention,
-      badgeLabel: 'fällige wiederkehrende Zahlungen',
-    },
+    ...(!isSimpleAccount
+      ? [
+          {
+            name: 'Wiederkehrend',
+            href: '/recurring',
+            icon: ArrowPathIcon,
+            badge: badges.recurringAttention,
+            badgeLabel: 'fällige wiederkehrende Zahlungen',
+          },
+        ]
+      : []),
     { name: 'Statistiken', href: '/statistics', icon: ChartPieIcon, badge: 0 },
     {
       name: 'Einstellungen',

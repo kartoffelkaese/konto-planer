@@ -30,12 +30,14 @@ interface TransactionFormProps {
   onSuccess?: () => void
   onCancel?: () => void
   defaultIsRecurring?: boolean
+  hideRecurring?: boolean
 }
 
 export default function TransactionForm({ 
   onSuccess, 
   onCancel,
-  defaultIsRecurring = false 
+  defaultIsRecurring = false,
+  hideRecurring = false,
 }: TransactionFormProps) {
   const router = useRouter()
   const { showToast } = useToast()
@@ -372,6 +374,7 @@ export default function TransactionForm({
         />
       </div>
 
+      {!hideRecurring && (
       <div className="flex items-center">
         <input
           type="checkbox"
@@ -385,8 +388,9 @@ export default function TransactionForm({
           Wiederkehrende Zahlung
         </label>
       </div>
+      )}
 
-      {formData.isRecurring && (
+      {!hideRecurring && formData.isRecurring && (
         <div>
           <label htmlFor="recurringInterval" className="block text-sm font-medium text-primary">
             Wiederholungsintervall

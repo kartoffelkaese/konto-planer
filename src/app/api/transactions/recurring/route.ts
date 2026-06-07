@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
+import { assertPlanningAccount } from '@/lib/simpleAccount'
 import { getSalaryMonthRange, isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
 
 export async function GET(_request: NextRequest) {
@@ -11,6 +12,9 @@ export async function GET(_request: NextRequest) {
     if (isErrorResponse(ctx)) return ctx
 
     const { account } = ctx
+
+    const planningError = assertPlanningAccount(account)
+    if (planningError) return planningError
 
     const transactions = await prisma.transaction.findMany({
       where: {

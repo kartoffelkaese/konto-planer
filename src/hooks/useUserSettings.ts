@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useSession } from 'next-auth/react'
 import type { AccountMemberRole } from '@prisma/client'
 import { isAccountWritable } from '@/lib/accountPermissions'
 
@@ -11,21 +12,38 @@ export type UserSettings = {
   accountName: string | null
   transferSenderName?: string | null
   bankId?: string | null
+  isSimpleAccount?: boolean
   createdAt: string
   activeAccountId?: string
   role?: AccountMemberRole
 }
 
 export function useUserSettings() {
+  const { data: session, status } = useSession()
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
+    if (status === 'loading') {
+      return
+    }
+
+    if (!session?.user) {
+      setSettings(null)
+      setError(null)
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     setError(null)
     try {
       const response = await fetch('/api/users/settings')
+      if (response.status === 401) {
+        setSettings(null)
+        return
+      }
       if (!response.ok) {
         throw new Error('Einstellungen konnten nicht geladen werden')
       }
@@ -37,7 +55,7 @@ export function useUserSettings() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [session, status])
 
   useEffect(() => {
     load()
@@ -63,6 +81,7 @@ export function useUserSettings() {
     canWrite,
     salaryDay: settings?.salaryDay ?? null,
     accountName: settings?.accountName ?? 'Mein Konto',
+    isSimpleAccount: settings?.isSimpleAccount ?? false,
     loading,
     error,
     reload: load,

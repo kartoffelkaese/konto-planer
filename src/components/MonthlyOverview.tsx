@@ -9,6 +9,7 @@ interface MonthlyOverviewProps {
   clearedBalance: number
   totalPendingExpenses: number
   available: number
+  hidePendingMetrics?: boolean
 }
 
 export default function MonthlyOverview({
@@ -16,6 +17,7 @@ export default function MonthlyOverview({
   clearedBalance,
   totalPendingExpenses,
   available,
+  hidePendingMetrics = false,
 }: MonthlyOverviewProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -23,8 +25,12 @@ export default function MonthlyOverview({
     <>
       <KpiCard label="Einnahmen" subtitle="Aktueller Monat" amount={currentIncome} stripe="income" />
       <KpiCard label="Kontostand" amount={clearedBalance} stripe="accent" />
-      <KpiCard label="Ausstehend" amount={totalPendingExpenses} stripe="pending" />
-      <KpiCard label="Verfügbar" subtitle="Inkl. nicht bestätigt" amount={available} stripe="accent" />
+      {!hidePendingMetrics && (
+        <>
+          <KpiCard label="Ausstehend" amount={totalPendingExpenses} stripe="pending" />
+          <KpiCard label="Verfügbar" subtitle="Inkl. nicht bestätigt" amount={available} stripe="accent" />
+        </>
+      )}
     </>
   )
 
@@ -61,18 +67,22 @@ export default function MonthlyOverview({
               }`}
             >
               <KpiCard label="Einnahmen" subtitle="Aktueller Monat" amount={currentIncome} stripe="income" />
-              <KpiCard label="Ausstehend" amount={totalPendingExpenses} stripe="pending" />
-              <KpiCard label="Verfügbar" subtitle="Inkl. nicht bestätigt" amount={available} stripe="accent" />
+              {!hidePendingMetrics && (
+                <>
+                  <KpiCard label="Ausstehend" amount={totalPendingExpenses} stripe="pending" />
+                  <KpiCard label="Verfügbar" subtitle="Inkl. nicht bestätigt" amount={available} stripe="accent" />
+                </>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="hidden md:grid md:grid-cols-2 md:gap-4 lg:hidden">
+      <div className={`hidden md:grid md:gap-4 lg:hidden ${hidePendingMetrics ? 'md:grid-cols-2' : 'md:grid-cols-2'}`}>
         {kpiItems}
       </div>
 
-      <div className="hidden lg:grid lg:grid-cols-4 lg:gap-4">
+      <div className={`hidden lg:grid lg:gap-4 ${hidePendingMetrics ? 'lg:grid-cols-2' : 'lg:grid-cols-4'}`}>
         {kpiItems}
       </div>
     </div>

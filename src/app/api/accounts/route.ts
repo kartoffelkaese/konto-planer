@@ -23,7 +23,14 @@ export async function GET() {
     where: { userId: user.id },
     include: {
       account: {
-        select: { id: true, name: true, salaryDay: true, bankId: true, createdAt: true },
+        select: {
+          id: true,
+          name: true,
+          salaryDay: true,
+          bankId: true,
+          isSimpleAccount: true,
+          createdAt: true,
+        },
       },
     },
     orderBy: { createdAt: 'asc' },
@@ -35,6 +42,7 @@ export async function GET() {
       name: m.account.name,
       salaryDay: m.account.salaryDay,
       bankId: m.account.bankId,
+      isSimpleAccount: m.account.isSimpleAccount,
       role: m.role,
       isActive: m.account.id === activeAccountId,
       createdAt: m.account.createdAt,
@@ -74,9 +82,14 @@ export async function POST(request: NextRequest) {
     if (existing) salaryDay = existing.account.salaryDay
   }
 
+  let isSimpleAccount = false
+  if (body.isSimpleAccount === true) {
+    isSimpleAccount = true
+  }
+
   const account = await prisma.$transaction(async (tx) => {
     const created = await tx.account.create({
-      data: { name, salaryDay, bankId },
+      data: { name, salaryDay, bankId, isSimpleAccount },
     })
     await tx.accountMember.create({
       data: {
@@ -94,6 +107,7 @@ export async function POST(request: NextRequest) {
       name: account.name,
       salaryDay: account.salaryDay,
       bankId: account.bankId,
+      isSimpleAccount: account.isSimpleAccount,
       role: AccountMemberRole.OWNER,
       isActive: false,
       createdAt: account.createdAt,

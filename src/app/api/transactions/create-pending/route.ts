@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
+import { assertPlanningAccount } from '@/lib/simpleAccount'
 import { getRecurringDueDatesInRange, getSalaryMonthRange } from '@/lib/dateUtils'
 import { buildRecurringInstanceData } from '@/lib/recurringInstances'
 import {
@@ -20,6 +21,9 @@ export async function POST(_request: NextRequest) {
     if (writeError) return writeError
 
     const { account } = ctx
+
+    const planningError = assertPlanningAccount(account)
+    if (planningError) return planningError
 
     const recurringTransactions = await prisma.transaction.findMany({
       where: {

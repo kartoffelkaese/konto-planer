@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   getRecurringTransactions,
   createRecurringInstance,
@@ -32,8 +33,9 @@ import { useUserSettings } from '@/hooks/useUserSettings'
 import { Button } from '@/components/Button'
 
 export default function RecurringTransactionsPage() {
+  const router = useRouter()
   const { showToast } = useToast()
-  const { salaryDay, canWrite } = useUserSettings()
+  const { salaryDay, canWrite, isSimpleAccount, loading: settingsLoading } = useUserSettings()
   const [transactions, setTransactions] = useState<RecurringWithStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,8 +46,16 @@ export default function RecurringTransactionsPage() {
   const [togglingPauseId, setTogglingPauseId] = useState<string | null>(null)
 
   useEffect(() => {
-    loadTransactions()
-  }, [])
+    if (!settingsLoading && isSimpleAccount) {
+      router.replace('/transactions')
+    }
+  }, [settingsLoading, isSimpleAccount, router])
+
+  useEffect(() => {
+    if (!isSimpleAccount) {
+      loadTransactions()
+    }
+  }, [isSimpleAccount])
 
   const loadTransactions = async () => {
     try {
@@ -140,6 +150,10 @@ export default function RecurringTransactionsPage() {
       t.dueInSalaryMonth &&
       !t.hasInstanceInSalaryMonth
   )
+
+  if (settingsLoading || isSimpleAccount) {
+    return <PageLoader message="Wird weitergeleitet…" />
+  }
 
   if (loading) {
     return <PageLoader message="Wiederkehrende Zahlungen werden geladen…" />

@@ -27,7 +27,8 @@ export default function SettingsPage() {
   const [accountName, setAccountName] = useState("Mein Konto")
   const [transferSenderName, setTransferSenderName] = useState('')
   const [bankId, setBankId] = useState<string | null>(null)
-  
+  const [isSimpleAccount, setIsSimpleAccount] = useState(false)
+  const [simpleAccountError, setSimpleAccountError] = useState<string | null>(null)
   // Neue States für E-Mail-Änderung
   const [showEmailForm, setShowEmailForm] = useState(false)
   const [newEmail, setNewEmail] = useState('')
@@ -59,6 +60,8 @@ export default function SettingsPage() {
       setAccountName(data.accountName || "Mein Konto")
       setTransferSenderName(data.transferSenderName || '')
       setBankId(data.bankId ?? null)
+      setIsSimpleAccount(Boolean(data.isSimpleAccount))
+      setSimpleAccountError(null)
     } catch (err) {
       console.error('Error loading settings:', err)
       setError('Fehler beim Laden der Einstellungen')
@@ -70,6 +73,7 @@ export default function SettingsPage() {
     if (!canWrite) return
     setLoading(true)
     setError(null)
+    setSimpleAccountError(null)
     try {
       const response = await fetch('/api/users/settings', {
         method: 'PATCH',
@@ -81,11 +85,21 @@ export default function SettingsPage() {
           accountName,
           transferSenderName,
           bankId,
+          ...(role === 'OWNER' ? { isSimpleAccount } : {}),
         }),
       })
 
       if (!response.ok) {
-        throw new Error('Fehler beim Speichern der Einstellungen')
+        const data = await response.json().catch(() => ({}))
+        const message =
+          typeof data.error === 'string'
+            ? data.error
+            : 'Fehler beim Speichern der Einstellungen'
+        if (response.status === 400 && role === 'OWNER' && isSimpleAccount) {
+          setSimpleAccountError(message)
+          setIsSimpleAccount(false)
+        }
+        throw new Error(message)
       }
 
       showToast('Einstellungen gespeichert', 'success')
@@ -252,6 +266,43 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
+                {role === 'OWNER' && (
+                  <div className="rounded-control border border-border p-4 bg-canvas">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="isSimpleAccount"
+                        checked={isSimpleAccount}
+                        onChange={(e) => {
+                          setIsSimpleAccount(e.target.checked)
+                          setSimpleAccountError(null)
+                        }}
+                        className="mt-1 h-4 w-4 rounded border-border text-accent focus:ring-accent bg-surface"
+                        disabled={loading || !canWrite}
+                      />
+                      <div>
+                        <label htmlFor="isSimpleAccount" className="block text-sm font-medium text-primary">
+                          Einfaches Konto
+                        </label>
+                        <p className="mt-1 text-sm text-secondary">
+                          Für Sparkonten, Depots oder andere Konten ohne Haushaltsplanung:
+                          kein Gehaltsmonat, keine wiederkehrenden Zahlungen, vereinfachtes
+                          Dashboard. Bestehende Buchungen bleiben erhalten.
+                        </p>
+                        {simpleAccountError && (
+                          <p className="mt-2 text-sm text-danger">
+                            {simpleAccountError}{' '}
+                            <Link href="/recurring" className="underline font-medium">
+                              Wiederkehrende Zahlungen verwalten
+                            </Link>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!isSimpleAccount && (
                 <div>
                   <label htmlFor="salaryDay" className="block text-sm font-medium text-primary">
                     Tag des Gehaltseingangs
@@ -275,6 +326,7 @@ export default function SettingsPage() {
                     Der Gehaltsmonat läuft dann vom {salaryDay}. bis zum {salaryDay}. des Folgemonats
                   </p>
                 </div>
+                )}
 
                 {canWrite && (
                 <div className="flex justify-end">

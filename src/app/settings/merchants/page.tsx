@@ -487,4 +487,4 @@ export default function MerchantsPage() {
       </Modal>
     </div>
   )
-} 
+}

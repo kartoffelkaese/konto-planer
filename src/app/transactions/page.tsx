@@ -35,7 +35,7 @@ function TransactionsPageContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { salaryDay, accountName, loading: settingsLoading, canWrite } = useUserSettings()
+  const { salaryDay, accountName, loading: settingsLoading, canWrite, isSimpleAccount } = useUserSettings()
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [sortField, setSortField] = useState<SortField>(() => {
@@ -327,7 +327,7 @@ function TransactionsPageContent() {
   }
 
   const hasPendingInList = transactions.some(isTransactionPending)
-  const showPendingAction = canWrite && (totals.totalPendingExpenses > 0 || hasPendingInList)
+  const showPendingAction = !isSimpleAccount && canWrite && (totals.totalPendingExpenses > 0 || hasPendingInList)
 
   if ((loading || settingsLoading) && transactions.length === 0 && !error) {
     return <PageLoader message="Transaktionen werden geladen…" />
@@ -380,7 +380,7 @@ function TransactionsPageContent() {
                 </Button>
               )}
             </div>
-            {salaryDay !== null && (
+            {salaryDay !== null && !isSimpleAccount && (
               <div className="mt-2">
                 <SalaryMonthHint
                   salaryDay={salaryDay}
@@ -390,6 +390,7 @@ function TransactionsPageContent() {
             )}
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            {!isSimpleAccount && (
             <label className="flex items-center space-x-2 shrink-0">
               <input
                 type="checkbox"
@@ -403,6 +404,7 @@ function TransactionsPageContent() {
               />
               <span className="text-sm text-primary">Nur Gehaltsmonat</span>
             </label>
+            )}
             {canWrite && (
             <Button
               type="button"
@@ -445,6 +447,7 @@ function TransactionsPageContent() {
             clearedBalance={totals.clearedBalance}
             totalPendingExpenses={totals.totalPendingExpenses}
             available={totals.available}
+            hidePendingMetrics={isSimpleAccount}
           />
         </div>
 
@@ -487,6 +490,7 @@ function TransactionsPageContent() {
         <TransactionForm
           onSuccess={handleNewTransactionSuccess}
           onCancel={() => setShowNewTransactionModal(false)}
+          hideRecurring={isSimpleAccount}
         />
       </Modal>
 
@@ -501,6 +505,7 @@ function TransactionsPageContent() {
             id={selectedTransactionId}
             onSuccess={handleEditTransactionSuccess}
             onCancel={() => setShowEditTransactionModal(false)}
+            hideRecurring={isSimpleAccount}
           />
         )}
       </Modal>

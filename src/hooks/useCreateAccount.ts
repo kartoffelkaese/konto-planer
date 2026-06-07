@@ -19,7 +19,7 @@ export function useCreateAccount() {
   const createAccount = useCallback(
     async (
       name: string,
-      options?: { switchToNew?: boolean; bankId?: string | null }
+      options?: { switchToNew?: boolean; bankId?: string | null; isSimpleAccount?: boolean }
     ) => {
       const trimmed = name.trim()
       if (!trimmed) {
@@ -35,6 +35,7 @@ export function useCreateAccount() {
           body: JSON.stringify({
             name: trimmed,
             ...(options?.bankId ? { bankId: options.bankId } : {}),
+            ...(options?.isSimpleAccount ? { isSimpleAccount: true } : {}),
           }),
         })
         const data = await res.json()

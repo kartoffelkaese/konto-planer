@@ -39,6 +39,7 @@ model Account {
   salaryDay          Int
   transferSenderName String?
   bankId             String?
+  isSimpleAccount    Boolean         @default(false)
   createdAt          DateTime        @default(now())
   members         AccountMember[]
   invites         AccountInvite[]

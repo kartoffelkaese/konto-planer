@@ -5,6 +5,8 @@ import timezone from 'dayjs/plugin/timezone'
 import {
   getSalaryMonthRange,
   getSalaryMonthPeriodInfo,
+  getCalendarMonthRange,
+  getCalendarMonthLabel,
   isTransactionDueInSalaryMonth,
   isTransactionPending,
   getNextDueDate,
@@ -51,6 +53,25 @@ describe('getSalaryMonthPeriodInfo', () => {
     expect(info.rangeLabel).toMatch(/\d{2}\.\d{2}\.\d{4} – \d{2}\.\d{2}\.\d{4}/)
     expect(info.startDate).toBeInstanceOf(Date)
     expect(info.endDate).toBeInstanceOf(Date)
+  })
+})
+
+describe('getCalendarMonthRange', () => {
+  it('umfasst den vollen Kalendermonat', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2025-06-15T12:00:00+02:00'))
+    const { startDate, endDate } = getCalendarMonthRange()
+    expect(dayjs(startDate).tz('Europe/Berlin').date()).toBe(1)
+    expect(dayjs(startDate).tz('Europe/Berlin').month()).toBe(5)
+    expect(dayjs(endDate).tz('Europe/Berlin').date()).toBe(30)
+    expect(dayjs(endDate).tz('Europe/Berlin').month()).toBe(5)
+    vi.useRealTimers()
+  })
+})
+
+describe('getCalendarMonthLabel', () => {
+  it('formatiert auf Deutsch', () => {
+    expect(getCalendarMonthLabel(new Date('2025-06-15'))).toMatch(/2025/)
   })
 })
 

@@ -17,6 +17,7 @@ import {
   applyTransactionCategoryOnSave,
   validateTransactionCategoryId,
 } from '@/lib/transactionCategory'
+import { assertRecurringNotAllowed } from '@/lib/simpleAccount'
 
 export async function GET(request: Request) {
   const ctx = await getAccountContext()
@@ -119,6 +120,11 @@ export async function POST(request: Request) {
     )
     if (categoryValidation.error) return categoryValidation.error
     const categoryId = categoryValidation.categoryId ?? null
+
+    if (isRecurring) {
+      const planningError = assertRecurringNotAllowed(account)
+      if (planningError) return planningError
+    }
 
     const resolvedMerchant = await resolveMerchantForTransaction(account.id, {
       merchantId,

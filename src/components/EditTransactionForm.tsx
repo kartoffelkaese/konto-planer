@@ -23,9 +23,15 @@ interface EditTransactionFormProps {
   id: string
   onSuccess?: () => void
   onCancel?: () => void
+  hideRecurring?: boolean
 }
 
-export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTransactionFormProps) {
+export default function EditTransactionForm({
+  id,
+  onSuccess,
+  onCancel,
+  hideRecurring = false,
+}: EditTransactionFormProps) {
   const router = useRouter()
   const { showToast } = useToast()
   const [isInitialLoading, setIsInitialLoading] = useState(true)
@@ -356,6 +362,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
           />
         </div>
 
+        {!hideRecurring && (
         <div className="flex items-center">
           <input
             type="checkbox"
@@ -369,8 +376,9 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
             Wiederkehrende Zahlung
           </label>
         </div>
+        )}
 
-        {isRecurringTemplate && formData.isRecurring && (
+        {!hideRecurring && isRecurringTemplate && formData.isRecurring && (
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -388,7 +396,7 @@ export default function EditTransactionForm({ id, onSuccess, onCancel }: EditTra
           </div>
         )}
 
-        {formData.isRecurring && (
+        {!hideRecurring && formData.isRecurring && (
           <div>
             <label htmlFor="recurringInterval" className="block text-sm font-medium text-primary">
               Wiederholungsintervall

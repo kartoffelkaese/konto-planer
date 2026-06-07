@@ -9,6 +9,10 @@ import {
   validateTransferSenderName,
   validateBankId,
 } from '@/lib/api-auth'
+import {
+  assertCanEnableSimpleAccount,
+  assertOwnerForSimpleAccountToggle,
+} from '@/lib/simpleAccount'
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -26,7 +30,27 @@ export async function PATCH(request: NextRequest) {
       name?: string
       transferSenderName?: string | null
       bankId?: string | null
+      isSimpleAccount?: boolean
     } = {}
+
+    if (body.isSimpleAccount !== undefined) {
+      const ownerError = assertOwnerForSimpleAccountToggle(membership.role)
+      if (ownerError) return ownerError
+
+      if (typeof body.isSimpleAccount !== 'boolean') {
+        return NextResponse.json(
+          { error: 'Ungültiger Wert für Einfaches Konto' },
+          { status: 400 }
+        )
+      }
+
+      if (body.isSimpleAccount && !account.isSimpleAccount) {
+        const enableError = await assertCanEnableSimpleAccount(account.id)
+        if (enableError) return enableError
+      }
+
+      data.isSimpleAccount = body.isSimpleAccount
+    }
 
     if (body.salaryDay !== undefined) {
       const salaryDay = validateSalaryDay(body.salaryDay)
@@ -68,6 +92,7 @@ export async function PATCH(request: NextRequest) {
       accountName: updated.name,
       transferSenderName: updated.transferSenderName,
       bankId: updated.bankId,
+      isSimpleAccount: updated.isSimpleAccount,
       createdAt: updated.createdAt,
       activeAccountId: account.id,
       role: membership.role,
@@ -95,6 +120,7 @@ export async function GET() {
       accountName: account.name,
       transferSenderName: account.transferSenderName,
       bankId: account.bankId,
+      isSimpleAccount: account.isSimpleAccount,
       createdAt: account.createdAt,
       activeAccountId: account.id,
       role: membership.role,

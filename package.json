@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "6.0.1",
+  "version": "6.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
+    "db:seed-demo": "node scripts/seed-demo.mjs",
     "postinstall": "prisma generate",
     "pm2:start": "pm2 start ecosystem.config.js --env production",
     "pm2:stop": "pm2 stop konto-planer",

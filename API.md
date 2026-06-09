@@ -83,6 +83,29 @@ Antwort: `{ transactions, total, page, hasMore }`
 
 `merchant`, `merchantId?`, `createNewMerchant?`, `description?`, `amount`, `date`, `categoryId?`, `isRecurring?`, `recurringInterval?`, `isTransfer?`, `transferTargetAccountId?`
 
+### CSV-Import
+
+| Methode | Pfad | Beschreibung |
+|---------|------|----------------|
+| `POST` | `/api/transactions/import/preview` | CSV-Text parsen, Händler matchen, Duplikate prüfen |
+| `POST` | `/api/transactions/import` | Ausgewählte Zeilen als Buchungen anlegen |
+
+**`POST /api/transactions/import/preview` – Body**
+
+`csvText` (string) – Inhalt der CSV-Datei (UTF-8, typisch `;`-getrennt)
+
+Erwartete Spalten (Format `standardBank`): `Buchungsdatum`, `Status`, `Zahlungspflichtige*r`, `Zahlungsempfänger*in`, `Verwendungszweck`, `Umsatztyp`, `Betrag (€)`
+
+Antwort: `{ formatId, rows, merchants, summary }` – `rows` enthält u. a. `merchantRaw`, Vorschlag `merchantId`, `matchConfidence`, `isDuplicate`, `suggestedIncluded`
+
+**`POST /api/transactions/import` – Body**
+
+`rows`: Array von `{ rowIndex, date, amount, description?, merchantId?, merchant?, createNewMerchant?, categoryId?, isConfirmed }` – nur vom Client freigegebene Zeilen
+
+Antwort: `{ created, skipped, errors }`
+
+Schreibzugriff auf das aktive Konto erforderlich (nicht `READ_ONLY`).
+
 **`GET /api/transactions/totals` – Query**
 
 `salaryDay` optional (sonst Gehaltstag des Kontos)

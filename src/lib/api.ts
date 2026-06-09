@@ -173,3 +173,68 @@ export const setRecurringPaused = async (
 ): Promise<Transaction> => {
   return updateTransaction(id, { isRecurringPaused: paused })
 }
+
+export type CsvImportPreviewMerchant = {
+  id: string
+  name: string
+  categoryIds?: string[]
+  categories?: Array<{ id: string; name: string; color: string }>
+}
+
+export type CsvImportPreviewRow = {
+  rowIndex: number
+  date: string | null
+  amount: number | null
+  description: string
+  merchantRaw: string
+  merchantId: string | null
+  merchantName: string | null
+  matchConfidence: 'exact' | 'contains' | 'similar' | null
+  categoryId: string | null
+  isConfirmed: boolean
+  isDuplicate: boolean
+  errors: string[]
+  suggestedIncluded: boolean
+}
+
+export type CsvImportPreviewResponse = {
+  formatId: string
+  rows: CsvImportPreviewRow[]
+  merchants: CsvImportPreviewMerchant[]
+  summary: {
+    total: number
+    duplicates: number
+    errors: number
+    suggested: number
+  }
+}
+
+export type CsvImportCommitRow = {
+  rowIndex: number
+  date: string
+  amount: number
+  description: string | null
+  merchantId?: string | null
+  merchant?: string | null
+  createNewMerchant?: boolean
+  categoryId?: string | null
+  isConfirmed: boolean
+}
+
+export const previewCsvImport = async (
+  csvText: string
+): Promise<CsvImportPreviewResponse> => {
+  return apiFetch<CsvImportPreviewResponse>('/transactions/import/preview', {
+    method: 'POST',
+    body: JSON.stringify({ csvText }),
+  })
+}
+
+export const commitCsvImport = async (
+  rows: CsvImportCommitRow[]
+): Promise<{ created: number; skipped: number; errors: Array<{ rowIndex: number; message: string }> }> => {
+  return apiFetch('/transactions/import', {
+    method: 'POST',
+    body: JSON.stringify({ rows }),
+  })
+}

@@ -13,6 +13,7 @@ import TransactionForm from '@/components/TransactionForm'
 import EditTransactionForm from '@/components/EditTransactionForm'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
+import TransactionCsvImport from '@/components/TransactionCsvImport'
 import PageLoader from '@/components/PageLoader'
 import PageError from '@/components/PageError'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -406,13 +407,18 @@ function TransactionsPageContent() {
             </label>
             )}
             {canWrite && (
-            <Button
-              type="button"
-              className="hidden md:inline-flex shrink-0"
-              onClick={() => setShowNewTransactionModal(true)}
-            >
-              Neue Transaktion
-            </Button>
+            <>
+              <TransactionCsvImport
+                onImported={() => loadTransactions(1, false)}
+              />
+              <Button
+                type="button"
+                className="hidden md:inline-flex shrink-0"
+                onClick={() => setShowNewTransactionModal(true)}
+              >
+                Neue Transaktion
+              </Button>
+            </>
             )}
           </div>
         </div>

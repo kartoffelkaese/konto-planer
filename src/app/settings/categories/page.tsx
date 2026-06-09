@@ -9,19 +9,20 @@ import PageLoader from '@/components/PageLoader'
 import SettingsBreadcrumb from '@/components/SettingsBreadcrumb'
 import { useUserSettings } from '@/hooks/useUserSettings'
 
+/** Gesättigte, schema-unabhängige Palette – gut lesbar mit getContrastColor. */
 const PRESET_COLORS = [
-  '#FF6B6B', // Rot
-  '#4ECDC4', // Türkis
-  '#45B7D1', // Hellblau
-  '#96CEB4', // Mintgrün
-  '#FFEEAD', // Hellgelb
-  '#FFD93D', // Gelb
-  '#FF9F1C', // Orange
-  '#A8E6CF', // Pastellgrün
-  '#DCD6F7', // Lavendel
-  '#F4BFBF', // Rosa
-  '#95DAC1', // Mintblau
-  '#B6E2D3', // Hellmint
+  '#C0392B',
+  '#2E86AB',
+  '#1F6B52',
+  '#8A6918',
+  '#6B4C9A',
+  '#D35400',
+  '#2C3E50',
+  '#16A085',
+  '#8E44AD',
+  '#2874A6',
+  '#A04000',
+  '#566573',
 ]
 
 interface ColorPickerProps {
@@ -93,7 +94,7 @@ export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [formData, setFormData] = useState({
     name: '',
-    color: '#A7C7E7'
+    color: PRESET_COLORS[0]
   })
   const [filters, setFilters] = useState({
     search: ''
@@ -141,7 +142,7 @@ export default function CategoriesPage() {
 
       await loadCategories()
       setShowAddModal(false)
-      setFormData({ name: '', color: '#A7C7E7' })
+      setFormData({ name: '', color: PRESET_COLORS[0] })
       showToast('Kategorie erstellt', 'success')
     } catch (err) {
       console.error('Error creating category:', err)
@@ -176,7 +177,7 @@ export default function CategoriesPage() {
       await loadCategories()
       setShowEditModal(false)
       setSelectedCategory(null)
-      setFormData({ name: '', color: '#A7C7E7' })
+      setFormData({ name: '', color: PRESET_COLORS[0] })
       showToast('Kategorie gespeichert', 'success')
     } catch (err) {
       console.error('Error updating category:', err)
@@ -235,7 +236,7 @@ export default function CategoriesPage() {
         {canWrite && (
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-control shadow-sm text-white bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-control shadow-sm text-accent-foreground bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
           Kategorie hinzufügen

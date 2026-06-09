@@ -1,7 +1,7 @@
 export const COLOR_SCHEMES = [
   'nebel',
-  'twilight',
   'kupfer',
+  'moor',
   'plum',
   'lagoon',
   'heritage',
@@ -24,33 +24,33 @@ export const COLOR_SCHEME_LABELS: Record<
 > = {
   nebel: {
     title: 'Nebel & Veilchen',
-    description: 'Violett-UI, Grün & Rost für Werte',
-    swatches: ['#1c1b28', '#4e58b8', '#2d7457', '#7a6324', '#9e4a3c'],
-  },
-  twilight: {
-    title: 'Abendlicht',
-    description: 'Schiefer-UI, Salbei, Mauve & warmes Taupe',
-    swatches: ['#22223b', '#4a4e69', '#2f5639', '#6b5436', '#5a3d46'],
+    description: 'Kühles Indigo-UI, Teal & Ziegel für Werte',
+    swatches: ['#1a1b26', '#4455a8', '#1f6b52', '#826016', '#a83832'],
   },
   kupfer: {
     title: 'Kupfer & Kreide',
-    description: 'Warmes Kupfer-UI, Grün, Rost & Ocker',
-    swatches: ['#2c2420', '#8f4a28', '#2f6b4f', '#7a5c18', '#8b3a32'],
+    description: 'Warmes Kupfer-UI, Grün & Ziegel',
+    swatches: ['#2a221e', '#8a4e2a', '#256b50', '#826018', '#9a3830'],
+  },
+  moor: {
+    title: 'Moor & Torf',
+    description: 'Erdiges Petrol-UI, Moos & Ziegel',
+    swatches: ['#141c18', '#2a5856', '#236b44', '#826016', '#a83830'],
   },
   plum: {
     title: 'Nachtviolett',
-    description: 'Dunkelmodus – Pflaume, Mint, Lilac & Beere',
-    swatches: ['#050404', '#b87aa0', '#6ecf9a', '#d4b0e0', '#e88aaa'],
+    description: 'Dunkelmodus – Pflaume, Mint & Beere',
+    swatches: ['#0a0909', '#a87898', '#5ec492', '#c8a0d8', '#e07898'],
   },
   lagoon: {
     title: 'Lagune',
-    description: 'Aquatisches Cyan – kühl, Amber & Koralle',
-    swatches: ['#001219', '#0077b6', '#087478', '#9a4f02', '#9b2226'],
+    description: 'Aquatisches Cyan, Amber & Koralle',
+    swatches: ['#001219', '#006d9e', '#0a7068', '#8a5208', '#9b2226'],
   },
   heritage: {
     title: 'Heritage',
-    description: 'Dunkelmodus – Marine-UI, Mint, Amber & Koralle',
-    swatches: ['#001a28', '#669bbc', '#6ecf9a', '#e0b060', '#e07078'],
+    description: 'Dunkelmodus – Marine, Mint & Amber',
+    swatches: ['#001820', '#5a94b8', '#60c890', '#d8a850', '#ec5868'],
   },
 }
 
@@ -74,6 +74,10 @@ export function getStoredColorScheme(): ColorScheme {
   if (stored === 'forest') {
     localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, 'kupfer')
     return 'kupfer'
+  }
+  if (stored === 'twilight') {
+    localStorage.setItem(COLOR_SCHEME_STORAGE_KEY, DEFAULT_COLOR_SCHEME)
+    return DEFAULT_COLOR_SCHEME
   }
   return stored && COLOR_SCHEMES.includes(stored as ColorScheme)
     ? (stored as ColorScheme)

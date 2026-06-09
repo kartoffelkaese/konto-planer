@@ -24,7 +24,7 @@ const variantClasses: Record<ButtonVariant, string> = {
     'btn-primary border border-transparent shadow-sm text-accent-foreground focus:ring-accent',
   secondary: 'btn-secondary shadow-sm focus:ring-accent',
   danger:
-    'bg-danger text-white border border-transparent shadow-sm hover:bg-danger-hover focus:ring-danger',
+    'bg-danger text-danger-foreground border border-transparent shadow-sm hover:bg-danger-hover focus:ring-danger',
   'danger-outline':
     'text-expense bg-surface border border-danger shadow-sm hover:bg-danger-subtle focus:ring-danger',
   ghost:
@@ -32,7 +32,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   'accent-subtle':
     'text-accent bg-accent-subtle border border-transparent hover:opacity-90 focus:ring-accent',
   warning:
-    'bg-pending text-white border border-transparent shadow-sm hover:opacity-90 focus:ring-pending',
+    'bg-pending text-pending-foreground border border-transparent shadow-sm hover:opacity-90 focus:ring-pending',
 }
 
 const baseClasses =

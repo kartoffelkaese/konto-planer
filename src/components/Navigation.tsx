@@ -213,7 +213,7 @@ export default function Navigation() {
 
       <div
         id="mobile-sidebar"
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-surface border-r-2 border-r-accent md:w-[var(--sidebar-width)] md:translate-x-0 md:transition-[transform,width] md:duration-300 md:ease-in-out max-md:mobile-nav-drawer max-md:top-14 max-md:h-[calc(100%-3.5rem)] ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-surface border-r border-border md:w-[var(--sidebar-width)] md:translate-x-0 md:transition-[transform,width] md:duration-300 md:ease-in-out max-md:mobile-nav-drawer max-md:top-14 max-md:h-[calc(100%-3.5rem)] ${
           isOpen
             ? 'max-md:translate-x-0 max-md:shadow-xl'
             : 'max-md:-translate-x-full max-md:shadow-none'
@@ -221,7 +221,7 @@ export default function Navigation() {
       >
         <div className="flex-1 overflow-x-hidden overflow-y-auto">
           <div
-            className={`hidden md:flex h-16 shrink-0 items-center border-b border-accent-border bg-accent-muted px-4 transition-[padding] duration-300 ease-in-out ${
+            className={`hidden md:flex h-16 shrink-0 items-center border-b border-border bg-surface-muted px-4 transition-[padding] duration-300 ease-in-out ${
               iconOnlyMode ? 'md:justify-center md:px-2' : 'justify-between'
             }`}
           >

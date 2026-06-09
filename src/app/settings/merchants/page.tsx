@@ -233,7 +233,7 @@ export default function MerchantsPage() {
         {canWrite && (
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-control shadow-sm text-white bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-control shadow-sm text-accent-foreground bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
           Händler hinzufügen

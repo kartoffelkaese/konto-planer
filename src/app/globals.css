@@ -11,185 +11,192 @@
 }
 
 /*
- * Nebel & Veilchen – kühl-violett (UI), Grün/Rost für Werte
- * Canvas neutral; Akzent dunkler als Einnahmen-Grün.
- * Semantik-Farben & Rahmen dunkler für WCAG AA (Text 4.5:1, UI-Komponenten 3:1).
+ * Nebel & Veilchen – kühles neutrales UI, Indigo-Akzent; Semantik getrennt.
+ * WCAG AA: Text 4.5:1, UI-Komponenten 3:1.
  */
 html[data-color-scheme="nebel"],
 html:not([data-color-scheme]) {
-  --color-canvas: #f3f2f8;
+  --color-canvas: #f4f5f8;
   --color-surface: #ffffff;
-  --color-surface-muted: #ecebf3;
-  --color-border: #9693a2;
-  --color-text-primary: #1c1b28;
-  --color-text-secondary: #5e5c70;
-  --color-accent: #4e58b8;
-  --color-accent-hover: #3d46a0;
-  --color-accent-subtle: #e8eafc;
-  --color-accent-muted: #f3f2f8;
+  --color-surface-muted: #e8eaef;
+  --color-border: #8a8d98;
+  --color-text-primary: #1a1b26;
+  --color-text-secondary: #52556a;
+  --color-accent: #4455a8;
+  --color-accent-hover: #364489;
+  --color-accent-subtle: #e4e8f4;
+  --color-accent-muted: #eef0f5;
   --color-accent-foreground: #ffffff;
-  --color-accent-border: #7a85c9;
-  --color-income: #2d7457;
-  --color-income-bg: #e3f2eb;
-  --color-expense: #9e4a3c;
-  --color-expense-bg: #faece9;
-  --color-pending: #7a6324;
-  --color-pending-bg: #f8f0e0;
-  --color-danger: #9e4a3c;
-  --color-danger-hover: #853f33;
-  --color-danger-subtle: #faece9;
-  --shadow-color: rgba(28, 27, 40, 0.06);
+  --color-accent-border: #6b7ac4;
+  --color-income: #1f6b52;
+  --color-income-bg: #e0f0e9;
+  --color-expense: #a83832;
+  --color-expense-bg: #fae8e6;
+  --color-pending: #826016;
+  --color-pending-bg: #f5eed8;
+  --color-pending-foreground: #ffffff;
+  --color-danger: #8c2e28;
+  --color-danger-hover: #742520;
+  --color-danger-foreground: #ffffff;
+  --color-danger-subtle: #fae0dc;
+  --color-chart-default: #4455a8;
+  --shadow-color: rgba(26, 27, 38, 0.06);
 }
 
 /*
- * Abendlicht – Coolors: 22223b · 4a4e69 · 9a8c98 · c9ada7 · f2e9e4
- * Analog Schiefer/Lila-Grau (UI); Salbei/Mauve/Amber-Taupe semantisch getrennt.
- * Semantik-Farben & Rahmen dunkler für WCAG AA (Text 4.5:1, UI-Komponenten 3:1).
- */
-html[data-color-scheme="twilight"] {
-  --color-canvas: #f5f2f0;
-  --color-surface: #ffffff;
-  --color-surface-muted: #ebe6e2;
-  --color-border: #928a83;
-  --color-text-primary: #22223b;
-  --color-text-secondary: #3f4358;
-  --color-accent: #4a4e69;
-  --color-accent-hover: #22223b;
-  --color-accent-subtle: #ede8e4;
-  --color-accent-muted: #f5f2f0;
-  --color-accent-foreground: #ffffff;
-  --color-accent-border: #756a72;
-  --color-income: #2f5639;
-  --color-income-bg: #e8f0ea;
-  --color-expense: #5a3d46;
-  --color-expense-bg: #f0e8ea;
-  --color-pending: #6b5436;
-  --color-pending-bg: #f3ebe0;
-  --color-danger: #5a3a42;
-  --color-danger-hover: #452e34;
-  --color-danger-subtle: #f0e8ea;
-  --shadow-color: rgba(34, 34, 59, 0.08);
-}
-
-/*
- * Kupfer & Kreide – warmes Split-komplementär (Kupfer-UI · kühles Grün · Rost/Ocker)
- * Kupfer als UI-Akzent; semantische Farben bewusst getrennt von Nebel/Lagune/Abendlicht.
- * Semantik-Farben & Rahmen dunkler für WCAG AA (Text 4.5:1, UI-Komponenten 3:1).
+ * Kupfer & Kreide – warmes Kupfer-UI; kühles Grün & Ziegel semantisch.
  */
 html[data-color-scheme="kupfer"] {
-  --color-canvas: #faf4ef;
+  --color-canvas: #f8f4f0;
   --color-surface: #ffffff;
-  --color-surface-muted: #f2ebe4;
-  --color-border: #9a8b82;
-  --color-text-primary: #2c2420;
-  --color-text-secondary: #5c4f48;
-  --color-accent: #8f4a28;
-  --color-accent-hover: #6d381e;
-  --color-accent-subtle: #f5e8df;
-  --color-accent-muted: #faf4ef;
+  --color-surface-muted: #efe8e2;
+  --color-border: #948578;
+  --color-text-primary: #2a221e;
+  --color-text-secondary: #5a4e46;
+  --color-accent: #8a4e2a;
+  --color-accent-hover: #6d3c20;
+  --color-accent-subtle: #f2e6dc;
+  --color-accent-muted: #f5ede6;
   --color-accent-foreground: #ffffff;
-  --color-accent-border: #a86a48;
-  --color-income: #2f6b4f;
-  --color-income-bg: #e5f2eb;
-  --color-expense: #8b3a32;
-  --color-expense-bg: #faeae8;
-  --color-pending: #7a5c18;
-  --color-pending-bg: #f5eed8;
-  --color-danger: #8b3a32;
-  --color-danger-hover: #712f28;
-  --color-danger-subtle: #faeae8;
-  --shadow-color: rgba(44, 36, 32, 0.08);
+  --color-accent-border: #a66a44;
+  --color-income: #256b50;
+  --color-income-bg: #e2f0ea;
+  --color-expense: #9a3830;
+  --color-expense-bg: #faeae6;
+  --color-pending: #826018;
+  --color-pending-bg: #f5eed6;
+  --color-pending-foreground: #ffffff;
+  --color-danger: #7e2218;
+  --color-danger-hover: #681a12;
+  --color-danger-foreground: #ffffff;
+  --color-danger-subtle: #fae0dc;
+  --color-chart-default: #8a4e2a;
+  --shadow-color: rgba(42, 34, 30, 0.08);
 }
 
 /*
- * Nachtviolett (Dunkel) – Coolors: eaeaea · 893168 · 4a1942 · 2e1c2b · 050404
- * Tiefe Violett-Stufen; helles Grau Text; Beere UI; Mint/Lilac/Rosa semantisch.
- * Rahmen heller für WCAG AA (UI-Komponenten 3:1 auf dunklen Flächen).
+ * Moor & Torf – erdiges Petrol-UI; Moosgrün, Ocker & Ziegel semantisch getrennt.
+ */
+html[data-color-scheme="moor"] {
+  --color-canvas: #f0f2ef;
+  --color-surface: #ffffff;
+  --color-surface-muted: #e3e8e4;
+  --color-border: #7a8a80;
+  --color-text-primary: #141c18;
+  --color-text-secondary: #47564e;
+  --color-accent: #2a5856;
+  --color-accent-hover: #1f4543;
+  --color-accent-subtle: #d8e8e5;
+  --color-accent-muted: #e8eeea;
+  --color-accent-foreground: #ffffff;
+  --color-accent-border: #4a8078;
+  --color-income: #236b44;
+  --color-income-bg: #ddf0e6;
+  --color-expense: #a83830;
+  --color-expense-bg: #fae8e5;
+  --color-pending: #826016;
+  --color-pending-bg: #f3ecd8;
+  --color-pending-foreground: #ffffff;
+  --color-danger: #7c2418;
+  --color-danger-hover: #681c12;
+  --color-danger-foreground: #ffffff;
+  --color-danger-subtle: #f8e0da;
+  --color-chart-default: #2a5856;
+  --shadow-color: rgba(20, 28, 24, 0.07);
+}
+
+/*
+ * Nachtviolett (Dunkel) – Pflaume UI; Mint, Lilac & Rosa semantisch.
  */
 html[data-color-scheme="plum"] {
   color-scheme: dark;
-  --color-canvas: #050404;
-  --color-surface: #2e1c2b;
-  --color-surface-muted: #4a1942;
-  --color-border: #8a7285;
+  --color-canvas: #0a0909;
+  --color-surface: #2a1c28;
+  --color-surface-muted: #3d2240;
+  --color-border: #927a88;
   --color-text-primary: #eaeaea;
-  --color-text-secondary: #c4b0bc;
-  --color-accent: #b87aa0;
-  --color-accent-hover: #d4a0c0;
-  --color-accent-subtle: #3d1e32;
-  --color-accent-muted: #2e1c2b;
-  --color-accent-foreground: #050404;
-  --color-accent-border: #a85a88;
-  --color-income: #6ecf9a;
-  --color-income-bg: #0d2e22;
-  --color-expense: #e88aaa;
-  --color-expense-bg: #3d1028;
-  --color-pending: #d4b0e0;
-  --color-pending-bg: #2a1f30;
-  --color-danger: #ff6b8a;
-  --color-danger-hover: #ff8aa8;
-  --color-danger-subtle: #3d1028;
+  --color-text-secondary: #b8a8b2;
+  --color-accent: #a87898;
+  --color-accent-hover: #c498b0;
+  --color-accent-subtle: #352030;
+  --color-accent-muted: #2a1c28;
+  --color-accent-foreground: #0a0909;
+  --color-accent-border: #986888;
+  --color-income: #5ec492;
+  --color-income-bg: #0c2e22;
+  --color-expense: #e07898;
+  --color-expense-bg: #381020;
+  --color-pending: #c8a0d8;
+  --color-pending-bg: #2a2030;
+  --color-pending-foreground: #0a0909;
+  --color-danger: #ff6080;
+  --color-danger-hover: #ff8098;
+  --color-danger-foreground: #0a0909;
+  --color-danger-subtle: #381020;
+  --color-chart-default: #a87898;
   --shadow-color: rgba(0, 0, 0, 0.4);
 }
 
 /*
- * Lagune – Coolors: 001219 · 005f73 · 0a9396 · 94d2bd · e9d8a6 · ca6702 · 9b2226 · …
- * Kühl-aquatisch (Cyan/Navy); warme Amber/Koralle nur für Werte – klar von Kupfer getrennt.
- * Semantik-Farben & Rahmen dunkler für WCAG AA (Text 4.5:1, UI-Komponenten 3:1).
+ * Lagune – Aquatisches Cyan UI; gedämpfter Fließtext, Amber & Koralle für Werte.
  */
 html[data-color-scheme="lagoon"] {
-  --color-canvas: #e8f6fa;
+  --color-canvas: #eef6f9;
   --color-surface: #ffffff;
-  --color-surface-muted: #dff5f8;
-  --color-border: #6d9b8b;
+  --color-surface-muted: #e0f0f5;
+  --color-border: #6a9490;
   --color-text-primary: #001219;
-  --color-text-secondary: #005f73;
-  --color-accent: #0077b6;
-  --color-accent-hover: #001219;
-  --color-accent-subtle: #cceef5;
-  --color-accent-muted: #e8f6fa;
+  --color-text-secondary: #3d5a66;
+  --color-accent: #006d9e;
+  --color-accent-hover: #004d70;
+  --color-accent-subtle: #cce8f2;
+  --color-accent-muted: #e5f2f7;
   --color-accent-foreground: #ffffff;
-  --color-accent-border: #0a9396;
-  --color-income: #087478;
-  --color-income-bg: #d4f5f0;
+  --color-accent-border: #0a8890;
+  --color-income: #0a7068;
+  --color-income-bg: #d0f0ec;
   --color-expense: #9b2226;
   --color-expense-bg: #fcecea;
-  --color-pending: #9a4f02;
-  --color-pending-bg: #faf0d8;
-  --color-danger: #ae2012;
-  --color-danger-hover: #9b2226;
-  --color-danger-subtle: #fcecea;
+  --color-pending: #8a5208;
+  --color-pending-bg: #faf0d4;
+  --color-pending-foreground: #ffffff;
+  --color-danger: #8a1a0e;
+  --color-danger-hover: #721408;
+  --color-danger-foreground: #ffffff;
+  --color-danger-subtle: #fce4e0;
+  --color-chart-default: #006d9e;
   --shadow-color: rgba(0, 18, 25, 0.1);
 }
 
 /*
- * Heritage (Dunkel) – Coolors: 780000 · c1121f · fdf0d5 · 003049 · 669bbc
- * Marine-Stufen für Flächen; Stahlblau UI; Creme Text; Rot/Amber semantisch.
- * Rahmen & Gefahr heller für WCAG AA (UI 3:1, semantischer Text 4.5:1 auf dunklen Flächen).
+ * Heritage (Dunkel) – Marine UI; Creme Text; Mint, Amber & Koralle semantisch.
  */
 html[data-color-scheme="heritage"] {
   color-scheme: dark;
-  --color-canvas: #001a28;
-  --color-surface: #002438;
-  --color-surface-muted: #003049;
-  --color-border: #48758f;
+  --color-canvas: #001820;
+  --color-surface: #002236;
+  --color-surface-muted: #003048;
+  --color-border: #507890;
   --color-text-primary: #fdf0d5;
-  --color-text-secondary: #9ec4dc;
-  --color-accent: #669bbc;
-  --color-accent-hover: #90c4e0;
-  --color-accent-subtle: #0d3347;
-  --color-accent-muted: #002438;
-  --color-accent-foreground: #001a28;
-  --color-accent-border: #4a8aad;
-  --color-income: #6ecf9a;
-  --color-income-bg: #0d2e22;
-  --color-expense: #f0717f;
-  --color-expense-bg: #3d1018;
-  --color-pending: #e0b060;
-  --color-pending-bg: #2a3a18;
-  --color-danger: #e07078;
-  --color-danger-hover: #f08890;
-  --color-danger-subtle: #3d1018;
+  --color-text-secondary: #90b8d0;
+  --color-accent: #5a94b8;
+  --color-accent-hover: #7ab4d8;
+  --color-accent-subtle: #0c3048;
+  --color-accent-muted: #002236;
+  --color-accent-foreground: #001820;
+  --color-accent-border: #4080a0;
+  --color-income: #60c890;
+  --color-income-bg: #0c2e22;
+  --color-expense: #e86878;
+  --color-expense-bg: #381018;
+  --color-pending: #d8a850;
+  --color-pending-bg: #283818;
+  --color-pending-foreground: #001820;
+  --color-danger: #ec5868;
+  --color-danger-hover: #f07080;
+  --color-danger-foreground: #001820;
+  --color-danger-subtle: #381018;
+  --color-chart-default: #5a94b8;
   --shadow-color: rgba(0, 0, 0, 0.35);
 }
 
@@ -374,11 +381,6 @@ a[href].landing-cta-outline:hover {
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.025em;
-  color: var(--color-accent-hover);
-}
-
-html[data-color-scheme="heritage"] .page-title,
-html[data-color-scheme="plum"] .page-title {
   color: var(--color-text-primary);
 }
 

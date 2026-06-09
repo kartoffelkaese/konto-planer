@@ -43,11 +43,16 @@ const config = {
         pending: {
           DEFAULT: 'var(--color-pending)',
           bg: 'var(--color-pending-bg)',
+          foreground: 'var(--color-pending-foreground)',
         },
         danger: {
           DEFAULT: 'var(--color-danger)',
           hover: 'var(--color-danger-hover)',
+          foreground: 'var(--color-danger-foreground)',
           subtle: 'var(--color-danger-subtle)',
+        },
+        chart: {
+          DEFAULT: 'var(--color-chart-default)',
         },
         background: 'var(--color-canvas)',
         foreground: 'var(--color-text-primary)',

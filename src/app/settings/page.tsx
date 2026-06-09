@@ -422,7 +422,7 @@ export default function SettingsPage() {
             <div id="appearance-settings" className="rounded-lg border border-border p-4 bg-surface">
               <h2 className="text-lg font-medium text-primary mb-2">Farbschema</h2>
               <p className="text-sm text-secondary mb-4">
-                Nebel &amp; Veilchen (Standard) oder Abendlicht
+                Wählen Sie ein Farbschema für die gesamte Oberfläche.
               </p>
               <ColorSchemeSwitcher />
             </div>

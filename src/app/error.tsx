@@ -46,7 +46,7 @@ export default function Error({
             <summary className="text-sm text-secondary mb-2">
               Fehlerdetails
             </summary>
-            <pre className="text-xs bg-gray-100 bg-surface p-2 rounded overflow-auto">
+            <pre className="text-xs bg-surface-muted p-2 rounded overflow-auto">
               {error.message}
               {error.stack && `\n\n${error.stack}`}
             </pre>
@@ -55,13 +55,13 @@ export default function Error({
         <div className="flex gap-4">
           <button
             onClick={reset}
-            className="flex-1 bg-accent hover:bg-accent-hover text-white font-medium py-2 px-4 rounded-control transition-colors"
+            className="flex-1 btn-primary font-medium py-2 px-4 rounded-control transition-colors"
           >
             Erneut versuchen
           </button>
           <button
             onClick={() => window.location.href = '/'}
-            className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-control transition-colors"
+            className="flex-1 bg-surface-muted hover:bg-border/30 text-primary font-medium py-2 px-4 rounded-control border border-border transition-colors"
           >
             Zur Startseite
           </button>

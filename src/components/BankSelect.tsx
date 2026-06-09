@@ -39,7 +39,7 @@ function BankLogo({
 
   return (
     <span
-      className={`flex ${boxClass} shrink-0 items-center justify-center rounded-lg border border-border bg-white p-1`}
+      className={`flex ${boxClass} shrink-0 items-center justify-center rounded-lg border border-border bg-surface p-1`}
       aria-hidden
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}

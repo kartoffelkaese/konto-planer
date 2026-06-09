@@ -110,7 +110,7 @@ export async function GET(request: Request) {
         date,
         amount,
         category: resolvedCategory?.name || '',
-        color: resolvedCategory?.color || '#A7C7E7',
+        color: resolvedCategory?.color || 'var(--color-chart-default)',
       }
     })
 

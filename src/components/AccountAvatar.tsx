@@ -59,7 +59,7 @@ export default function AccountAvatar({
         aria-hidden
       >
         <span
-          className={`flex items-center justify-center rounded-lg border border-border bg-white p-1 ${sizeClass} ${
+          className={`flex items-center justify-center rounded-lg border border-border bg-surface p-1 ${sizeClass} ${
             animating ? 'account-switch-avatar' : ''
           }`}
         >

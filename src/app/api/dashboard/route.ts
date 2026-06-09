@@ -223,7 +223,7 @@ export async function GET() {
     transactionsWithCategories.forEach(transaction => {
       const resolvedCategory = resolveTransactionCategory(transaction)
       const categoryName = resolvedCategory?.name || 'Unkategorisiert'
-      const categoryColor = resolvedCategory?.color || '#6B7280'
+      const categoryColor = resolvedCategory?.color || 'var(--color-text-secondary)'
       const amount = Math.abs(transaction.amount.toNumber())
 
       if (categoryMap.has(categoryName)) {

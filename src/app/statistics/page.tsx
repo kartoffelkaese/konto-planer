@@ -296,7 +296,7 @@ export default function StatisticsPage() {
                 />
                 <Bar 
                   dataKey="amount" 
-                  fill="#2563eb"
+                  fill="var(--color-chart-default)"
                   radius={[4, 4, 0, 0]}
                 >
                   {statisticsData.map((entry, index) => (

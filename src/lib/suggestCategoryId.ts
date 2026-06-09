@@ -1,8 +1,6 @@
-import type { Category } from '@/types'
-
 type MerchantWithCategories = {
   categoryIds?: string[]
-  categories?: Category[]
+  categories?: Array<{ id: string }>
 }
 
 /** Eine Händler-Kategorie → vorausfüllen; mehrere oder keine → leer. */

@@ -5,6 +5,7 @@ import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { assertPlanningAccount } from '@/lib/simpleAccount'
 import { getSalaryMonthRange, isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
+import { transactionCategoryInclude } from '@/lib/merchantCategories'
 
 export async function GET(_request: NextRequest) {
   try {
@@ -21,6 +22,7 @@ export async function GET(_request: NextRequest) {
         accountId: account.id,
         isRecurring: true,
       },
+      include: transactionCategoryInclude,
       orderBy: {
         date: 'desc',
       },

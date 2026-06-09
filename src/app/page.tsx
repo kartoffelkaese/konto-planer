@@ -11,6 +11,7 @@ import EmptyState from '@/components/EmptyState'
 import CategoryExpenseBars from '@/components/CategoryExpenseBars'
 import KpiCard from '@/components/KpiCard'
 import { useUserSettings } from '@/hooks/useUserSettings'
+import { resolveTransactionMerchantName } from '@/lib/merchantCategories'
 
 interface DashboardData {
   monthlyIncome: number
@@ -194,7 +195,7 @@ export default function DashboardPage() {
                   >
                     <div className="min-w-0">
                       <p className="font-medium text-primary truncate">
-                        {transaction.merchant}
+                        {resolveTransactionMerchantName(transaction)}
                       </p>
                       <p className="text-sm text-secondary">
                         {formatDate(transaction.date)}
@@ -258,7 +259,7 @@ export default function DashboardPage() {
             {data.recurringTransactions.map((transaction) => (
               <div key={transaction.id} className="flex items-center justify-between py-2 border-b border-border">
                 <div>
-                  <p className="font-medium text-primary">{transaction.merchant}</p>
+                  <p className="font-medium text-primary">{resolveTransactionMerchantName(transaction)}</p>
                   <p className="text-sm text-secondary">{transaction.category}</p>
                 </div>
                 <div className="text-right">

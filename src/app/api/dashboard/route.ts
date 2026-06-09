@@ -11,7 +11,7 @@ import { logger } from '@/lib/logger'
 import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { transactionTransferInclude } from '@/lib/transfers'
-import { resolveTransactionCategory } from '@/lib/merchantCategories'
+import { resolveTransactionCategory, resolveTransactionMerchantName } from '@/lib/merchantCategories'
 
 export async function GET() {
   try {
@@ -63,6 +63,7 @@ export async function GET() {
               amount: true,
               date: true,
               description: true,
+              merchantRef: { select: { name: true } },
             },
           }),
         ])
@@ -81,7 +82,7 @@ export async function GET() {
         monthLabel,
         recentTransactions: recentRaw.map((t) => ({
           id: t.id,
-          merchant: t.merchant,
+          merchant: resolveTransactionMerchantName(t),
           amount: t.amount.toNumber(),
           date: t.date.toISOString(),
           description: t.description,
@@ -183,7 +184,7 @@ export async function GET() {
         amount: Math.abs(transaction.amount.toNumber()),
         date: nextDate.toISOString(),
         category: resolveTransactionCategory(transaction)?.name || 'Unkategorisiert',
-        merchant: transaction.merchant,
+        merchant: resolveTransactionMerchantName(transaction),
         description: transaction.description
       }
     })

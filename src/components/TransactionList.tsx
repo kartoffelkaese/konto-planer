@@ -11,7 +11,7 @@ import { getContrastColor } from '@/lib/colorUtils'
 import { useToast } from '@/hooks/useToast'
 import TransferBadge from '@/components/TransferBadge'
 import EmptyState from '@/components/EmptyState'
-import { resolveTransactionCategory } from '@/lib/merchantCategories'
+import { resolveTransactionCategory, resolveTransactionMerchantName } from '@/lib/merchantCategories'
 
 type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
 type SortDirection = 'asc' | 'desc'
@@ -76,7 +76,9 @@ export default function TransactionList({
         comparison = new Date(a.date).getTime() - new Date(b.date).getTime()
         break
       case 'merchant':
-        comparison = (a.merchant || '').localeCompare(b.merchant || '')
+        comparison = resolveTransactionMerchantName(a).localeCompare(
+          resolveTransactionMerchantName(b)
+        )
         break
       case 'category':
         const categoryA = resolveTransactionCategory(a)?.name || ''
@@ -293,7 +295,10 @@ export default function TransactionList({
   const handleDeleteTransaction = (transaction: Transaction) => {
     setDeleteTarget({
       id: transaction.id,
-      label: transaction.merchant || transaction.description || 'diese Transaktion',
+      label:
+        resolveTransactionMerchantName(transaction) ||
+        transaction.description ||
+        'diese Transaktion',
     })
   }
 
@@ -367,7 +372,7 @@ export default function TransactionList({
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-primary">
-                    <span>{transaction.merchant}</span>
+                    <span>{resolveTransactionMerchantName(transaction)}</span>
                     <TransferBadge transaction={transaction} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -455,7 +460,7 @@ export default function TransactionList({
                     </button>
                   )}
                   <div className="text-sm text-secondary">
-                    {transaction.merchant}
+                    {resolveTransactionMerchantName(transaction)}
                     <TransferBadge transaction={transaction} />
                   </div>
                 </div>

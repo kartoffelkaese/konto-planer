@@ -30,6 +30,7 @@ import SalaryMonthHint from '@/components/SalaryMonthHint'
 import RecurringAnchorHint from '@/components/RecurringAnchorHint'
 import { useToast } from '@/hooks/useToast'
 import { useUserSettings } from '@/hooks/useUserSettings'
+import { resolveTransactionMerchantName } from '@/lib/merchantCategories'
 import { Button } from '@/components/Button'
 
 export default function RecurringTransactionsPage() {
@@ -117,7 +118,7 @@ export default function RecurringTransactionsPage() {
     }
     try {
       const newTransaction = await createRecurringInstance(transaction.id)
-      showToast(`Neue Zahlung für „${transaction.merchant}“ erstellt`, 'success')
+      showToast(`Neue Zahlung für „${resolveTransactionMerchantName(transaction)}“ erstellt`, 'success')
       window.location.href = '/transactions'
     } catch (err) {
       console.error('Fehler beim Erstellen der nächsten Instanz:', err)
@@ -300,7 +301,7 @@ export default function RecurringTransactionsPage() {
                     const salaryStatus = getRecurringSalaryMonthStatus(transaction)
                     return (
                     <tr key={transaction.id} className="border-b border-border last:border-b-0">
-                      <td className="p-4 text-sm text-primary">{transaction.merchant}</td>
+                      <td className="p-4 text-sm text-primary">{resolveTransactionMerchantName(transaction)}</td>
                       <td className="p-4 text-sm text-primary">{transaction.description}</td>
                       <td className={`p-4 text-sm text-right ${
                         transaction.amount > 0 ? 'text-income' : 'text-expense'
@@ -423,7 +424,7 @@ export default function RecurringTransactionsPage() {
                       </div>
                       <div>
                         <h3 className="text-sm font-medium text-primary">{transaction.description}</h3>
-                        <p className="text-xs text-secondary">{transaction.merchant}</p>
+                        <p className="text-xs text-secondary">{resolveTransactionMerchantName(transaction)}</p>
                       </div>
                     </div>
                     <p

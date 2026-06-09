@@ -109,6 +109,11 @@ export async function PATCH(
       data: { name },
     })
 
+    await tx.transaction.updateMany({
+      where: { merchantId: id, accountId: account.id },
+      data: { merchant: name },
+    })
+
     if (categoryIds !== undefined) {
       await setMerchantCategories(tx, id, categoryIds)
     }

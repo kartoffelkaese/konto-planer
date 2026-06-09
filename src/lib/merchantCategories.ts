@@ -75,6 +75,13 @@ export function resolveTransactionCategory(
   return resolveMerchantCategory(transaction.merchantRef)
 }
 
+export function resolveTransactionMerchantName(transaction: {
+  merchant: string
+  merchantRef?: { name: string } | null
+}): string {
+  return transaction.merchantRef?.name ?? transaction.merchant
+}
+
 export function normalizeCategoryIds(
   categoryIds?: string[] | null,
   categoryId?: string | null

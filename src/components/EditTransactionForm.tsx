@@ -10,7 +10,7 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import TransferAccountFields, { type TransferTarget } from '@/components/TransferAccountFields'
 import CategorySelect from '@/components/CategorySelect'
-import { resolveMerchantCategories, resolveTransactionCategory } from '@/lib/merchantCategories'
+import { resolveMerchantCategories, resolveTransactionCategory, resolveTransactionMerchantName } from '@/lib/merchantCategories'
 
 interface Merchant {
   id: string
@@ -112,7 +112,7 @@ export default function EditTransactionForm({
         resolveMerchantCategories(transaction.merchantRef).map((category) => category.id)
       )
       setFormData({
-        merchant: transaction.merchant || '',
+        merchant: resolveTransactionMerchantName(transaction) || '',
         description: transaction.description || '',
         amount: Math.abs(transaction.amount).toString(),
         type: transaction.amount >= 0 ? 'income' : 'expense',

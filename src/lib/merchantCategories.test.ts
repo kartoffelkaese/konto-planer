@@ -3,6 +3,7 @@ import {
   resolveMerchantCategory,
   resolveMerchantCategories,
   resolveTransactionCategory,
+  resolveTransactionMerchantName,
   serializeMerchant,
   normalizeCategoryIds,
 } from './merchantCategories'
@@ -101,6 +102,26 @@ describe('serializeMerchant', () => {
       categoryId: 'cat-a',
       category: categoryA,
     })
+  })
+})
+
+describe('resolveTransactionMerchantName', () => {
+  it('bevorzugt merchantRef.name wenn verknüpft', () => {
+    expect(
+      resolveTransactionMerchantName({
+        merchant: 'Alter Name',
+        merchantRef: { name: 'Neuer Name' },
+      })
+    ).toBe('Neuer Name')
+  })
+
+  it('fällt auf merchant-String zurück ohne merchantRef', () => {
+    expect(
+      resolveTransactionMerchantName({
+        merchant: 'Freitext-Händler',
+        merchantRef: null,
+      })
+    ).toBe('Freitext-Händler')
   })
 })
 

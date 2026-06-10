@@ -9,6 +9,20 @@ function isNonEmptyString(value: unknown, maxLen: number): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= maxLen
 }
 
+/** Betrag: Zahl oder numerischer String (Prisma Decimal wird als String exportiert). */
+function isValidAmount(value: unknown): boolean {
+  if (typeof value !== 'number' && typeof value !== 'string') return false
+  const num = Number(value)
+  // Decimal(10,2): max. 8 Vorkommastellen
+  return Number.isFinite(num) && Math.abs(num) < 100_000_000
+}
+
+function isValidDateString(value: unknown): boolean {
+  return (
+    typeof value === 'string' && !Number.isNaN(new Date(value).getTime())
+  )
+}
+
 export function validateBackupPayload(
   backup: unknown,
   bodyByteLength?: number
@@ -79,6 +93,24 @@ export function validateBackupPayload(
       (typeof t.description !== 'string' || t.description.length > MAX_DESCRIPTION_LENGTH)
     ) {
       return NextResponse.json({ error: 'Ungültige Transaktion im Backup' }, { status: 400 })
+    }
+    if (!isValidAmount(t.amount)) {
+      return NextResponse.json(
+        { error: 'Ungültiger Betrag in Transaktion im Backup' },
+        { status: 400 }
+      )
+    }
+    if (!isValidDateString(t.date)) {
+      return NextResponse.json(
+        { error: 'Ungültiges Datum in Transaktion im Backup' },
+        { status: 400 }
+      )
+    }
+    if (t.lastConfirmedDate != null && !isValidDateString(t.lastConfirmedDate)) {
+      return NextResponse.json(
+        { error: 'Ungültiges Datum in Transaktion im Backup' },
+        { status: 400 }
+      )
     }
   }
 

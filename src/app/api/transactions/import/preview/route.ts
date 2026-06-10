@@ -3,8 +3,10 @@ import { prisma } from '@/lib/prisma'
 import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { merchantCategoriesInclude } from '@/lib/merchantCategories'
-import { parseCsv } from '@/lib/csvImport'
+import { parseCsv, CsvParseError } from '@/lib/csvImport'
 import { buildImportPreviewRows } from '@/lib/csvImport/buildPreview'
+import { CSV_IMPORT_MAX_BYTES } from '@/lib/csvImport/types'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
   const ctx = await getAccountContext()
@@ -13,7 +15,26 @@ export async function POST(request: Request) {
   const writeError = requireWritableContext(ctx)
   if (writeError) return writeError
 
-  const { account } = ctx
+  const { account, user } = ctx
+
+  const { allowed } = checkRateLimit(
+    `csv-preview:${user.id}`,
+    RATE_LIMITS.csvImport
+  )
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Zu viele Import-Versuche. Bitte später erneut versuchen.' },
+      { status: 429 }
+    )
+  }
+
+  const contentLength = request.headers.get('content-length')
+  if (contentLength && parseInt(contentLength, 10) > CSV_IMPORT_MAX_BYTES) {
+    return NextResponse.json(
+      { error: 'CSV-Datei ist zu groß (max. 2 MB)' },
+      { status: 400 }
+    )
+  }
 
   try {
     const body = await request.json()
@@ -22,6 +43,13 @@ export async function POST(request: Request) {
     if (!csvText.trim()) {
       return NextResponse.json(
         { error: 'CSV-Inhalt fehlt' },
+        { status: 400 }
+      )
+    }
+
+    if (csvText.length > CSV_IMPORT_MAX_BYTES) {
+      return NextResponse.json(
+        { error: 'CSV-Datei ist zu groß (max. 2 MB)' },
         { status: 400 }
       )
     }
@@ -84,8 +112,11 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error('CSV preview error:', error)
+    // Nur bewusst nutzergerichtete Parse-Fehler durchreichen, keine internen Details
     const message =
-      error instanceof Error ? error.message : 'Fehler beim Einlesen der CSV-Datei'
+      error instanceof CsvParseError
+        ? error.message
+        : 'Fehler beim Einlesen der CSV-Datei'
     return NextResponse.json({ error: message }, { status: 400 })
   }
 }

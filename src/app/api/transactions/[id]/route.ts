@@ -93,10 +93,6 @@ export async function PATCH(
       }
     }
 
-    if (updateData.isTransfer === false && existingTransaction.isTransfer) {
-      await unlinkTransfer(id)
-    }
-
     const wantsTransfer =
       updateData.isTransfer !== undefined
         ? Boolean(updateData.isTransfer)
@@ -107,15 +103,7 @@ export async function PATCH(
         ? updateData.transferTargetAccountId
         : existingTransaction.transferTargetAccountId
 
-    if (
-      wantsTransfer &&
-      targetAccountId &&
-      existingTransaction.transferTargetAccountId &&
-      existingTransaction.transferTargetAccountId !== targetAccountId
-    ) {
-      await unlinkTransfer(id)
-    }
-
+    // Berechtigung prüfen, bevor bestehende Verknüpfungen verändert werden
     if (wantsTransfer && targetAccountId) {
       const transferError = await assertTransferTargetAllowed(
         user.id,
@@ -123,6 +111,19 @@ export async function PATCH(
         targetAccountId
       )
       if (transferError) return transferError
+    }
+
+    if (updateData.isTransfer === false && existingTransaction.isTransfer) {
+      await unlinkTransfer(id)
+    }
+
+    if (
+      wantsTransfer &&
+      targetAccountId &&
+      existingTransaction.transferTargetAccountId &&
+      existingTransaction.transferTargetAccountId !== targetAccountId
+    ) {
+      await unlinkTransfer(id)
     }
 
     if (updateData.merchantId !== undefined || updateData.merchant !== undefined) {

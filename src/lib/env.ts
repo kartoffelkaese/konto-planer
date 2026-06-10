@@ -14,6 +14,13 @@ export function assertProductionEnv(): void {
   if (!process.env.AUTH_URL && !process.env.NEXTAUTH_URL) {
     missing.push('AUTH_URL (kanonische öffentliche URL, z. B. https://konto-planer.de)')
   }
+  // Ohne explizite Entscheidung teilen sich hinter einem Reverse-Proxy alle
+  // Besucher dieselben Rate-Limit-Buckets (globaler Registrierungs-DoS möglich).
+  if (process.env.TRUST_PROXY !== 'true' && process.env.TRUST_PROXY !== 'false') {
+    missing.push(
+      'TRUST_PROXY ("true" hinter Reverse-Proxy wie nginx/Caddy, sonst "false")'
+    )
+  }
 
   if (missing.length > 0) {
     throw new Error(

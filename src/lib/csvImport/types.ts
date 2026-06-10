@@ -1,5 +1,11 @@
 export type CsvImportFormatId = 'standardBank'
 
+/** Obergrenze für hochgeladene CSV-Inhalte (Schutz vor DoS). */
+export const CSV_IMPORT_MAX_BYTES = 2 * 1024 * 1024
+
+/** Max. Zeilen pro Import-Commit (Schutz vor DoS über Massen-Inserts). */
+export const CSV_IMPORT_MAX_ROWS = 5000
+
 export type ParsedCsvRow = {
   rowIndex: number
   date: Date | null

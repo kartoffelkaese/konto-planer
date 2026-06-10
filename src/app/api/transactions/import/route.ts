@@ -8,6 +8,8 @@ import {
   validateTransactionCategoryId,
 } from '@/lib/transactionCategory'
 import type { ImportCommitRow } from '@/lib/csvImport/types'
+import { CSV_IMPORT_MAX_ROWS } from '@/lib/csvImport/types'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
 type CommitBody = {
   rows?: ImportCommitRow[]
@@ -59,7 +61,18 @@ export async function POST(request: Request) {
   const writeError = requireWritableContext(ctx)
   if (writeError) return writeError
 
-  const { account } = ctx
+  const { account, user } = ctx
+
+  const { allowed } = checkRateLimit(
+    `csv-commit:${user.id}`,
+    RATE_LIMITS.csvImport
+  )
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Zu viele Import-Versuche. Bitte später erneut versuchen.' },
+      { status: 429 }
+    )
+  }
 
   try {
     const body = (await request.json()) as CommitBody
@@ -68,6 +81,13 @@ export async function POST(request: Request) {
     if (rawRows.length === 0) {
       return NextResponse.json(
         { error: 'Keine Zeilen zum Importieren' },
+        { status: 400 }
+      )
+    }
+
+    if (rawRows.length > CSV_IMPORT_MAX_ROWS) {
+      return NextResponse.json(
+        { error: `Zu viele Zeilen (max. ${CSV_IMPORT_MAX_ROWS} pro Import)` },
         { status: 400 }
       )
     }

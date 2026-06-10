@@ -7,6 +7,7 @@ import {
   validateBackupPayload,
 } from '@/lib/backup-validation'
 import { setMerchantCategories } from '@/lib/merchantCategories'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
 export async function GET() {
   try {
@@ -64,7 +65,18 @@ export async function POST(request: Request) {
     const writeError = requireWritableContext(ctx)
     if (writeError) return writeError
 
-    const { account } = ctx
+    const { account, user } = ctx
+
+    const { allowed } = checkRateLimit(
+      `backup-restore:${user.id}`,
+      RATE_LIMITS.backupRestore
+    )
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Zu viele Wiederherstellungen. Bitte später erneut versuchen.' },
+        { status: 429 }
+      )
+    }
 
     const contentLength = request.headers.get('content-length')
     const bodyByteLength = contentLength ? parseInt(contentLength, 10) : undefined

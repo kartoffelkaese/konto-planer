@@ -89,7 +89,7 @@ Antwort: `{ transactions, total, page, hasMore }`
 
 | Methode | Pfad | Beschreibung |
 |---------|------|----------------|
-| `POST` | `/api/transactions/import/preview` | CSV-Text parsen, Händler matchen, Duplikate prüfen |
+| `POST` | `/api/transactions/import/preview` | CSV-Text parsen, Händler matchen, Duplikate prüfen (nur im Importzeitraum) |
 | `POST` | `/api/transactions/import` | Ausgewählte Zeilen als Buchungen anlegen |
 
 **`POST /api/transactions/import/preview` – Body**
@@ -98,13 +98,18 @@ Antwort: `{ transactions, total, page, hasMore }`
 
 Erwartete Spalten (Format `standardBank`): `Buchungsdatum`, `Status`, `Zahlungspflichtige*r`, `Zahlungsempfänger*in`, `Verwendungszweck`, `Umsatztyp`, `Betrag (€)`
 
-Antwort: `{ formatId, rows, merchants, summary }` – `rows` enthält u. a. `merchantRaw`, Vorschlag `merchantId`, `matchConfidence`, `isDuplicate`, `suggestedIncluded`
+Antwort: `{ formatId, rows, merchants, summary }` – `rows` enthält u. a. `merchantRaw`, Vorschlag `merchantId`, `matchConfidence`, `isDuplicate`, `duplicateTransactionId`, `canConfirmDuplicate`, `suggestedIncluded`, `suggestedConfirm`; `summary.confirmable` zählt Duplikate, die als offene bestehende Buchung bestätigt werden können; `summary.dateRange` (`start`/`end` als ISO-Datum oder `null`) – Duplikatprüfung lädt nur bestehende Transaktionen in diesem Bereich (Min/Max der Buchungsdaten, Fallback: `Zeitraum:`-Metadaten der Bank-CSV)
+
+**Bestätigungs-Flow (Duplikat + CSV „Gebucht“ + DB offen):** `canConfirmDuplicate: true` – keine Neuanlage; Commit mit `confirmExistingId` setzt nur `isConfirmed: true` auf der bestehenden Transaktion.
 
 **`POST /api/transactions/import` – Body**
 
-`rows`: Array von `{ rowIndex, date, amount, description?, merchantId?, merchant?, createNewMerchant?, categoryId?, isConfirmed }` – nur vom Client freigegebene Zeilen
+`rows`: Array – nur vom Client freigegebene Zeilen:
 
-Antwort: `{ created, skipped, errors }`
+- **Neu importieren:** `{ rowIndex, date, amount, description?, merchantId?, merchant?, createNewMerchant?, categoryId?, isConfirmed }`
+- **Bestehende bestätigen:** `{ rowIndex, confirmExistingId }` – `confirmExistingId` aus Preview (`duplicateTransactionId`)
+
+Antwort: `{ created, confirmed, skipped, errors }`
 
 Schreibzugriff auf das aktive Konto erforderlich (nicht `READ_ONLY`).
 

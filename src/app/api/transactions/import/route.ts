@@ -18,6 +18,17 @@ type CommitBody = {
 function parseCommitRow(raw: unknown): ImportCommitRow | null {
   if (!raw || typeof raw !== 'object') return null
   const row = raw as Record<string, unknown>
+  const rowIndex = typeof row.rowIndex === 'number' ? row.rowIndex : 0
+
+  const confirmExistingId =
+    typeof row.confirmExistingId === 'string' && row.confirmExistingId.trim()
+      ? row.confirmExistingId.trim()
+      : null
+
+  if (confirmExistingId) {
+    return { rowIndex, confirmExistingId }
+  }
+
   if (typeof row.date !== 'string' || !row.date) return null
   if (typeof row.amount !== 'number' || Number.isNaN(row.amount)) return null
   if (typeof row.isConfirmed !== 'boolean') return null
@@ -32,7 +43,7 @@ function parseCommitRow(raw: unknown): ImportCommitRow | null {
   if (!merchantId && !merchant) return null
 
   return {
-    rowIndex: typeof row.rowIndex === 'number' ? row.rowIndex : 0,
+    rowIndex,
     date: row.date,
     amount: row.amount,
     description:
@@ -105,8 +116,51 @@ export async function POST(request: Request) {
 
     const errors: Array<{ rowIndex: number; message: string }> = []
     let created = 0
+    let confirmed = 0
 
     for (const row of rows) {
+      if (row.confirmExistingId) {
+        const existing = await prisma.transaction.findFirst({
+          where: {
+            id: row.confirmExistingId,
+            accountId: account.id,
+            isRecurring: false,
+          },
+          select: {
+            id: true,
+            date: true,
+            amount: true,
+            merchantId: true,
+            merchant: true,
+            isConfirmed: true,
+          },
+        })
+
+        if (!existing) {
+          errors.push({
+            rowIndex: row.rowIndex,
+            message: 'Transaktion nicht gefunden',
+          })
+          continue
+        }
+
+        if (existing.isConfirmed) {
+          errors.push({
+            rowIndex: row.rowIndex,
+            message: 'Transaktion ist bereits gebucht',
+          })
+          continue
+        }
+
+        await prisma.transaction.update({
+          where: { id: existing.id },
+          data: { isConfirmed: true },
+        })
+
+        confirmed++
+        continue
+      }
+
       const categoryValidation = await validateTransactionCategoryId(
         row.categoryId,
         account.id
@@ -147,11 +201,11 @@ export async function POST(request: Request) {
           accountId: account.id,
           merchant: resolvedMerchant.merchant,
           merchantId: resolvedMerchant.merchantId,
-          description: row.description,
-          amount: row.amount,
+          description: row.description ?? null,
+          amount: row.amount!,
           date: transactionDate,
           categoryId: categoryValidation.categoryId ?? null,
-          isConfirmed: row.isConfirmed,
+          isConfirmed: row.isConfirmed!,
           isRecurring: false,
         },
       })
@@ -166,7 +220,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       created,
-      skipped: rows.length - created,
+      confirmed,
+      skipped: rows.length - created - confirmed - errors.length,
       errors,
     })
   } catch (error) {

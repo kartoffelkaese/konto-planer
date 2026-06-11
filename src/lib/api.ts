@@ -193,8 +193,11 @@ export type CsvImportPreviewRow = {
   categoryId: string | null
   isConfirmed: boolean
   isDuplicate: boolean
+  duplicateTransactionId: string | null
+  canConfirmDuplicate: boolean
   errors: string[]
   suggestedIncluded: boolean
+  suggestedConfirm: boolean
 }
 
 export type CsvImportPreviewResponse = {
@@ -206,19 +209,22 @@ export type CsvImportPreviewResponse = {
     duplicates: number
     errors: number
     suggested: number
+    confirmable: number
+    dateRange: { start: string; end: string } | null
   }
 }
 
 export type CsvImportCommitRow = {
   rowIndex: number
-  date: string
-  amount: number
-  description: string | null
+  confirmExistingId?: string
+  date?: string
+  amount?: number
+  description?: string | null
   merchantId?: string | null
   merchant?: string | null
   createNewMerchant?: boolean
   categoryId?: string | null
-  isConfirmed: boolean
+  isConfirmed?: boolean
 }
 
 export const previewCsvImport = async (
@@ -232,7 +238,12 @@ export const previewCsvImport = async (
 
 export const commitCsvImport = async (
   rows: CsvImportCommitRow[]
-): Promise<{ created: number; skipped: number; errors: Array<{ rowIndex: number; message: string }> }> => {
+): Promise<{
+  created: number
+  confirmed: number
+  skipped: number
+  errors: Array<{ rowIndex: number; message: string }>
+}> => {
   return apiFetch('/transactions/import', {
     method: 'POST',
     body: JSON.stringify({ rows }),

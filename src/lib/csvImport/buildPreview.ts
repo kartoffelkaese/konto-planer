@@ -1,6 +1,6 @@
 import { findMerchantInBankTexts } from '@/lib/merchantMatching'
 import { suggestCategoryIdForMerchant } from '@/lib/suggestCategoryId'
-import { isDuplicateTransaction } from './duplicates'
+import { findDuplicateTransaction } from './duplicates'
 import { formatDateIso } from './parseDate'
 import type { ImportPreviewRow, ParsedCsvRow } from './types'
 
@@ -12,10 +12,12 @@ export type MerchantForPreview = {
 }
 
 export type ExistingTxForDuplicate = {
+  id: string
   date: Date
   amount: number | { toString(): string }
   merchantId: string | null
   merchant: string
+  isConfirmed: boolean
 }
 
 export function buildImportPreviewRows(
@@ -51,14 +53,14 @@ export function buildImportPreviewRows(
       row.amount !== null &&
       row.merchantRaw.trim().length > 0
 
-    let isDuplicate = false
+    let duplicateMatch = null as ReturnType<typeof findDuplicateTransaction>
     if (
       isValid &&
       row.date &&
       row.amount !== null &&
       (merchantId || merchantName || row.merchantRaw)
     ) {
-      isDuplicate = isDuplicateTransaction(
+      duplicateMatch = findDuplicateTransaction(
         {
           date: row.date,
           amount: row.amount,
@@ -68,6 +70,13 @@ export function buildImportPreviewRows(
         existingTransactions
       )
     }
+
+    const isDuplicate = duplicateMatch !== null
+    const canConfirmDuplicate =
+      isDuplicate &&
+      row.isConfirmed &&
+      duplicateMatch !== null &&
+      !duplicateMatch.isConfirmed
 
     const hasBlockingErrors =
       errors.length > 0 || row.date === null || row.amount === null
@@ -84,8 +93,11 @@ export function buildImportPreviewRows(
       categoryId,
       isConfirmed: row.isConfirmed,
       isDuplicate,
+      duplicateTransactionId: duplicateMatch?.id ?? null,
+      canConfirmDuplicate,
       errors,
       suggestedIncluded: !hasBlockingErrors && !isDuplicate,
+      suggestedConfirm: canConfirmDuplicate,
     }
   })
 }

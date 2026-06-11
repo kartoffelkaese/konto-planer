@@ -31,21 +31,26 @@ export type ImportPreviewRow = {
   categoryId: string | null
   isConfirmed: boolean
   isDuplicate: boolean
+  duplicateTransactionId: string | null
+  canConfirmDuplicate: boolean
   errors: string[]
   /** Server-Vorschlag: importieren (gültig, kein Duplikat) */
   suggestedIncluded: boolean
+  /** Server-Vorschlag: bestehende offene Buchung bestätigen */
+  suggestedConfirm: boolean
 }
 
 export type ImportCommitRow = {
   rowIndex: number
-  date: string
-  amount: number
-  description: string | null
+  confirmExistingId?: string
+  date?: string
+  amount?: number
+  description?: string | null
   merchantId?: string | null
   merchant?: string | null
   createNewMerchant?: boolean
   categoryId?: string | null
-  isConfirmed: boolean
+  isConfirmed?: boolean
 }
 
 export type CsvImportFormat = {

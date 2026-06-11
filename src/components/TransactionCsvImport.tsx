@@ -17,9 +17,11 @@ import {
 } from '@/lib/api'
 import { suggestCategoryIdForMerchant } from '@/lib/suggestCategoryId'
 import { formatCurrency } from '@/lib/formatters'
+import { formatDate } from '@/lib/dateUtils'
 
 type EditableImportRow = CsvImportPreviewRow & {
   included: boolean
+  confirmIncluded: boolean
   createNewMerchant: boolean
 }
 
@@ -28,6 +30,8 @@ type ImportSummary = {
   duplicates: number
   errors: number
   suggested: number
+  confirmable: number
+  dateRange: { start: string; end: string } | null
 }
 
 type TransactionCsvImportProps = {
@@ -58,10 +62,15 @@ function rowIsValid(row: EditableImportRow): boolean {
   )
 }
 
+function rowCanConfirm(row: EditableImportRow): boolean {
+  return row.canConfirmDuplicate && !!row.duplicateTransactionId
+}
+
 function toEditableRows(rows: CsvImportPreviewRow[]): EditableImportRow[] {
   return rows.map((row) => ({
     ...row,
     included: row.suggestedIncluded,
+    confirmIncluded: row.suggestedConfirm,
     createNewMerchant: !row.merchantId && row.errors.length === 0,
     merchantName: row.merchantName ?? row.merchantRaw,
   }))
@@ -69,6 +78,7 @@ function toEditableRows(rows: CsvImportPreviewRow[]): EditableImportRow[] {
 
 function rowBorderClass(row: EditableImportRow, valid: boolean): string {
   if (row.errors.length > 0) return 'border-l-danger'
+  if (row.confirmIncluded && rowCanConfirm(row)) return 'border-l-income'
   if (row.isDuplicate) return 'border-l-pending'
   if (row.included && valid) return 'border-l-income'
   return 'border-l-border'
@@ -110,25 +120,39 @@ function ImportPreviewRowCard({
   onMerchantChange: (value: string) => void
 }) {
   const valid = rowIsValid(row)
+  const confirmable = rowCanConfirm(row)
   const amountClass =
     row.amount !== null && row.amount >= 0 ? 'text-income' : 'text-expense'
+  const isSelected =
+    (row.included && valid && !confirmable) || (row.confirmIncluded && confirmable)
 
   return (
     <article
       className={`rounded-card border border-border border-l-4 bg-surface p-4 shadow-sm transition-colors ${rowBorderClass(row, valid)} ${
-        row.included && valid ? 'ring-1 ring-accent/15' : ''
+        isSelected ? 'ring-1 ring-accent/15' : ''
       }`}
     >
       <div className="flex gap-3">
-        <div className="pt-1">
-          <input
-            type="checkbox"
-            checked={row.included}
-            disabled={!valid}
-            onChange={(e) => onUpdate({ included: e.target.checked })}
-            className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
-            aria-label={`Zeile ${row.rowIndex} importieren`}
-          />
+        <div className="pt-1 space-y-2">
+          {!confirmable ? (
+            <input
+              type="checkbox"
+              checked={row.included}
+              disabled={!valid}
+              onChange={(e) => onUpdate({ included: e.target.checked })}
+              className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
+              aria-label={`Zeile ${row.rowIndex} importieren`}
+            />
+          ) : (
+            <input
+              type="checkbox"
+              checked={row.confirmIncluded}
+              onChange={(e) => onUpdate({ confirmIncluded: e.target.checked })}
+              className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
+              aria-label={`Zeile ${row.rowIndex} – bestehende Buchung bestätigen`}
+              title="Bestehende Buchung bestätigen"
+            />
+          )}
         </div>
 
         <div className="min-w-0 flex-1 space-y-3">
@@ -137,7 +161,7 @@ function ImportPreviewRowCard({
               <input
                 type="date"
                 value={row.date ?? ''}
-                disabled={row.errors.length > 0 && !row.date}
+                disabled={confirmable || (row.errors.length > 0 && !row.date)}
                 onChange={(e) => onUpdate({ date: e.target.value })}
                 className="text-sm font-medium"
               />
@@ -161,67 +185,104 @@ function ImportPreviewRowCard({
               {row.isDuplicate && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-pending/40 bg-pending-bg px-2 py-0.5 text-xs font-medium text-pending">
                   <DocumentDuplicateIcon className="h-3.5 w-3.5" aria-hidden />
-                  Duplikat
+                  {confirmable
+                    ? 'Duplikat – offen, kann bestätigt werden'
+                    : 'Duplikat'}
                 </span>
               )}
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-secondary">
-                Händler
-              </label>
-              <select
-                value={
-                  row.createNewMerchant ? NEW_MERCHANT_VALUE : row.merchantId ?? ''
-                }
-                onChange={(e) => onMerchantChange(e.target.value)}
-                className="w-full text-sm"
-              >
-                <option value="">— Händler wählen —</option>
-                {merchants.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-                <option value={NEW_MERCHANT_VALUE}>
-                  Neu anlegen: {row.merchantRaw}
-                </option>
-              </select>
-              {row.createNewMerchant && (
-                <input
-                  type="text"
-                  value={row.merchantName ?? ''}
-                  onChange={(e) => onUpdate({ merchantName: e.target.value })}
-                  className="w-full text-sm"
-                  placeholder="Name für neuen Händler"
-                />
-              )}
-              {matchHint(row.matchConfidence) ? (
-                <p className="text-xs text-accent">{matchHint(row.matchConfidence)}</p>
-              ) : (
-                !row.merchantId &&
-                !row.createNewMerchant && (
-                  <p className="text-xs text-secondary">Händler bitte zuweisen</p>
-                )
-              )}
+          {confirmable ? (
+            <div className="rounded-control border border-accent/20 bg-accent-subtle/30 px-3 py-2 text-sm text-primary">
+              <p className="font-medium">Bestehende Buchung bestätigen</p>
+              <p className="mt-1 text-xs text-secondary">
+                Es wird keine neue Transaktion angelegt – die offene Buchung wird als
+                gebucht markiert.
+              </p>
             </div>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-secondary">
+                    Händler
+                  </label>
+                  <select
+                    value={
+                      row.createNewMerchant ? NEW_MERCHANT_VALUE : row.merchantId ?? ''
+                    }
+                    onChange={(e) => onMerchantChange(e.target.value)}
+                    className="w-full text-sm"
+                  >
+                    <option value="">— Händler wählen —</option>
+                    {merchants.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                    <option value={NEW_MERCHANT_VALUE}>
+                      Neu anlegen: {row.merchantRaw}
+                    </option>
+                  </select>
+                  {row.createNewMerchant && (
+                    <input
+                      type="text"
+                      value={row.merchantName ?? ''}
+                      onChange={(e) => onUpdate({ merchantName: e.target.value })}
+                      className="w-full text-sm"
+                      placeholder="Name für neuen Händler"
+                    />
+                  )}
+                  {matchHint(row.matchConfidence) ? (
+                    <p className="text-xs text-accent">{matchHint(row.matchConfidence)}</p>
+                  ) : (
+                    !row.merchantId &&
+                    !row.createNewMerchant && (
+                      <p className="text-xs text-secondary">Händler bitte zuweisen</p>
+                    )
+                  )}
+                </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-secondary">
-                Verwendungszweck
-              </label>
-              <input
-                type="text"
-                value={row.description}
-                onChange={(e) => onUpdate({ description: e.target.value })}
-                className="w-full text-sm"
-              />
-            </div>
-          </div>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-secondary">
+                    Verwendungszweck
+                  </label>
+                  <input
+                    type="text"
+                    value={row.description}
+                    onChange={(e) => onUpdate({ description: e.target.value })}
+                    className="w-full text-sm"
+                  />
+                </div>
+              </div>
 
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+              <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                <div className="rounded-control bg-surface-muted/80 px-3 py-2 text-xs text-secondary">
+                  <span className="font-medium text-primary">Aus CSV: </span>
+                  <span title={row.merchantRaw}>{row.merchantRaw}</span>
+                  {row.description && row.description !== row.merchantRaw && (
+                    <>
+                      <span className="mx-1 opacity-50">·</span>
+                      <span title={row.description}>{row.description}</span>
+                    </>
+                  )}
+                </div>
+
+                <label className="flex items-center gap-2 text-sm text-primary sm:justify-end">
+                  <input
+                    type="checkbox"
+                    checked={row.isConfirmed}
+                    onChange={(e) => onUpdate({ isConfirmed: e.target.checked })}
+                    className="rounded border-border text-accent focus:ring-accent"
+                  />
+                  Als gebucht markieren
+                </label>
+              </div>
+            </>
+          )}
+
+          {confirmable && (
             <div className="rounded-control bg-surface-muted/80 px-3 py-2 text-xs text-secondary">
               <span className="font-medium text-primary">Aus CSV: </span>
               <span title={row.merchantRaw}>{row.merchantRaw}</span>
@@ -232,17 +293,7 @@ function ImportPreviewRowCard({
                 </>
               )}
             </div>
-
-            <label className="flex items-center gap-2 text-sm text-primary sm:justify-end">
-              <input
-                type="checkbox"
-                checked={row.isConfirmed}
-                onChange={(e) => onUpdate({ isConfirmed: e.target.checked })}
-                className="rounded border-border text-accent focus:ring-accent"
-              />
-              Als gebucht markieren
-            </label>
-          </div>
+          )}
 
           {row.errors.length > 0 && (
             <div
@@ -258,7 +309,7 @@ function ImportPreviewRowCard({
             </div>
           )}
 
-          {row.amount !== null && (
+          {row.amount !== null && !confirmable && (
             <details className="text-xs text-secondary sm:hidden">
               <summary className="cursor-pointer hover:text-primary">Betrag anpassen</summary>
               <input
@@ -278,22 +329,24 @@ function ImportPreviewRowCard({
           )}
         </div>
 
-        <div className="hidden sm:block w-28 shrink-0">
-          <label className="block text-xs font-medium text-secondary mb-1.5 text-right">
-            Betrag (€)
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            value={row.amount ?? ''}
-            onChange={(e) =>
-              onUpdate({
-                amount: e.target.value ? Number.parseFloat(e.target.value) : null,
-              })
-            }
-            className="w-full text-sm text-right tabular-nums"
-          />
-        </div>
+        {!confirmable && (
+          <div className="hidden sm:block w-28 shrink-0">
+            <label className="block text-xs font-medium text-secondary mb-1.5 text-right">
+              Betrag (€)
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              value={row.amount ?? ''}
+              onChange={(e) =>
+                onUpdate({
+                  amount: e.target.value ? Number.parseFloat(e.target.value) : null,
+                })
+              }
+              className="w-full text-sm text-right tabular-nums"
+            />
+          </div>
+        )}
       </div>
     </article>
   )
@@ -321,12 +374,24 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
     resetImportState()
   }
 
-  const selectedCount = useMemo(
-    () => rows.filter((r) => r.included && rowIsValid(r)).length,
+  const selectedImportCount = useMemo(
+    () =>
+      rows.filter((r) => r.included && rowIsValid(r) && !rowCanConfirm(r)).length,
     [rows]
   )
 
-  const validCount = useMemo(() => rows.filter((r) => rowIsValid(r)).length, [rows])
+  const selectedConfirmCount = useMemo(
+    () => rows.filter((r) => r.confirmIncluded && rowCanConfirm(r)).length,
+    [rows]
+  )
+
+  const selectedCount = selectedImportCount + selectedConfirmCount
+
+  const validCount = useMemo(
+    () =>
+      rows.filter((r) => rowIsValid(r) || rowCanConfirm(r)).length,
+    [rows]
+  )
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -384,13 +449,20 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
   }
 
   const handleCommit = async () => {
-    const toImport = rows.filter((r) => r.included && rowIsValid(r))
-    if (toImport.length === 0) return
+    const toImport = rows.filter(
+      (r) => r.included && rowIsValid(r) && !rowCanConfirm(r)
+    )
+    const toConfirm = rows.filter((r) => r.confirmIncluded && rowCanConfirm(r))
+    if (toImport.length === 0 && toConfirm.length === 0) return
 
     setCommitting(true)
     try {
-      const result = await commitCsvImport(
-        toImport.map((row) => ({
+      const result = await commitCsvImport([
+        ...toConfirm.map((row) => ({
+          rowIndex: row.rowIndex,
+          confirmExistingId: row.duplicateTransactionId!,
+        })),
+        ...toImport.map((row) => ({
           rowIndex: row.rowIndex,
           date: row.date!,
           amount: row.amount!,
@@ -404,18 +476,27 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
           createNewMerchant: row.createNewMerchant,
           categoryId: row.categoryId || null,
           isConfirmed: row.isConfirmed,
-        }))
-      )
+        })),
+      ])
 
+      const parts: string[] = []
       if (result.created > 0) {
-        showToast(
-          `${result.created} Transaktion${result.created === 1 ? '' : 'en'} importiert`,
-          'success'
+        parts.push(
+          `${result.created} importiert`
         )
+      }
+      if (result.confirmed > 0) {
+        parts.push(
+          `${result.confirmed} bestätigt`
+        )
+      }
+
+      if (parts.length > 0) {
+        showToast(parts.join(', '), 'success')
         handleClose()
         onImported()
       } else {
-        showToast('Keine Transaktionen importiert', 'error')
+        showToast('Keine Transaktionen übernommen', 'error')
       }
     } catch (err) {
       console.error(err)
@@ -457,15 +538,35 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
       >
         <div className="flex flex-col gap-4 -mx-1">
           {stats && (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <StatCard label="Zeilen gesamt" value={stats.total} />
-              <StatCard label="Zum Import" value={selectedCount} tone="accent" />
-              <StatCard label="Duplikate" value={stats.duplicates} tone="warning" />
-              <StatCard
-                label="Mit Fehlern"
-                value={stats.errors}
-                tone={stats.errors > 0 ? 'danger' : 'neutral'}
-              />
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <StatCard label="Zeilen gesamt" value={stats.total} />
+                <StatCard label="Zum Import" value={selectedImportCount} tone="accent" />
+                <StatCard
+                  label="Bestätigen"
+                  value={selectedConfirmCount}
+                  tone={stats.confirmable > 0 ? 'accent' : 'neutral'}
+                />
+                <StatCard label="Duplikate" value={stats.duplicates} tone="warning" />
+                <StatCard
+                  label="Mit Fehlern"
+                  value={stats.errors}
+                  tone={stats.errors > 0 ? 'danger' : 'neutral'}
+                />
+              </div>
+              {stats.dateRange && (
+                <p className="text-sm text-secondary">
+                  Importzeitraum:{' '}
+                  <span className="font-medium text-primary">
+                    {formatDate(stats.dateRange.start)}
+                    {stats.dateRange.start !== stats.dateRange.end &&
+                      ` – ${formatDate(stats.dateRange.end)}`}
+                  </span>
+                  <span className="text-xs text-secondary ml-1">
+                    (Duplikatprüfung nur in diesem Zeitraum)
+                  </span>
+                </p>
+              )}
             </div>
           )}
 
@@ -477,7 +578,15 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
               size="sm"
               onClick={() =>
                 setRows((prev) =>
-                  prev.map((r) => (rowIsValid(r) ? { ...r, included: true } : r))
+                  prev.map((r) => {
+                    if (rowCanConfirm(r)) {
+                      return { ...r, confirmIncluded: true }
+                    }
+                    if (rowIsValid(r)) {
+                      return { ...r, included: true }
+                    }
+                    return r
+                  })
                 )
               }
             >
@@ -488,7 +597,9 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
               variant="ghost"
               size="sm"
               onClick={() =>
-                setRows((prev) => prev.map((r) => ({ ...r, included: false })))
+                setRows((prev) =>
+                  prev.map((r) => ({ ...r, included: false, confirmIncluded: false }))
+                )
               }
             >
               Keine
@@ -539,7 +650,16 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
               disabled={selectedCount === 0}
             >
               {selectedCount > 0
-                ? `${selectedCount} Buchung${selectedCount === 1 ? '' : 'en'} übernehmen`
+                ? [
+                    selectedImportCount > 0
+                      ? `${selectedImportCount} importieren`
+                      : null,
+                    selectedConfirmCount > 0
+                      ? `${selectedConfirmCount} bestätigen`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(', ')
                 : 'Übernehmen'}
             </Button>
           </div>

@@ -1,10 +1,12 @@
 import { normalizeMerchantName } from '@/lib/merchantMatching'
 
 export type ExistingTransactionForDuplicateCheck = {
+  id: string
   date: Date
   amount: number | { toString(): string }
   merchantId: string | null
   merchant: string
+  isConfirmed: boolean
 }
 
 export type DuplicateCheckInput = {
@@ -12,6 +14,11 @@ export type DuplicateCheckInput = {
   amount: number
   merchantId: string | null
   merchantName: string | null
+}
+
+export type DuplicateMatch = {
+  id: string
+  isConfirmed: boolean
 }
 
 function sameCalendarDay(a: Date, b: Date): boolean {
@@ -28,7 +35,7 @@ function sameAmount(a: number, b: number | { toString(): string }): boolean {
 
 function sameMerchant(
   input: DuplicateCheckInput,
-  existing: ExistingTransactionForDuplicateCheck
+  existing: Pick<ExistingTransactionForDuplicateCheck, 'merchantId' | 'merchant'>
 ): boolean {
   if (input.merchantId && existing.merchantId) {
     return input.merchantId === existing.merchantId
@@ -38,14 +45,29 @@ function sameMerchant(
   return left.length > 0 && left === right
 }
 
+export function matchesDuplicateCriteria(
+  input: DuplicateCheckInput,
+  existing: ExistingTransactionForDuplicateCheck
+): boolean {
+  return (
+    sameCalendarDay(input.date, existing.date) &&
+    sameAmount(input.amount, existing.amount) &&
+    sameMerchant(input, existing)
+  )
+}
+
+export function findDuplicateTransaction(
+  input: DuplicateCheckInput,
+  existing: ExistingTransactionForDuplicateCheck[]
+): DuplicateMatch | null {
+  const match = existing.find((tx) => matchesDuplicateCriteria(input, tx))
+  if (!match) return null
+  return { id: match.id, isConfirmed: match.isConfirmed }
+}
+
 export function isDuplicateTransaction(
   input: DuplicateCheckInput,
   existing: ExistingTransactionForDuplicateCheck[]
 ): boolean {
-  return existing.some(
-    (tx) =>
-      sameCalendarDay(input.date, tx.date) &&
-      sameAmount(input.amount, tx.amount) &&
-      sameMerchant(input, tx)
-  )
+  return findDuplicateTransaction(input, existing) !== null
 }

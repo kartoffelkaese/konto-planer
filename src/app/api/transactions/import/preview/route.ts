@@ -5,6 +5,10 @@ import { isErrorResponse } from '@/lib/api-auth'
 import { merchantCategoriesInclude } from '@/lib/merchantCategories'
 import { parseCsv, CsvParseError } from '@/lib/csvImport'
 import { buildImportPreviewRows } from '@/lib/csvImport/buildPreview'
+import {
+  getImportDateRange,
+  toImportDateRangeIso,
+} from '@/lib/csvImport/dateRange'
 import { CSV_IMPORT_MAX_BYTES } from '@/lib/csvImport/types'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
@@ -69,16 +73,23 @@ export async function POST(request: Request) {
       categories: m.categories.map((c) => ({ id: c.categoryId })),
     }))
 
+    const dateRange = getImportDateRange(parsedRows, csvText)
+
     const existingTransactions = await prisma.transaction.findMany({
       where: {
         accountId: account.id,
         isRecurring: false,
+        ...(dateRange && {
+          date: { gte: dateRange.start, lte: dateRange.end },
+        }),
       },
       select: {
+        id: true,
         date: true,
         amount: true,
         merchantId: true,
         merchant: true,
+        isConfirmed: true,
       },
     })
 
@@ -93,6 +104,8 @@ export async function POST(request: Request) {
       duplicates: previewRows.filter((r) => r.isDuplicate).length,
       errors: previewRows.filter((r) => r.errors.length > 0).length,
       suggested: previewRows.filter((r) => r.suggestedIncluded).length,
+      confirmable: previewRows.filter((r) => r.canConfirmDuplicate).length,
+      dateRange: toImportDateRangeIso(dateRange),
     }
 
     return NextResponse.json({

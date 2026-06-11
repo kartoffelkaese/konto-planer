@@ -185,8 +185,16 @@ export async function PATCH(
       updateData.createNewMerchant !== undefined
     ) {
       const resolvedMerchant = await resolveMerchantForTransaction(account.id, {
-        merchantId: updateData.merchantId ?? existingTransaction.merchantId,
-        merchant: updateData.merchant ?? existingTransaction.merchant,
+        merchantId:
+          updateData.merchantId !== undefined
+            ? updateData.merchantId
+            : updateData.merchant !== undefined
+              ? null
+              : existingTransaction.merchantId,
+        merchant:
+          updateData.merchant !== undefined
+            ? updateData.merchant
+            : existingTransaction.merchant,
         createNewMerchant: updateData.createNewMerchant,
       })
       if (resolvedMerchant.error) return resolvedMerchant.error

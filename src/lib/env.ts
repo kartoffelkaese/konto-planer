@@ -1,3 +1,5 @@
+import { SMTP_ENV_KEYS } from '@/lib/email'
+
 /**
  * Pflicht-Umgebungsvariablen für Produktion (öffentliches Hosting).
  */
@@ -20,6 +22,11 @@ export function assertProductionEnv(): void {
     missing.push(
       'TRUST_PROXY ("true" hinter Reverse-Proxy wie nginx/Caddy, sonst "false")'
     )
+  }
+  for (const key of SMTP_ENV_KEYS) {
+    if (!process.env[key]) {
+      missing.push(key)
+    }
   }
 
   if (missing.length > 0) {

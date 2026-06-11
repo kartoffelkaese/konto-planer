@@ -19,6 +19,8 @@ export const RATE_LIMITS = {
   register: { limit: 5, windowMs: 60 * 60 * 1000 },
   errorLog: { limit: 30, windowMs: 60 * 60 * 1000 },
   emailChange: { limit: 5, windowMs: 60 * 60 * 1000 },
+  resendVerification: { limit: 3, windowMs: 60 * 60 * 1000 },
+  emailChangeResend: { limit: 3, windowMs: 60 * 60 * 1000 },
   accountDelete: { limit: 3, windowMs: 60 * 60 * 1000 },
   csvImport: { limit: 10, windowMs: 15 * 60 * 1000 },
   backupRestore: { limit: 5, windowMs: 60 * 60 * 1000 },

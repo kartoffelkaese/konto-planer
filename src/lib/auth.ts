@@ -111,6 +111,10 @@ export const authConfig: NextAuthConfig = {
             return null
           }
 
+          if (!user.emailVerified) {
+            throw new Error('EMAIL_NOT_VERIFIED')
+          }
+
           const firstAccountId = await getFirstAccountIdForUser(user.id)
 
           return {
@@ -120,6 +124,12 @@ export const authConfig: NextAuthConfig = {
             activeAccountId: firstAccountId ?? undefined,
           }
         } catch (error) {
+          if (
+            error instanceof Error &&
+            error.message === 'EMAIL_NOT_VERIFIED'
+          ) {
+            throw error
+          }
           console.error('Auth error:', error)
           return null
         }

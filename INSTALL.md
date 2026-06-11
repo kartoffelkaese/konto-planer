@@ -36,6 +36,13 @@ NODE_ENV=production
 | `AUTH_SECRET` | ja | Geheimer Schlüssel für Sessions (alternativ `NEXTAUTH_SECRET`) |
 | `AUTH_URL` | ja (Prod.) | Öffentliche Basis-URL **mit** Schema, ohne Slash am Ende (alternativ `NEXTAUTH_URL`) |
 | `NODE_ENV` | empfohlen | `production` |
+| `TRUST_PROXY` | ja (Prod.) | `true` hinter Reverse-Proxy |
+| `SMTP_HOST` | ja (Prod.) | SMTP-Server für E-Mail-Bestätigung |
+| `SMTP_PORT` | ja (Prod.) | z. B. `587` oder `465` |
+| `SMTP_USER` | ja (Prod.) | SMTP-Benutzername |
+| `SMTP_PASS` | ja (Prod.) | SMTP-Passwort |
+| `SMTP_FROM` | ja (Prod.) | Absender, z. B. `KontoPlaner <noreply@ihre-domain.de>` |
+| `SMTP_SECURE` | optional | `true` für Port 465 |
 
 Die App lauscht intern auf **127.0.0.1:3001** (siehe `npm start` in `package.json`).
 
@@ -64,6 +71,16 @@ npm run pm2:start
 ```
 
 Weitere PM2-Befehle: `npm run pm2:restart`, `npm run pm2:logs`, `npm run pm2:stop`.
+
+### Cleanup unbestätigter Konten (Cron)
+
+Unbestätigte Registrierungen ohne gültigen Verifizierungs-Token werden gelöscht. Empfehlung: stündlich per Cron:
+
+```bash
+0 * * * * cd /pfad/zu/konto-planer && npm run db:cleanup-unverified >> /var/log/konto-planer-cleanup.log 2>&1
+```
+
+Manuell: `npm run db:cleanup-unverified`
 
 ## 5. Reverse-Proxy
 
@@ -111,7 +128,8 @@ npm test
 
 | Problem | Hinweis |
 |---------|---------|
-| Start bricht sofort ab | Pflicht-Env in Produktion prüfen (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`) |
+| Start bricht sofort ab | Pflicht-Env in Produktion prüfen (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `TRUST_PROXY`, SMTP-Variablen) |
+| Keine Bestätigungs-E-Mail | SMTP-Zugangsdaten und `AUTH_URL` prüfen; Spam-Ordner |
 | Login-Redirect falsch | `AUTH_URL` muss die öffentliche HTTPS-URL sein |
 | `Unknown field` / Prisma-Fehler | `npx prisma generate` nach Migration |
 | 502 vom Proxy | App läuft? `curl -I http://127.0.0.1:3001` |

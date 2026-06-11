@@ -88,6 +88,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({
       id: user.id,
       email: user.email,
+      pendingEmail: user.pendingEmail,
       salaryDay: updated.salaryDay,
       accountName: updated.name,
       transferSenderName: updated.transferSenderName,
@@ -116,6 +117,7 @@ export async function GET() {
     return NextResponse.json({
       id: user.id,
       email: user.email,
+      pendingEmail: user.pendingEmail,
       salaryDay: account.salaryDay,
       accountName: account.name,
       transferSenderName: account.transferSenderName,

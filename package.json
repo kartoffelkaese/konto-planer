@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "7.2.0",
+  "version": "7.2.1",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
@@ -12,6 +12,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed-demo": "node scripts/seed-demo.mjs",
+    "db:cleanup-unverified": "node scripts/cleanup-unverified-users.mjs",
     "postinstall": "prisma generate",
     "pm2:start": "pm2 start ecosystem.config.js --env production",
     "pm2:stop": "pm2 stop konto-planer",
@@ -22,7 +23,8 @@
   "overrides": {
     "postcss": "^8.5.15",
     "@hono/node-server": "^1.19.13",
-    "eslint": "10.4.1"
+    "eslint": "10.4.1",
+    "nodemailer": "^8.0.11"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
@@ -32,8 +34,9 @@
     "@prisma/client": "^7.8.0",
     "bcryptjs": "^3.0.3",
     "dayjs": "^1.11.21",
-    "next": "^16.2.7",
+    "next": "^16.2.9",
     "next-auth": "^5.0.0-beta.29",
+    "nodemailer": "^8.0.11",
     "prisma": "^7.8.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -42,13 +45,14 @@
   "devDependencies": {
     "@eslint/compat": "^2.1.0",
     "@tailwindcss/postcss": "^4.3.0",
-    "@types/node": "^25.9.2",
+    "@types/node": "^25.9.3",
+    "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.5.0",
     "dotenv": "^17.4.2",
     "eslint": "10.4.1",
-    "eslint-config-next": "^16.2.7",
+    "eslint-config-next": "^16.2.9",
     "postcss": "^8.5.15",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
@@ -59,6 +63,6 @@
     "fsevents@2.3.3": true,
     "prisma@7.8.0": true,
     "sharp@0.34.5": true,
-    "unrs-resolver@1.11.1": true
+    "unrs-resolver@1.12.2": true
   }
 }

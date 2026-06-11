@@ -22,15 +22,38 @@ enum AccountInviteStatus {
   REVOKED
 }
 
+enum EmailVerificationPurpose {
+  SIGNUP
+  EMAIL_CHANGE
+}
+
 model User {
-  id            String          @id @default(uuid())
-  email         String          @unique
-  passwordHash  String
-  createdAt     DateTime        @default(now())
-  memberships   AccountMember[]
-  invitesSent   AccountInvite[] @relation("InvitedBy")
+  id                      String                   @id @default(uuid())
+  email                   String                   @unique
+  passwordHash            String
+  emailVerified           DateTime?
+  pendingEmail            String?
+  createdAt               DateTime                 @default(now())
+  memberships             AccountMember[]
+  invitesSent             AccountInvite[]          @relation("InvitedBy")
+  emailVerificationTokens EmailVerificationToken[]
 
   @@map("users")
+}
+
+model EmailVerificationToken {
+  id        String                   @id @default(uuid())
+  userId    String
+  purpose   EmailVerificationPurpose
+  tokenHash String                   @unique
+  newEmail  String?
+  expiresAt DateTime
+  createdAt DateTime                 @default(now())
+  user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("email_verification_tokens")
 }
 
 model Account {

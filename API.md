@@ -18,6 +18,8 @@ Geschützte Routen erwarten eine **gültige NextAuth-Session** (`credentials: 'i
 
 Anmeldung: `/auth/login` (Credentials). Es gibt **keinen** Bearer-Token-Header.
 
+**E-Mail-Bestätigung:** Nach Registrierung ist `emailVerified` leer, bis der Link in der E-Mail geklickt wurde (24 h gültig). Login vor Bestätigung → Fehler. Unbestätigte Konten ohne gültigen Token werden per Cleanup-Skript gelöscht (`npm run db:cleanup-unverified`).
+
 ## Kontext & Berechtigungen
 
 - Die meisten Endpunkte beziehen sich auf das **aktive Buchführungs-Konto** (`activeAccountId` in der Session).
@@ -176,7 +178,9 @@ Antwort: Array `{ date, amount, category, color }` (Monatsschlüssel `YYYY-MM`)
 |---------|------|----------------|
 | `GET` | `/api/users/settings` | Einstellungen des **aktiven Kontos** |
 | `PATCH` | `/api/users/settings` | Einstellungen ändern (Schreibzugriff nötig) |
-| `PATCH` | `/api/users/email` | E-Mail ändern (mit Passwort) |
+| `PATCH` | `/api/users/email` | Neue E-Mail anfordern (Passwort); Bestätigungslink an neue Adresse |
+| `DELETE` | `/api/users/email/pending` | Ausstehende E-Mail-Änderung abbrechen |
+| `POST` | `/api/users/email/resend` | Bestätigungs-E-Mail für ausstehende Änderung erneut senden |
 | `DELETE` | `/api/users/delete` | Anmeldung löschen (mit Passwort) |
 
 **`GET/PATCH /api/users/settings` – Felder**
@@ -198,7 +202,9 @@ Antwort: Array `{ date, amount, category, color }` (Monatsschlüssel `YYYY-MM`)
 
 | Methode | Pfad | Beschreibung |
 |---------|------|----------------|
-| `POST` | `/api/auth/register` | `email`, `password`, `salaryDay` |
+| `POST` | `/api/auth/register` | `email`, `password`, `salaryDay` — sendet Bestätigungs-E-Mail |
+| `GET` | `/api/auth/verify-email?token=…` | E-Mail bestätigen (Redirect zur Anmeldung) |
+| `POST` | `/api/auth/resend-verification` | `{ "email" }` — Bestätigungs-E-Mail erneut (Registrierung) |
 | `POST` | `/api/error-log` | Client-Fehler ans Server-Log (Session, Rate-Limit) |
 
 ## Fehlercodes

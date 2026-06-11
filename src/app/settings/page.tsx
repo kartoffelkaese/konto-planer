@@ -20,7 +20,7 @@ import { dispatchAccountChanged } from '@/lib/accountSwitchEvents'
 export default function SettingsPage() {
   const { showToast } = useToast()
   const { canWrite, role } = useUserSettings()
-  const { data: session, update: updateSession } = useSession()
+  const { data: session } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [salaryDay, setSalaryDay] = useState(1)
@@ -35,6 +35,8 @@ export default function SettingsPage() {
   const [password, setPassword] = useState('')
   const [emailError, setEmailError] = useState<string | null>(null)
   const [emailLoading, setEmailLoading] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
+  const [pendingResendLoading, setPendingResendLoading] = useState(false)
 
   useEffect(() => {
     loadSettings()
@@ -61,6 +63,7 @@ export default function SettingsPage() {
       setTransferSenderName(data.transferSenderName || '')
       setBankId(data.bankId ?? null)
       setIsSimpleAccount(Boolean(data.isSimpleAccount))
+      setPendingEmail(data.pendingEmail ?? null)
       setSimpleAccountError(null)
     } catch (err) {
       console.error('Error loading settings:', err)
@@ -135,19 +138,14 @@ export default function SettingsPage() {
         throw new Error(data.error || 'Ein Fehler ist aufgetreten')
       }
 
-      showToast('E-Mail-Adresse aktualisiert', 'success')
+      showToast(
+        `Bestätigungs-E-Mail an ${data.pendingEmail} gesendet`,
+        'success'
+      )
+      setPendingEmail(data.pendingEmail ?? null)
       setShowEmailForm(false)
       setNewEmail('')
       setPassword('')
-      
-      // Aktualisiere die Session mit der neuen E-Mail
-      await updateSession({
-        ...session,
-        user: {
-          ...session?.user,
-          email: data.email,
-        },
-      })
     } catch (err) {
       console.error('Error updating email:', err)
       const message = err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten'
@@ -155,6 +153,51 @@ export default function SettingsPage() {
       showToast(message, 'error')
     } finally {
       setEmailLoading(false)
+    }
+  }
+
+  const handleCancelPendingEmail = async () => {
+    setEmailLoading(true)
+    setEmailError(null)
+    try {
+      const response = await fetch('/api/users/email/pending', {
+        method: 'DELETE',
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Abbrechen fehlgeschlagen')
+      }
+      setPendingEmail(null)
+      showToast('Ausstehende E-Mail-Änderung abgebrochen', 'success')
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten'
+      setEmailError(message)
+      showToast(message, 'error')
+    } finally {
+      setEmailLoading(false)
+    }
+  }
+
+  const handleResendPendingEmail = async () => {
+    setPendingResendLoading(true)
+    setEmailError(null)
+    try {
+      const response = await fetch('/api/users/email/resend', {
+        method: 'POST',
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Senden fehlgeschlagen')
+      }
+      showToast('Bestätigungs-E-Mail erneut gesendet', 'success')
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten'
+      setEmailError(message)
+      showToast(message, 'error')
+    } finally {
+      setPendingResendLoading(false)
     }
   }
 
@@ -365,13 +408,53 @@ export default function SettingsPage() {
                 </div>
               )}
 
+              {pendingEmail && (
+                <div className="mb-4 p-4 bg-accent-subtle rounded-lg border border-border">
+                  <p className="text-sm text-primary">
+                    Ausstehende Änderung auf{' '}
+                    <span className="font-medium">{pendingEmail}</span>. Bitte
+                    bestätigen Sie den Link in Ihrem Postfach.
+                  </p>
+                  <p className="text-xs text-secondary mt-1">
+                    Sie sind weiterhin mit {session?.user?.email} angemeldet, bis
+                    die neue Adresse bestätigt ist.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      loading={pendingResendLoading}
+                      loadingText="Wird gesendet…"
+                      onClick={handleResendPendingEmail}
+                    >
+                      Link erneut senden
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCancelPendingEmail}
+                      disabled={emailLoading}
+                    >
+                      Abbrechen
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {!showEmailForm ? (
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-secondary">Aktuelle E-Mail-Adresse</p>
                     <p className="font-medium text-primary">{session?.user?.email}</p>
                   </div>
-                  <Button type="button" variant="ghost" onClick={() => setShowEmailForm(true)}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setShowEmailForm(true)}
+                    disabled={!!pendingEmail}
+                  >
                     Ändern
                   </Button>
                 </div>
@@ -411,8 +494,8 @@ export default function SettingsPage() {
                     <Button type="button" variant="secondary" onClick={() => setShowEmailForm(false)}>
                       Abbrechen
                     </Button>
-                    <Button type="submit" loading={emailLoading} loadingText="Wird gespeichert…">
-                      Speichern
+                    <Button type="submit" loading={emailLoading} loadingText="Wird gesendet…">
+                      Bestätigung anfordern
                     </Button>
                   </div>
                 </form>

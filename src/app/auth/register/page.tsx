@@ -51,7 +51,9 @@ export default function RegisterPage() {
         throw new Error(data.message || 'Ein Fehler ist aufgetreten')
       }
 
-      router.push('/auth/login?registered=true')
+      router.push(
+        `/auth/check-email?email=${encodeURIComponent(email)}`
+      )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten')
       console.error(err)

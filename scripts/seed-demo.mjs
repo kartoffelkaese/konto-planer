@@ -139,7 +139,11 @@ async function main() {
 
   await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
-      data: { email: DEMO_EMAIL, passwordHash },
+      data: {
+        email: DEMO_EMAIL,
+        passwordHash,
+        emailVerified: new Date(),
+      },
     })
 
     const haushalt = await createAccountWithOwner(tx, user.id, {

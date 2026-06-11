@@ -75,6 +75,14 @@ export function resolveTransactionCategory(
   return resolveMerchantCategory(transaction.merchantRef)
 }
 
+/** Statistik/Filter: nur Transaktionen, deren aufgelöste Kategorie passt. */
+export function transactionBelongsToCategory(
+  transaction: TransactionWithCategory,
+  categoryId: string
+): boolean {
+  return resolveTransactionCategory(transaction)?.id === categoryId
+}
+
 export function resolveTransactionMerchantName(transaction: {
   merchant: string
   merchantRef?: { name: string } | null

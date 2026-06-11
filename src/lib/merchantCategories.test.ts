@@ -6,6 +6,7 @@ import {
   resolveTransactionMerchantName,
   serializeMerchant,
   normalizeCategoryIds,
+  transactionBelongsToCategory,
 } from './merchantCategories'
 import type { Category } from '@/types'
 
@@ -20,6 +21,13 @@ const categoryB: Category = {
   id: 'cat-b',
   name: 'Miete',
   color: '#FFD3B6',
+  createdAt: '2025-01-01',
+}
+
+const categoryKatze: Category = {
+  id: 'cat-katze',
+  name: 'Katze',
+  color: '#FFB6C1',
   createdAt: '2025-01-01',
 }
 
@@ -122,6 +130,48 @@ describe('resolveTransactionMerchantName', () => {
         merchantRef: null,
       })
     ).toBe('Freitext-Händler')
+  })
+})
+
+describe('transactionBelongsToCategory', () => {
+  const multiCategoryMerchant = {
+    categories: [
+      { category: categoryKatze },
+      { category: categoryA },
+      { category: categoryB },
+    ],
+  }
+
+  it('berücksichtigt explizite Transaktions-Kategorie', () => {
+    expect(
+      transactionBelongsToCategory(
+        {
+          categoryRef: categoryA,
+          merchantRef: multiCategoryMerchant,
+        },
+        'cat-a'
+      )
+    ).toBe(true)
+    expect(
+      transactionBelongsToCategory(
+        {
+          categoryRef: categoryA,
+          merchantRef: multiCategoryMerchant,
+        },
+        'cat-katze'
+      )
+    ).toBe(false)
+  })
+
+  it('ordnet Transaktion ohne categoryId nur der ersten Händler-Kategorie zu', () => {
+    const tx = {
+      categoryId: null,
+      categoryRef: null,
+      merchantRef: multiCategoryMerchant,
+    }
+    expect(transactionBelongsToCategory(tx, 'cat-a')).toBe(true)
+    expect(transactionBelongsToCategory(tx, 'cat-katze')).toBe(false)
+    expect(transactionBelongsToCategory(tx, 'cat-b')).toBe(false)
   })
 })
 

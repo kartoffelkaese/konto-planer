@@ -8,6 +8,7 @@ import {
 } from '@/lib/api-auth'
 import {
   resolveTransactionCategory,
+  transactionBelongsToCategory,
   transactionCategoryInclude,
 } from '@/lib/merchantCategories'
 
@@ -58,21 +59,9 @@ export async function GET(request: Request) {
       }
     }
 
-    const transactions = await prisma.transaction.findMany({
+    const transactionsRaw = await prisma.transaction.findMany({
       where: {
         accountId: account.id,
-        ...(category && {
-          OR: [
-            { categoryId: category },
-            {
-              merchantRef: {
-                categories: {
-                  some: { categoryId: category },
-                },
-              },
-            },
-          ],
-        }),
         ...(merchant && {
           merchantId: merchant,
         }),
@@ -85,6 +74,10 @@ export async function GET(request: Request) {
         date: 'asc',
       },
     })
+
+    const transactions = category
+      ? transactionsRaw.filter((t) => transactionBelongsToCategory(t, category))
+      : transactionsRaw
 
     const monthlyData = transactions.reduce(
       (acc: { [key: string]: number }, transaction) => {

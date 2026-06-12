@@ -185,6 +185,28 @@ export function getSalaryMonthRange(salaryDay: number) {
   }
 }
 
+/** Gehaltsmonat, der ein Referenzdatum enthält (für CSV-/Import-Zuordnung). */
+export function getSalaryMonthRangeForDate(salaryDay: number, reference: Date | string) {
+  const ref = dayjs(reference).tz(DEFAULT_TIMEZONE)
+  const currentDay = ref.date()
+
+  let startDate: dayjs.Dayjs
+  let endDate: dayjs.Dayjs
+
+  if (currentDay >= salaryDay) {
+    startDate = ref.date(salaryDay).startOf('day')
+    endDate = ref.add(1, 'month').date(salaryDay).subtract(1, 'day').endOf('day')
+  } else {
+    startDate = ref.subtract(1, 'month').date(salaryDay).startOf('day')
+    endDate = ref.date(salaryDay).subtract(1, 'day').endOf('day')
+  }
+
+  return {
+    startDate: startDate.utc().toDate(),
+    endDate: endDate.utc().toDate(),
+  }
+}
+
 /** Kalendermonat (1. bis letzter Tag) – für einfache Konten */
 export function getCalendarMonthRange(reference = new Date()) {
   const ref = dayjs(reference).tz(DEFAULT_TIMEZONE)

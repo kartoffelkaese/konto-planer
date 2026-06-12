@@ -121,4 +121,69 @@ describe('buildImportPreviewRows', () => {
     expect(preview[0].canConfirmDuplicate).toBe(false)
     expect(preview[0].suggestedConfirm).toBe(false)
   })
+
+  it('sortiert Zeilen nach Datum aufsteigend', () => {
+    const parsed: ParsedCsvRow[] = [
+      {
+        rowIndex: 3,
+        date: new Date(2026, 5, 20, 12, 0, 0),
+        amount: -5,
+        description: 'Spät',
+        merchantRaw: 'Spät',
+        isConfirmed: true,
+        umsatztyp: 'ausgang',
+        errors: [],
+      },
+      {
+        rowIndex: 1,
+        date: new Date(2026, 5, 5, 12, 0, 0),
+        amount: -1,
+        description: 'Früh',
+        merchantRaw: 'Früh',
+        isConfirmed: true,
+        umsatztyp: 'ausgang',
+        errors: [],
+      },
+    ]
+
+    const preview = buildImportPreviewRows(parsed, merchants, [])
+    expect(preview.map((r) => r.date)).toEqual(['2026-06-05', '2026-06-20'])
+  })
+
+  it('erkennt wiederkehrende Zahlung und blockiert Import', () => {
+    const parsed: ParsedCsvRow[] = [
+      {
+        rowIndex: 1,
+        date: new Date(2026, 2, 14, 12, 0, 0),
+        amount: -49.99,
+        description: 'Streaming',
+        merchantRaw: 'Streaming',
+        isConfirmed: true,
+        umsatztyp: 'ausgang',
+        errors: [],
+      },
+    ]
+
+    const preview = buildImportPreviewRows(parsed, merchants, [], {
+      enableRecurringMatch: true,
+      salaryDay: 25,
+      recurringTemplates: [
+        {
+          id: 'tmpl-1',
+          date: new Date(2026, 0, 15, 12, 0, 0),
+          amount: -49.99,
+          merchantId: 'm-stream',
+          merchant: 'Streaming',
+          recurringInterval: 'monthly',
+        },
+      ],
+      recurringInstances: [],
+    })
+
+    expect(preview[0].isRecurringMatch).toBe(true)
+    expect(preview[0].recurringMatchKind).toBe('createAndConfirm')
+    expect(preview[0].canConfirmRecurring).toBe(true)
+    expect(preview[0].suggestedIncluded).toBe(false)
+    expect(preview[0].isDuplicate).toBe(false)
+  })
 })

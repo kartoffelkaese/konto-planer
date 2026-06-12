@@ -3,6 +3,7 @@
 import { useRef, useState, useMemo, useCallback } from 'react'
 import {
   ArrowUpTrayIcon,
+  ArrowPathIcon,
   ExclamationTriangleIcon,
   DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline'
@@ -28,6 +29,7 @@ type EditableImportRow = CsvImportPreviewRow & {
 type ImportSummary = {
   total: number
   duplicates: number
+  recurring: number
   errors: number
   suggested: number
   confirmable: number
@@ -63,14 +65,47 @@ function rowIsValid(row: EditableImportRow): boolean {
 }
 
 function rowCanConfirm(row: EditableImportRow): boolean {
+  if (row.canConfirmRecurring) {
+    return (
+      row.recurringMatchKind === 'confirmExisting' ||
+      row.recurringMatchKind === 'createAndConfirm'
+    )
+  }
   return row.canConfirmDuplicate && !!row.duplicateTransactionId
+}
+
+function recurringMatchLabel(row: EditableImportRow): string {
+  switch (row.recurringMatchKind) {
+    case 'confirmExisting':
+      return 'Wiederkehrend – Instanz bestätigen'
+    case 'createAndConfirm':
+      return 'Wiederkehrend – Instanz anlegen und bestätigen'
+    case 'alreadyBooked':
+      return 'Wiederkehrend – bereits gebucht'
+    default:
+      return 'Wiederkehrend'
+  }
+}
+
+function recurringConfirmTitle(row: EditableImportRow): string {
+  if (row.recurringMatchKind === 'createAndConfirm') {
+    return 'Wiederkehrende Instanz anlegen und bestätigen'
+  }
+  return 'Wiederkehrende Instanz bestätigen'
+}
+
+function recurringConfirmDescription(row: EditableImportRow): string {
+  if (row.recurringMatchKind === 'createAndConfirm') {
+    return 'Es wird keine normale Transaktion importiert – die Instanz für den Gehaltsmonat wird angelegt und als gebucht markiert.'
+  }
+  return 'Es wird keine neue Transaktion angelegt – die offene wiederkehrende Buchung wird als gebucht markiert.'
 }
 
 function toEditableRows(rows: CsvImportPreviewRow[]): EditableImportRow[] {
   return rows.map((row) => ({
     ...row,
     included: row.suggestedIncluded,
-    confirmIncluded: row.suggestedConfirm,
+    confirmIncluded: row.suggestedConfirm || row.suggestedConfirmRecurring,
     createNewMerchant: !row.merchantId && row.errors.length === 0,
     merchantName: row.merchantName ?? row.merchantRaw,
   }))
@@ -79,6 +114,7 @@ function toEditableRows(rows: CsvImportPreviewRow[]): EditableImportRow[] {
 function rowBorderClass(row: EditableImportRow, valid: boolean): string {
   if (row.errors.length > 0) return 'border-l-danger'
   if (row.confirmIncluded && rowCanConfirm(row)) return 'border-l-income'
+  if (row.isRecurringMatch) return 'border-l-pending'
   if (row.isDuplicate) return 'border-l-pending'
   if (row.included && valid) return 'border-l-income'
   return 'border-l-border'
@@ -124,7 +160,8 @@ function ImportPreviewRowCard({
   const amountClass =
     row.amount !== null && row.amount >= 0 ? 'text-income' : 'text-expense'
   const isSelected =
-    (row.included && valid && !confirmable) || (row.confirmIncluded && confirmable)
+    (row.included && valid && !confirmable && !row.isRecurringMatch) ||
+    (row.confirmIncluded && confirmable)
 
   return (
     <article
@@ -138,7 +175,7 @@ function ImportPreviewRowCard({
             <input
               type="checkbox"
               checked={row.included}
-              disabled={!valid}
+              disabled={!valid || row.isRecurringMatch}
               onChange={(e) => onUpdate({ included: e.target.checked })}
               className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
               aria-label={`Zeile ${row.rowIndex} importieren`}
@@ -149,8 +186,8 @@ function ImportPreviewRowCard({
               checked={row.confirmIncluded}
               onChange={(e) => onUpdate({ confirmIncluded: e.target.checked })}
               className="h-4 w-4 rounded border-border text-accent focus:ring-accent"
-              aria-label={`Zeile ${row.rowIndex} – bestehende Buchung bestätigen`}
-              title="Bestehende Buchung bestätigen"
+              aria-label={`Zeile ${row.rowIndex} – ${recurringConfirmTitle(row)}`}
+              title={recurringConfirmTitle(row)}
             />
           )}
         </div>
@@ -182,7 +219,13 @@ function ImportPreviewRowCard({
                   Offen
                 </span>
               )}
-              {row.isDuplicate && (
+              {row.isRecurringMatch && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-accent/40 bg-accent-subtle px-2 py-0.5 text-xs font-medium text-accent">
+                  <ArrowPathIcon className="h-3.5 w-3.5" aria-hidden />
+                  {recurringMatchLabel(row)}
+                </span>
+              )}
+              {row.isDuplicate && !row.isRecurringMatch && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-pending/40 bg-pending-bg px-2 py-0.5 text-xs font-medium text-pending">
                   <DocumentDuplicateIcon className="h-3.5 w-3.5" aria-hidden />
                   {confirmable
@@ -195,11 +238,22 @@ function ImportPreviewRowCard({
 
           {confirmable ? (
             <div className="rounded-control border border-accent/20 bg-accent-subtle/30 px-3 py-2 text-sm text-primary">
-              <p className="font-medium">Bestehende Buchung bestätigen</p>
-              <p className="mt-1 text-xs text-secondary">
-                Es wird keine neue Transaktion angelegt – die offene Buchung wird als
-                gebucht markiert.
+              <p className="font-medium">
+                {row.canConfirmRecurring
+                  ? recurringConfirmTitle(row)
+                  : 'Bestehende Buchung bestätigen'}
               </p>
+              <p className="mt-1 text-xs text-secondary">
+                {row.canConfirmRecurring
+                  ? recurringConfirmDescription(row)
+                  : 'Es wird keine neue Transaktion angelegt – die offene Buchung wird als gebucht markiert.'}
+              </p>
+            </div>
+          ) : row.isRecurringMatch ? (
+            <div className="rounded-control border border-border bg-surface-muted/80 px-3 py-2 text-sm text-secondary">
+              {row.recurringMatchKind === 'alreadyBooked'
+                ? 'Diese wiederkehrende Buchung ist im Gehaltsmonat bereits gebucht – kein Import nötig.'
+                : 'Wiederkehrende Zahlung – normaler Import ist nicht möglich.'}
             </div>
           ) : (
             <>
@@ -458,10 +512,26 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
     setCommitting(true)
     try {
       const result = await commitCsvImport([
-        ...toConfirm.map((row) => ({
-          rowIndex: row.rowIndex,
-          confirmExistingId: row.duplicateTransactionId!,
-        })),
+        ...toConfirm.map((row) => {
+          if (row.canConfirmRecurring && row.recurringMatchKind === 'createAndConfirm') {
+            return {
+              rowIndex: row.rowIndex,
+              confirmRecurringTemplateId: row.recurringTemplateId!,
+              date: row.date!,
+              amount: row.amount!,
+            }
+          }
+          if (row.canConfirmRecurring && row.recurringInstanceId) {
+            return {
+              rowIndex: row.rowIndex,
+              confirmExistingId: row.recurringInstanceId,
+            }
+          }
+          return {
+            rowIndex: row.rowIndex,
+            confirmExistingId: row.duplicateTransactionId!,
+          }
+        }),
         ...toImport.map((row) => ({
           rowIndex: row.rowIndex,
           date: row.date!,
@@ -539,13 +609,18 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
         <div className="flex flex-col gap-4 -mx-1">
           {stats && (
             <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
                 <StatCard label="Zeilen gesamt" value={stats.total} />
                 <StatCard label="Zum Import" value={selectedImportCount} tone="accent" />
                 <StatCard
                   label="Bestätigen"
                   value={selectedConfirmCount}
                   tone={stats.confirmable > 0 ? 'accent' : 'neutral'}
+                />
+                <StatCard
+                  label="Wiederkehrend"
+                  value={stats.recurring ?? 0}
+                  tone={(stats.recurring ?? 0) > 0 ? 'warning' : 'neutral'}
                 />
                 <StatCard label="Duplikate" value={stats.duplicates} tone="warning" />
                 <StatCard
@@ -611,7 +686,7 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
               onClick={() =>
                 setRows((prev) =>
                   prev.map((r) =>
-                    rowIsValid(r) && !r.isDuplicate
+                    rowIsValid(r) && !r.isDuplicate && !r.isRecurringMatch
                       ? { ...r, included: true }
                       : { ...r, included: false }
                   )

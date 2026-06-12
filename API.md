@@ -98,16 +98,19 @@ Antwort: `{ transactions, total, page, hasMore }`
 
 Erwartete Spalten (Format `standardBank`): `Buchungsdatum`, `Status`, `Zahlungspflichtige*r`, `Zahlungsempfänger*in`, `Verwendungszweck`, `Umsatztyp`, `Betrag (€)`
 
-Antwort: `{ formatId, rows, merchants, summary }` – `rows` enthält u. a. `merchantRaw`, Vorschlag `merchantId`, `matchConfidence`, `isDuplicate`, `duplicateTransactionId`, `canConfirmDuplicate`, `suggestedIncluded`, `suggestedConfirm`; `summary.confirmable` zählt Duplikate, die als offene bestehende Buchung bestätigt werden können; `summary.dateRange` (`start`/`end` als ISO-Datum oder `null`) – Duplikatprüfung lädt nur bestehende Transaktionen in diesem Bereich (Min/Max der Buchungsdaten, Fallback: `Zeitraum:`-Metadaten der Bank-CSV)
+Antwort: `{ formatId, rows, merchants, summary }` – `rows` sind **nach Datum aufsteigend** sortiert (älteste zuerst) und enthalten u. a. `merchantRaw`, Vorschlag `merchantId`, `matchConfidence`, Duplikat-Felder (`isDuplicate`, `duplicateTransactionId`, `canConfirmDuplicate`, `suggestedConfirm`) sowie Wiederkehrend-Felder (`isRecurringMatch`, `recurringMatchKind`, `recurringTemplateId`, `recurringInstanceId`, `canConfirmRecurring`, `suggestedConfirmRecurring`); `summary.confirmable` zählt bestätigbare Duplikate und wiederkehrende Zeilen; `summary.recurring` zählt erkannte wiederkehrende Treffer; `summary.dateRange` (`start`/`end` als ISO-Datum oder `null`) – Duplikatprüfung lädt nur bestehende Transaktionen in diesem Bereich (Min/Max der Buchungsdaten, Fallback: `Zeitraum:`-Metadaten der Bank-CSV)
 
 **Bestätigungs-Flow (Duplikat + CSV „Gebucht“ + DB offen):** `canConfirmDuplicate: true` – keine Neuanlage; Commit mit `confirmExistingId` setzt nur `isConfirmed: true` auf der bestehenden Transaktion.
+
+**Wiederkehrend-Flow (nur Planungskonten, CSV „Gebucht“):** Passende Vorlage oder Instanz im Gehaltsmonat – kein normaler Import. `recurringMatchKind`: `confirmExisting` (offene Instanz bestätigen), `createAndConfirm` (Instanz anlegen und als gebucht markieren), `alreadyBooked` (nur Hinweis). Commit: `{ rowIndex, confirmExistingId }` (Instanz) oder `{ rowIndex, confirmRecurringTemplateId, date, amount }` (neue Instanz).
 
 **`POST /api/transactions/import` – Body**
 
 `rows`: Array – nur vom Client freigegebene Zeilen:
 
 - **Neu importieren:** `{ rowIndex, date, amount, description?, merchantId?, merchant?, createNewMerchant?, categoryId?, isConfirmed }`
-- **Bestehende bestätigen:** `{ rowIndex, confirmExistingId }` – `confirmExistingId` aus Preview (`duplicateTransactionId`)
+- **Bestehende bestätigen:** `{ rowIndex, confirmExistingId }` – aus Preview (`duplicateTransactionId` oder `recurringInstanceId`)
+- **Wiederkehrend anlegen und bestätigen:** `{ rowIndex, confirmRecurringTemplateId, date, amount }`
 
 Antwort: `{ created, confirmed, skipped, errors }`
 

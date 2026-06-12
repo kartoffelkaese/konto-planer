@@ -10,6 +10,14 @@ import {
 import type { ImportCommitRow } from '@/lib/csvImport/types'
 import { CSV_IMPORT_MAX_ROWS } from '@/lib/csvImport/types'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { assertPlanningAccount } from '@/lib/simpleAccount'
+import { findRecurringCsvMatch } from '@/lib/csvImport/recurringMatch'
+import { buildRecurringInstanceData } from '@/lib/recurringInstances'
+import { getSalaryMonthRangeForDate } from '@/lib/dateUtils'
+import {
+  createTransferPair,
+  resolveTransferSenderName,
+} from '@/lib/transfers'
 
 type CommitBody = {
   rows?: ImportCommitRow[]
@@ -27,6 +35,23 @@ function parseCommitRow(raw: unknown): ImportCommitRow | null {
 
   if (confirmExistingId) {
     return { rowIndex, confirmExistingId }
+  }
+
+  const confirmRecurringTemplateId =
+    typeof row.confirmRecurringTemplateId === 'string' &&
+    row.confirmRecurringTemplateId.trim()
+      ? row.confirmRecurringTemplateId.trim()
+      : null
+
+  if (confirmRecurringTemplateId) {
+    if (typeof row.date !== 'string' || !row.date) return null
+    if (typeof row.amount !== 'number' || Number.isNaN(row.amount)) return null
+    return {
+      rowIndex,
+      confirmRecurringTemplateId,
+      date: row.date,
+      amount: row.amount,
+    }
   }
 
   if (typeof row.date !== 'string' || !row.date) return null
@@ -158,6 +183,151 @@ export async function POST(request: Request) {
         })
 
         confirmed++
+        continue
+      }
+
+      if (row.confirmRecurringTemplateId) {
+        const planningError = assertPlanningAccount(account)
+        if (planningError) {
+          errors.push({
+            rowIndex: row.rowIndex,
+            message: 'Wiederkehrende Zahlungen sind für dieses Konto nicht verfügbar',
+          })
+          continue
+        }
+
+        const template = await prisma.transaction.findFirst({
+          where: {
+            id: row.confirmRecurringTemplateId,
+            accountId: account.id,
+            isRecurring: true,
+            isRecurringPaused: false,
+            parentTransactionId: null,
+          },
+        })
+
+        if (!template) {
+          errors.push({
+            rowIndex: row.rowIndex,
+            message: 'Wiederkehrende Vorlage nicht gefunden',
+          })
+          continue
+        }
+
+        const transactionDate = new Date(`${row.date}T12:00:00`)
+        if (Number.isNaN(transactionDate.getTime())) {
+          errors.push({
+            rowIndex: row.rowIndex,
+            message: 'Ungültiges Datum',
+          })
+          continue
+        }
+
+        if (Math.abs(Number(template.amount) - row.amount!) >= 0.001) {
+          errors.push({
+            rowIndex: row.rowIndex,
+            message: 'Betrag passt nicht zur wiederkehrenden Vorlage',
+          })
+          continue
+        }
+
+        const { startDate, endDate } = getSalaryMonthRangeForDate(
+          account.salaryDay,
+          transactionDate
+        )
+
+        const instancesInMonth = await prisma.transaction.findMany({
+          where: {
+            accountId: account.id,
+            isRecurring: false,
+            parentTransactionId: template.id,
+            date: { gte: startDate, lte: endDate },
+          },
+          select: {
+            id: true,
+            date: true,
+            amount: true,
+            merchantId: true,
+            merchant: true,
+            isConfirmed: true,
+            parentTransactionId: true,
+          },
+        })
+
+        const match = findRecurringCsvMatch(
+          {
+            date: transactionDate,
+            amount: row.amount!,
+            merchantId: template.merchantId,
+            merchantName: template.merchant,
+            csvIsConfirmed: true,
+          },
+          [
+            {
+              id: template.id,
+              date: template.date,
+              amount: template.amount,
+              merchantId: template.merchantId,
+              merchant: template.merchant,
+              recurringInterval: template.recurringInterval,
+            },
+          ],
+          instancesInMonth,
+          account.salaryDay
+        )
+
+        if (match.kind === 'confirmExisting' && match.instanceId) {
+          await prisma.transaction.update({
+            where: { id: match.instanceId },
+            data: { isConfirmed: true },
+          })
+          confirmed++
+          continue
+        }
+
+        if (match.kind === 'createAndConfirm') {
+          const newInstance = await prisma.$transaction(async (tx) => {
+            const instance = await tx.transaction.create({
+              data: {
+                ...buildRecurringInstanceData(
+                  template,
+                  transactionDate,
+                  account.id,
+                  template.id
+                ),
+                isConfirmed: true,
+              },
+            })
+
+            if (template.isTransfer && template.transferTargetAccountId) {
+              const sourceAccount = await tx.account.findUnique({
+                where: { id: account.id },
+                select: { name: true, transferSenderName: true },
+              })
+              if (sourceAccount) {
+                await createTransferPair(
+                  tx,
+                  instance,
+                  template.transferTargetAccountId,
+                  resolveTransferSenderName(sourceAccount)
+                )
+              }
+            }
+
+            return instance
+          })
+          void newInstance
+          created++
+          continue
+        }
+
+        errors.push({
+          rowIndex: row.rowIndex,
+          message:
+            match.kind === 'alreadyBooked'
+              ? 'Wiederkehrende Buchung ist bereits gebucht'
+              : 'Wiederkehrende Zuordnung nicht möglich',
+        })
         continue
       }
 

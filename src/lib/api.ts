@@ -195,9 +195,15 @@ export type CsvImportPreviewRow = {
   isDuplicate: boolean
   duplicateTransactionId: string | null
   canConfirmDuplicate: boolean
+  isRecurringMatch: boolean
+  recurringMatchKind: 'confirmExisting' | 'createAndConfirm' | 'alreadyBooked' | 'none'
+  recurringTemplateId: string | null
+  recurringInstanceId: string | null
+  canConfirmRecurring: boolean
   errors: string[]
   suggestedIncluded: boolean
   suggestedConfirm: boolean
+  suggestedConfirmRecurring: boolean
 }
 
 export type CsvImportPreviewResponse = {
@@ -207,6 +213,7 @@ export type CsvImportPreviewResponse = {
   summary: {
     total: number
     duplicates: number
+    recurring: number
     errors: number
     suggested: number
     confirmable: number
@@ -217,6 +224,7 @@ export type CsvImportPreviewResponse = {
 export type CsvImportCommitRow = {
   rowIndex: number
   confirmExistingId?: string
+  confirmRecurringTemplateId?: string
   date?: string
   amount?: number
   description?: string | null

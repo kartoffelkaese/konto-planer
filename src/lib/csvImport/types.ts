@@ -19,6 +19,12 @@ export type ParsedCsvRow = {
 
 export type MerchantMatchConfidence = 'exact' | 'contains' | 'similar' | null
 
+export type RecurringMatchKind =
+  | 'confirmExisting'
+  | 'createAndConfirm'
+  | 'alreadyBooked'
+  | 'none'
+
 export type ImportPreviewRow = {
   rowIndex: number
   date: string | null
@@ -33,16 +39,24 @@ export type ImportPreviewRow = {
   isDuplicate: boolean
   duplicateTransactionId: string | null
   canConfirmDuplicate: boolean
+  isRecurringMatch: boolean
+  recurringMatchKind: RecurringMatchKind
+  recurringTemplateId: string | null
+  recurringInstanceId: string | null
+  canConfirmRecurring: boolean
   errors: string[]
-  /** Server-Vorschlag: importieren (gültig, kein Duplikat) */
+  /** Server-Vorschlag: importieren (gültig, kein Duplikat, kein Wiederkehrend-Match) */
   suggestedIncluded: boolean
   /** Server-Vorschlag: bestehende offene Buchung bestätigen */
   suggestedConfirm: boolean
+  /** Server-Vorschlag: wiederkehrende Instanz bestätigen oder anlegen */
+  suggestedConfirmRecurring: boolean
 }
 
 export type ImportCommitRow = {
   rowIndex: number
   confirmExistingId?: string
+  confirmRecurringTemplateId?: string
   date?: string
   amount?: number
   description?: string | null

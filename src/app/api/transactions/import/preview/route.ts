@@ -90,21 +90,80 @@ export async function POST(request: Request) {
         merchantId: true,
         merchant: true,
         isConfirmed: true,
+        parentTransactionId: true,
       },
     })
+
+    let recurringTemplates: Array<{
+      id: string
+      date: Date
+      amount: { toString(): string }
+      merchantId: string | null
+      merchant: string
+      recurringInterval: string | null
+    }> = []
+    let recurringInstances = existingTransactions
+
+    if (!account.isSimpleAccount) {
+      recurringTemplates = await prisma.transaction.findMany({
+        where: {
+          accountId: account.id,
+          isRecurring: true,
+          isRecurringPaused: false,
+          parentTransactionId: null,
+        },
+        select: {
+          id: true,
+          date: true,
+          amount: true,
+          merchantId: true,
+          merchant: true,
+          recurringInterval: true,
+        },
+      })
+
+      recurringInstances = await prisma.transaction.findMany({
+        where: {
+          accountId: account.id,
+          isRecurring: false,
+          parentTransactionId: { not: null },
+          ...(dateRange && {
+            date: { gte: dateRange.start, lte: dateRange.end },
+          }),
+        },
+        select: {
+          id: true,
+          date: true,
+          amount: true,
+          merchantId: true,
+          merchant: true,
+          isConfirmed: true,
+          parentTransactionId: true,
+        },
+      })
+    }
 
     const previewRows = buildImportPreviewRows(
       parsedRows,
       merchantsForPreview,
-      existingTransactions
+      existingTransactions,
+      {
+        enableRecurringMatch: !account.isSimpleAccount,
+        salaryDay: account.salaryDay,
+        recurringTemplates,
+        recurringInstances,
+      }
     )
 
     const summary = {
       total: previewRows.length,
       duplicates: previewRows.filter((r) => r.isDuplicate).length,
+      recurring: previewRows.filter((r) => r.isRecurringMatch).length,
       errors: previewRows.filter((r) => r.errors.length > 0).length,
       suggested: previewRows.filter((r) => r.suggestedIncluded).length,
-      confirmable: previewRows.filter((r) => r.canConfirmDuplicate).length,
+      confirmable: previewRows.filter(
+        (r) => r.canConfirmDuplicate || r.canConfirmRecurring
+      ).length,
       dateRange: toImportDateRangeIso(dateRange),
     }
 

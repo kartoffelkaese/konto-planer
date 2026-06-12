@@ -2,7 +2,13 @@ import { findMerchantInBankTexts } from '@/lib/merchantMatching'
 import { suggestCategoryIdForMerchant } from '@/lib/suggestCategoryId'
 import { findDuplicateTransaction } from './duplicates'
 import { formatDateIso } from './parseDate'
-import type { ImportPreviewRow, ParsedCsvRow } from './types'
+import {
+  findRecurringCsvMatch,
+  sortImportPreviewRowsByDate,
+  type RecurringInstanceForMatch,
+  type RecurringTemplateForMatch,
+} from './recurringMatch'
+import type { ImportPreviewRow, ParsedCsvRow, RecurringMatchKind } from './types'
 
 export type MerchantForPreview = {
   id: string
@@ -18,14 +24,30 @@ export type ExistingTxForDuplicate = {
   merchantId: string | null
   merchant: string
   isConfirmed: boolean
+  parentTransactionId?: string | null
+}
+
+export type BuildImportPreviewOptions = {
+  salaryDay?: number | null
+  enableRecurringMatch?: boolean
+  recurringTemplates?: RecurringTemplateForMatch[]
+  recurringInstances?: RecurringInstanceForMatch[]
 }
 
 export function buildImportPreviewRows(
   parsedRows: ParsedCsvRow[],
   merchants: MerchantForPreview[],
-  existingTransactions: ExistingTxForDuplicate[]
+  existingTransactions: ExistingTxForDuplicate[],
+  options: BuildImportPreviewOptions = {}
 ): ImportPreviewRow[] {
-  return parsedRows.map((row) => {
+  const {
+    salaryDay = null,
+    enableRecurringMatch = false,
+    recurringTemplates = [],
+    recurringInstances = [],
+  } = options
+
+  const rows = parsedRows.map((row) => {
     const errors = [...row.errors]
     let merchantId: string | null = null
     let merchantName: string | null = null
@@ -53,13 +75,48 @@ export function buildImportPreviewRows(
       row.amount !== null &&
       row.merchantRaw.trim().length > 0
 
+    let recurringMatchKind: RecurringMatchKind = 'none'
+    let recurringTemplateId: string | null = null
+    let recurringInstanceId: string | null = null
+
+    if (
+      enableRecurringMatch &&
+      isValid &&
+      row.date &&
+      row.amount !== null &&
+      salaryDay != null &&
+      (merchantId || merchantName || row.merchantRaw)
+    ) {
+      const recurringMatch = findRecurringCsvMatch(
+        {
+          date: row.date,
+          amount: row.amount,
+          merchantId,
+          merchantName: merchantName ?? row.merchantRaw,
+          csvIsConfirmed: row.isConfirmed,
+        },
+        recurringTemplates,
+        recurringInstances,
+        salaryDay
+      )
+      recurringMatchKind = recurringMatch.kind
+      recurringTemplateId = recurringMatch.templateId
+      recurringInstanceId = recurringMatch.instanceId
+    }
+
+    const isRecurringMatch = recurringMatchKind !== 'none'
+
     let duplicateMatch = null as ReturnType<typeof findDuplicateTransaction>
     if (
+      !isRecurringMatch &&
       isValid &&
       row.date &&
       row.amount !== null &&
       (merchantId || merchantName || row.merchantRaw)
     ) {
+      const nonRecurringExisting = existingTransactions.filter(
+        (tx) => !tx.parentTransactionId
+      )
       duplicateMatch = findDuplicateTransaction(
         {
           date: row.date,
@@ -67,16 +124,23 @@ export function buildImportPreviewRows(
           merchantId,
           merchantName: merchantName ?? row.merchantRaw,
         },
-        existingTransactions
+        nonRecurringExisting
       )
     }
 
     const isDuplicate = duplicateMatch !== null
     const canConfirmDuplicate =
+      !isRecurringMatch &&
       isDuplicate &&
       row.isConfirmed &&
       duplicateMatch !== null &&
       !duplicateMatch.isConfirmed
+
+    const canConfirmRecurring =
+      isRecurringMatch &&
+      row.isConfirmed &&
+      (recurringMatchKind === 'confirmExisting' ||
+        recurringMatchKind === 'createAndConfirm')
 
     const hasBlockingErrors =
       errors.length > 0 || row.date === null || row.amount === null
@@ -95,9 +159,19 @@ export function buildImportPreviewRows(
       isDuplicate,
       duplicateTransactionId: duplicateMatch?.id ?? null,
       canConfirmDuplicate,
+      isRecurringMatch,
+      recurringMatchKind,
+      recurringTemplateId,
+      recurringInstanceId,
+      canConfirmRecurring,
       errors,
-      suggestedIncluded: !hasBlockingErrors && !isDuplicate,
+      suggestedIncluded: !hasBlockingErrors && !isDuplicate && !isRecurringMatch,
       suggestedConfirm: canConfirmDuplicate,
+      suggestedConfirmRecurring: canConfirmRecurring,
     }
   })
+
+  return sortImportPreviewRowsByDate(rows)
 }
+
+export { sortImportPreviewRowsByDate }

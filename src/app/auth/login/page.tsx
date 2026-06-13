@@ -1,14 +1,21 @@
 'use client'
 
-import { useState, Suspense } from 'react'
-import { getSession, signIn } from 'next-auth/react'
+import { useState, Suspense, useEffect } from 'react'
+import { getSession, signIn, useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
 import { Button } from '@/components/Button'
+import PageLoader from '@/components/PageLoader'
+import AuthAlert from '@/components/auth/AuthAlert'
+import AuthFormField from '@/components/auth/AuthFormField'
+import AuthPageLayout, {
+  AuthAlternateLink,
+  AuthCard,
+} from '@/components/auth/AuthPageLayout'
 
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { status } = useSession()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [resendLoading, setResendLoading] = useState(false)
@@ -17,6 +24,15 @@ function LoginForm() {
   const [showResend, setShowResend] = useState(false)
 
   const verifyError = searchParams.get('verifyError')
+  const authError = searchParams.get('error')
+  const isVerified = searchParams.get('verified') === 'true'
+  const isEmailChanged = searchParams.get('emailChanged') === 'true'
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace('/')
+    }
+  }, [status, router])
 
   const getErrorMessage = (errorCode: string) => {
     switch (errorCode) {
@@ -24,8 +40,14 @@ function LoginForm() {
         return 'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.'
       case 'EMAIL_NOT_VERIFIED':
         return 'Ihre E-Mail-Adresse wurde noch nicht bestätigt. Bitte prüfen Sie Ihr Postfach.'
+      case 'Configuration':
+        return 'Es ist ein Konfigurationsfehler aufgetreten. Bitte kontaktieren Sie den Administrator.'
+      case 'AccessDenied':
+        return 'Zugriff verweigert. Sie haben keine Berechtigung für diese Aktion.'
+      case 'Verification':
+        return 'Der Verifizierungslink ist ungültig oder abgelaufen.'
       default:
-        return errorCode
+        return 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.'
     }
   }
 
@@ -96,122 +118,118 @@ function LoginForm() {
     }
   }
 
-  return (
-    <main id="login-page" className="min-h-screen flex flex-col items-center justify-center bg-canvas py-12 px-4 sm:px-6 lg:px-8">
-      <div id="login-container" className="max-w-md w-full">
-        <div id="login-header" className="text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-accent mb-2">KontoPlaner</h1>
-          <h2 className="text-xl font-semibold text-primary mb-8">
-            Willkommen zurück
-          </h2>
-          {searchParams.get('verified') === 'true' && (
-            <div className="mb-4 p-4 bg-income-bg rounded-lg border border-border">
-              <p className="text-income text-sm">
-                E-Mail bestätigt! Sie können sich jetzt anmelden.
-              </p>
-            </div>
-          )}
-          {searchParams.get('emailChanged') === 'true' && (
-            <div className="mb-4 p-4 bg-income-bg rounded-lg border border-border">
-              <p className="text-income text-sm">
-                E-Mail-Adresse bestätigt! Bitte melden Sie sich mit Ihrer neuen
-                Adresse an.
-              </p>
-            </div>
-          )}
-          {verifyError && (
-            <div className="mb-4 p-4 bg-danger-subtle rounded-lg border border-border">
-              <p className="text-danger text-sm">{verifyError}</p>
-            </div>
-          )}
-        </div>
+  if (status === 'loading' || status === 'authenticated') {
+    return <PageLoader message="Wird geladen…" />
+  }
 
-        <div id="login-form-container" className="section-card-accent p-8">
-          <form id="login-form" className="space-y-6" onSubmit={handleSubmit}>
+  return (
+    <AuthPageLayout alternateHref="/auth/register" alternateLabel="Registrieren">
+      <AuthCard
+        title="Willkommen zurück"
+        subtitle="Melden Sie sich an, um Ihre Finanzen fortzusetzen."
+        footer={
+          <AuthAlternateLink
+            prompt="Noch kein Konto?"
+            href="/auth/register"
+            label="Jetzt registrieren"
+          />
+        }
+      >
+        <div className="space-y-5">
+          {isVerified && (
+            <AuthAlert variant="success" title="E-Mail bestätigt">
+              Sie können sich jetzt anmelden.
+            </AuthAlert>
+          )}
+
+          {isEmailChanged && (
+            <AuthAlert variant="success" title="Neue E-Mail bestätigt">
+              Bitte melden Sie sich mit Ihrer neuen Adresse an.
+            </AuthAlert>
+          )}
+
+          {verifyError && (
+            <AuthAlert variant="error" title="Bestätigung fehlgeschlagen">
+              {verifyError}
+            </AuthAlert>
+          )}
+
+          {authError && !error && (
+            <AuthAlert variant="error" title="Anmeldung nicht möglich">
+              {getErrorMessage(authError)}
+            </AuthAlert>
+          )}
+
+          <form className="space-y-5" onSubmit={handleSubmit}>
             {error && (
-              <div id="error-message" className="rounded-lg bg-danger-subtle p-4 text-center border border-border">
-                <div className="text-sm text-danger">{error}</div>
-                {showResend && (
-                  <div className="mt-3 space-y-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      loading={resendLoading}
-                      loadingText="Wird gesendet…"
-                      onClick={handleResend}
-                    >
-                      Bestätigungs-E-Mail erneut senden
-                    </Button>
-                    {resendMessage && (
-                      <p className="text-xs text-secondary">{resendMessage}</p>
-                    )}
-                  </div>
-                )}
-              </div>
+              <AuthAlert
+                variant="error"
+                title="Anmeldung fehlgeschlagen"
+                actions={
+                  showResend ? (
+                    <div className="space-y-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        loading={resendLoading}
+                        loadingText="Wird gesendet…"
+                        onClick={handleResend}
+                      >
+                        Bestätigungs-E-Mail erneut senden
+                      </Button>
+                      {resendMessage && (
+                        <p className="text-xs text-secondary">{resendMessage}</p>
+                      )}
+                    </div>
+                  ) : undefined
+                }
+              >
+                {error}
+              </AuthAlert>
             )}
 
-            <div id="form-fields" className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-primary mb-1">
-                  E-Mail
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="appearance-none block w-full px-3 py-2 border border-border rounded-lg placeholder:text-secondary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent bg-surface text-primary"
-                  placeholder="ihre@email.de"
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-primary mb-1">
-                  Passwort
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="appearance-none block w-full px-3 py-2 border border-border rounded-lg placeholder:text-secondary focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent bg-surface text-primary"
-                  placeholder="••••••••"
-                />
-              </div>
+            <div className="space-y-4">
+              <AuthFormField
+                id="email"
+                name="email"
+                label="E-Mail"
+                type="email"
+                autoComplete="email"
+                required
+                autoFocus
+                placeholder="ihre@email.de"
+              />
+              <AuthFormField
+                id="password"
+                name="password"
+                label="Passwort"
+                type="password"
+                autoComplete="current-password"
+                required
+                placeholder="••••••••"
+              />
             </div>
 
-            <div>
-              <Button
-                type="submit"
-                fullWidth
-                size="lg"
-                loading={loading}
-                loadingText="Anmeldung läuft…"
-              >
-                Anmelden
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              fullWidth
+              size="lg"
+              loading={loading}
+              loadingText="Anmeldung läuft…"
+            >
+              Anmelden
+            </Button>
           </form>
         </div>
-
-        <div id="register-link" className="mt-6 text-center">
-          <Link
-            href="/auth/register"
-            className="text-sm font-medium text-accent hover:text-accent-hover transition-colors duration-feedback"
-          >
-            Noch kein Konto? Jetzt registrieren →
-          </Link>
-        </div>
-      </div>
-    </main>
+      </AuthCard>
+    </AuthPageLayout>
   )
 }
 
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<PageLoader message="Wird geladen…" />}>
       <LoginForm />
     </Suspense>
   )

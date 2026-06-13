@@ -10,6 +10,8 @@ interface ModalProps {
   title: string
   children: React.ReactNode
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl'
+  /** Wenn true, schließt Klick außerhalb / Escape das Modal nicht */
+  preventClose?: boolean
 }
 
 const maxWidthClasses = {
@@ -27,11 +29,16 @@ export default function Modal({
   onClose, 
   title, 
   children,
-  maxWidth = 'lg'
+  maxWidth = 'lg',
+  preventClose = false,
 }: ModalProps) {
+  const handleClose = () => {
+    if (!preventClose) onClose()
+  }
+
   return (
     <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog as="div" className="relative z-50" onClose={handleClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -59,8 +66,9 @@ export default function Modal({
                 <div className="absolute right-0 top-0 hidden pr-4 pt-4 sm:block">
                   <button
                     type="button"
-                    className="rounded-control text-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface"
-                    onClick={onClose}
+                    className="rounded-control text-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-40"
+                    onClick={handleClose}
+                    disabled={preventClose}
                   >
                     <span className="sr-only">Schließen</span>
                     <XMarkIcon className="h-6 w-6" aria-hidden="true" />

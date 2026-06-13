@@ -243,26 +243,76 @@ export async function GET() {
     const kumulatedCategoryData = Array.from(categoryMap.values())
       .sort((a, b) => b.value - a.value)
 
+    const [confirmedRows, pendingRows, recentRaw] = await Promise.all([
+      prisma.transaction.findMany({
+        where: { accountId: account.id, isConfirmed: true },
+        select: { amount: true },
+      }),
+      prisma.transaction.findMany({
+        where: { accountId: account.id, isConfirmed: false },
+        select: { amount: true },
+      }),
+      prisma.transaction.findMany({
+        where: {
+          accountId: account.id,
+          isRecurring: false,
+          isConfirmed: true,
+        },
+        orderBy: { date: 'desc' },
+        take: 6,
+        select: {
+          id: true,
+          merchant: true,
+          amount: true,
+          date: true,
+          description: true,
+          merchantRef: { select: { name: true } },
+        },
+      }),
+    ])
+
+    const totalIncomeConfirmed = confirmedRows.reduce(
+      (sum, t) => (t.amount.toNumber() > 0 ? sum + t.amount.toNumber() : sum),
+      0
+    )
+    const totalExpensesConfirmed = confirmedRows.reduce(
+      (sum, t) =>
+        t.amount.toNumber() < 0 ? sum + Math.abs(t.amount.toNumber()) : sum,
+      0
+    )
+    const clearedBalance = totalIncomeConfirmed - totalExpensesConfirmed
+    const totalPendingExpenses = pendingRows.reduce(
+      (sum, t) =>
+        t.amount.toNumber() < 0 ? sum + Math.abs(t.amount.toNumber()) : sum,
+      0
+    )
+    const available = clearedBalance - totalPendingExpenses
+
     return NextResponse.json({
       monthlyIncome: income,
       monthlyExpenses: expenses,
-      recurringExpenses: account.isSimpleAccount
-        ? 0
-        : Math.abs(recurringExpenses._sum.amount?.toNumber() || 0),
+      recurringExpenses: Math.abs(recurringExpenses._sum.amount?.toNumber() || 0),
       savingsRate: Math.max(0, savingsRate),
       totalBalance: totalBalance._sum.amount?.toNumber() || 0,
-      recurringTransactions: account.isSimpleAccount ? [] : upcomingTransactions,
-      categoryDistribution: account.isSimpleAccount ? [] : kumulatedCategoryData,
-      categoryPeriod: account.isSimpleAccount
-        ? undefined
-        : {
-            startDate: categoryPeriod.startDate.toISOString(),
-            endDate: categoryPeriod.endDate.toISOString(),
-            rangeLabel: categoryPeriod.rangeLabel,
-            salaryDay: account.salaryDay,
-          },
-      monthLabel: undefined,
-      recentTransactions: [],
+      clearedBalance,
+      available,
+      totalPendingExpenses,
+      recurringTransactions: upcomingTransactions,
+      categoryDistribution: kumulatedCategoryData,
+      categoryPeriod: {
+        startDate: categoryPeriod.startDate.toISOString(),
+        endDate: categoryPeriod.endDate.toISOString(),
+        rangeLabel: categoryPeriod.rangeLabel,
+        salaryDay: account.salaryDay,
+      },
+      monthLabel: categoryPeriod.rangeLabel,
+      recentTransactions: recentRaw.map((t) => ({
+        id: t.id,
+        merchant: resolveTransactionMerchantName(t),
+        amount: t.amount.toNumber(),
+        date: t.date.toISOString(),
+        description: t.description,
+      })),
     })
   } catch (error) {
     logger.error('Fehler beim Laden der Dashboard-Daten', error, {

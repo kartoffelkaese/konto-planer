@@ -2,25 +2,27 @@
 
 // Statistik: Charts ohne zusätzliche Mikrointeraktionen – stabile Darstellung hat Vorrang.
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Cell
+import { useRouter } from 'next/navigation'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Cell,
 } from 'recharts'
 import ChartContainer from '@/components/ChartContainer'
 import PageLoader from '@/components/PageLoader'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import PageError from '@/components/PageError'
 import EmptyState from '@/components/EmptyState'
-import { 
-  ChevronDownIcon
-} from '@heroicons/react/24/outline'
+import PageContextHeader from '@/components/PageContextHeader'
+import { ChevronDownIcon } from '@heroicons/react/24/outline'
+import { useUserSettings } from '@/hooks/useUserSettings'
+import { useActiveAccountReload } from '@/hooks/useActiveAccountReload'
 
 interface Category {
   id: string
@@ -42,6 +44,12 @@ interface StatisticsData {
 
 export default function StatisticsPage() {
   const { data: session } = useSession()
+  const router = useRouter()
+  const {
+    accountName,
+    isSimpleAccount,
+    loading: settingsLoading,
+  } = useUserSettings()
   const [categories, setCategories] = useState<Category[]>([])
   const [merchants, setMerchants] = useState<Merchant[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('')
@@ -52,62 +60,58 @@ export default function StatisticsPage() {
   const [statisticsData, setStatisticsData] = useState<StatisticsData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [metaLoading, setMetaLoading] = useState(true)
 
-  // Zeitraum-Optionen
   const timeRanges = [
     { value: '1month', label: 'Letzter Monat' },
     { value: '3months', label: 'Letzte 3 Monate' },
     { value: '6months', label: 'Letzte 6 Monate' },
     { value: '1year', label: 'Letztes Jahr' },
-    { value: 'custom', label: 'Benutzerdefiniert' }
+    { value: 'custom', label: 'Benutzerdefiniert' },
   ]
 
   useEffect(() => {
-    if (session) {
-      fetchCategories()
-      fetchMerchants()
+    if (!settingsLoading && isSimpleAccount) {
+      router.replace('/')
     }
-  }, [session])
+  }, [settingsLoading, isSimpleAccount, router])
 
-  useEffect(() => {
-    if (selectedCategory || selectedMerchant) {
-      fetchStatistics()
-    }
-  }, [selectedCategory, selectedMerchant, timeRange, customStartDate, customEndDate])
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch('/api/categories')
       const data = await response.json()
-      // Kategorien alphabetisch sortieren
-      const sortedCategories = data.sort((a: Category, b: Category) => 
+      const sortedCategories = data.sort((a: Category, b: Category) =>
         a.name.localeCompare(b.name, 'de')
       )
       setCategories(sortedCategories)
-      // Erste Kategorie als Standard auswählen
       if (sortedCategories.length > 0) {
         setSelectedCategory(sortedCategories[0].id)
       }
     } catch (error) {
       console.error('Fehler beim Laden der Kategorien:', error)
     }
-  }
+  }, [])
 
-  const fetchMerchants = async () => {
+  const fetchMerchants = useCallback(async () => {
     try {
       const response = await fetch('/api/merchants')
       const data = await response.json()
-      // Händler alphabetisch sortieren
-      const sortedMerchants = data.sort((a: Merchant, b: Merchant) => 
+      const sortedMerchants = data.sort((a: Merchant, b: Merchant) =>
         a.name.localeCompare(b.name, 'de')
       )
       setMerchants(sortedMerchants)
     } catch (error) {
       console.error('Fehler beim Laden der Händler:', error)
     }
-  }
+  }, [])
 
-  const fetchStatistics = async () => {
+  const loadMeta = useCallback(async () => {
+    setMetaLoading(true)
+    await Promise.all([fetchCategories(), fetchMerchants()])
+    setMetaLoading(false)
+  }, [fetchCategories, fetchMerchants])
+
+  const fetchStatistics = useCallback(async () => {
     setIsLoading(true)
     setLoadError(null)
     try {
@@ -130,20 +134,61 @@ export default function StatisticsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [
+    timeRange,
+    selectedCategory,
+    selectedMerchant,
+    customStartDate,
+    customEndDate,
+  ])
+
+  useEffect(() => {
+    if (session) {
+      loadMeta()
+    }
+  }, [session, loadMeta])
+
+  useActiveAccountReload(() => {
+    if (session) {
+      setSelectedMerchant('')
+      loadMeta()
+    }
+  })
+
+  useEffect(() => {
+    if (metaLoading) return
+    if (timeRange === 'custom' && (!customStartDate || !customEndDate)) {
+      return
+    }
+    fetchStatistics()
+  }, [
+    metaLoading,
+    timeRange,
+    selectedCategory,
+    selectedMerchant,
+    customStartDate,
+    customEndDate,
+    fetchStatistics,
+  ])
 
   if (!session) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[50vh] px-4">
         <div className="text-center">
           <h1 className="text-2xl font-semibold text-primary">Bitte melden Sie sich an</h1>
-          <p className="mt-2 text-secondary">Um die Statistiken zu sehen, müssen Sie angemeldet sein.</p>
+          <p className="mt-2 text-secondary">
+            Um die Statistiken zu sehen, müssen Sie angemeldet sein.
+          </p>
         </div>
       </div>
     )
   }
 
-  if (isLoading && statisticsData.length === 0) {
+  if (settingsLoading || isSimpleAccount) {
+    return <PageLoader message="Statistiken werden geladen…" />
+  }
+
+  if ((isLoading || metaLoading) && statisticsData.length === 0 && !loadError) {
     return <PageLoader message="Statistiken werden geladen…" />
   }
 
@@ -151,23 +196,35 @@ export default function StatisticsPage() {
     return <PageError message={loadError} onRetry={fetchStatistics} />
   }
 
+  const selectedCategoryName = categories.find((c) => c.id === selectedCategory)?.name
+  const selectedMerchantName = merchants.find((m) => m.id === selectedMerchant)?.name
+  const filterSummary =
+    selectedMerchantName ?? selectedCategoryName ?? 'Keine Auswahl'
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <h1 className="page-title mb-4 md:mb-0">Statistiken</h1>
-        
-        <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-          {/* Kategorie-Auswahl */}
-          <div className="relative">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <PageContextHeader
+        title="Statistiken"
+        subtitle={`${accountName} · Ausgabenentwicklung`}
+      />
+
+      <div className="rounded-lg border border-border bg-surface p-4 md:p-5 mb-6">
+        <p className="text-sm font-medium text-primary mb-3">Filter</p>
+        <div className="flex flex-col md:flex-row flex-wrap gap-4">
+          <div className="relative flex-1 min-w-[200px]">
+            <label htmlFor="stats-category" className="sr-only">
+              Kategorie
+            </label>
             <select
+              id="stats-category"
               value={selectedCategory}
               onChange={(e) => {
                 setSelectedCategory(e.target.value)
                 if (e.target.value) {
-                  setSelectedMerchant('') // Wenn eine Kategorie ausgewählt wird, Händler zurücksetzen
+                  setSelectedMerchant('')
                 }
               }}
-              className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control appearance-none bg-surface text-primary"
+              className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control appearance-none bg-surface text-primary border"
             >
               <option value="">Alle Kategorien</option>
               {categories.map((category) => (
@@ -181,17 +238,20 @@ export default function StatisticsPage() {
             </div>
           </div>
 
-          {/* Händler-Auswahl */}
-          <div className="relative">
+          <div className="relative flex-1 min-w-[200px]">
+            <label htmlFor="stats-merchant" className="sr-only">
+              Händler
+            </label>
             <select
+              id="stats-merchant"
               value={selectedMerchant}
               onChange={(e) => {
                 setSelectedMerchant(e.target.value)
                 if (e.target.value) {
-                  setSelectedCategory('') // Wenn ein Händler ausgewählt wird, Kategorie zurücksetzen
+                  setSelectedCategory('')
                 }
               }}
-              className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control appearance-none bg-surface text-primary"
+              className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control appearance-none bg-surface text-primary border"
             >
               <option value="">Alle Händler</option>
               {merchants.map((merchant) => (
@@ -205,12 +265,15 @@ export default function StatisticsPage() {
             </div>
           </div>
 
-          {/* Zeitraum-Auswahl */}
-          <div className="relative">
+          <div className="relative flex-1 min-w-[200px]">
+            <label htmlFor="stats-range" className="sr-only">
+              Zeitraum
+            </label>
             <select
+              id="stats-range"
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control appearance-none bg-surface text-primary"
+              className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control appearance-none bg-surface text-primary border"
             >
               {timeRanges.map((range) => (
                 <option key={range.value} value={range.value}>
@@ -223,32 +286,44 @@ export default function StatisticsPage() {
             </div>
           </div>
 
-          {/* Benutzerdefinierte Datumsauswahl */}
           {timeRange === 'custom' && (
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative">
+            <>
+              <div className="relative flex-1 min-w-[160px]">
+                <label htmlFor="stats-start" className="sr-only">
+                  Von
+                </label>
                 <input
+                  id="stats-start"
                   type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control bg-surface text-primary"
+                  className="block w-full pl-3 pr-3 py-2 text-base border border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control bg-surface text-primary"
                 />
               </div>
-              <div className="relative">
+              <div className="relative flex-1 min-w-[160px]">
+                <label htmlFor="stats-end" className="sr-only">
+                  Bis
+                </label>
                 <input
+                  id="stats-end"
                   type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control bg-surface text-primary"
+                  className="block w-full pl-3 pr-3 py-2 text-base border border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control bg-surface text-primary"
                 />
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>
 
-      {/* Grafik */}
-      <div className="bg-surface rounded-lg shadow p-4 md:p-6">
+      <div className="bg-surface rounded-lg border border-border p-4 md:p-6">
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-lg font-medium text-primary">{filterSummary}</h2>
+          <p className="text-sm text-secondary">
+            {timeRanges.find((r) => r.value === timeRange)?.label}
+          </p>
+        </div>
         <div className="w-full min-w-0">
           {isLoading ? (
             <div className="flex items-center justify-center h-[400px]">
@@ -263,39 +338,47 @@ export default function StatisticsPage() {
             <ChartContainer height={400}>
               <BarChart data={statisticsData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-                <XAxis 
-                  dataKey="date" 
+                <XAxis
+                  dataKey="date"
                   tick={{ fontSize: 12, fill: 'var(--text-color)' }}
                   tickFormatter={(value) => {
                     const date = new Date(value + '-01')
-                    return date.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
+                    return date.toLocaleDateString('de-DE', {
+                      month: 'short',
+                      year: '2-digit',
+                    })
                   }}
                   stroke="var(--text-color)"
                 />
-                <YAxis 
-                  tickFormatter={(value) => `${value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€`}
+                <YAxis
+                  tickFormatter={(value) =>
+                    `${value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€`
+                  }
                   tick={{ fontSize: 12, fill: 'var(--text-color)' }}
                   stroke="var(--text-color)"
                 />
-                <Tooltip 
+                <Tooltip
                   formatter={(value) => [
                     `${Number(value ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€`,
                     'Ausgaben',
                   ]}
                   labelFormatter={(label) => {
                     const date = new Date(label + '-01')
-                    return date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
+                    return date.toLocaleDateString('de-DE', {
+                      month: 'long',
+                      year: 'numeric',
+                    })
                   }}
-                  contentStyle={{ 
-                    backgroundColor: 'var(--card-bg)', 
+                  contentStyle={{
+                    backgroundColor: 'var(--card-bg)',
                     border: '1px solid var(--border-color)',
                     borderRadius: '0.5rem',
-                    color: 'var(--text-color)'
+                    color: 'var(--text-color)',
                   }}
                   itemStyle={{ color: 'var(--text-color)' }}
                 />
-                <Bar 
-                  dataKey="amount" 
+                <Bar
+                  dataKey="amount"
                   fill="var(--color-chart-default)"
                   radius={[4, 4, 0, 0]}
                 >
@@ -310,4 +393,4 @@ export default function StatisticsPage() {
       </div>
     </div>
   )
-} 
+}

@@ -10,21 +10,34 @@ interface MonthlyOverviewProps {
   totalPendingExpenses: number
   available: number
   hidePendingMetrics?: boolean
+  incomeSubtitle?: string
+  balanceSubtitle?: string
 }
 
 export default function MonthlyOverview({
   currentIncome,
+  currentExpenses,
   clearedBalance,
   totalPendingExpenses,
   available,
   hidePendingMetrics = false,
+  incomeSubtitle = 'Aktueller Monat',
+  balanceSubtitle,
 }: MonthlyOverviewProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const kpiItems = (
     <>
-      <KpiCard label="Einnahmen" subtitle="Aktueller Monat" amount={currentIncome} stripe="income" />
-      <KpiCard label="Kontostand" amount={clearedBalance} stripe="accent" />
+      <KpiCard label="Einnahmen" subtitle={incomeSubtitle} amount={currentIncome} stripe="income" />
+      {!hidePendingMetrics && (
+        <KpiCard label="Ausgaben" subtitle={incomeSubtitle} amount={currentExpenses} stripe="expense" />
+      )}
+      <KpiCard
+        label="Kontostand"
+        subtitle={balanceSubtitle}
+        amount={clearedBalance}
+        stripe="accent"
+      />
       {!hidePendingMetrics && (
         <>
           <KpiCard label="Ausstehend" amount={totalPendingExpenses} stripe="pending" />
@@ -66,7 +79,10 @@ export default function MonthlyOverview({
                 isExpanded ? 'opacity-100' : 'opacity-0'
               }`}
             >
-              <KpiCard label="Einnahmen" subtitle="Aktueller Monat" amount={currentIncome} stripe="income" />
+              <KpiCard label="Einnahmen" subtitle={incomeSubtitle} amount={currentIncome} stripe="income" />
+              {!hidePendingMetrics && (
+                <KpiCard label="Ausgaben" subtitle={incomeSubtitle} amount={currentExpenses} stripe="expense" />
+              )}
               {!hidePendingMetrics && (
                 <>
                   <KpiCard label="Ausstehend" amount={totalPendingExpenses} stripe="pending" />
@@ -82,7 +98,7 @@ export default function MonthlyOverview({
         {kpiItems}
       </div>
 
-      <div className={`hidden lg:grid lg:gap-4 ${hidePendingMetrics ? 'lg:grid-cols-2' : 'lg:grid-cols-4'}`}>
+      <div className={`hidden lg:grid lg:gap-4 ${hidePendingMetrics ? 'lg:grid-cols-2' : 'lg:grid-cols-2 xl:grid-cols-5'}`}>
         {kpiItems}
       </div>
     </div>

@@ -18,7 +18,9 @@ import PageLoader from '@/components/PageLoader'
 import PageError from '@/components/PageError'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import SalaryMonthHint from '@/components/SalaryMonthHint'
+import PageContextHeader from '@/components/PageContextHeader'
 import { useUserSettings } from '@/hooks/useUserSettings'
+import { useActiveAccountReload } from '@/hooks/useActiveAccountReload'
 
 type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
 type SortDirection = 'asc' | 'desc'
@@ -109,6 +111,13 @@ function TransactionsPageContent() {
       loadTransactions(1, false)
     }
   }, [salaryDay, debouncedSearch, filterSalaryMonth])
+
+  useActiveAccountReload(() => {
+    if (salaryDay !== null) {
+      loadTransactions(1, false)
+      loadTotals()
+    }
+  })
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString())
@@ -359,13 +368,15 @@ function TransactionsPageContent() {
           </div>
         )}
 
-        <div
-          id="page-header"
-          className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-4"
-        >
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="page-title">{accountName}</h1>
+        <PageContextHeader
+          title={accountName}
+          subtitle={
+            isSimpleAccount
+              ? 'Transaktionen · Kalendermonat'
+              : 'Transaktionen · Gehaltsmonat'
+          }
+          actions={
+            <>
               {showPendingAction && (
                 <Button
                   type="button"
@@ -380,48 +391,46 @@ function TransactionsPageContent() {
                   Ausstehende erstellen
                 </Button>
               )}
-            </div>
-            {salaryDay !== null && !isSimpleAccount && (
-              <div className="mt-2">
-                <SalaryMonthHint
-                  salaryDay={salaryDay}
-                  filterActive={filterSalaryMonth}
-                />
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-            {!isSimpleAccount && (
-            <label className="flex items-center space-x-2 shrink-0">
-              <input
-                type="checkbox"
-                checked={filterSalaryMonth}
-                onChange={(e) => {
-                  const checked = e.target.checked
-                  setFilterSalaryMonth(checked)
-                  syncUrl({ filterSalaryMonth: checked })
-                }}
-                className="rounded border-border text-accent focus:ring-accent bg-surface"
-              />
-              <span className="text-sm text-primary">Nur Gehaltsmonat</span>
-            </label>
-            )}
-            {canWrite && (
-            <>
-              <TransactionCsvImport
-                onImported={() => loadTransactions(1, false)}
-              />
-              <Button
-                type="button"
-                className="hidden md:inline-flex shrink-0"
-                onClick={() => setShowNewTransactionModal(true)}
-              >
-                Neue Transaktion
-              </Button>
+              {!isSimpleAccount && (
+                <label className="flex items-center space-x-2 shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={filterSalaryMonth}
+                    onChange={(e) => {
+                      const checked = e.target.checked
+                      setFilterSalaryMonth(checked)
+                      syncUrl({ filterSalaryMonth: checked })
+                    }}
+                    className="rounded border-border text-accent focus:ring-accent bg-surface"
+                  />
+                  <span className="text-sm text-primary">Nur Gehaltsmonat</span>
+                </label>
+              )}
+              {canWrite && (
+                <>
+                  <TransactionCsvImport
+                    onImported={() => loadTransactions(1, false)}
+                  />
+                  <Button
+                    type="button"
+                    className="hidden md:inline-flex shrink-0"
+                    onClick={() => setShowNewTransactionModal(true)}
+                  >
+                    Neue Transaktion
+                  </Button>
+                </>
+              )}
             </>
-            )}
+          }
+        />
+        {salaryDay !== null && !isSimpleAccount && (
+          <div className="mb-4 -mt-2">
+            <SalaryMonthHint
+              salaryDay={salaryDay}
+              filterActive={filterSalaryMonth}
+            />
           </div>
-        </div>
+        )}
 
         <div className="mb-6">
           <label htmlFor="transaction-search" className="sr-only">
@@ -454,6 +463,8 @@ function TransactionsPageContent() {
             totalPendingExpenses={totals.totalPendingExpenses}
             available={totals.available}
             hidePendingMetrics={isSimpleAccount}
+            incomeSubtitle={isSimpleAccount ? 'Kalendermonat' : 'Gehaltsmonat'}
+            balanceSubtitle="Gebucht"
           />
         </div>
 

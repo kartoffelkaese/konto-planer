@@ -6,8 +6,10 @@ import { useRouter } from 'next/navigation'
 import { CheckIcon, WalletIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
 import Modal from '@/components/Modal'
+import LoadingSpinner from '@/components/LoadingSpinner'
 import AccountAvatar from '@/components/AccountAvatar'
 import { getDuplicateBankIds } from '@/lib/accountBankBadge'
+import { getBankById } from '@/lib/germanBanks'
 import {
   ACCOUNT_SWITCH_EXIT_MS,
   dispatchAccountChanged,
@@ -37,6 +39,7 @@ export default function AccountSwitcher({
   const [accounts, setAccounts] = useState<AccountItem[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [switchingId, setSwitchingId] = useState<string | null>(null)
   const [avatarAnimating, setAvatarAnimating] = useState(false)
 
   const loadAccounts = useCallback(async () => {
@@ -78,6 +81,7 @@ export default function AccountSwitcher({
       return
     }
     setLoading(true)
+    setSwitchingId(accountId)
     dispatchAccountSwitching()
     await new Promise((resolve) => setTimeout(resolve, ACCOUNT_SWITCH_EXIT_MS))
     try {
@@ -97,11 +101,15 @@ export default function AccountSwitcher({
       showToast('Kontowechsel fehlgeschlagen', 'error')
     } finally {
       setLoading(false)
+      setSwitchingId(null)
     }
   }
 
   const renderAccountButton = (acc: AccountItem, compact?: boolean) => {
     const isActive = acc.isActive
+    const isSwitching = switchingId === acc.id
+    const bank = getBankById(acc.bankId)
+
     return (
       <button
         key={acc.id}
@@ -114,8 +122,9 @@ export default function AccountSwitcher({
           isActive
             ? 'bg-accent-subtle border-l-[3px] border-l-accent pl-[calc(0.5rem-3px)]'
             : 'border-l-[3px] border-l-transparent hover:bg-accent-muted'
-        }`}
+        } ${isSwitching ? 'opacity-80' : ''}`}
         aria-current={isActive ? 'true' : undefined}
+        aria-busy={isSwitching || undefined}
       >
         <AccountAvatar
           name={acc.name}
@@ -132,19 +141,25 @@ export default function AccountSwitcher({
           >
             {acc.name}
           </span>
-          {acc.role === 'OWNER' && (
-            <span className="block text-xs text-secondary">Inhaber</span>
-          )}
-          {acc.role === 'MEMBER' && (
-            <span className="block text-xs text-secondary">Geteilt</span>
-          )}
-          {acc.role === 'READ_ONLY' && (
-            <span className="block text-xs text-secondary">Nur Lesen</span>
+          <span className="block truncate text-xs text-secondary">
+            {bank?.name ??
+              (acc.role === 'OWNER'
+                ? 'Inhaber'
+                : acc.role === 'MEMBER'
+                  ? 'Geteilt'
+                  : 'Nur Lesen')}
+          </span>
+          {bank && acc.role !== 'OWNER' && (
+            <span className="block text-xs text-secondary/80">
+              {acc.role === 'MEMBER' ? 'Geteilt' : 'Nur Lesen'}
+            </span>
           )}
         </span>
-        {isActive && (
+        {isSwitching ? (
+          <LoadingSpinner size="sm" className="shrink-0 text-accent" />
+        ) : isActive ? (
           <CheckIcon className="h-5 w-5 shrink-0 text-accent" aria-hidden />
-        )}
+        ) : null}
       </button>
     )
   }
@@ -204,11 +219,31 @@ export default function AccountSwitcher({
         onClose={() => setModalOpen(false)}
         title="Konto wechseln"
         maxWidth="sm"
+        preventClose={loading}
       >
-        <p className="text-sm text-secondary mb-3">
+        <p className="text-sm text-secondary mb-1">
           Wählen Sie das Konto, dessen Buchungen Sie anzeigen und bearbeiten möchten.
         </p>
-        <div className="space-y-0.5" role="list">
+        <p className="text-xs text-secondary mb-4">
+          {accounts.length} Konten verfügbar
+          {active ? (
+            <>
+              {' '}
+              · Aktiv: <span className="font-medium text-primary">{active.name}</span>
+            </>
+          ) : null}
+        </p>
+        {loading && (
+          <div
+            className="mb-3 flex items-center gap-2 text-sm text-accent"
+            role="status"
+            aria-live="polite"
+          >
+            <LoadingSpinner size="sm" />
+            Konto wird gewechselt…
+          </div>
+        )}
+        <div className="space-y-0.5" role="list" aria-label="Konten">
           {accounts.map((acc) => renderAccountButton(acc, true))}
         </div>
       </Modal>

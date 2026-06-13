@@ -6,7 +6,6 @@ import {
   ArrowPathIcon,
   ArrowsRightLeftIcon,
   BanknotesIcon,
-  BuildingStorefrontIcon,
   ChartBarIcon,
   ChartPieIcon,
   CheckCircleIcon,
@@ -16,19 +15,27 @@ import {
   UserGroupIcon,
 } from '@heroicons/react/24/outline'
 import CategoryExpenseBars from '@/components/CategoryExpenseBars'
+import { getButtonClassName } from '@/components/Button'
+import { APP_VERSION } from '@/lib/version'
 
 const features = [
   {
     icon: ChartBarIcon,
     title: 'Dashboard auf einen Blick',
     description:
-      'Einnahmen, Ausgaben und Kategorien – KPIs und Diagramme statt Tabellen-Chaos.',
+      'Verfügbar, Einnahmen, Ausgaben und letzte Buchungen – KPIs statt Tabellen-Chaos.',
   },
   {
     icon: BanknotesIcon,
     title: 'Transaktionen & Gehaltsmonat',
     description:
       'Buchen, filtern, bestätigen. Der Gehaltsmonat folgt Ihrem Einkommen – nicht dem Kalender.',
+  },
+  {
+    icon: ArrowDownTrayIcon,
+    title: 'CSV-Import von der Bank',
+    description:
+      'Umsätze von DKB und ING importieren – mit Vorschau, Duplikatprüfung und Zuordnung zu Händlern.',
   },
   {
     icon: ArrowPathIcon,
@@ -85,7 +92,7 @@ const steps = [
     number: '02',
     title: 'Finanzen strukturieren',
     description:
-      'Transaktionen erfassen, Kategorien und Händler anlegen, wiederkehrende Zahlungen definieren.',
+      'Transaktionen erfassen oder per CSV importieren, Kategorien anlegen, wiederkehrende Zahlungen definieren.',
   },
   {
     number: '03',
@@ -99,7 +106,22 @@ const trustPoints = [
   'Kostenlos nutzbar',
   'Deutsche Oberfläche',
   'Mehrere Konten',
-  'Backup jederzeit',
+  'CSV-Import (DKB & ING)',
+]
+
+const highlights = [
+  {
+    title: 'Gehaltsmonat statt Kalender',
+    description: 'Auswertungen passen sich Ihrem Gehaltseingang an – nicht dem 1. des Monats.',
+  },
+  {
+    title: 'Verfügbar auf einen Blick',
+    description: 'Kontostand minus ausstehende Ausgaben – so sehen Sie, was wirklich frei ist.',
+  },
+  {
+    title: 'Schnell startklar',
+    description: 'Registrieren, Bank wählen, erste Buchung oder CSV-Import – in unter einer Minute.',
+  },
 ]
 
 const previewFormatCurrency = (amount: number) =>
@@ -111,6 +133,12 @@ const previewFormatCurrency = (amount: number) =>
 
 const PREVIEW_ACCOUNT_NAME = 'Haushalt'
 const PREVIEW_BANK_NAME = 'Waldbank'
+
+const previewRecentTransactions = [
+  { merchant: 'REWE', amount: -42.3, date: '28.05.' },
+  { merchant: 'Gehalt', amount: 3240, date: '01.05.' },
+  { merchant: 'Spotify', amount: -9.99, date: '15.05.' },
+]
 
 function PreviewBankLogo() {
   return (
@@ -159,28 +187,66 @@ function LandingPreview() {
           </span>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <div className="kpi-card--accent rounded-control px-3 py-2.5">
+        <div className="rounded-control border border-accent bg-accent-subtle border-l-4 border-l-accent px-3 py-2.5 mb-3">
+          <p className="text-[10px] font-medium uppercase tracking-wide text-secondary">
+            Verfügbar
+          </p>
+          <p className="mt-0.5 text-lg font-semibold tabular-nums text-accent">2.840 €</p>
+          <p className="mt-0.5 text-[10px] text-secondary">
+            Kontostand 3.120 € · Ausstehend 280 €
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2">
+          <div className="kpi-card--accent rounded-control px-2.5 py-2">
             <p className="text-[10px] font-medium uppercase tracking-wide text-secondary">
               Einnahmen
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-income sm:text-base">3.240 €</p>
+            <p className="mt-0.5 text-xs font-semibold text-income sm:text-sm">3.240 €</p>
           </div>
-          <div className="rounded-control border border-border bg-surface-muted px-3 py-2.5">
+          <div className="rounded-control border border-border bg-surface-muted px-2.5 py-2">
             <p className="text-[10px] font-medium uppercase tracking-wide text-secondary">
               Ausgaben
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-expense sm:text-base">2.180 €</p>
+            <p className="mt-0.5 text-xs font-semibold text-expense sm:text-sm">2.180 €</p>
           </div>
-          <div className="rounded-control border border-border bg-surface px-3 py-2.5">
+          <div className="rounded-control border border-border bg-surface px-2.5 py-2">
             <p className="text-[10px] font-medium uppercase tracking-wide text-secondary">
-              Überschuss
+              Kontostand
             </p>
-            <p className="mt-0.5 text-sm font-semibold text-accent sm:text-base">1.060 €</p>
+            <p className="mt-0.5 text-xs font-semibold text-accent sm:text-sm">3.120 €</p>
+          </div>
+          <div className="rounded-control border border-pending/30 bg-pending-bg px-2.5 py-2">
+            <p className="text-[10px] font-medium uppercase tracking-wide text-secondary">
+              Ausstehend
+            </p>
+            <p className="mt-0.5 text-xs font-semibold text-pending sm:text-sm">280 €</p>
           </div>
         </div>
 
-        <div className="mt-4 rounded-control border border-border bg-canvas p-3">
+        <div className="mt-3 rounded-control border border-border bg-canvas p-3">
+          <p className="mb-2 text-xs font-medium text-primary">Letzte Buchungen</p>
+          <ul className="space-y-1.5">
+            {previewRecentTransactions.map((tx) => (
+              <li
+                key={tx.merchant + tx.date}
+                className="flex items-center justify-between gap-2 text-xs"
+              >
+                <span className="truncate text-primary">{tx.merchant}</span>
+                <span className="shrink-0 tabular-nums text-secondary">{tx.date}</span>
+                <span
+                  className={`shrink-0 font-medium tabular-nums ${
+                    tx.amount >= 0 ? 'text-income' : 'text-expense'
+                  }`}
+                >
+                  {previewFormatCurrency(tx.amount)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mt-3 rounded-control border border-border bg-canvas p-3">
           <p className="mb-3 text-xs font-medium text-primary">Ausgaben nach Kategorie</p>
           <CategoryExpenseBars categories={categories} formatCurrency={previewFormatCurrency} />
         </div>
@@ -194,10 +260,10 @@ function LandingPreview() {
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-control border border-accent-border bg-accent-subtle px-3 py-2">
-            <ArrowsRightLeftIcon className="h-4 w-4 shrink-0 text-accent" />
+            <ArrowDownTrayIcon className="h-4 w-4 shrink-0 text-accent" />
             <p className="text-xs text-primary">
-              <span className="font-medium">Umbuchung</span>
-              <span className="text-secondary"> · 200 € → Sparkonto</span>
+              <span className="font-medium">CSV-Import</span>
+              <span className="text-secondary"> · 12 neue Umsätze</span>
             </p>
           </div>
         </div>
@@ -206,30 +272,98 @@ function LandingPreview() {
   )
 }
 
+function LandingHeader() {
+  return (
+    <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur-md">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <Link
+          href="/"
+          className="shrink-0 text-lg font-semibold tracking-tight text-accent"
+        >
+          KontoPlaner
+        </Link>
+
+        <nav
+          className="hidden items-center gap-6 md:flex"
+          aria-label="Seitenabschnitte"
+        >
+          <a
+            href="#highlights"
+            className="text-sm font-medium text-secondary transition-colors duration-feedback hover:text-accent"
+          >
+            Vorteile
+          </a>
+          <a
+            href="#features"
+            className="text-sm font-medium text-secondary transition-colors duration-feedback hover:text-accent"
+          >
+            Funktionen
+          </a>
+          <a
+            href="#steps"
+            className="text-sm font-medium text-secondary transition-colors duration-feedback hover:text-accent"
+          >
+            So starten
+          </a>
+        </nav>
+
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <Link
+            href="/auth/login"
+            className={getButtonClassName({
+              variant: 'ghost',
+              size: 'sm',
+              className: 'hidden sm:inline-flex',
+            })}
+          >
+            Anmelden
+          </Link>
+          <Link
+            href="/auth/login"
+            className="rounded-control px-3 py-2 text-sm font-medium text-secondary transition-colors duration-feedback hover:text-accent sm:hidden"
+          >
+            Anmelden
+          </Link>
+          <Link
+            href="/auth/register"
+            className={getButtonClassName({ variant: 'primary', size: 'sm' })}
+          >
+            Registrieren
+          </Link>
+        </div>
+      </div>
+    </header>
+  )
+}
+
+function LandingFooter() {
+  return (
+    <footer className="border-t border-border bg-surface py-10">
+      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-4 sm:flex-row sm:px-6 lg:px-8">
+        <div className="text-center sm:text-left">
+          <p className="font-semibold text-primary">KontoPlaner</p>
+          <p className="mt-1 text-sm text-secondary">
+            Persönliche Finanzverwaltung – klar, lokal, ohne Werbung.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+          <Link href="/auth/login" className="text-secondary hover:text-accent">
+            Anmelden
+          </Link>
+          <Link href="/auth/register" className="text-secondary hover:text-accent">
+            Registrieren
+          </Link>
+          <span className="text-secondary/70">Version {APP_VERSION}</span>
+        </div>
+      </div>
+    </footer>
+  )
+}
+
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-canvas">
-      <header className="border-b border-border bg-surface/80 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-accent">
-            KontoPlaner
-          </Link>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href="/auth/login"
-              className="rounded-control px-3 py-2 text-sm font-medium text-secondary transition-colors duration-feedback hover:text-accent"
-            >
-              Anmelden
-            </Link>
-            <Link
-              href="/auth/register"
-              className="btn-primary rounded-control px-4 py-2 text-sm font-medium"
-            >
-              Registrieren
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="landing-page min-h-screen bg-canvas">
+      <LandingHeader />
 
       <section className="landing-hero relative overflow-hidden border-b border-border">
         <div className="landing-hero-glow pointer-events-none absolute inset-0" aria-hidden="true" />
@@ -249,20 +383,30 @@ export default function LandingPage() {
 
               <p className="landing-fade-in landing-fade-in-delay-2 mx-auto mt-5 max-w-xl text-base leading-relaxed text-secondary sm:text-lg lg:mx-0">
                 KontoPlaner bündelt Einnahmen, Ausgaben und wiederkehrende Zahlungen – für ein
-                Konto oder mehrere, allein oder gemeinsam. Mit Gehaltsmonat, Umbuchungen und klarem
+                Konto oder mehrere, allein oder gemeinsam. Mit Gehaltsmonat, CSV-Import und klarem
                 Überblick statt Tabellen-Chaos.
               </p>
 
               <div className="landing-fade-in landing-fade-in-delay-3 mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
                 <Link
                   href="/auth/register"
-                  className="btn-primary inline-flex w-full items-center justify-center rounded-control px-7 py-3.5 text-base font-medium shadow-sm transition-transform duration-feedback hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
+                  className={getButtonClassName({
+                    variant: 'primary',
+                    size: 'lg',
+                    className:
+                      'w-full shadow-sm transition-transform duration-feedback hover:scale-[1.02] active:scale-[0.98] sm:w-auto',
+                  })}
                 >
                   Kostenlos starten
                 </Link>
                 <Link
                   href="/auth/login"
-                  className="btn-secondary inline-flex w-full items-center justify-center rounded-control px-7 py-3.5 text-base font-medium shadow-sm transition-transform duration-feedback hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
+                  className={getButtonClassName({
+                    variant: 'secondary',
+                    size: 'lg',
+                    className:
+                      'w-full shadow-sm transition-transform duration-feedback hover:scale-[1.02] active:scale-[0.98] sm:w-auto',
+                  })}
                 >
                   Anmelden
                 </Link>
@@ -285,7 +429,26 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="py-16 sm:py-20">
+      <section
+        id="highlights"
+        className="border-b border-border bg-surface-muted/40 py-12 sm:py-14 scroll-mt-14"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
+            {highlights.map(({ title, description }) => (
+              <article
+                key={title}
+                className="rounded-card border border-border bg-surface p-5 transition-[border-color,box-shadow] duration-feedback hover:border-accent-border hover:shadow-[0_8px_24px_var(--shadow-color)]"
+              >
+                <h2 className="text-base font-semibold text-primary">{title}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-secondary">{description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="features" className="py-16 sm:py-20 scroll-mt-14">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-medium uppercase tracking-wide text-accent">Funktionen</p>
@@ -314,7 +477,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="border-y border-border bg-surface-muted/50 py-16 sm:py-20">
+      <section
+        id="steps"
+        className="border-y border-border bg-surface-muted/50 py-16 sm:py-20 scroll-mt-14"
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-sm font-medium uppercase tracking-wide text-accent">
@@ -342,6 +508,15 @@ export default function LandingPage() {
               </li>
             ))}
           </ol>
+
+          <div className="mt-12 flex justify-center">
+            <Link
+              href="/auth/register"
+              className={getButtonClassName({ variant: 'primary', size: 'md' })}
+            >
+              Jetzt kostenlos registrieren
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -364,8 +539,8 @@ export default function LandingPage() {
             Bereit für mehr Klarheit?
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-accent-foreground/90">
-            Legen Sie jetzt los – Konto anlegen, erste Buchung erfassen, optional Bank zuordnen und
-            Farbschema wählen. In unter einer Minute eingerichtet.
+            Legen Sie jetzt los – Konto anlegen, erste Buchung erfassen oder CSV importieren,
+            optional Bank zuordnen und Farbschema wählen. In unter einer Minute eingerichtet.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
@@ -383,6 +558,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <LandingFooter />
     </div>
   )
 }

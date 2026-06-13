@@ -20,6 +20,7 @@ import {
   ArrowPathIcon,
   PauseIcon,
   PlayIcon,
+  PlusIcon,
 } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
 import TransactionForm from '@/components/TransactionForm'
@@ -30,13 +31,15 @@ import SalaryMonthHint from '@/components/SalaryMonthHint'
 import RecurringAnchorHint from '@/components/RecurringAnchorHint'
 import { useToast } from '@/hooks/useToast'
 import { useUserSettings } from '@/hooks/useUserSettings'
+import { useActiveAccountReload } from '@/hooks/useActiveAccountReload'
+import PageContextHeader from '@/components/PageContextHeader'
 import { resolveTransactionMerchantName } from '@/lib/merchantCategories'
 import { Button } from '@/components/Button'
 
 export default function RecurringTransactionsPage() {
   const router = useRouter()
   const { showToast } = useToast()
-  const { salaryDay, canWrite, isSimpleAccount, loading: settingsLoading } = useUserSettings()
+  const { salaryDay, canWrite, isSimpleAccount, loading: settingsLoading, accountName } = useUserSettings()
   const [transactions, setTransactions] = useState<RecurringWithStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -57,6 +60,13 @@ export default function RecurringTransactionsPage() {
       loadTransactions()
     }
   }, [isSimpleAccount])
+
+  useActiveAccountReload(() => {
+    if (!isSimpleAccount) {
+      setLoading(true)
+      loadTransactions()
+    }
+  })
 
   const loadTransactions = async () => {
     try {
@@ -194,45 +204,42 @@ export default function RecurringTransactionsPage() {
   return (
     <div id="recurring-page" className="min-h-screen">
       <div id="recurring-container" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div id="page-header" className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8">
-          <div>
-            <h1 className="page-title">Wiederkehrende Zahlungen</h1>
-            <p className="mt-1 text-sm text-secondary">
-              Verwalten Sie Ihre regelmäßigen Ein- und Ausgaben
-            </p>
-            {salaryDay !== null && (
-              <div className="mt-2 space-y-1">
-                <SalaryMonthHint salaryDay={salaryDay} />
-                <RecurringAnchorHint />
-              </div>
-            )}
+        <PageContextHeader
+          title="Wiederkehrende Zahlungen"
+          subtitle={`${accountName} · Regelmäßige Ein- und Ausgaben`}
+          actions={
+            <>
+              {canWrite && hasDueWithoutInstance && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleCreateAllPending}
+                  loading={isCreatingPending}
+                  loadingText="Wird erstellt…"
+                >
+                  Ausstehende erstellen
+                </Button>
+              )}
+              {canWrite && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => setShowNewTransactionModal(true)}
+                >
+                  <PlusIcon className="h-4 w-4" aria-hidden />
+                  Neue Zahlung
+                </Button>
+              )}
+            </>
+          }
+        />
+        {salaryDay !== null && (
+          <div className="mb-6 -mt-2 space-y-1">
+            <SalaryMonthHint salaryDay={salaryDay} />
+            <RecurringAnchorHint />
           </div>
-          <div className="flex flex-wrap gap-2">
-            {canWrite && hasDueWithoutInstance && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={handleCreateAllPending}
-                loading={isCreatingPending}
-                loadingText="Wird erstellt…"
-              >
-                Ausstehende erstellen
-              </Button>
-            )}
-          {canWrite && (
-          <button
-            onClick={() => setShowNewTransactionModal(true)}
-            className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-accent-foreground bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent focus:ring-offset-canvas transition-colors duration-150"
-          >
-            <svg className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
-            Neue wiederkehrende Zahlung
-          </button>
-          )}
-          </div>
-        </div>
+        )}
 
         <div id="monthly-summary" className="rounded-lg border border-border p-4 mb-8 bg-surface">
           <h3 className="text-sm font-semibold mb-3 text-primary">Monatliche Belastung</h3>

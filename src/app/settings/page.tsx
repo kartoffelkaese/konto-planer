@@ -13,13 +13,20 @@ import AccountSharing from '@/components/AccountSharing'
 import AccountInvitations from '@/components/AccountInvitations'
 import CreateAdditionalAccount from '@/components/CreateAdditionalAccount'
 import BankSelect from '@/components/BankSelect'
+import PageContextHeader from '@/components/PageContextHeader'
+import PageLoader from '@/components/PageLoader'
 import { useUserSettings } from '@/hooks/useUserSettings'
+import { isCsvImportAvailableForBank } from '@/lib/csvImport/bankFormats'
 import { Button } from '@/components/Button'
 import { dispatchAccountChanged } from '@/lib/accountSwitchEvents'
 
 export default function SettingsPage() {
   const { showToast } = useToast()
-  const { canWrite, role } = useUserSettings()
+  const {
+    canWrite,
+    role,
+    accountName: activeAccountName,
+  } = useUserSettings()
   const { data: session } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -37,6 +44,7 @@ export default function SettingsPage() {
   const [emailLoading, setEmailLoading] = useState(false)
   const [pendingEmail, setPendingEmail] = useState<string | null>(null)
   const [pendingResendLoading, setPendingResendLoading] = useState(false)
+  const [initialLoadDone, setInitialLoadDone] = useState(false)
 
   useEffect(() => {
     loadSettings()
@@ -68,6 +76,8 @@ export default function SettingsPage() {
     } catch (err) {
       console.error('Error loading settings:', err)
       setError('Fehler beim Laden der Einstellungen')
+    } finally {
+      setInitialLoadDone(true)
     }
   }
 
@@ -201,13 +211,22 @@ export default function SettingsPage() {
     }
   }
 
+  if (!initialLoadDone) {
+    return <PageLoader message="Einstellungen werden geladen…" />
+  }
+
+  const csvImportHint = isCsvImportAvailableForBank(bankId)
+    ? 'Erforderlich für den CSV-Import von Kontoumsätzen.'
+    : 'Logo im Menü; für CSV-Import wird eine unterstützte Bank benötigt (z. B. DKB, ING).'
+
   return (
     <div className="p-6">
       <main id="settings-page" className="min-h-screen">
         <div id="settings-container" className="max-w-2xl mx-auto">
-          <div id="page-header" className="flex justify-between items-center mb-8">
-            <h1 className="page-title text-3xl">Einstellungen</h1>
-          </div>
+          <PageContextHeader
+            title="Einstellungen"
+            subtitle={`${activeAccountName} · Konto und App`}
+          />
 
           {error && (
             <div id="error-message" className="mb-4 p-4 bg-danger-subtle text-danger rounded-lg">
@@ -278,7 +297,7 @@ export default function SettingsPage() {
                     Bank
                   </label>
                   <p className="mt-1 mb-2 text-sm text-secondary">
-                    Optional – wird als Logo im Seitenmenü angezeigt.
+                    {csvImportHint}
                   </p>
                   <BankSelect
                     id="bankId"

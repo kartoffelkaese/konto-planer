@@ -1,17 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
-import { CalendarIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
+import {
+  CalendarIcon,
+  PlusIcon,
+  ListBulletIcon,
+} from '@heroicons/react/24/outline'
 import LandingPage from '@/components/LandingPage'
 import PageLoader from '@/components/PageLoader'
 import PageError from '@/components/PageError'
 import EmptyState from '@/components/EmptyState'
 import CategoryExpenseBars from '@/components/CategoryExpenseBars'
 import KpiCard from '@/components/KpiCard'
+import DashboardRecentTransactions from '@/components/DashboardRecentTransactions'
+import { Button, getButtonClassName } from '@/components/Button'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { resolveTransactionMerchantName } from '@/lib/merchantCategories'
+import { formatCurrency } from '@/lib/formatters'
+import { formatDate } from '@/lib/dateUtils'
+import { ACCOUNT_CHANGED_EVENT } from '@/lib/accountSwitchEvents'
 
 interface DashboardData {
   monthlyIncome: number
@@ -19,6 +28,9 @@ interface DashboardData {
   recurringExpenses: number
   savingsRate: number
   totalBalance: number
+  clearedBalance?: number
+  available?: number
+  totalPendingExpenses?: number
   recurringTransactions: Array<{
     id: string
     amount: number
@@ -48,22 +60,24 @@ interface DashboardData {
   }>
 }
 
+const emptyDashboard: DashboardData = {
+  monthlyIncome: 0,
+  monthlyExpenses: 0,
+  recurringExpenses: 0,
+  savingsRate: 0,
+  totalBalance: 0,
+  recurringTransactions: [],
+  categoryDistribution: [],
+}
+
 export default function DashboardPage() {
-  const { data: session } = useSession()
-  const { isSimpleAccount, accountName } = useUserSettings()
-  const [data, setData] = useState<DashboardData>({
-    monthlyIncome: 0,
-    monthlyExpenses: 0,
-    recurringExpenses: 0,
-    savingsRate: 0,
-    totalBalance: 0,
-    recurringTransactions: [],
-    categoryDistribution: [],
-  })
+  const { data: session, status } = useSession()
+  const { isSimpleAccount, accountName, settings } = useUserSettings()
+  const [data, setData] = useState<DashboardData>(emptyDashboard)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setIsLoading(true)
     setLoadError(null)
     try {
@@ -77,13 +91,25 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     if (session) {
       fetchDashboardData()
     }
-  }, [session, isSimpleAccount])
+  }, [session, isSimpleAccount, settings?.activeAccountId, fetchDashboardData])
+
+  useEffect(() => {
+    const onAccountChanged = () => {
+      if (session) fetchDashboardData()
+    }
+    window.addEventListener(ACCOUNT_CHANGED_EVENT, onAccountChanged)
+    return () => window.removeEventListener(ACCOUNT_CHANGED_EVENT, onAccountChanged)
+  }, [session, fetchDashboardData])
+
+  if (status === 'loading') {
+    return <PageLoader message="Wird geladen…" />
+  }
 
   if (!session) {
     return <LandingPage />
@@ -94,43 +120,59 @@ export default function DashboardPage() {
   }
 
   if (loadError) {
-    return (
-      <PageError message={loadError} onRetry={fetchDashboardData} />
-    )
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount)
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
+    return <PageError message={loadError} onRetry={fetchDashboardData} />
   }
 
   const monthLabel = data.monthLabel ?? 'Aktueller Monat'
   const monthNet = data.monthlyIncome - data.monthlyExpenses
   const recentTransactions = data.recentTransactions ?? []
+  const periodLabel = data.categoryPeriod?.rangeLabel
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="page-title">{isSimpleAccount ? accountName : 'Dashboard'}</h1>
-        {isSimpleAccount && (
-          <p className="mt-1 text-sm text-secondary">
-            Einfaches Konto · Übersicht nach Kalendermonat
-          </p>
+    <div className="p-6 max-w-6xl mx-auto">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="page-title">{isSimpleAccount ? accountName : 'Dashboard'}</h1>
+          {isSimpleAccount ? (
+            <p className="mt-1 text-sm text-secondary">
+              Einfaches Konto · Übersicht nach Kalendermonat
+            </p>
+          ) : periodLabel ? (
+            <p className="mt-1 text-sm text-secondary">
+              Gehaltsmonat · {periodLabel} · nur bestätigte Buchungen
+            </p>
+          ) : null}
+        </div>
+        {!isSimpleAccount && (
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <Link
+              href="/transactions?new=1"
+              className={getButtonClassName({
+                variant: 'primary',
+                size: 'sm',
+                className: 'inline-flex items-center gap-1.5',
+              })}
+            >
+              <PlusIcon className="h-4 w-4" aria-hidden />
+              Neue Transaktion
+            </Link>
+            <Link
+              href="/transactions"
+              className={getButtonClassName({
+                variant: 'secondary',
+                size: 'sm',
+                className: 'inline-flex items-center gap-1.5',
+              })}
+            >
+              <ListBulletIcon className="h-4 w-4" aria-hidden />
+              Alle Transaktionen
+            </Link>
+          </div>
         )}
       </div>
 
       {isSimpleAccount ? (
-        <div className="space-y-8 max-w-4xl">
+        <div className="space-y-8">
           <div className="rounded-card border border-accent bg-accent-subtle border-l-4 border-l-accent p-6">
             <p className="text-sm font-medium text-secondary">Kontostand</p>
             <p className="mt-2 text-3xl font-semibold tabular-nums text-accent">
@@ -167,118 +209,163 @@ export default function DashboardPage() {
             </p>
           )}
 
-          <div className="bg-surface rounded-lg border border-border p-6">
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <h2 className="text-lg font-medium text-primary">Letzte Buchungen</h2>
-              <Link
-                href="/transactions"
-                className="inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline"
-              >
-                Alle anzeigen
-                <ArrowRightIcon className="h-4 w-4" aria-hidden />
-              </Link>
+          <DashboardRecentTransactions transactions={recentTransactions} />
+        </div>
+      ) : (
+        <div className="space-y-8">
+          <div className="rounded-card border border-accent bg-accent-subtle border-l-4 border-l-accent p-6">
+            <p className="text-sm font-medium text-secondary">Verfügbar</p>
+            <p className="mt-2 text-3xl font-semibold tabular-nums text-accent">
+              {formatCurrency(data.available ?? 0)}
+            </p>
+            <p className="mt-2 text-xs text-secondary">
+              Kontostand {formatCurrency(data.clearedBalance ?? 0)}
+              {(data.totalPendingExpenses ?? 0) > 0 && (
+                <>
+                  {' '}
+                  · Ausstehend {formatCurrency(data.totalPendingExpenses ?? 0)}
+                </>
+              )}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard
+              label="Einnahmen"
+              subtitle={periodLabel ?? monthLabel}
+              amount={data.monthlyIncome}
+              stripe="income"
+            />
+            <KpiCard
+              label="Ausgaben"
+              subtitle={periodLabel ?? monthLabel}
+              amount={data.monthlyExpenses}
+              stripe="expense"
+            />
+            <KpiCard
+              label="Kontostand"
+              subtitle="Gebucht"
+              amount={data.clearedBalance ?? 0}
+              stripe="accent"
+            />
+            <KpiCard
+              label="Ausstehend"
+              subtitle="Noch offen"
+              amount={data.totalPendingExpenses ?? 0}
+              stripe="pending"
+            />
+          </div>
+
+          {(data.monthlyIncome > 0 || data.monthlyExpenses > 0) && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-secondary">
+              <span>
+                Saldo im Gehaltsmonat:{' '}
+                <span
+                  className={`font-medium tabular-nums ${
+                    monthNet >= 0 ? 'text-income' : 'text-expense'
+                  }`}
+                >
+                  {monthNet >= 0 ? '+' : ''}
+                  {formatCurrency(monthNet)}
+                </span>
+              </span>
+              {data.monthlyIncome > 0 && (
+                <span>
+                  Sparrate:{' '}
+                  <span className="font-medium tabular-nums text-primary">
+                    {Math.round(data.savingsRate)}&nbsp;%
+                  </span>
+                </span>
+              )}
+            </div>
+          )}
+
+          <DashboardRecentTransactions transactions={recentTransactions} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-surface rounded-lg border border-border p-6">
+              <div className="mb-4">
+                <h2 className="text-lg font-medium text-primary">
+                  Ausgaben nach Kategorien
+                </h2>
+                {data.categoryPeriod && (
+                  <p className="mt-1 text-sm text-secondary">
+                    {data.categoryPeriod.rangeLabel} · nur bestätigte Ausgaben
+                  </p>
+                )}
+              </div>
+              {data.categoryDistribution.length === 0 ? (
+                <EmptyState
+                  title="Keine Ausgaben im Gehaltsmonat"
+                  description="Sobald Sie Ausgaben erfassen, erscheint hier die Verteilung nach Kategorien."
+                  actionLabel="Transaktion erfassen"
+                  actionHref="/transactions?new=1"
+                />
+              ) : (
+                <div className="rounded-control border border-border bg-canvas p-4">
+                  <CategoryExpenseBars
+                    categories={data.categoryDistribution}
+                    formatCurrency={formatCurrency}
+                  />
+                </div>
+              )}
             </div>
 
-            {recentTransactions.length === 0 ? (
-              <EmptyState
-                title="Noch keine Buchungen"
-                description="Erfassen Sie Ihre erste Transaktion, um den Kontostand zu führen."
-                actionLabel="Transaktion erfassen"
-                actionHref="/transactions?new=1"
-              />
-            ) : (
-              <ul className="divide-y divide-border">
-                {recentTransactions.map((transaction) => (
-                  <li
+            <div className="bg-surface rounded-lg border border-border p-6">
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <div>
+                  <h2 className="text-lg font-medium text-primary">
+                    Wiederkehrende Zahlungen
+                  </h2>
+                  <p className="mt-1 text-sm text-secondary">Nächste 30 Tage</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Link
+                    href="/recurring"
+                    className="text-sm font-medium text-accent hover:underline"
+                  >
+                    Alle
+                  </Link>
+                  <CalendarIcon className="h-5 w-5 text-secondary" aria-hidden />
+                </div>
+              </div>
+              <div className="space-y-1">
+                {data.recurringTransactions.map((transaction) => (
+                  <Link
                     key={transaction.id}
-                    className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
+                    href="/recurring"
+                    className="flex items-center justify-between gap-4 py-3 border-b border-border last:border-0 rounded-control -mx-2 px-2 hover:bg-surface-muted/80 transition-colors"
                   >
                     <div className="min-w-0">
                       <p className="font-medium text-primary truncate">
                         {resolveTransactionMerchantName(transaction)}
                       </p>
-                      <p className="text-sm text-secondary">
-                        {formatDate(transaction.date)}
-                        {transaction.description && (
-                          <span className="truncate"> · {transaction.description}</span>
-                        )}
+                      <p className="text-sm text-secondary truncate">
+                        {transaction.category}
                       </p>
                     </div>
-                    <p
-                      className={`shrink-0 font-medium tabular-nums ${
-                        transaction.amount >= 0 ? 'text-income' : 'text-expense'
-                      }`}
-                    >
-                      {formatCurrency(transaction.amount)}
-                    </p>
-                  </li>
+                    <div className="text-right shrink-0">
+                      <p className="font-medium tabular-nums text-primary">
+                        {formatCurrency(transaction.amount)}
+                      </p>
+                      <p className="text-sm text-secondary">
+                        {formatDate(new Date(transaction.date))}
+                      </p>
+                    </div>
+                  </Link>
                 ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      ) : (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Kategorieverteilung */}
-        <div className="bg-surface rounded-lg border border-border p-6">
-          <div className="mb-4">
-            <h3 className="text-lg font-medium text-primary">Ausgaben nach Kategorien</h3>
-            {data.categoryPeriod && (
-              <p className="mt-1 text-sm text-secondary">
-                Aktueller Gehaltsmonat ({data.categoryPeriod.rangeLabel}) · nur bestätigte
-                Ausgaben
-              </p>
-            )}
-          </div>
-          <div className="min-w-0">
-            {data.categoryDistribution.length === 0 ? (
-              <EmptyState
-                title="Keine Ausgaben im aktuellen Zeitraum"
-                description="Sobald Sie Ausgaben erfassen, erscheint hier die Verteilung nach Kategorien."
-                actionLabel="Transaktion erfassen"
-                actionHref="/transactions?new=1"
-              />
-            ) : (
-              <div className="rounded-control border border-border bg-canvas p-4">
-                <CategoryExpenseBars
-                  categories={data.categoryDistribution}
-                  formatCurrency={formatCurrency}
-                />
+                {data.recurringTransactions.length === 0 && (
+                  <EmptyState
+                    title="Keine fälligen Zahlungen"
+                    description="In den nächsten 30 Tagen sind keine wiederkehrenden Buchungen geplant."
+                    actionLabel="Wiederkehrende anlegen"
+                    actionHref="/recurring"
+                  />
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
-
-        {/* Wiederkehrende Zahlungen */}
-        <div className="bg-surface rounded-lg border border-border p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-primary">Wiederkehrende Zahlungen (nächste 30 Tage)</h3>
-            <CalendarIcon className="h-5 w-5 text-secondary" />
-          </div>
-          <div className="space-y-4">
-            {data.recurringTransactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between py-2 border-b border-border">
-                <div>
-                  <p className="font-medium text-primary">{resolveTransactionMerchantName(transaction)}</p>
-                  <p className="text-sm text-secondary">{transaction.category}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-primary">{formatCurrency(transaction.amount)}</p>
-                  <p className="text-sm text-secondary">Nächste Zahlung: {formatDate(transaction.date)}</p>
-                </div>
-              </div>
-            ))}
-            {data.recurringTransactions.length === 0 && (
-              <EmptyState
-                title="Keine wiederkehrenden Zahlungen"
-                description="In den nächsten 30 Tagen sind keine fälligen wiederkehrenden Buchungen geplant."
-                actionLabel="Wiederkehrende anlegen"
-                actionHref="/recurring"
-              />
-            )}
-          </div>
-        </div>
-      </div>
       )}
     </div>
   )

@@ -8,6 +8,25 @@ interface TransactionsResponse {
   hasMore: boolean
 }
 
+export interface TransactionTotalsResponse {
+  currentIncome: number
+  currentExpenses: number
+  totalIncome: number
+  totalExpenses: number
+  clearedBalance: number
+  totalPendingExpenses: number
+  available: number
+  periodLabel?: string
+}
+
+export type TransactionPeriodQuery = {
+  period?: string
+  startDate?: string
+  endDate?: string
+  salaryDay?: number | null
+  search?: string
+}
+
 const API_BASE = '/api'
 const TIMEOUT_MS = 10000
 
@@ -70,26 +89,47 @@ function encodeQuery(params: Record<string, string | number | boolean | undefine
   return q ? `?${q}` : ''
 }
 
-export const getTransactions = async (
-  page: number = 1,
-  limit: number = 20,
-  options?: {
-    salaryDay?: number | null
-    filterSalaryMonth?: boolean
-    search?: string
-  }
-): Promise<TransactionsResponse> => {
-  const params: Record<string, string | number | boolean | undefined> = { page, limit }
+function buildTransactionQueryParams(
+  options?: TransactionPeriodQuery
+): Record<string, string | number | boolean | undefined> {
+  const params: Record<string, string | number | boolean | undefined> = {}
   if (options?.salaryDay !== undefined && options.salaryDay !== null) {
     params.salaryDay = options.salaryDay
   }
-  if (options?.filterSalaryMonth !== undefined) {
-    params.filterSalaryMonth = options.filterSalaryMonth
+  if (options?.period && options.period !== 'all') {
+    params.period = options.period
+  }
+  if (options?.startDate) {
+    params.startDate = options.startDate
+  }
+  if (options?.endDate) {
+    params.endDate = options.endDate
   }
   if (options?.search?.trim()) {
     params.q = options.search.trim()
   }
+  return params
+}
+
+export const getTransactions = async (
+  page: number = 1,
+  limit: number = 20,
+  options?: TransactionPeriodQuery
+): Promise<TransactionsResponse> => {
+  const params: Record<string, string | number | boolean | undefined> = {
+    page,
+    limit,
+    ...buildTransactionQueryParams(options),
+  }
   return apiFetch<TransactionsResponse>(`/transactions${encodeQuery(params)}`)
+}
+
+export const getTransactionTotals = async (
+  options?: TransactionPeriodQuery
+): Promise<TransactionTotalsResponse> => {
+  return apiFetch<TransactionTotalsResponse>(
+    `/transactions/totals${encodeQuery(buildTransactionQueryParams(options))}`
+  )
 }
 
 export const getTransaction = async (id: string): Promise<Transaction> => {

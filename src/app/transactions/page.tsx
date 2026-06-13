@@ -2,11 +2,19 @@
 
 import { Suspense, useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
+import { PlusIcon } from '@heroicons/react/24/outline'
 import { Transaction } from '@/types'
-import { getTransactions, updateTransaction, createRecurringInstance, createPendingInstances } from '@/lib/api'
+import { getTransactions, getTransactionTotals, updateTransaction, createRecurringInstance, createPendingInstances } from '@/lib/api'
 import { isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
+import {
+  getDefaultCustomPeriodRange,
+  isCustomPeriodBlocked,
+  isPeriodFilterActive,
+  parsePeriodFromUrl,
+  type TransactionPeriod,
+} from '@/lib/transactionPeriodRange'
 import TransactionList from '@/components/TransactionList'
+import TransactionPeriodFilter from '@/components/TransactionPeriodFilter'
 import MonthlyOverview from '@/components/MonthlyOverview'
 import Modal from '@/components/Modal'
 import TransactionForm from '@/components/TransactionForm'
@@ -48,11 +56,13 @@ function TransactionsPageContent() {
   const [sortDirection, setSortDirection] = useState<SortDirection>(() =>
     searchParams.get('dir') === 'asc' ? 'asc' : 'desc'
   )
-  const [filterSalaryMonth, setFilterSalaryMonth] = useState(
-    () => searchParams.get('filterSalaryMonth') === '1'
-  )
+  const initialPeriod = parsePeriodFromUrl(searchParams)
+  const [period, setPeriod] = useState<TransactionPeriod>(initialPeriod.period)
+  const [customStartDate, setCustomStartDate] = useState(initialPeriod.startDate)
+  const [customEndDate, setCustomEndDate] = useState(initialPeriod.endDate)
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '')
   const [debouncedSearch, setDebouncedSearch] = useState(() => searchParams.get('q') ?? '')
+  const [periodLabel, setPeriodLabel] = useState<string | null>(null)
   const [totals, setTotals] = useState({
     currentIncome: 0,
     currentExpenses: 0,
@@ -72,27 +82,58 @@ function TransactionsPageContent() {
   const [showEditTransactionModal, setShowEditTransactionModal] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
 
+  const customPeriodBlocked = isCustomPeriodBlocked(
+    period,
+    customStartDate,
+    customEndDate
+  )
+
+  const periodQuery = useCallback(
+    () => ({
+      period,
+      startDate: period === 'custom' ? customStartDate : undefined,
+      endDate: period === 'custom' ? customEndDate : undefined,
+      salaryDay,
+      search: debouncedSearch,
+    }),
+    [period, customStartDate, customEndDate, salaryDay, debouncedSearch]
+  )
+
   const syncUrl = useCallback(
     (overrides?: {
-      filterSalaryMonth?: boolean
+      period?: TransactionPeriod
+      customStartDate?: string
+      customEndDate?: string
       search?: string
       sort?: SortField
       dir?: SortDirection
     }) => {
       const params = new URLSearchParams()
-      const filter = overrides?.filterSalaryMonth ?? filterSalaryMonth
+      const nextPeriod = overrides?.period ?? period
+      const nextStart = overrides?.customStartDate ?? customStartDate
+      const nextEnd = overrides?.customEndDate ?? customEndDate
       const search = overrides?.search ?? debouncedSearch
       const sort = overrides?.sort ?? sortField
       const dir = overrides?.dir ?? sortDirection
 
-      if (filter) params.set('filterSalaryMonth', '1')
+      if (nextPeriod !== 'all') params.set('period', nextPeriod)
+      if (nextPeriod === 'custom' && nextStart) params.set('from', nextStart)
+      if (nextPeriod === 'custom' && nextEnd) params.set('to', nextEnd)
       if (search.trim()) params.set('q', search.trim())
       if (sort !== 'date') params.set('sort', sort)
       if (dir !== 'desc') params.set('dir', dir)
 
       router.replace(buildTransactionsUrl(params), { scroll: false })
     },
-    [router, filterSalaryMonth, debouncedSearch, sortField, sortDirection]
+    [
+      router,
+      period,
+      customStartDate,
+      customEndDate,
+      debouncedSearch,
+      sortField,
+      sortDirection,
+    ]
   )
 
   useEffect(() => {
@@ -107,13 +148,19 @@ function TransactionsPageContent() {
   }, [debouncedSearch, searchParams, syncUrl])
 
   useEffect(() => {
-    if (salaryDay !== null) {
-      loadTransactions(1, false)
+    if (salaryDay === null) return
+    if (customPeriodBlocked) {
+      setLoading(false)
+      setTransactions([])
+      setHasMore(false)
+      setPage(1)
+      return
     }
-  }, [salaryDay, debouncedSearch, filterSalaryMonth])
+    loadTransactions(1, false)
+  }, [salaryDay, debouncedSearch, period, customStartDate, customEndDate, customPeriodBlocked])
 
   useActiveAccountReload(() => {
-    if (salaryDay !== null) {
+    if (salaryDay !== null && !customPeriodBlocked) {
       loadTransactions(1, false)
       loadTotals()
     }
@@ -140,29 +187,29 @@ function TransactionsPageContent() {
   useEffect(() => {
     if (salaryDay === null) return
     loadTotals()
-  }, [salaryDay])
+  }, [salaryDay, period, customStartDate, customEndDate])
 
   const loadTotals = async () => {
     if (salaryDay === null) return
     try {
-      const response = await fetch('/api/transactions/totals')
-      if (response.ok) {
-        const data = await response.json()
-        setTotals(data)
-      }
+      const data = await getTransactionTotals({
+        period,
+        startDate: period === 'custom' ? customStartDate : undefined,
+        endDate: period === 'custom' ? customEndDate : undefined,
+        salaryDay,
+      })
+      setTotals(data)
+      setPeriodLabel(data.periodLabel ?? null)
     } catch (err) {
       console.error('Error loading totals:', err)
     }
   }
 
   const loadTransactions = async (pageNum: number, append = false) => {
+    if (customPeriodBlocked) return
     try {
       setLoading(true)
-      const response = await getTransactions(pageNum, 20, {
-        salaryDay: salaryDay,
-        filterSalaryMonth: filterSalaryMonth,
-        search: debouncedSearch,
-      })
+      const response = await getTransactions(pageNum, 20, periodQuery())
       const data = response.transactions.map((t) => ({
         ...t,
         amount: Number(t.amount),
@@ -207,7 +254,7 @@ function TransactionsPageContent() {
     return () => {
       observer.current?.disconnect()
     }
-  }, [hasMore, loading, page, filterSalaryMonth, salaryDay, debouncedSearch])
+  }, [hasMore, loading, page, period, customStartDate, customEndDate, salaryDay, debouncedSearch, customPeriodBlocked])
 
   const lastElementRef = useCallback(() => {}, [])
 
@@ -269,7 +316,7 @@ function TransactionsPageContent() {
   const handleTransactionChange = useCallback(async () => {
     await loadTotals()
     await loadTransactions(page, false)
-  }, [page, salaryDay, filterSalaryMonth, debouncedSearch])
+  }, [page, salaryDay, period, customStartDate, customEndDate, debouncedSearch, customPeriodBlocked])
 
   const handleSort = useCallback(
     (field: SortField) => {
@@ -391,21 +438,6 @@ function TransactionsPageContent() {
                   Ausstehende erstellen
                 </Button>
               )}
-              {!isSimpleAccount && (
-                <label className="flex items-center space-x-2 shrink-0">
-                  <input
-                    type="checkbox"
-                    checked={filterSalaryMonth}
-                    onChange={(e) => {
-                      const checked = e.target.checked
-                      setFilterSalaryMonth(checked)
-                      syncUrl({ filterSalaryMonth: checked })
-                    }}
-                    className="rounded border-border text-accent focus:ring-accent bg-surface"
-                  />
-                  <span className="text-sm text-primary">Nur Gehaltsmonat</span>
-                </label>
-              )}
               {canWrite && (
                 <>
                   <TransactionCsvImport
@@ -427,30 +459,62 @@ function TransactionsPageContent() {
           <div className="mb-4 -mt-2">
             <SalaryMonthHint
               salaryDay={salaryDay}
-              filterActive={filterSalaryMonth}
+              filterActive={period === 'current'}
             />
           </div>
         )}
 
-        <div className="mb-6">
-          <label htmlFor="transaction-search" className="sr-only">
-            Transaktionen durchsuchen
-          </label>
-          <div className="flex items-center gap-3 w-full rounded-control border border-border bg-surface px-3 py-2 shadow-sm focus-within:border-accent focus-within:outline focus-within:outline-2 focus-within:outline-accent-subtle focus-within:outline-offset-1">
-            <MagnifyingGlassIcon
-              className="h-5 w-5 shrink-0 text-secondary"
-              aria-hidden="true"
-            />
-            <input
-              id="transaction-search"
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Händler oder Beschreibung suchen…"
-              className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-primary shadow-none focus:outline-none focus:ring-0"
-            />
-          </div>
-        </div>
+        {salaryDay !== null && (
+          <TransactionPeriodFilter
+            period={period}
+            customStartDate={customStartDate}
+            customEndDate={customEndDate}
+            isSimpleAccount={isSimpleAccount}
+            salaryDay={salaryDay}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onPeriodChange={(nextPeriod) => {
+              setPeriod(nextPeriod)
+              if (
+                nextPeriod === 'custom' &&
+                !customStartDate &&
+                !customEndDate
+              ) {
+                const defaults = getDefaultCustomPeriodRange()
+                setCustomStartDate(defaults.startDate)
+                setCustomEndDate(defaults.endDate)
+                syncUrl({
+                  period: nextPeriod,
+                  customStartDate: defaults.startDate,
+                  customEndDate: defaults.endDate,
+                })
+                return
+              }
+              syncUrl({ period: nextPeriod })
+            }}
+            onCustomRangeChange={(startDate, endDate) => {
+              setCustomStartDate(startDate)
+              setCustomEndDate(endDate)
+              syncUrl({
+                period: 'custom',
+                customStartDate: startDate,
+                customEndDate: endDate,
+              })
+            }}
+            onReset={() => {
+              setPeriod('all')
+              setCustomStartDate('')
+              setCustomEndDate('')
+              setSearchQuery('')
+              syncUrl({
+                period: 'all',
+                customStartDate: '',
+                customEndDate: '',
+                search: '',
+              })
+            }}
+          />
+        )}
 
         <div
           id="monthly-overview-section"
@@ -463,7 +527,7 @@ function TransactionsPageContent() {
             totalPendingExpenses={totals.totalPendingExpenses}
             available={totals.available}
             hidePendingMetrics={isSimpleAccount}
-            incomeSubtitle={isSimpleAccount ? 'Kalendermonat' : 'Gehaltsmonat'}
+            incomeSubtitle={periodLabel ?? (isSimpleAccount ? 'Kalendermonat' : 'Gehaltsmonat')}
             balanceSubtitle="Gebucht"
           />
         </div>
@@ -485,6 +549,7 @@ function TransactionsPageContent() {
             onAddTransaction={canWrite ? () => setShowNewTransactionModal(true) : undefined}
             onEditTransaction={canWrite ? handleEditTransaction : undefined}
             isSearchActive={debouncedSearch.trim().length > 0}
+            isPeriodFilterActive={isPeriodFilterActive(period)}
             readOnly={!canWrite}
           />
           {hasMore && (

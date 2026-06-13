@@ -76,8 +76,11 @@ Wenn das aktive Konto als **einfaches Konto** markiert ist:
 | `page` | Seite (Standard: 1) |
 | `limit` | Einträge pro Seite (Standard: 20, max. 100) |
 | `q` | Suche in Händler/Beschreibung |
-| `salaryDay` | Gehaltstag (1–31), mit `filterSalaryMonth` |
-| `filterSalaryMonth` | `true` = nur aktueller Gehaltsmonat |
+| `period` | Zeitraum: `all` (Standard), `current` (Gehalts-/Kalendermonat), `custom` |
+| `startDate` | Bei `period=custom`: Start (ISO `YYYY-MM-DD`) |
+| `endDate` | Bei `period=custom`: Ende (ISO `YYYY-MM-DD`) |
+| `salaryDay` | Gehaltstag (1–31), für `period=current` |
+| `filterSalaryMonth` | **Legacy** – `true` oder `1` entspricht `period=current` |
 
 Antwort: `{ transactions, total, page, hasMore }`
 
@@ -126,9 +129,13 @@ Schreibzugriff auf das aktive Konto erforderlich (nicht `READ_ONLY`).
 
 **`GET /api/transactions/totals` – Query**
 
-`salaryDay` optional (sonst Gehaltstag des Kontos)
+| Parameter | Beschreibung |
+|-----------|----------------|
+| `period` | Wie bei `GET /api/transactions`; bei `all` KPI-Einnahmen/Ausgaben für aktuellen Gehalts- bzw. Kalendermonat |
+| `startDate` / `endDate` | Bei `period=custom` |
+| `salaryDay` | Optional (sonst Gehaltstag des Kontos) |
 
-Antwort: `currentIncome`, `currentExpenses`, `totalIncome`, `totalExpenses`, `clearedBalance`, `totalPendingExpenses`, `available`
+Antwort: `currentIncome`, `currentExpenses`, `totalIncome`, `totalExpenses`, `clearedBalance`, `totalPendingExpenses`, `available`, `periodLabel`
 
 ### Buchführungs-Konten
 

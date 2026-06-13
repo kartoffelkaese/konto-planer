@@ -2,11 +2,14 @@
 
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getSalaryMonthRange } from '@/lib/dateUtils'
 import { resolveSalaryDay } from '@/lib/salaryDay'
 import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { resolveMerchantForTransaction } from '@/lib/resolveMerchantForTransaction'
+import {
+  resolvePeriodFromRequest,
+  resolveTransactionPeriodRange,
+} from '@/lib/transactionPeriodRange'
 import {
   assertTransferTargetAllowed,
   createTransferPair,
@@ -31,8 +34,9 @@ export async function GET(request: Request) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '20') || 20, 100)
     const skip = (page - 1) * limit
     const salaryDayParam = searchParams.get('salaryDay')
-    const filterSalaryMonth = searchParams.get('filterSalaryMonth') === 'true'
     const search = searchParams.get('q')?.trim()
+    const { period, startDate, endDate } = resolvePeriodFromRequest(searchParams)
+    const salaryDay = resolveSalaryDay(salaryDayParam, account.salaryDay)
 
     const whereClause: {
       accountId: string
@@ -45,10 +49,16 @@ export async function GET(request: Request) {
       accountId: account.id,
     }
 
-    if (filterSalaryMonth) {
-      const salaryDay = resolveSalaryDay(salaryDayParam, account.salaryDay)
-      const { startDate, endDate } = getSalaryMonthRange(salaryDay)
-      whereClause.date = { gte: startDate, lte: endDate }
+    const dateRange = resolveTransactionPeriodRange({
+      period,
+      startDate,
+      endDate,
+      salaryDay,
+      isSimpleAccount: account.isSimpleAccount,
+    })
+
+    if (dateRange) {
+      whereClause.date = { gte: dateRange.gte, lte: dateRange.lte }
     }
 
     if (search && search.length > 0) {

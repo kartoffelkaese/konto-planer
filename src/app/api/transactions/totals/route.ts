@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getSalaryMonthRange } from '@/lib/dateUtils'
 import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { resolveSalaryDay } from '@/lib/salaryDay'
+import {
+  resolvePeriodFromRequest,
+  resolveTransactionPeriodRangeForTotals,
+} from '@/lib/transactionPeriodRange'
 
 export async function GET(request: Request) {
   const ctx = await getAccountContext()
@@ -17,15 +20,22 @@ export async function GET(request: Request) {
       searchParams.get('salaryDay'),
       account.salaryDay
     )
+    const { period, startDate, endDate } = resolvePeriodFromRequest(searchParams)
 
-    const { startDate, endDate } = getSalaryMonthRange(salaryDay)
+    const periodRange = resolveTransactionPeriodRangeForTotals({
+      period,
+      startDate,
+      endDate,
+      salaryDay,
+      isSimpleAccount: account.isSimpleAccount,
+    })
 
     const currentMonthTransactions = await prisma.transaction.findMany({
       where: {
         accountId: account.id,
         date: {
-          gte: startDate,
-          lte: endDate,
+          gte: periodRange.gte,
+          lte: periodRange.lte,
         },
       },
     })
@@ -79,6 +89,7 @@ export async function GET(request: Request) {
       clearedBalance,
       totalPendingExpenses,
       available,
+      periodLabel: periodRange.label,
     })
   } catch (error) {
     console.error('Error calculating transaction totals:', error)

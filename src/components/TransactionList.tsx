@@ -29,6 +29,7 @@ interface TransactionListProps {
   onAddTransaction?: () => void
   onEditTransaction?: (id: string) => void
   isSearchActive?: boolean
+  isPeriodFilterActive?: boolean
   readOnly?: boolean
 }
 
@@ -45,6 +46,7 @@ export default function TransactionList({
   onAddTransaction,
   onEditTransaction,
   isSearchActive = false,
+  isPeriodFilterActive = false,
   readOnly = false,
 }: TransactionListProps) {
   const { showToast } = useToast()
@@ -144,17 +146,29 @@ export default function TransactionList({
   const emptyList = (
     <EmptyState
       title={
-        isSearchActive ? 'Keine Treffer' : 'Keine Transaktionen vorhanden'
+        isSearchActive
+          ? 'Keine Treffer'
+          : isPeriodFilterActive
+            ? 'Keine Buchungen in diesem Zeitraum'
+            : 'Keine Transaktionen vorhanden'
       }
       description={
         isSearchActive
-          ? 'Passen Sie die Suche an oder deaktivieren Sie den Gehaltsmonats-Filter.'
-          : 'Erfassen Sie Ihre erste Einnahme oder Ausgabe.'
+          ? 'Passen Sie die Suche an oder ändern Sie den Zeitraum.'
+          : isPeriodFilterActive
+            ? 'Wählen Sie einen anderen Zeitraum oder setzen Sie den Filter zurück.'
+            : 'Erfassen Sie Ihre erste Einnahme oder Ausgabe.'
       }
       actionLabel={
-        isSearchActive ? undefined : !readOnly && onAddTransaction ? 'Erste Transaktion anlegen' : undefined
+        isSearchActive || isPeriodFilterActive
+          ? undefined
+          : !readOnly && onAddTransaction
+            ? 'Erste Transaktion anlegen'
+            : undefined
       }
-      onAction={isSearchActive || readOnly ? undefined : onAddTransaction}
+      onAction={
+        isSearchActive || isPeriodFilterActive || readOnly ? undefined : onAddTransaction
+      }
     />
   )
 

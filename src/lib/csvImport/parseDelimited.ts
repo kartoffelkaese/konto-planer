@@ -1,4 +1,5 @@
 import {
+  collectHeaderMarkers,
   findHeaderColumnOffset,
   isHeaderField,
 } from './headerDetection'
@@ -51,18 +52,21 @@ type HeaderInfo = {
   columnOffset: number
 }
 
-function findHeaderInfo(lines: string[]): HeaderInfo | null {
+function findHeaderInfo(
+  lines: string[],
+  headerMarkers: string[]
+): HeaderInfo | null {
   const limit = Math.min(lines.length, MAX_HEADER_SCAN_LINES)
 
   for (let i = 0; i < limit; i++) {
     const delimiter = detectDelimiter(lines[i])
     const fields = parseCsvLine(lines[i], delimiter)
-    if (!fields.some(isHeaderField)) continue
+    if (!fields.some((f) => isHeaderField(f, headerMarkers))) continue
 
     return {
       headerLineIndex: i,
       delimiter,
-      columnOffset: findHeaderColumnOffset(fields),
+      columnOffset: findHeaderColumnOffset(fields, headerMarkers),
     }
   }
 
@@ -73,17 +77,24 @@ function sliceFromOffset(fields: string[], offset: number): string[] {
   return offset > 0 ? fields.slice(offset) : fields
 }
 
-export function parseDelimitedCsv(text: string): {
+export function parseDelimitedCsv(
+  text: string,
+  options?: { headerMarkers?: string[] }
+): {
   headers: string[]
   records: Record<string, string>[]
 } {
+  const headerMarkers =
+    options?.headerMarkers && options.headerMarkers.length > 0
+      ? options.headerMarkers
+      : collectHeaderMarkers([])
   const normalized = stripBom(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n')
   const lines = normalized.split('\n').filter((line) => line.trim().length > 0)
   if (lines.length === 0) {
     return { headers: [], records: [] }
   }
 
-  const headerInfo = findHeaderInfo(lines)
+  const headerInfo = findHeaderInfo(lines, headerMarkers)
   if (!headerInfo) {
     const delimiter = detectDelimiter(lines[0])
     const headers = parseCsvLine(lines[0], delimiter)
@@ -121,3 +132,5 @@ export function parseDelimitedCsv(text: string): {
 
   return { headers, records }
 }
+
+export { collectHeaderMarkers }

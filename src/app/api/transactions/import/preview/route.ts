@@ -3,7 +3,13 @@ import { prisma } from '@/lib/prisma'
 import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { merchantCategoriesInclude } from '@/lib/merchantCategories'
-import { parseCsv, CsvParseError } from '@/lib/csvImport'
+import {
+  parseCsv,
+  CsvParseError,
+  getCsvFormatById,
+  listCsvFormats,
+} from '@/lib/csvImport'
+import type { CsvImportFormatId } from '@/lib/csvImport/types'
 import { buildImportPreviewRows } from '@/lib/csvImport/buildPreview'
 import {
   getImportDateRange,
@@ -11,6 +17,14 @@ import {
 } from '@/lib/csvImport/dateRange'
 import { CSV_IMPORT_MAX_BYTES } from '@/lib/csvImport/types'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { getBankById } from '@/lib/germanBanks'
+
+function parseFormatIdOverride(value: unknown): CsvImportFormatId | undefined {
+  if (typeof value !== 'string' || !value.trim()) return undefined
+  const formats = listCsvFormats()
+  const found = formats.find((f) => f.id === value.trim())
+  return found?.id
+}
 
 export async function POST(request: Request) {
   const ctx = await getAccountContext()
@@ -43,6 +57,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const csvText = typeof body.csvText === 'string' ? body.csvText : ''
+    const formatIdOverride = parseFormatIdOverride(body.formatId)
 
     if (!csvText.trim()) {
       return NextResponse.json(
@@ -58,7 +73,18 @@ export async function POST(request: Request) {
       )
     }
 
-    const { formatId, rows: parsedRows } = parseCsv(csvText)
+    const {
+      formatId,
+      formatLabel,
+      rows: parsedRows,
+      headerMismatch,
+    } = parseCsv(csvText, {
+      bankId: account.bankId,
+      formatId: formatIdOverride,
+    })
+
+    const format = getCsvFormatById(formatId)
+    const bank = getBankById(account.bankId)
 
     const merchants = await prisma.merchant.findMany({
       where: { accountId: account.id },
@@ -73,7 +99,11 @@ export async function POST(request: Request) {
       categories: m.categories.map((c) => ({ id: c.categoryId })),
     }))
 
-    const dateRange = getImportDateRange(parsedRows, csvText)
+    const dateRange = getImportDateRange(
+      parsedRows,
+      csvText,
+      format?.parseMetadata
+    )
 
     const existingTransactions = await prisma.transaction.findMany({
       where: {
@@ -169,6 +199,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       formatId,
+      formatLabel,
+      bankId: account.bankId,
+      bankName: bank?.name ?? null,
+      ...(headerMismatch ? { headerMismatch: true } : {}),
+      availableFormats: listCsvFormats(),
       rows: previewRows,
       merchants: merchants.map((m) => ({
         id: m.id,
@@ -184,7 +219,6 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error('CSV preview error:', error)
-    // Nur bewusst nutzergerichtete Parse-Fehler durchreichen, keine internen Details
     const message =
       error instanceof CsvParseError
         ? error.message

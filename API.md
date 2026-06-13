@@ -94,11 +94,19 @@ Antwort: `{ transactions, total, page, hasMore }`
 
 **`POST /api/transactions/import/preview` – Body**
 
-`csvText` (string) – Inhalt der CSV-Datei (UTF-8, typisch `;`-getrennt)
+- `csvText` (string) – Inhalt der CSV-Datei (UTF-8, typisch `;`-getrennt)
+- `formatId` (optional) – CSV-Format manuell wählen (Override); sonst aus `account.bankId` via Mapping
 
-Erwartete Spalten (Format `standardBank`): `Buchungsdatum`, `Status`, `Zahlungspflichtige*r`, `Zahlungsempfänger*in`, `Verwendungszweck`, `Umsatztyp`, `Betrag (€)`
+**Bank → Format:** Das Konto muss eine Bank in den Einstellungen haben (`bankId`). Unterstützte Zuordnungen siehe `src/lib/csvImport/bankFormats.ts`. Fehlt die Bank oder das Mapping → Fehler (kein Fallback auf anderes Format).
 
-Antwort: `{ formatId, rows, merchants, summary }` – `rows` sind **nach Datum aufsteigend** sortiert (älteste zuerst) und enthalten u. a. `merchantRaw`, Vorschlag `merchantId`, `matchConfidence`, Duplikat-Felder (`isDuplicate`, `duplicateTransactionId`, `canConfirmDuplicate`, `suggestedConfirm`) sowie Wiederkehrend-Felder (`isRecurringMatch`, `recurringMatchKind`, `recurringTemplateId`, `recurringInstanceId`, `canConfirmRecurring`, `suggestedConfirmRecurring`); `summary.confirmable` zählt bestätigbare Duplikate und wiederkehrende Zeilen; `summary.recurring` zählt erkannte wiederkehrende Treffer; `summary.dateRange` (`start`/`end` als ISO-Datum oder `null`) – Duplikatprüfung lädt nur bestehende Transaktionen in diesem Bereich (Min/Max der Buchungsdaten, Fallback: `Zeitraum:`-Metadaten der Bank-CSV)
+**Formate:**
+
+| formatId | Bank(en) | Spalten (Kern) |
+|----------|----------|----------------|
+| `dkbExport` | DKB | `Buchungsdatum`, `Status`, `Zahlungspflichtige*r`, `Zahlungsempfänger*in`, `Verwendungszweck`, `Umsatztyp`, `Betrag (€)` |
+| `ingExport` | ING | `Datum`, `Empfänger/Auftraggeber`, `Verwendungszweck`, `Betrag` (vorzeichenbehaftet) |
+
+Antwort: `{ formatId, formatLabel, bankId, bankName, headerMismatch?, availableFormats, rows, merchants, summary }` – `rows` sind **nach Datum aufsteigend** sortiert; `headerMismatch: true` wenn CSV-Spalten nicht zum gewählten Format passen; `summary.confirmable` zählt bestätigbare Duplikate und wiederkehrende Zeilen; `summary.recurring` zählt erkannte wiederkehrende Treffer; `summary.dateRange` – Duplikatprüfung nur in diesem Bereich
 
 **Bestätigungs-Flow (Duplikat + CSV „Gebucht“ + DB offen):** `canConfirmDuplicate: true` – keine Neuanlage; Commit mit `confirmExistingId` setzt nur `isConfirmed: true` auf der bestehenden Transaktion.
 

@@ -1,4 +1,6 @@
-export type CsvImportFormatId = 'standardBank'
+import type { ImportDateRange } from './dateRange'
+
+export type CsvImportFormatId = 'dkbExport' | 'ingExport'
 
 /** Obergrenze für hochgeladene CSV-Inhalte (Schutz vor DoS). */
 export const CSV_IMPORT_MAX_BYTES = 2 * 1024 * 1024
@@ -75,9 +77,22 @@ export type CsvImportFormat = {
     row: Record<string, string>,
     rowIndex: number
   ) => ParsedCsvRow
+  /** Kopfzeilen-Marker (normalisiert) – mindestens einer pro Zeile */
+  headerMarkers?: string[]
+  /** Metadaten-Zeilen vor der Tabelle (z. B. Zeitraum) */
+  parseMetadata?: (csvText: string) => ImportDateRange | null
+  /** Zeilen überspringen (Summen, leere Zeilen) */
+  skipRow?: (row: Record<string, string>) => boolean
 }
 
 export type CsvParseResult = {
   formatId: CsvImportFormatId
+  formatLabel: string
   rows: ParsedCsvRow[]
+  headerMismatch?: boolean
+}
+
+export type ParseCsvOptions = {
+  formatId?: CsvImportFormatId
+  bankId?: string | null
 }

@@ -47,11 +47,12 @@ export function parseZeitraumFromCsv(csvText: string): ImportDateRange | null {
 
 /**
  * Datumsbereich für Duplikat-DB-Abfrage: primär Min/Max aller Buchungsdaten,
- * Fallback Zeitraum-Metadaten.
+ * Fallback format-spezifische Metadaten oder Zeitraum (DKB).
  */
 export function getImportDateRange(
   rows: Array<{ date: Date | null }>,
-  csvText?: string
+  csvText?: string,
+  parseMetadata?: (csvText: string) => ImportDateRange | null
 ): ImportDateRange | null {
   const dates = rows
     .map((row) => row.date)
@@ -64,6 +65,10 @@ export function getImportDateRange(
   }
 
   if (csvText?.trim()) {
+    if (parseMetadata) {
+      const fromFormat = parseMetadata(csvText)
+      if (fromFormat) return fromFormat
+    }
     return parseZeitraumFromCsv(csvText)
   }
 

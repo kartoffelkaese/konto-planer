@@ -1,32 +1,8 @@
 import type { CsvImportFormat, ParsedCsvRow } from '../types'
+import { getCell, normalizeHeader, requiresColumns } from '../columnMap'
 import { parseGermanAmount } from '../parseAmount'
 import { parseGermanDate } from '../parseDate'
-
-function normalizeHeader(header: string): string {
-  return header
-    .trim()
-    .toLowerCase()
-    .replace(/\*/g, '')
-    .replace(/\s+/g, ' ')
-}
-
-function findColumnKey(
-  row: Record<string, string>,
-  candidates: string[]
-): string | undefined {
-  const keys = Object.keys(row)
-  for (const candidate of candidates) {
-    const normCandidate = normalizeHeader(candidate)
-    const found = keys.find((k) => normalizeHeader(k) === normCandidate)
-    if (found) return found
-  }
-  return undefined
-}
-
-function getCell(row: Record<string, string>, candidates: string[]): string {
-  const key = findColumnKey(row, candidates)
-  return key ? (row[key] ?? '').trim() : ''
-}
+import { parseZeitraumFromCsv } from '../dateRange'
 
 const COL_BOOKING_DATE = ['Buchungsdatum', 'buchungsdatum']
 const COL_STATUS = ['Status', 'status']
@@ -46,21 +22,13 @@ const COL_PURPOSE = ['Verwendungszweck', 'verwendungszweck']
 const COL_TYPE = ['Umsatztyp', 'umsatztyp']
 const COL_AMOUNT = ['Betrag (€)', 'Betrag', 'betrag (€)', 'betrag']
 
-export function detectStandardBankFormat(headers: string[]): boolean {
-  const normalized = headers.map(normalizeHeader)
-  const hasDate = normalized.some((h) =>
-    COL_BOOKING_DATE.some((c) => normalizeHeader(c) === h)
-  )
-  const hasType = normalized.some((h) =>
-    COL_TYPE.some((c) => normalizeHeader(c) === h)
-  )
-  const hasAmount = normalized.some((h) =>
-    COL_AMOUNT.some((c) => normalizeHeader(c) === h)
-  )
-  return hasDate && hasType && hasAmount
+export const DKB_HEADER_MARKERS = ['buchungsdatum']
+
+export function detectDkbExportFormat(headers: string[]): boolean {
+  return requiresColumns(headers, COL_BOOKING_DATE, COL_TYPE, COL_AMOUNT)
 }
 
-function parseStandardBankRow(
+function parseDkbExportRow(
   row: Record<string, string>,
   rowIndex: number
 ): ParsedCsvRow {
@@ -108,9 +76,11 @@ function parseStandardBankRow(
   }
 }
 
-export const standardBankFormat: CsvImportFormat = {
-  id: 'standardBank',
-  label: 'Standard-Bankexport',
-  detect: detectStandardBankFormat,
-  parseRow: parseStandardBankRow,
+export const dkbExportFormat: CsvImportFormat = {
+  id: 'dkbExport',
+  label: 'DKB Kontoumsätze',
+  headerMarkers: DKB_HEADER_MARKERS,
+  detect: detectDkbExportFormat,
+  parseMetadata: parseZeitraumFromCsv,
+  parseRow: parseDkbExportRow,
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useMemo, useCallback } from 'react'
+import Link from 'next/link'
 import {
   ArrowUpTrayIcon,
   ArrowPathIcon,
@@ -10,6 +11,8 @@ import {
 import Modal from '@/components/Modal'
 import { Button } from '@/components/Button'
 import { useToast } from '@/hooks/useToast'
+import { useUserSettings } from '@/hooks/useUserSettings'
+import { isCsvImportAvailableForBank } from '@/lib/csvImport/bankFormats'
 import {
   previewCsvImport,
   commitCsvImport,
@@ -34,6 +37,15 @@ type ImportSummary = {
   suggested: number
   confirmable: number
   dateRange: { start: string; end: string } | null
+}
+
+type ImportFormatMeta = {
+  formatId: string
+  formatLabel: string
+  bankId: string | null
+  bankName: string | null
+  headerMismatch?: boolean
+  availableFormats: Array<{ id: string; label: string }>
 }
 
 type TransactionCsvImportProps = {
@@ -408,20 +420,52 @@ function ImportPreviewRowCard({
 
 export default function TransactionCsvImport({ onImported }: TransactionCsvImportProps) {
   const { showToast } = useToast()
+  const { settings, loading: settingsLoading } = useUserSettings()
+  const csvImportAvailable = isCsvImportAvailableForBank(settings?.bankId)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const csvTextRef = useRef<string>('')
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [committing, setCommitting] = useState(false)
   const [merchants, setMerchants] = useState<CsvImportPreviewMerchant[]>([])
   const [rows, setRows] = useState<EditableImportRow[]>([])
   const [stats, setStats] = useState<ImportSummary | null>(null)
+  const [formatMeta, setFormatMeta] = useState<ImportFormatMeta | null>(null)
 
   const resetImportState = useCallback(() => {
     setRows([])
     setMerchants([])
     setStats(null)
+    setFormatMeta(null)
+    csvTextRef.current = ''
     if (fileInputRef.current) fileInputRef.current.value = ''
   }, [])
+
+  const applyPreview = useCallback(
+    (preview: Awaited<ReturnType<typeof previewCsvImport>>) => {
+      setMerchants(preview.merchants)
+      setRows(toEditableRows(preview.rows))
+      setStats(preview.summary)
+      setFormatMeta({
+        formatId: preview.formatId,
+        formatLabel: preview.formatLabel,
+        bankId: preview.bankId,
+        bankName: preview.bankName,
+        headerMismatch: preview.headerMismatch,
+        availableFormats: preview.availableFormats,
+      })
+    },
+    []
+  )
+
+  const loadPreview = useCallback(
+    async (csvText: string, formatId?: string) => {
+      const preview = await previewCsvImport(csvText, formatId ? { formatId } : undefined)
+      applyPreview(preview)
+      return preview
+    },
+    [applyPreview]
+  )
 
   const handleClose = () => {
     setOpen(false)
@@ -455,10 +499,8 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
 
     try {
       const csvText = await file.text()
-      const preview = await previewCsvImport(csvText)
-      setMerchants(preview.merchants)
-      setRows(toEditableRows(preview.rows))
-      setStats(preview.summary)
+      csvTextRef.current = csvText
+      await loadPreview(csvText)
       setOpen(true)
     } catch (err) {
       console.error(err)
@@ -500,6 +542,22 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
       categoryId: suggestCategoryIdForMerchant(merchant ?? null),
       matchConfidence: 'exact',
     })
+  }
+
+  const handleFormatOverride = async (formatId: string) => {
+    if (!csvTextRef.current) return
+    setLoading(true)
+    try {
+      await loadPreview(csvTextRef.current, formatId)
+    } catch (err) {
+      console.error(err)
+      showToast(
+        err instanceof Error ? err.message : 'CSV konnte nicht neu gelesen werden',
+        'error'
+      )
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleCommit = async () => {
@@ -579,6 +637,10 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
     }
   }
 
+  if (settingsLoading || !csvImportAvailable) {
+    return null
+  }
+
   return (
     <>
       <input
@@ -607,6 +669,68 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
         maxWidth="6xl"
       >
         <div className="flex flex-col gap-4 -mx-1">
+          {formatMeta && (
+            <div className="space-y-2 rounded-card border border-border bg-surface-muted/50 px-3 py-2.5 text-sm">
+              <p className="text-primary">
+                {formatMeta.bankName ? (
+                  <>
+                    Import für{' '}
+                    <span className="font-medium">{formatMeta.bankName}</span>
+                    {' – '}
+                    Format{' '}
+                    <span className="font-medium">{formatMeta.formatLabel}</span>
+                  </>
+                ) : (
+                  <>
+                    Format{' '}
+                    <span className="font-medium">{formatMeta.formatLabel}</span>
+                  </>
+                )}
+              </p>
+              {!formatMeta.bankId && (
+                <p className="text-secondary text-xs">
+                  Keine Bank in den Einstellungen gewählt.{' '}
+                  <Link href="/settings" className="text-accent underline">
+                    Bank in Einstellungen wählen
+                  </Link>
+                </p>
+              )}
+              {formatMeta.headerMismatch && (
+                <p className="flex items-start gap-1.5 text-pending text-xs">
+                  <ExclamationTriangleIcon className="h-4 w-4 shrink-0" aria-hidden />
+                  Die CSV-Spalten passen nicht zum erwarteten Format. Prüfen Sie die
+                  Bank in den Einstellungen oder wählen Sie ein anderes Format.
+                </p>
+              )}
+              {formatMeta.availableFormats.length > 1 && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <label
+                      htmlFor="csv-format-override"
+                      className="text-xs font-medium text-secondary"
+                    >
+                      Anderes Format:
+                    </label>
+                    <select
+                      id="csv-format-override"
+                      value={formatMeta.formatId}
+                      disabled={loading}
+                      onChange={(e) => handleFormatOverride(e.target.value)}
+                      className="rounded-control border border-border bg-surface px-2 py-1 text-xs text-primary"
+                    >
+                      {formatMeta.availableFormats.map((f) => (
+                        <option key={f.id} value={f.id}>
+                          {f.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Link href="/settings" className="text-xs text-accent underline">
+                      Bank ändern
+                    </Link>
+                  </div>
+                )}
+            </div>
+          )}
+
           {stats && (
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">

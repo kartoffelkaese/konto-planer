@@ -208,6 +208,11 @@ export type CsvImportPreviewRow = {
 
 export type CsvImportPreviewResponse = {
   formatId: string
+  formatLabel: string
+  bankId: string | null
+  bankName: string | null
+  headerMismatch?: boolean
+  availableFormats: Array<{ id: string; label: string }>
   rows: CsvImportPreviewRow[]
   merchants: CsvImportPreviewMerchant[]
   summary: {
@@ -219,6 +224,11 @@ export type CsvImportPreviewResponse = {
     confirmable: number
     dateRange: { start: string; end: string } | null
   }
+}
+
+export type CsvImportPreviewOptions = {
+  csvText: string
+  formatId?: string
 }
 
 export type CsvImportCommitRow = {
@@ -236,11 +246,15 @@ export type CsvImportCommitRow = {
 }
 
 export const previewCsvImport = async (
-  csvText: string
+  csvText: string,
+  options?: { formatId?: string }
 ): Promise<CsvImportPreviewResponse> => {
   return apiFetch<CsvImportPreviewResponse>('/transactions/import/preview', {
     method: 'POST',
-    body: JSON.stringify({ csvText }),
+    body: JSON.stringify({
+      csvText,
+      ...(options?.formatId ? { formatId: options.formatId } : {}),
+    }),
   })
 }
 

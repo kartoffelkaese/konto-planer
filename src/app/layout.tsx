@@ -13,8 +13,10 @@ import {
   SITE_DESCRIPTION,
   SITE_NAME,
   SITE_OG_ALT,
-  SITE_OG_IMAGE_PATH,
+  SITE_OG_IMAGE_HEIGHT,
+  SITE_OG_IMAGE_WIDTH,
   SITE_TITLE,
+  getOgImageUrl,
   getSiteUrl,
 } from '@/lib/siteMetadata'
 
@@ -39,9 +41,9 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
     images: [
       {
-        url: SITE_OG_IMAGE_PATH,
-        width: 1200,
-        height: 630,
+        url: getOgImageUrl(),
+        width: SITE_OG_IMAGE_WIDTH,
+        height: SITE_OG_IMAGE_HEIGHT,
         alt: SITE_OG_ALT,
       },
     ],
@@ -50,7 +52,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: [SITE_OG_IMAGE_PATH],
+    images: [getOgImageUrl()],
   },
   robots: {
     index: true,

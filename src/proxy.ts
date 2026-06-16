@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { isPublicApiPath } from '@/lib/public-api'
 
+/** Statische Dateien aus public/ – ohne Login (OG-Bild, Icons, …). */
+const PUBLIC_STATIC_FILE = /\.(?:png|svg|ico|jpg|jpeg|webp|woff2?)$/i
+
 /** RSC/Soft-Navigation – Redirect würde den Flight-Fetch abbrechen. */
 function isRscOrPrefetchRequest(req: NextRequest): boolean {
   return (
@@ -16,6 +19,10 @@ function isRscOrPrefetchRequest(req: NextRequest): boolean {
 export default auth((req) => {
   const token = req.auth
   const pathname = req.nextUrl.pathname
+
+  if (PUBLIC_STATIC_FILE.test(pathname)) {
+    return NextResponse.next()
+  }
 
   if (pathname.startsWith('/api/')) {
     if (isPublicApiPath(pathname)) {
@@ -43,5 +50,7 @@ export default auth((req) => {
 })
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|banks/).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|banks/|[^/]+\\.(?:png|svg|ico|jpg|jpeg|webp|woff2?)$).*)',
+  ],
 }

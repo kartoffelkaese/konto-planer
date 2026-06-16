@@ -9,6 +9,9 @@ export const SITE_OG_ALT = SITE_TITLE
 
 export const SITE_OG_IMAGE_PATH = '/og-image.png'
 
+export const SITE_OG_IMAGE_WIDTH = 1200
+export const SITE_OG_IMAGE_HEIGHT = 630
+
 /** Kanonische Basis-URL für Metadata (Open Graph, Canonical). */
 export function getSiteUrl(): URL {
   const raw =
@@ -18,4 +21,8 @@ export function getSiteUrl(): URL {
 
   const normalized = raw.endsWith('/') ? raw.slice(0, -1) : raw
   return new URL(normalized)
+}
+
+export function getOgImageUrl(): string {
+  return new URL(SITE_OG_IMAGE_PATH, getSiteUrl()).href
 }

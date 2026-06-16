@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment } from 'react'
+import { Fragment, useEffect, useRef } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 
@@ -24,17 +24,45 @@ const maxWidthClasses = {
   '6xl': 'max-w-6xl',
 }
 
-export default function Modal({ 
-  isOpen, 
-  onClose, 
-  title, 
+function focusFirstField(container: HTMLElement) {
+  const fields = container.querySelectorAll<HTMLElement>(
+    'input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled])'
+  )
+
+  for (const field of fields) {
+    if (field.classList.contains('sr-only')) continue
+    const style = window.getComputedStyle(field)
+    if (style.display === 'none' || style.visibility === 'hidden') continue
+    field.focus()
+    return
+  }
+}
+
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
   children,
   maxWidth = 'lg',
   preventClose = false,
 }: ModalProps) {
+  const contentRef = useRef<HTMLDivElement>(null)
+
   const handleClose = () => {
     if (!preventClose) onClose()
   }
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const timer = window.setTimeout(() => {
+      if (contentRef.current) {
+        focusFirstField(contentRef.current)
+      }
+    }, 50)
+
+    return () => window.clearTimeout(timer)
+  }, [isOpen, children])
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -78,7 +106,7 @@ export default function Modal({
                   <Dialog.Title as="h3" className="text-lg font-semibold leading-6 text-primary mb-4">
                     {title}
                   </Dialog.Title>
-                  <div className="text-secondary">
+                  <div ref={contentRef} className="text-secondary">
                   {children}
                   </div>
                 </div>

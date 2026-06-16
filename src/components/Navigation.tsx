@@ -100,12 +100,24 @@ export default function Navigation() {
         return
       }
       e.preventDefault()
+
+      if (pathname === '/split') {
+        router.push('/split/new')
+        return
+      }
+
+      const splitDetailMatch = pathname.match(/^\/split\/([^/]+)$/)
+      if (splitDetailMatch && splitDetailMatch[1] !== 'new') {
+        router.push(`${pathname}?new=1`)
+        return
+      }
+
       router.push('/transactions?new=1')
     }
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [session, router])
+  }, [session, router, pathname])
 
   if (!session) {
     return null

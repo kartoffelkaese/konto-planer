@@ -3,7 +3,10 @@
 import { useMemo } from 'react'
 import { PencilIcon, TrashIcon, UserGroupIcon } from '@heroicons/react/24/outline'
 import { formatDate } from '@/lib/dateUtils'
-import { formatCurrency } from '@/lib/formatters'
+import {
+  formatSplitExpenseAmount,
+  splitExpenseAmountClass,
+} from '@/lib/splitFormatters'
 import { getContrastColor } from '@/lib/colorUtils'
 import { Button } from '@/components/Button'
 import EmptyState from '@/components/EmptyState'
@@ -65,8 +68,8 @@ function ParticipantExpensePanel({
         </div>
         <div className="text-right shrink-0">
           <p className="text-xs text-secondary">Bezahlt</p>
-          <p className="text-lg font-semibold tabular-nums text-expense">
-            {formatCurrency(-total)}
+          <p className={`text-lg font-semibold tabular-nums ${splitExpenseAmountClass(total)}`}>
+            {formatSplitExpenseAmount(total)}
           </p>
         </div>
       </header>
@@ -103,8 +106,10 @@ function ParticipantExpensePanel({
             </div>
 
             <div className="flex items-center justify-between gap-3 sm:justify-end sm:shrink-0">
-              <span className="text-sm font-medium tabular-nums text-expense sm:min-w-[5.5rem] sm:text-right">
-                {formatCurrency(-expense.amount)}
+              <span
+                className={`text-sm font-medium tabular-nums sm:min-w-[5.5rem] sm:text-right ${splitExpenseAmountClass(expense.amount)}`}
+              >
+                {formatSplitExpenseAmount(expense.amount)}
               </span>
               {!readOnly && (
                 <div className="flex gap-0.5 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus-within:opacity-100">
@@ -224,8 +229,8 @@ export default function SplitExpenseList({
           </div>
           <div>
             <dt className="text-xs text-secondary">Gesamt</dt>
-            <dd className="font-semibold tabular-nums text-expense">
-              {formatCurrency(-totalAmount)}
+            <dd className={`font-semibold tabular-nums ${splitExpenseAmountClass(totalAmount)}`}>
+              {formatSplitExpenseAmount(totalAmount)}
             </dd>
           </div>
         </dl>

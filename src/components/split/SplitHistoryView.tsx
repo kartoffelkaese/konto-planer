@@ -9,6 +9,10 @@ import {
 } from '@heroicons/react/24/outline'
 import { formatCurrency } from '@/lib/formatters'
 import { formatDate } from '@/lib/dateUtils'
+import {
+  formatSplitExpenseAmount,
+  splitExpenseAmountClass,
+} from '@/lib/splitFormatters'
 import type { SplitExpense, SplitHistoryResponse, SplitSettlement } from '@/types/split'
 import {
   splitSectionCardClass,
@@ -100,8 +104,10 @@ function ExpenseHistoryRow({
         </div>
       </div>
 
-      <span className="text-sm font-medium tabular-nums text-expense sm:min-w-[5.5rem] sm:text-right sm:shrink-0">
-        {formatCurrency(-expense.amount)}
+      <span
+        className={`text-sm font-medium tabular-nums sm:min-w-[5.5rem] sm:text-right sm:shrink-0 ${splitExpenseAmountClass(expense.amount)}`}
+      >
+        {formatSplitExpenseAmount(expense.amount)}
       </span>
     </li>
   )
@@ -185,8 +191,8 @@ export default function SplitHistoryView({
         <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
           <div>
             <dt className="text-xs text-secondary">Gesamtausgaben</dt>
-            <dd className="font-semibold tabular-nums text-expense">
-              {formatCurrency(-history.totalExpenses)}
+            <dd className={`font-semibold tabular-nums ${splitExpenseAmountClass(history.totalExpenses)}`}>
+              {formatSplitExpenseAmount(history.totalExpenses)}
             </dd>
           </div>
           {history.settlements.length > 0 && (
@@ -279,8 +285,8 @@ export default function SplitHistoryView({
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-xs text-secondary">Summe</p>
-                    <p className="text-base font-semibold tabular-nums text-expense">
-                      {formatCurrency(-group.total)}
+                    <p className={`text-base font-semibold tabular-nums ${splitExpenseAmountClass(group.total)}`}>
+                      {formatSplitExpenseAmount(group.total)}
                     </p>
                   </div>
                 </header>

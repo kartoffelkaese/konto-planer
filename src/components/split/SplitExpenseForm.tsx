@@ -8,6 +8,7 @@ import type { SplitCategory, SplitParticipant } from '@/types/split'
 import { createSplitExpense, updateSplitExpense } from '@/lib/api'
 import type { SplitExpense } from '@/types/split'
 import {
+  splitHintClass,
   splitInputClass,
   splitLabelClass,
   splitSectionCardClass,
@@ -60,8 +61,8 @@ export default function SplitExpenseForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const parsedAmount = Number.parseFloat(amount.replace(',', '.'))
-    if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
-      setError('Bitte einen gültigen Betrag eingeben')
+    if (Number.isNaN(parsedAmount) || parsedAmount === 0) {
+      setError('Bitte einen gültigen Betrag eingeben (0 ist nicht erlaubt, Minusbeträge für Erstattungen)')
       return
     }
     if (shareParticipantIds.length === 0) {
@@ -125,8 +126,12 @@ export default function SplitExpenseForm({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             required
+            placeholder="z. B. 42,50 oder -10 für Erstattung"
             className={`mt-1 ${splitInputClass}`}
           />
+          <p className={splitHintClass}>
+            Negative Beträge für Erstattungen oder Gutschriften — werden bei den Salden berücksichtigt.
+          </p>
         </div>
         <div>
           <label htmlFor="split-date" className={splitLabelClass}>

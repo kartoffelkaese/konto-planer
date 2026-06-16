@@ -2,6 +2,10 @@
 
 import { useMemo } from 'react'
 import { formatCurrency } from '@/lib/formatters'
+import {
+  formatSplitExpenseAmount,
+  splitExpenseAmountClass,
+} from '@/lib/splitFormatters'
 import type { SplitBalanceEntry } from '@/types/split'
 import { splitSectionCardClass } from '@/components/split/splitUiClasses'
 import {
@@ -176,8 +180,8 @@ export default function SplitBalanceSummary({
         <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
           <div>
             <dt className="text-xs text-secondary">Gesamtausgaben</dt>
-            <dd className="font-semibold tabular-nums text-expense">
-              {formatCurrency(-totalExpenses)}
+            <dd className={`font-semibold tabular-nums ${splitExpenseAmountClass(totalExpenses)}`}>
+              {formatSplitExpenseAmount(totalExpenses)}
             </dd>
           </div>
           {creditorCount > 0 && (

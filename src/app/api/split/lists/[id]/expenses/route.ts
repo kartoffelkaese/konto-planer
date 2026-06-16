@@ -28,9 +28,9 @@ async function validateExpenseInput(
     )
   }
 
-  if (body.amount == null || Number.isNaN(body.amount) || body.amount <= 0) {
+  if (body.amount == null || Number.isNaN(body.amount) || body.amount === 0) {
     return NextResponse.json(
-      { error: 'Betrag muss größer als 0 sein' },
+      { error: 'Betrag darf nicht 0 sein (negative Beträge für Erstattungen möglich)' },
       { status: 400 }
     )
   }

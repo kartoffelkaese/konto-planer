@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ExclamationCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
 import PageContextHeader from '@/components/PageContextHeader'
@@ -48,6 +48,7 @@ function formatSplitListDeleteError(message: string, listName?: string): string 
 export default function SplitDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { showToast } = useToast()
   const listId = params.id as string
 
@@ -98,6 +99,22 @@ export default function SplitDetailPage() {
     setLoading(true)
     reloadAll().finally(() => setLoading(false))
   }, [reloadAll])
+
+  useEffect(() => {
+    if (searchParams.get('new') !== '1' || loading || !list) return
+
+    if (readOnly) {
+      showToast('Archivierte Listen können keine neuen Ausgaben erfassen', 'error')
+    } else if (list.participants.length === 0) {
+      showToast('Bitte zuerst einen Teilnehmer in den Einstellungen anlegen', 'error')
+    } else {
+      setTab('expenses')
+      setShowForm(true)
+      setEditingExpense(null)
+    }
+
+    router.replace(`/split/${listId}`, { scroll: false })
+  }, [searchParams, loading, list, readOnly, listId, router, showToast])
 
   const handleArchive = async () => {
     if (!list) return

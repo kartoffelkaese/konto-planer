@@ -52,7 +52,7 @@ export function computeParticipantBalances(
 
   for (const expense of expenses) {
     const amount = roundMoney(expense.amount)
-    if (amount <= 0) continue
+    if (amount === 0) continue
 
     paid.set(
       expense.paidByParticipantId,

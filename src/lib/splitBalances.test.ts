@@ -42,6 +42,29 @@ describe('computeParticipantBalances', () => {
     expect(balances.find((b) => b.participantId === 'c')?.net).toBe(0)
   })
 
+  it('treats negative amounts as refunds in paid and owed shares', () => {
+    const balances = computeParticipantBalances(participants, [
+      {
+        id: 'e1',
+        amount: 90,
+        paidByParticipantId: 'a',
+        shareParticipantIds: [],
+      },
+      {
+        id: 'e2',
+        amount: -30,
+        paidByParticipantId: 'a',
+        shareParticipantIds: [],
+      },
+    ])
+
+    expect(balances.find((b) => b.participantId === 'a')?.paid).toBe(60)
+    expect(balances.find((b) => b.participantId === 'a')?.owed).toBe(20)
+    expect(balances.find((b) => b.participantId === 'a')?.net).toBe(40)
+    expect(balances.find((b) => b.participantId === 'b')?.net).toBe(-20)
+    expect(balances.find((b) => b.participantId === 'c')?.net).toBe(-20)
+  })
+
   it('applies settlements to net balances', () => {
     const balances = computeParticipantBalances(
       participants,

@@ -1,7 +1,7 @@
 'use client'
 
 type SplitTabBarProps<T extends string> = {
-  tabs: { id: T; label: string }[]
+  tabs: { id: T; label: string; badge?: number }[]
   activeTab: T
   onChange: (tab: T) => void
   ariaLabel?: string
@@ -34,13 +34,28 @@ export default function SplitTabBar<T extends string>({
           role="tab"
           aria-selected={activeTab === tab.id}
           onClick={() => onChange(tab.id)}
-          className={`rounded-control border px-3 py-2.5 text-sm font-medium transition-colors duration-feedback focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
+          className={`relative rounded-control border px-3 py-2.5 text-sm font-medium transition-colors duration-feedback focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
             activeTab === tab.id
               ? 'border-accent bg-accent-subtle text-accent'
               : 'border-border bg-surface text-primary hover:border-accent-border hover:bg-surface-muted'
           }`}
         >
-          {tab.label}
+          <span className="inline-flex items-center justify-center gap-1.5">
+            {tab.label}
+            {tab.badge != null && tab.badge > 0 && (
+              <span
+                className={`inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums ${
+                  activeTab === tab.id
+                    ? 'bg-accent text-white'
+                    : tab.id === 'balances'
+                      ? 'bg-expense-bg text-expense'
+                      : 'bg-surface-muted text-secondary'
+                }`}
+              >
+                {tab.badge}
+              </span>
+            )}
+          </span>
         </button>
       ))}
     </div>

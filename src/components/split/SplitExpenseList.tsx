@@ -9,6 +9,7 @@ import { Button } from '@/components/Button'
 import EmptyState from '@/components/EmptyState'
 import type { SplitExpense, SplitParticipant } from '@/types/split'
 import { splitSectionCardClass } from '@/components/split/splitUiClasses'
+import { getParticipantInitials } from '@/components/split/splitParticipantUtils'
 
 type SplitExpenseListProps = {
   expenses: SplitExpense[]
@@ -28,15 +29,6 @@ type ParticipantExpensePanelProps = {
   onDelete?: (expenseId: string) => void
 }
 
-function getInitials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('')
-}
-
 function formatShareLabel(shareCount: number, participantCount: number): string {
   if (shareCount >= participantCount) return 'Alle'
   if (shareCount === 1) return '1 Person'
@@ -52,7 +44,7 @@ function ParticipantExpensePanel({
   onDelete,
 }: ParticipantExpensePanelProps) {
   const total = expenses.reduce((sum, expense) => sum + expense.amount, 0)
-  const initials = getInitials(participant.displayName)
+  const initials = getParticipantInitials(participant.displayName)
 
   return (
     <section className={`${splitSectionCardClass} overflow-hidden p-0`}>

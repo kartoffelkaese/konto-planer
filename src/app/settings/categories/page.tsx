@@ -7,70 +7,8 @@ import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
 import PageLoader from '@/components/PageLoader'
 import SettingsBreadcrumb from '@/components/SettingsBreadcrumb'
+import ColorPicker, { DEFAULT_CATEGORY_COLOR } from '@/components/ColorPicker'
 import { useUserSettings } from '@/hooks/useUserSettings'
-
-/** Gesättigte, schema-unabhängige Palette – gut lesbar mit getContrastColor. */
-const PRESET_COLORS = [
-  '#C0392B',
-  '#2E86AB',
-  '#1F6B52',
-  '#8A6918',
-  '#6B4C9A',
-  '#D35400',
-  '#2C3E50',
-  '#16A085',
-  '#8E44AD',
-  '#2874A6',
-  '#A04000',
-  '#566573',
-]
-
-interface ColorPickerProps {
-  value: string
-  onChange: (color: string) => void
-  id: string
-}
-
-function ColorPicker({ value, onChange, id }: ColorPickerProps) {
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-6 gap-2">
-        {PRESET_COLORS.map((color) => (
-          <button
-            key={color}
-            type="button"
-            className={`w-8 h-8 rounded-full border-2 transition-colors hover:opacity-90 ${
-              value === color ? 'border-accent ring-2 ring-accent/30' : 'border-border shadow-sm'
-            }`}
-            style={{ backgroundColor: color }}
-            onClick={() => onChange(color)}
-          />
-        ))}
-      </div>
-      <div className="flex items-center space-x-3">
-        <div className="flex-1">
-          <input
-            type="color"
-            id={id}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="sr-only"
-          />
-          <label
-            htmlFor={id}
-            className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium text-primary border border-border rounded-control shadow-sm hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface"
-          >
-            Andere Farbe wählen
-          </label>
-        </div>
-        <div 
-          className="w-10 h-10 rounded-full border-2 border-white border border-border" 
-          style={{ backgroundColor: value }}
-        />
-      </div>
-    </div>
-  )
-}
 
 interface Category {
   id: string
@@ -94,7 +32,7 @@ export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [formData, setFormData] = useState({
     name: '',
-    color: PRESET_COLORS[0]
+    color: DEFAULT_CATEGORY_COLOR
   })
   const [filters, setFilters] = useState({
     search: ''
@@ -142,7 +80,7 @@ export default function CategoriesPage() {
 
       await loadCategories()
       setShowAddModal(false)
-      setFormData({ name: '', color: PRESET_COLORS[0] })
+      setFormData({ name: '', color: DEFAULT_CATEGORY_COLOR })
       showToast('Kategorie erstellt', 'success')
     } catch (err) {
       console.error('Error creating category:', err)
@@ -177,7 +115,7 @@ export default function CategoriesPage() {
       await loadCategories()
       setShowEditModal(false)
       setSelectedCategory(null)
-      setFormData({ name: '', color: PRESET_COLORS[0] })
+      setFormData({ name: '', color: DEFAULT_CATEGORY_COLOR })
       showToast('Kategorie gespeichert', 'success')
     } catch (err) {
       console.error('Error updating category:', err)

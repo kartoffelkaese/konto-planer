@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { ArrowLongRightIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 import { Button } from '@/components/Button'
+import { useToast } from '@/hooks/useToast'
 import { formatCurrency } from '@/lib/formatters'
 import type { SplitDebtSuggestion } from '@/types/split'
 import { createSplitSettlement } from '@/lib/api'
-import { splitListItemClass, splitSectionTitleClass } from '@/components/split/splitUiClasses'
+import { splitSectionCardClass, splitSectionTitleClass } from '@/components/split/splitUiClasses'
 
 type SplitSettlementCardProps = {
   listId: string
@@ -20,6 +22,7 @@ export default function SplitSettlementCard({
   onSettled,
   readOnly = false,
 }: SplitSettlementCardProps) {
+  const { showToast } = useToast()
   const [loadingKey, setLoadingKey] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,9 +36,15 @@ export default function SplitSettlementCard({
         toParticipantId: suggestion.toParticipantId,
         amount: suggestion.amount,
       })
+      showToast(
+        `${suggestion.fromDisplayName} → ${suggestion.toDisplayName}: Ausgleich erfasst`,
+        'success'
+      )
       onSettled()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler')
+      const message = err instanceof Error ? err.message : 'Ausgleich konnte nicht gespeichert werden'
+      setError(message)
+      showToast(message, 'error')
     } finally {
       setLoadingKey(null)
     }
@@ -43,45 +52,68 @@ export default function SplitSettlementCard({
 
   if (suggestions.length === 0) {
     return (
-      <div className="rounded-lg border border-accent-border bg-accent-subtle p-4 text-sm text-primary">
-        Alle Salden sind ausgeglichen — niemand schuldet derzeit etwas.
+      <div className="flex items-start gap-3 rounded-lg border border-accent-border bg-accent-subtle p-4 text-sm text-primary">
+        <CheckCircleIcon className="h-5 w-5 shrink-0 text-accent" aria-hidden="true" />
+        <div>
+          <p className="font-medium">Alles ausgeglichen</p>
+          <p className="mt-0.5 text-secondary">
+            Aktuell schuldet niemand etwas — oder offene Beträge wurden bereits ausgeglichen.
+          </p>
+        </div>
       </div>
     )
   }
 
   return (
-    <section className="rounded-lg border border-border bg-surface p-4">
-      <h3 className={splitSectionTitleClass}>Vorgeschlagene Ausgleiche</h3>
+    <section className={`${splitSectionCardClass} space-y-4`}>
+      <div>
+        <h3 className={splitSectionTitleClass}>Nächste Ausgleiche</h3>
+        <p className="text-sm text-secondary">
+          Minimale Anzahl Zahlungen, um alle Salden auszugleichen.
+          {!readOnly && ' Markieren Sie erledigte Überweisungen als ausgeglichen.'}
+        </p>
+      </div>
+
       <ul className="space-y-3">
-        {suggestions.map((s) => {
-          const key = `${s.fromParticipantId}-${s.toParticipantId}`
+        {suggestions.map((suggestion) => {
+          const key = `${suggestion.fromParticipantId}-${suggestion.toParticipantId}`
           return (
-            <li key={key} className={splitListItemClass}>
-              <p className="text-sm text-primary min-w-0 flex-1">
-                <span className="font-medium">{s.fromDisplayName}</span>
-                {' schuldet '}
-                <span className="font-medium">{s.toDisplayName}</span>
-                {' '}
+            <li
+              key={key}
+              className="flex flex-col gap-3 rounded-lg border border-border bg-canvas px-4 py-3 sm:flex-row sm:items-center"
+            >
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                <span className="font-medium text-primary">{suggestion.fromDisplayName}</span>
+                <ArrowLongRightIcon
+                  className="h-4 w-4 shrink-0 text-secondary"
+                  aria-hidden="true"
+                />
+                <span className="font-medium text-primary">{suggestion.toDisplayName}</span>
                 <span className="font-semibold tabular-nums text-expense">
-                  {formatCurrency(-s.amount)}
+                  {formatCurrency(-suggestion.amount)}
                 </span>
-              </p>
+              </div>
               {!readOnly && (
                 <Button
                   size="sm"
                   className="shrink-0"
-                  onClick={() => handleSettle(s)}
+                  onClick={() => handleSettle(suggestion)}
                   loading={loadingKey === key}
                   loadingText="…"
                 >
-                  Als ausgeglichen markieren
+                  Ausgeglichen
                 </Button>
               )}
             </li>
           )
         })}
       </ul>
-      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
+
+      {error && (
+        <p className="text-sm text-danger" role="alert">
+          {error}
+        </p>
+      )}
     </section>
   )
 }

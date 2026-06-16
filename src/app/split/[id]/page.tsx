@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ExclamationCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
@@ -15,8 +15,7 @@ import SplitExpenseList from '@/components/split/SplitExpenseList'
 import SplitBalanceSummary from '@/components/split/SplitBalanceSummary'
 import SplitSettlementCard from '@/components/split/SplitSettlementCard'
 import SplitHistoryView from '@/components/split/SplitHistoryView'
-import SplitParticipantList from '@/components/split/SplitParticipantList'
-import SplitCategoryManager from '@/components/split/SplitCategoryManager'
+import SplitSettingsPanel from '@/components/split/SplitSettingsPanel'
 import {
   deleteSplitExpense,
   deleteSplitList,
@@ -167,21 +166,33 @@ export default function SplitDetailPage() {
   }
 
   const handleDeleteExpense = async (expenseId: string) => {
-    if (!confirm('Ausgabe löschen?')) return
+    const expense = expenses.find((item) => item.id === expenseId)
+    if (!confirm(`Ausgabe „${expense?.description ?? 'Posten'}" löschen?`)) return
+    setError(null)
     try {
       await deleteSplitExpense(listId, expenseId)
+      showToast('Ausgabe wurde gelöscht', 'success')
       await reloadAll()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler')
+      const message = err instanceof Error ? err.message : 'Ausgabe konnte nicht gelöscht werden'
+      setError(message)
+      showToast(message, 'error')
     }
   }
 
-  const tabs: { id: Tab; label: string }[] = [
-    { id: 'expenses', label: 'Ausgaben' },
-    { id: 'balances', label: 'Salden' },
-    { id: 'history', label: 'Historie' },
-    { id: 'settings', label: 'Einstellungen' },
-  ]
+  const tabs = useMemo(
+    () => [
+      { id: 'expenses' as Tab, label: 'Ausgaben', badge: expenses.length },
+      {
+        id: 'balances' as Tab,
+        label: 'Salden',
+        badge: balances?.suggestions.length ?? 0,
+      },
+      { id: 'history' as Tab, label: 'Historie' },
+      { id: 'settings' as Tab, label: 'Einstellungen' },
+    ],
+    [expenses.length, balances?.suggestions.length]
+  )
 
   if (loading && !list) {
     return <PageLoader message="Split-Liste wird geladen…" />
@@ -277,8 +288,13 @@ export default function SplitDetailPage() {
               categories={list.categories}
               expense={editingExpense}
               onSaved={async () => {
+                const wasEdit = Boolean(editingExpense)
                 setShowForm(false)
                 setEditingExpense(null)
+                showToast(
+                  wasEdit ? 'Ausgabe wurde aktualisiert' : 'Ausgabe wurde hinzugefügt',
+                  'success'
+                )
                 await reloadAll()
               }}
               onCancel={() => {
@@ -307,6 +323,7 @@ export default function SplitDetailPage() {
           <SplitBalanceSummary
             balances={balances.balances}
             totalExpenses={balances.totalExpenses}
+            openSettlements={balances.suggestions.length}
           />
           <SplitSettlementCard
             listId={listId}
@@ -318,27 +335,20 @@ export default function SplitDetailPage() {
       )}
 
       {tab === 'history' && history && (
-        <div className="rounded-lg border border-border bg-surface p-4">
-          <SplitHistoryView history={history} />
-        </div>
+        <SplitHistoryView
+          history={history}
+          participantCount={list.participants.length}
+        />
       )}
 
       {tab === 'settings' && (
-        <div className="space-y-6 max-w-2xl">
-          <SplitParticipantList
-            listId={listId}
-            participants={list.participants}
-            onChange={(participants) => setList({ ...list, participants })}
-            readOnly={readOnly}
-            canManage={isOwner && !readOnly}
-          />
-          <SplitCategoryManager
-            listId={listId}
-            categories={list.categories}
-            onChange={(categories) => setList({ ...list, categories })}
-            readOnly={readOnly}
-          />
-        </div>
+        <SplitSettingsPanel
+          listId={listId}
+          list={list}
+          readOnly={readOnly}
+          isOwner={isOwner}
+          onListChange={setList}
+        />
       )}
     </SplitPageShell>
   )

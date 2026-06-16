@@ -8,10 +8,8 @@ import type { SplitCategory, SplitParticipant } from '@/types/split'
 import { createSplitExpense, updateSplitExpense } from '@/lib/api'
 import type { SplitExpense } from '@/types/split'
 import {
-  splitHintClass,
   splitInputClass,
   splitLabelClass,
-  splitSectionCardClass,
   splitSegmentButtonClass,
 } from '@/components/split/splitUiClasses'
 
@@ -95,11 +93,7 @@ export default function SplitExpenseForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className={`${splitSectionCardClass} space-y-6`}>
-      <h3 className="text-lg font-medium text-primary">
-        {expense ? 'Ausgabe bearbeiten' : 'Neue Ausgabe'}
-      </h3>
-
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <label htmlFor="split-desc" className={splitLabelClass}>
           Beschreibung
@@ -129,9 +123,6 @@ export default function SplitExpenseForm({
             placeholder="z. B. 42,50 oder -10 für Erstattung"
             className={`mt-1 ${splitInputClass}`}
           />
-          <p className={splitHintClass}>
-            Negative Beträge für Erstattungen oder Gutschriften — werden bei den Salden berücksichtigt.
-          </p>
         </div>
         <div>
           <label htmlFor="split-date" className={splitLabelClass}>

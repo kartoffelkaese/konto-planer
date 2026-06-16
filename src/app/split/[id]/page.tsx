@@ -10,7 +10,7 @@ import { Button } from '@/components/Button'
 import { useToast } from '@/hooks/useToast'
 import SplitPageShell from '@/components/split/SplitPageShell'
 import SplitTabBar from '@/components/split/SplitTabBar'
-import SplitExpenseForm from '@/components/split/SplitExpenseForm'
+import SplitExpenseModal from '@/components/split/SplitExpenseModal'
 import SplitExpenseList from '@/components/split/SplitExpenseList'
 import SplitBalanceSummary from '@/components/split/SplitBalanceSummary'
 import SplitSettlementCard from '@/components/split/SplitSettlementCard'
@@ -57,13 +57,29 @@ export default function SplitDetailPage() {
   const [balances, setBalances] = useState<SplitBalancesResponse | null>(null)
   const [history, setHistory] = useState<SplitHistoryResponse | null>(null)
   const [tab, setTab] = useState<Tab>('expenses')
-  const [showForm, setShowForm] = useState(false)
+  const [expenseModalOpen, setExpenseModalOpen] = useState(false)
   const [editingExpense, setEditingExpense] = useState<SplitExpense | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const readOnly = list?.status === 'ARCHIVED'
   const isOwner = list?.role === 'OWNER'
+  const canAddExpense = !readOnly && (list?.participants.length ?? 0) > 0
+
+  const closeExpenseModal = useCallback(() => {
+    setExpenseModalOpen(false)
+    setEditingExpense(null)
+  }, [])
+
+  const openNewExpenseModal = useCallback(() => {
+    setEditingExpense(null)
+    setExpenseModalOpen(true)
+  }, [])
+
+  const openEditExpenseModal = useCallback((expense: SplitExpense) => {
+    setEditingExpense(expense)
+    setExpenseModalOpen(true)
+  }, [])
 
   const loadList = useCallback(async () => {
     const data = await getSplitList(listId)
@@ -108,13 +124,11 @@ export default function SplitDetailPage() {
     } else if (list.participants.length === 0) {
       showToast('Bitte zuerst einen Teilnehmer in den Einstellungen anlegen', 'error')
     } else {
-      setTab('expenses')
-      setShowForm(true)
-      setEditingExpense(null)
+      openNewExpenseModal()
     }
 
     router.replace(`/split/${listId}`, { scroll: false })
-  }, [searchParams, loading, list, readOnly, listId, router, showToast])
+  }, [searchParams, loading, list, readOnly, listId, router, showToast, openNewExpenseModal])
 
   const handleArchive = async () => {
     if (!list) return
@@ -129,7 +143,7 @@ export default function SplitDetailPage() {
     try {
       const updated = await updateSplitList(listId, { status: 'ARCHIVED' })
       setList(updated)
-      setShowForm(false)
+      closeExpenseModal()
       showToast(`„${list.name}" wurde archiviert`, 'success')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler beim Archivieren'
@@ -197,6 +211,13 @@ export default function SplitDetailPage() {
     }
   }
 
+  const handleExpenseSaved = async () => {
+    const wasEdit = Boolean(editingExpense)
+    closeExpenseModal()
+    showToast(wasEdit ? 'Ausgabe wurde aktualisiert' : 'Ausgabe wurde hinzugefügt', 'success')
+    await reloadAll()
+  }
+
   const tabs = useMemo(
     () => [
       { id: 'expenses' as Tab, label: 'Ausgaben', badge: expenses.length },
@@ -246,6 +267,12 @@ export default function SplitDetailPage() {
                 Zurück
               </Button>
             </Link>
+            {canAddExpense && (
+              <Button size="sm" onClick={openNewExpenseModal}>
+                <PlusIcon className="h-4 w-4" aria-hidden="true" />
+                Ausgabe
+              </Button>
+            )}
             {isOwner && !readOnly && (
               <Button variant="secondary" size="sm" onClick={handleArchive}>
                 Archivieren
@@ -290,49 +317,14 @@ export default function SplitDetailPage() {
       <SplitTabBar tabs={tabs} activeTab={tab} onChange={setTab} ariaLabel="Split-Listenbereiche" />
 
       {tab === 'expenses' && (
-        <div className="space-y-6">
-          {!readOnly && !showForm && !editingExpense && (
-            <Button onClick={() => setShowForm(true)}>
-              <PlusIcon className="h-4 w-4" aria-hidden="true" />
-              Ausgabe hinzufügen
-            </Button>
-          )}
-
-          {!readOnly && (showForm || editingExpense) && list.participants.length > 0 && (
-            <SplitExpenseForm
-              listId={listId}
-              participants={list.participants}
-              categories={list.categories}
-              expense={editingExpense}
-              onSaved={async () => {
-                const wasEdit = Boolean(editingExpense)
-                setShowForm(false)
-                setEditingExpense(null)
-                showToast(
-                  wasEdit ? 'Ausgabe wurde aktualisiert' : 'Ausgabe wurde hinzugefügt',
-                  'success'
-                )
-                await reloadAll()
-              }}
-              onCancel={() => {
-                setShowForm(false)
-                setEditingExpense(null)
-              }}
-            />
-          )}
-
-          <SplitExpenseList
-            expenses={expenses}
-            participants={list.participants}
-            readOnly={readOnly}
-            onEdit={(expense) => {
-              setEditingExpense(expense)
-              setShowForm(false)
-            }}
-            onDelete={handleDeleteExpense}
-            onAdd={() => setShowForm(true)}
-          />
-        </div>
+        <SplitExpenseList
+          expenses={expenses}
+          participants={list.participants}
+          readOnly={readOnly}
+          onEdit={openEditExpenseModal}
+          onDelete={handleDeleteExpense}
+          onAdd={canAddExpense ? openNewExpenseModal : undefined}
+        />
       )}
 
       {tab === 'balances' && balances && (
@@ -366,6 +358,27 @@ export default function SplitDetailPage() {
           isOwner={isOwner}
           onListChange={setList}
         />
+      )}
+
+      <SplitExpenseModal
+        isOpen={expenseModalOpen}
+        onClose={closeExpenseModal}
+        listId={listId}
+        participants={list.participants}
+        categories={list.categories}
+        expense={editingExpense}
+        onSaved={handleExpenseSaved}
+      />
+
+      {canAddExpense && (
+        <Button
+          type="button"
+          className="md:hidden fixed bottom-6 right-6 z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
+          onClick={openNewExpenseModal}
+          aria-label="Neue Ausgabe"
+        >
+          <PlusIcon className="h-6 w-6" aria-hidden="true" />
+        </Button>
       )}
     </SplitPageShell>
   )

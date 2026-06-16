@@ -9,6 +9,12 @@ import {
   DARK_COLOR_SCHEMES_JSON,
   DEFAULT_COLOR_SCHEME,
 } from '@/lib/colorSchemes'
+import {
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_TITLE,
+  getSiteUrl,
+} from '@/lib/siteMetadata'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -16,8 +22,29 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Konto-Planer',
-  description: 'Verwalten Sie Ihre Ein- und Ausgaben',
+  metadataBase: getSiteUrl(),
+  title: {
+    default: SITE_TITLE,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: {
+    type: 'website',
+    locale: 'de_DE',
+    siteName: SITE_NAME,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 }
 
 export default function RootLayout({

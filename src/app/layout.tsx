@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="de" suppressHydrationWarning className="scroll-smooth">
+    <html lang="de" suppressHydrationWarning className="scroll-smooth" data-scroll-behavior="smooth">
       <head>
         <script
           dangerouslySetInnerHTML={{

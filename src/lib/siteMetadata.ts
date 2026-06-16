@@ -7,6 +7,8 @@ export const SITE_DESCRIPTION =
 
 export const SITE_OG_ALT = SITE_TITLE
 
+export const SITE_OG_IMAGE_PATH = '/og-image.png'
+
 /** Kanonische Basis-URL für Metadata (Open Graph, Canonical). */
 export function getSiteUrl(): URL {
   const raw =

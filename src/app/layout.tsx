@@ -12,6 +12,8 @@ import {
 import {
   SITE_DESCRIPTION,
   SITE_NAME,
+  SITE_OG_ALT,
+  SITE_OG_IMAGE_PATH,
   SITE_TITLE,
   getSiteUrl,
 } from '@/lib/siteMetadata'
@@ -35,11 +37,20 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
+    images: [
+      {
+        url: SITE_OG_IMAGE_PATH,
+        width: 1200,
+        height: 630,
+        alt: SITE_OG_ALT,
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
+    images: [SITE_OG_IMAGE_PATH],
   },
   robots: {
     index: true,

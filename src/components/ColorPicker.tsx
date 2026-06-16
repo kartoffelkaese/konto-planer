@@ -20,7 +20,7 @@ export const PRESET_COLORS = [
   '#566573',
 ] as const
 
-export const DEFAULT_CATEGORY_COLOR = PRESET_COLORS[0]
+export const DEFAULT_CATEGORY_COLOR: string = PRESET_COLORS[0]
 
 type ColorPickerProps = {
   value: string

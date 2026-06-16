@@ -30,9 +30,9 @@ export default function CategoriesPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{ name: string; color: string }>({
     name: '',
-    color: DEFAULT_CATEGORY_COLOR
+    color: DEFAULT_CATEGORY_COLOR,
   })
   const [filters, setFilters] = useState({
     search: ''

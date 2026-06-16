@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       ? body.categoryNames.map((n) => n.trim()).filter(Boolean)
       : DEFAULT_SPLIT_CATEGORIES.map((c) => c.name)
 
-  const categoryColors = new Map(
+  const categoryColors = new Map<string, string>(
     DEFAULT_SPLIT_CATEGORIES.map((c) => [c.name, c.color])
   )
 

@@ -18,8 +18,8 @@ type ExpenseWithRelations = {
   date: Date
   createdById: string
   createdAt: Date
-  paidBy?: SplitParticipant | null
-  category?: SplitCategory | null
+  paidBy?: Parameters<typeof serializeParticipant>[0] | null
+  category?: Parameters<typeof serializeCategory>[0] | null
   shares?: { participantId: string }[]
 }
 

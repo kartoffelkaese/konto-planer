@@ -230,6 +230,26 @@ Antwort: Array `{ date, amount, category, color }` (Monatsschlüssel `YYYY-MM`)
 | `POST` | `/api/auth/resend-verification` | `{ "email" }` — Bestätigungs-E-Mail erneut (Registrierung) |
 | `POST` | `/api/error-log` | Client-Fehler ans Server-Log (Session, Rate-Limit) |
 
+## Split-Budget (eigenes Modul)
+
+Unabhängig vom Haushaltsbuch. Zugriff über **Session `user.id`**, nicht über `activeAccountId`.
+
+| Methode | Pfad | Beschreibung |
+|---------|------|--------------|
+| `GET` | `/api/split/lists` | Alle Split-Listen des Nutzers |
+| `POST` | `/api/split/lists` | `{ name, description?, participantNames?, categoryNames? }` |
+| `GET`/`PATCH`/`DELETE` | `/api/split/lists/:id` | Detail, archivieren/umbenennen, löschen (Owner) |
+| `GET`/`POST`/`DELETE` | `/api/split/lists/:id/participants` | Teilnehmer verwalten; POST `{ displayName, email? }` |
+| `GET`/`POST`/`PATCH`/`DELETE` | `/api/split/lists/:id/categories` | Kategorien pro Liste (getrennt von Haushalts-Kategorien) |
+| `GET`/`POST`/`PATCH`/`DELETE` | `/api/split/lists/:id/expenses` | Ausgaben CRUD inkl. `categoryId`, `shareParticipantIds` |
+| `GET` | `/api/split/lists/:id/balances` | Nettosalden + vereinfachte Schuldvorschläge |
+| `GET`/`POST` | `/api/split/lists/:id/settlements` | Ausgleich abhaken |
+| `GET` | `/api/split/lists/:id/history` | Ausgleiche + Gesamtausgaben (nach Kategorie) |
+| `GET` | `/api/split/invites/received` | Offene Split-Einladungen |
+| `PATCH` | `/api/split/invites/:id` | `{ action: "accept" \| "decline" }` |
+
+Archivierte Listen: nur Lesen (`403` bei Schreibzugriff).
+
 ## Fehlercodes
 
 | Code | Bedeutung |

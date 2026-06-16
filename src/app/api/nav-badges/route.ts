@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { AccountInviteStatus } from '@prisma/client'
+import { AccountInviteStatus, SplitInviteStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getAccountContext } from '@/lib/account-context'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
@@ -21,6 +21,13 @@ export async function GET() {
       where: {
         email: normalizeEmail(user.email),
         status: AccountInviteStatus.PENDING,
+      },
+    })
+
+    const pendingSplitInvitations = await prisma.splitListInvite.count({
+      where: {
+        email: normalizeEmail(user.email),
+        status: SplitInviteStatus.PENDING,
       },
     })
     const { startDate, endDate } = getSalaryMonthRange(account.salaryDay)
@@ -91,6 +98,7 @@ export async function GET() {
       unconfirmedTransactions,
       recurringAttention,
       pendingInvitations,
+      pendingSplitInvitations,
     })
   } catch (error) {
     console.error('Error fetching nav badges:', error)

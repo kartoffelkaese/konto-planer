@@ -1,6 +1,19 @@
 import { Transaction, CreateTransactionData } from '@/types'
 import type { RecurringWithStatus } from '@/lib/recurringStatus'
 import { toISOString } from '@/lib/dateUtils'
+import type {
+  CreateSplitExpenseData,
+  CreateSplitListData,
+  SplitBalancesResponse,
+  SplitCategory,
+  SplitExpense,
+  SplitHistoryResponse,
+  SplitInviteReceived,
+  SplitListDetail,
+  SplitListSummary,
+  SplitParticipant,
+  SplitSettlement,
+} from '@/types/split'
 
 interface TransactionsResponse {
   transactions: Transaction[]
@@ -311,3 +324,133 @@ export const commitCsvImport = async (
     body: JSON.stringify({ rows }),
   })
 }
+
+// --- Split-Budget ---
+
+export const getSplitLists = () => apiFetch<SplitListSummary[]>('/split/lists')
+
+export const createSplitList = (data: CreateSplitListData) =>
+  apiFetch<SplitListSummary>('/split/lists', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+
+export const getSplitList = (id: string) =>
+  apiFetch<SplitListDetail>(`/split/lists/${id}`)
+
+export const updateSplitList = (
+  id: string,
+  data: {
+    name?: string
+    description?: string | null
+    status?: 'ACTIVE' | 'ARCHIVED'
+  }
+) =>
+  apiFetch<SplitListDetail>(`/split/lists/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+
+export const deleteSplitList = (id: string) =>
+  apiFetch<{ message: string }>(`/split/lists/${id}`, { method: 'DELETE' })
+
+export const getSplitParticipants = (listId: string) =>
+  apiFetch<SplitParticipant[]>(`/split/lists/${listId}/participants`)
+
+export const addSplitParticipant = (
+  listId: string,
+  data: { displayName: string; email?: string }
+) =>
+  apiFetch<SplitParticipant>(`/split/lists/${listId}/participants`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+
+export const removeSplitParticipant = (listId: string, participantId: string) =>
+  apiFetch<{ message: string }>(`/split/lists/${listId}/participants`, {
+    method: 'DELETE',
+    body: JSON.stringify({ participantId }),
+  })
+
+export const getSplitCategories = (listId: string) =>
+  apiFetch<SplitCategory[]>(`/split/lists/${listId}/categories`)
+
+export const createSplitCategory = (
+  listId: string,
+  data: { name: string; color?: string | null }
+) =>
+  apiFetch<SplitCategory>(`/split/lists/${listId}/categories`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+
+export const updateSplitCategory = (
+  listId: string,
+  data: { categoryId: string; name?: string; color?: string | null }
+) =>
+  apiFetch<SplitCategory>(`/split/lists/${listId}/categories`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+
+export const deleteSplitCategory = (
+  listId: string,
+  data: { categoryId: string; reassignToCategoryId?: string | null }
+) =>
+  apiFetch<{ message: string }>(`/split/lists/${listId}/categories`, {
+    method: 'DELETE',
+    body: JSON.stringify(data),
+  })
+
+export const getSplitExpenses = (listId: string) =>
+  apiFetch<SplitExpense[]>(`/split/lists/${listId}/expenses`)
+
+export const createSplitExpense = (listId: string, data: CreateSplitExpenseData) =>
+  apiFetch<SplitExpense>(`/split/lists/${listId}/expenses`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+
+export const updateSplitExpense = (
+  listId: string,
+  data: CreateSplitExpenseData & { expenseId: string }
+) =>
+  apiFetch<SplitExpense>(`/split/lists/${listId}/expenses`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+
+export const deleteSplitExpense = (listId: string, expenseId: string) =>
+  apiFetch<{ message: string }>(`/split/lists/${listId}/expenses`, {
+    method: 'DELETE',
+    body: JSON.stringify({ expenseId }),
+  })
+
+export const getSplitBalances = (listId: string) =>
+  apiFetch<SplitBalancesResponse>(`/split/lists/${listId}/balances`)
+
+export const createSplitSettlement = (
+  listId: string,
+  data: {
+    fromParticipantId: string
+    toParticipantId: string
+    amount: number
+    note?: string
+  }
+) =>
+  apiFetch<SplitSettlement>(`/split/lists/${listId}/settlements`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+
+export const getSplitHistory = (listId: string) =>
+  apiFetch<SplitHistoryResponse>(`/split/lists/${listId}/history`)
+
+export const getSplitInvitesReceived = () =>
+  apiFetch<SplitInviteReceived[]>('/split/invites/received')
+
+export const respondToSplitInvite = (id: string, action: 'accept' | 'decline') =>
+  apiFetch<{ message: string; splitListId?: string; splitListName?: string }>(
+    `/split/invites/${id}`,
+    { method: 'PATCH', body: JSON.stringify({ action }) }
+  )

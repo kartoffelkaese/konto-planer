@@ -27,6 +27,22 @@ enum EmailVerificationPurpose {
   EMAIL_CHANGE
 }
 
+enum SplitListStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum SplitListRole {
+  OWNER
+  MEMBER
+}
+
+enum SplitInviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+}
+
 model User {
   id                      String                   @id @default(uuid())
   email                   String                   @unique
@@ -37,6 +53,12 @@ model User {
   memberships             AccountMember[]
   invitesSent             AccountInvite[]          @relation("InvitedBy")
   emailVerificationTokens EmailVerificationToken[]
+  splitListsCreated       SplitList[]              @relation("SplitListsCreated")
+  splitListMemberships    SplitListMember[]
+  splitParticipants       SplitParticipant[]
+  splitExpensesCreated    SplitExpense[]
+  splitSettlements        SplitSettlement[]
+  splitInvitesSent        SplitListInvite[]        @relation("SplitInvitesSent")
 
   @@map("users")
 }
@@ -184,4 +206,132 @@ model Category {
 
   @@unique([accountId, name])
   @@map("categories")
+}
+
+model SplitList {
+  id           String            @id @default(uuid())
+  name         String
+  description  String?
+  status       SplitListStatus   @default(ACTIVE)
+  createdById  String
+  createdAt    DateTime          @default(now())
+  archivedAt   DateTime?
+  createdBy    User              @relation("SplitListsCreated", fields: [createdById], references: [id], onDelete: Cascade)
+  members      SplitListMember[]
+  participants SplitParticipant[]
+  categories   SplitCategory[]
+  expenses     SplitExpense[]
+  settlements  SplitSettlement[]
+  invites      SplitListInvite[]
+
+  @@map("split_lists")
+}
+
+model SplitListMember {
+  id          String        @id @default(uuid())
+  splitListId String
+  userId      String
+  role        SplitListRole
+  createdAt   DateTime      @default(now())
+  splitList   SplitList     @relation(fields: [splitListId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([splitListId, userId])
+  @@map("split_list_members")
+}
+
+model SplitParticipant {
+  id              String              @id @default(uuid())
+  splitListId     String
+  displayName     String
+  userId          String?
+  sortOrder       Int?
+  createdAt       DateTime            @default(now())
+  splitList       SplitList           @relation(fields: [splitListId], references: [id], onDelete: Cascade)
+  user            User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  expensesPaid    SplitExpense[]      @relation("ExpensePaidBy")
+  expenseShares   SplitExpenseShare[]
+  settlementsFrom SplitSettlement[]   @relation("SettlementFrom")
+  settlementsTo   SplitSettlement[]   @relation("SettlementTo")
+  invites         SplitListInvite[]
+
+  @@unique([splitListId, displayName])
+  @@map("split_participants")
+}
+
+model SplitCategory {
+  id          String         @id @default(uuid())
+  splitListId String
+  name        String
+  color       String?
+  sortOrder   Int?
+  createdAt   DateTime       @default(now())
+  splitList   SplitList      @relation(fields: [splitListId], references: [id], onDelete: Cascade)
+  expenses    SplitExpense[]
+
+  @@unique([splitListId, name])
+  @@map("split_categories")
+}
+
+model SplitExpense {
+  id                  String              @id @default(uuid())
+  splitListId         String
+  paidByParticipantId String
+  categoryId          String?
+  amount              Decimal             @db.Decimal(10, 2)
+  description         String
+  date                DateTime
+  createdById         String
+  createdAt           DateTime            @default(now())
+  splitList           SplitList           @relation(fields: [splitListId], references: [id], onDelete: Cascade)
+  paidBy              SplitParticipant    @relation("ExpensePaidBy", fields: [paidByParticipantId], references: [id], onDelete: Restrict)
+  category            SplitCategory?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdBy           User                @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  shares              SplitExpenseShare[]
+
+  @@map("split_expenses")
+}
+
+model SplitExpenseShare {
+  expenseId     String
+  participantId String
+  expense       SplitExpense     @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  participant   SplitParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@id([expenseId, participantId])
+  @@map("split_expense_shares")
+}
+
+model SplitSettlement {
+  id                String           @id @default(uuid())
+  splitListId       String
+  fromParticipantId String
+  toParticipantId   String
+  amount            Decimal          @db.Decimal(10, 2)
+  settledAt         DateTime
+  settledById       String
+  note              String?
+  createdAt         DateTime         @default(now())
+  splitList         SplitList        @relation(fields: [splitListId], references: [id], onDelete: Cascade)
+  fromParticipant   SplitParticipant @relation("SettlementFrom", fields: [fromParticipantId], references: [id], onDelete: Restrict)
+  toParticipant     SplitParticipant @relation("SettlementTo", fields: [toParticipantId], references: [id], onDelete: Restrict)
+  settledBy         User             @relation(fields: [settledById], references: [id], onDelete: Cascade)
+
+  @@map("split_settlements")
+}
+
+model SplitListInvite {
+  id              String            @id @default(uuid())
+  splitListId     String
+  email           String
+  participantId   String?
+  invitedByUserId String
+  status          SplitInviteStatus @default(PENDING)
+  createdAt       DateTime          @default(now())
+  splitList       SplitList         @relation(fields: [splitListId], references: [id], onDelete: Cascade)
+  participant     SplitParticipant? @relation(fields: [participantId], references: [id], onDelete: SetNull)
+  invitedBy       User              @relation("SplitInvitesSent", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+
+  @@unique([splitListId, email])
+  @@map("split_list_invites")
 }

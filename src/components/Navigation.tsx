@@ -10,6 +10,7 @@ import {
   BanknotesIcon,
   ArrowPathIcon,
   Cog6ToothIcon,
+  UserGroupIcon,
   Bars3Icon,
   XMarkIcon,
   ChevronLeftIcon,
@@ -44,6 +45,7 @@ export default function Navigation() {
     unconfirmedTransactions: 0,
     recurringAttention: 0,
     pendingInvitations: 0,
+    pendingSplitInvitations: 0,
   })
 
   useEffect(() => {
@@ -69,6 +71,7 @@ export default function Navigation() {
           unconfirmedTransactions: data.unconfirmedTransactions ?? 0,
           recurringAttention: data.recurringAttention ?? 0,
           pendingInvitations: data.pendingInvitations ?? 0,
+          pendingSplitInvitations: data.pendingSplitInvitations ?? 0,
         })
       } catch {
         // Badge ist optional – Fehler still ignorieren
@@ -130,6 +133,13 @@ export default function Navigation() {
       : []),
     { name: 'Statistiken', href: '/statistics', icon: ChartPieIcon, badge: 0 },
     {
+      name: 'Split',
+      href: '/split',
+      icon: UserGroupIcon,
+      badge: badges.pendingSplitInvitations,
+      badgeLabel: 'offene Split-Einladungen',
+    },
+    {
       name: 'Einstellungen',
       href: '/settings',
       icon: Cog6ToothIcon,
@@ -141,6 +151,9 @@ export default function Navigation() {
   const isActive = (path: string) => {
     if (path === '/settings') {
       return pathname === '/settings' || pathname.startsWith('/settings/')
+    }
+    if (path === '/split') {
+      return pathname === '/split' || pathname.startsWith('/split/')
     }
     return pathname === path
   }

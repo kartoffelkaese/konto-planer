@@ -28,7 +28,7 @@ export default function SplitExpenseModal({
       isOpen={isOpen}
       onClose={onClose}
       title={expense ? 'Ausgabe bearbeiten' : 'Neue Ausgabe'}
-      maxWidth="2xl"
+      maxWidth="lg"
     >
       {isOpen && participants.length > 0 && (
         <SplitExpenseForm

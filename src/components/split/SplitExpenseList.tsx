@@ -78,62 +78,67 @@ function ParticipantExpensePanel({
         {expenses.map((expense) => (
           <li
             key={expense.id}
-            className="group flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-surface-muted sm:flex-row sm:items-center sm:gap-4"
+            className="group px-4 py-3 transition-colors hover:bg-surface-muted sm:relative sm:flex sm:items-center sm:gap-4"
           >
-            <div className="w-full sm:w-24 shrink-0">
+            <div className="hidden w-24 shrink-0 sm:block">
               <p className="text-sm tabular-nums text-secondary">{formatDate(expense.date)}</p>
             </div>
 
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-primary">{expense.description}</p>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                {expense.category && (
-                  <span
-                    className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
-                    style={{
-                      backgroundColor: expense.category.color ?? '#A7C7E7',
-                      color: getContrastColor(expense.category.color ?? '#A7C7E7'),
-                    }}
-                  >
-                    {expense.category.name}
+            <div className="flex items-start justify-between gap-3 sm:min-w-0 sm:flex-1 sm:items-center">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <p className="text-sm font-medium text-primary">{expense.description}</p>
+                  <p className="text-xs tabular-nums text-secondary sm:hidden">
+                    {formatDate(expense.date)}
+                  </p>
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  {expense.category && (
+                    <span
+                      className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
+                      style={{
+                        backgroundColor: expense.category.color ?? '#A7C7E7',
+                        color: getContrastColor(expense.category.color ?? '#A7C7E7'),
+                      }}
+                    >
+                      {expense.category.name}
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-1 text-xs text-secondary">
+                    <UserGroupIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                    {formatShareLabel(expense.shareParticipantIds.length, participantCount)}
                   </span>
-                )}
-                <span className="inline-flex items-center gap-1 text-xs text-secondary">
-                  <UserGroupIcon className="h-3.5 w-3.5" aria-hidden="true" />
-                  {formatShareLabel(expense.shareParticipantIds.length, participantCount)}
-                </span>
+                </div>
               </div>
-            </div>
-
-            <div className="flex items-center justify-between gap-3 sm:justify-end sm:shrink-0">
               <span
-                className={`text-sm font-medium tabular-nums sm:min-w-[5.5rem] sm:text-right ${splitExpenseAmountClass(expense.amount)}`}
+                className={`shrink-0 text-sm font-medium tabular-nums sm:min-w-[5.5rem] sm:text-right ${splitExpenseAmountClass(expense.amount)}`}
               >
                 {formatSplitExpenseAmount(expense.amount)}
               </span>
-              {!readOnly && (
-                <div className="flex gap-0.5 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus-within:opacity-100">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onEdit?.(expense)}
-                    aria-label={`${expense.description} bearbeiten`}
-                  >
-                    <PencilIcon className="h-4 w-4" aria-hidden="true" />
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => onDelete?.(expense.id)}
-                    aria-label={`${expense.description} löschen`}
-                  >
-                    <TrashIcon className="h-4 w-4 text-expense" aria-hidden="true" />
-                  </Button>
-                </div>
-              )}
             </div>
+
+            {!readOnly && (
+              <div className="mt-2 flex justify-end gap-0.5 border-t border-border pt-2 sm:mt-0 sm:w-auto sm:shrink-0 sm:border-0 sm:pt-0 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onEdit?.(expense)}
+                  aria-label={`${expense.description} bearbeiten`}
+                >
+                  <PencilIcon className="h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onDelete?.(expense.id)}
+                  aria-label={`${expense.description} löschen`}
+                >
+                  <TrashIcon className="h-4 w-4 text-expense" aria-hidden="true" />
+                </Button>
+              </div>
+            )}
           </li>
         ))}
       </ul>
@@ -214,15 +219,15 @@ export default function SplitExpenseList({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3">
-        <div>
+      <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <p className="text-sm font-medium text-primary">Ausgabenübersicht</p>
           <p className="text-xs text-secondary">
             Gruppiert nach „Bezahlt von“ · {participantsWithExpenses.length}{' '}
             {participantsWithExpenses.length === 1 ? 'Person' : 'Personen'} mit Posten
           </p>
         </div>
-        <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+        <dl className="grid grid-cols-2 gap-3 text-sm sm:flex sm:flex-wrap sm:gap-x-6 sm:gap-y-1">
           <div>
             <dt className="text-xs text-secondary">Posten</dt>
             <dd className="font-medium tabular-nums text-primary">{expenses.length}</dd>

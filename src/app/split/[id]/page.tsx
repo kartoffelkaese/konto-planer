@@ -268,7 +268,7 @@ export default function SplitDetailPage() {
               </Button>
             </Link>
             {canAddExpense && (
-              <Button size="sm" onClick={openNewExpenseModal}>
+              <Button size="sm" className="hidden md:inline-flex" onClick={openNewExpenseModal}>
                 <PlusIcon className="h-4 w-4" aria-hidden="true" />
                 Ausgabe
               </Button>
@@ -373,7 +373,7 @@ export default function SplitDetailPage() {
       {canAddExpense && (
         <Button
           type="button"
-          className="md:hidden fixed bottom-6 right-6 z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
+          className="md:hidden fixed bottom-5 right-4 z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
           onClick={openNewExpenseModal}
           aria-label="Neue Ausgabe"
         >

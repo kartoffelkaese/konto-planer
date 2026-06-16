@@ -156,8 +156,8 @@ export default function SplitSettingsPanel({
 
   return (
     <div className="space-y-6">
-      <div className={`${splitSectionCardClass} flex flex-wrap items-center justify-between gap-4`}>
-        <div className="flex items-start gap-3">
+      <div className={`${splitSectionCardClass} flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4`}>
+        <div className="flex min-w-0 items-start gap-3">
           <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-accent-subtle text-accent">
             <Cog6ToothIcon className="h-5 w-5" aria-hidden="true" />
           </span>
@@ -173,7 +173,7 @@ export default function SplitSettingsPanel({
             </p>
           </div>
         </div>
-        <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+        <dl className="grid grid-cols-2 gap-3 text-sm sm:flex sm:flex-wrap sm:gap-x-6 sm:gap-y-1">
           <div>
             <dt className="text-xs text-secondary">Mit Konto</dt>
             <dd className="font-medium tabular-nums text-primary">{withAccount}</dd>

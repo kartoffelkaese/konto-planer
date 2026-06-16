@@ -167,8 +167,8 @@ export default function SplitBalanceSummary({
 
   return (
     <div className="space-y-4">
-      <div className={`${splitSectionCardClass} flex flex-wrap items-center justify-between gap-4`}>
-        <div>
+      <div className={`${splitSectionCardClass} flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4`}>
+        <div className="min-w-0">
           <p className="text-sm font-medium text-primary">Saldenübersicht</p>
           <p className="text-xs text-secondary">
             {balances.length} {balances.length === 1 ? 'Teilnehmer' : 'Teilnehmer'}
@@ -177,7 +177,7 @@ export default function SplitBalanceSummary({
               : ' · alle Salden ausgeglichen'}
           </p>
         </div>
-        <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+        <dl className="grid grid-cols-2 gap-3 text-sm sm:flex sm:flex-wrap sm:gap-x-6 sm:gap-y-1">
           <div>
             <dt className="text-xs text-secondary">Gesamtausgaben</dt>
             <dd className={`font-semibold tabular-nums ${splitExpenseAmountClass(totalExpenses)}`}>

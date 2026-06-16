@@ -9,7 +9,7 @@ export default function SplitPageShell({ children, narrow = false }: SplitPageSh
   return (
     <div className="min-h-screen bg-canvas pb-24 md:pb-8">
       <div
-        className={`mx-auto px-4 sm:px-6 lg:px-8 py-8 ${
+        className={`mx-auto px-3 py-4 sm:px-6 sm:py-8 lg:px-8 ${
           narrow ? 'max-w-2xl' : 'max-w-7xl'
         }`}
       >

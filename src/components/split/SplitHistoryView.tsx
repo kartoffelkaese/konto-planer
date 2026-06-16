@@ -37,12 +37,20 @@ function SettlementRow({ settlement }: { settlement: SplitSettlement }) {
   const toName = settlement.toParticipant?.displayName ?? '?'
 
   return (
-    <li className="flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-surface-muted sm:flex-row sm:items-center sm:gap-4">
-      <div className="w-full sm:w-28 shrink-0">
+    <li className="px-4 py-3 transition-colors hover:bg-surface-muted">
+      <div className="mb-2 flex items-center justify-between gap-3 sm:hidden">
         <p className="text-sm tabular-nums text-secondary">{formatDate(settlement.settledAt)}</p>
+        <span className="text-sm font-semibold tabular-nums text-expense">
+          {formatCurrency(-settlement.amount)}
+        </span>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+        <div className="hidden w-28 shrink-0 sm:block">
+          <p className="text-sm tabular-nums text-secondary">{formatDate(settlement.settledAt)}</p>
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
         <span
           className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-accent-border bg-accent-subtle text-[11px] font-semibold text-accent"
           aria-hidden="true"
@@ -60,14 +68,19 @@ function SettlementRow({ settlement }: { settlement: SplitSettlement }) {
         <span className="font-medium text-primary">{toName}</span>
       </div>
 
-      <div className="flex flex-col items-start gap-0.5 sm:items-end sm:shrink-0">
-        <span className="text-sm font-semibold tabular-nums text-expense">
-          {formatCurrency(-settlement.amount)}
-        </span>
-        {settlement.note && (
-          <span className="max-w-xs text-xs text-secondary">{settlement.note}</span>
-        )}
+        <div className="hidden flex-col items-end gap-0.5 sm:flex sm:shrink-0">
+          <span className="text-sm font-semibold tabular-nums text-expense">
+            {formatCurrency(-settlement.amount)}
+          </span>
+          {settlement.note && (
+            <span className="max-w-xs text-right text-xs text-secondary">{settlement.note}</span>
+          )}
+        </div>
       </div>
+
+      {settlement.note && (
+        <p className="mt-1 text-xs text-secondary sm:hidden">{settlement.note}</p>
+      )}
     </li>
   )
 }

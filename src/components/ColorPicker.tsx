@@ -34,7 +34,7 @@ export default function ColorPicker({ value, onChange, id, compact = false }: Co
 
   return (
     <div className={compact ? 'space-y-2' : 'space-y-3'}>
-      <div className={`grid gap-2 ${compact ? 'grid-cols-8' : 'grid-cols-6'}`}>
+      <div className={`grid gap-2 ${compact ? 'grid-cols-4' : 'grid-cols-6'}`}>
         {presets.map((color) => (
           <button
             key={color}

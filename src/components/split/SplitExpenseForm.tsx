@@ -168,7 +168,7 @@ export default function SplitExpenseForm({
 
       <fieldset>
         <legend className={`${splitLabelClass} mb-2`}>Aufteilen auf (gleichmäßig)</legend>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           {participants.map((p) => {
             const selected = shareParticipantIds.includes(p.id)
             return (
@@ -192,12 +192,12 @@ export default function SplitExpenseForm({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" loading={loading} loadingText="Speichern…">
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap">
+        <Button type="submit" loading={loading} loadingText="Speichern…" className="w-full sm:w-auto">
           {expense ? 'Speichern' : 'Hinzufügen'}
         </Button>
         {onCancel && (
-          <Button type="button" variant="secondary" onClick={onCancel}>
+          <Button type="button" variant="secondary" onClick={onCancel} className="w-full sm:w-auto">
             Abbrechen
           </Button>
         )}

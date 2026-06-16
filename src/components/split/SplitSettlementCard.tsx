@@ -96,7 +96,7 @@ export default function SplitSettlementCard({
               {!readOnly && (
                 <Button
                   size="sm"
-                  className="shrink-0"
+                  className="w-full shrink-0 sm:w-auto"
                   onClick={() => handleSettle(suggestion)}
                   loading={loadingKey === key}
                   loadingText="…"

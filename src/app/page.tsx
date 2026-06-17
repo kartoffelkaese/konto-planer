@@ -25,8 +25,6 @@ import { ACCOUNT_CHANGED_EVENT } from '@/lib/accountSwitchEvents'
 interface DashboardData {
   monthlyIncome: number
   monthlyExpenses: number
-  recurringExpenses: number
-  savingsRate: number
   totalBalance: number
   clearedBalance?: number
   available?: number
@@ -63,8 +61,6 @@ interface DashboardData {
 const emptyDashboard: DashboardData = {
   monthlyIncome: 0,
   monthlyExpenses: 0,
-  recurringExpenses: 0,
-  savingsRate: 0,
   totalBalance: 0,
   recurringTransactions: [],
   categoryDistribution: [],
@@ -213,23 +209,61 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          <div className="rounded-card border border-accent bg-accent-subtle border-l-4 border-l-accent p-6">
-            <p className="text-sm font-medium text-secondary">Verfügbar</p>
-            <p className="mt-2 text-3xl font-semibold tabular-nums text-accent">
-              {formatCurrency(data.available ?? 0)}
-            </p>
-            <p className="mt-2 text-xs text-secondary">
-              Kontostand {formatCurrency(data.clearedBalance ?? 0)}
-              {(data.totalPendingExpenses ?? 0) > 0 && (
-                <>
-                  {' '}
-                  · Ausstehend {formatCurrency(data.totalPendingExpenses ?? 0)}
-                </>
-              )}
-            </p>
+          <div className="rounded-card border border-border bg-surface p-6 space-y-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <p className="text-sm font-medium text-secondary">Kontostand (gebucht)</p>
+              <p className="text-3xl font-semibold tabular-nums text-accent sm:text-right">
+                {formatCurrency(data.clearedBalance ?? 0)}
+              </p>
+            </div>
+
+            <div className="border-t border-border pt-6 space-y-4">
+              <p className="text-sm text-secondary">
+                Verfügbar = was nach offenen Ausgaben übrig bleibt
+              </p>
+
+              <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+                <div className="flex-1 rounded-control border border-border bg-canvas px-4 py-3">
+                  <p className="text-xs font-medium text-secondary">Kontostand</p>
+                  <p className="mt-1 text-lg font-semibold tabular-nums text-accent">
+                    {formatCurrency(data.clearedBalance ?? 0)}
+                  </p>
+                </div>
+
+                <p
+                  className="text-center text-lg font-medium text-secondary sm:px-1"
+                  aria-hidden="true"
+                >
+                  −
+                </p>
+
+                <div className="flex-1 rounded-control border border-border bg-canvas px-4 py-3">
+                  <p className="text-xs font-medium text-secondary">Ausstehend</p>
+                  <p className="mt-1 text-lg font-semibold tabular-nums text-expense">
+                    {formatCurrency(data.totalPendingExpenses ?? 0)}
+                  </p>
+                </div>
+
+                <p
+                  className="text-center text-lg font-medium text-secondary sm:px-1"
+                  aria-hidden="true"
+                >
+                  =
+                </p>
+
+                <div className="flex-1 rounded-control border border-pending/40 bg-pending-bg border-l-4 border-l-pending px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-pending">
+                    Verfügbar
+                  </p>
+                  <p className="mt-1 text-xl font-semibold tabular-nums text-pending">
+                    {formatCurrency(data.available ?? 0)}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <KpiCard
               label="Einnahmen"
               subtitle={periodLabel ?? monthLabel}
@@ -242,43 +276,7 @@ export default function DashboardPage() {
               amount={data.monthlyExpenses}
               stripe="expense"
             />
-            <KpiCard
-              label="Kontostand"
-              subtitle="Gebucht"
-              amount={data.clearedBalance ?? 0}
-              stripe="accent"
-            />
-            <KpiCard
-              label="Ausstehend"
-              subtitle="Noch offen"
-              amount={data.totalPendingExpenses ?? 0}
-              stripe="pending"
-            />
           </div>
-
-          {(data.monthlyIncome > 0 || data.monthlyExpenses > 0) && (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-secondary">
-              <span>
-                Saldo im Gehaltsmonat:{' '}
-                <span
-                  className={`font-medium tabular-nums ${
-                    monthNet >= 0 ? 'text-income' : 'text-expense'
-                  }`}
-                >
-                  {monthNet >= 0 ? '+' : ''}
-                  {formatCurrency(monthNet)}
-                </span>
-              </span>
-              {data.monthlyIncome > 0 && (
-                <span>
-                  Sparrate:{' '}
-                  <span className="font-medium tabular-nums text-primary">
-                    {Math.round(data.savingsRate)}&nbsp;%
-                  </span>
-                </span>
-              )}
-            </div>
-          )}
 
           <DashboardRecentTransactions transactions={recentTransactions} />
 

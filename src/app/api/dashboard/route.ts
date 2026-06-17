@@ -74,8 +74,6 @@ export async function GET() {
       return NextResponse.json({
         monthlyIncome: income,
         monthlyExpenses: expenses,
-        recurringExpenses: 0,
-        savingsRate: 0,
         totalBalance: totalBalance._sum.amount?.toNumber() || 0,
         recurringTransactions: [],
         categoryDistribution: [],
@@ -129,20 +127,6 @@ export async function GET() {
       }
     })
 
-    // Berechne wiederkehrende Ausgaben
-    const recurringExpenses = await prisma.transaction.aggregate({
-      where: {
-        accountId: account.id,
-        amount: {
-          lt: 0
-        },
-        isRecurring: true
-      },
-      _sum: {
-        amount: true
-      }
-    })
-
     // Berechne Gesamtbilanz
     const totalBalance = await prisma.transaction.aggregate({
       where: {
@@ -152,11 +136,6 @@ export async function GET() {
         amount: true
       }
     })
-
-    // Berechne Sparrate
-    const income = monthlyIncome._sum.amount?.toNumber() || 0
-    const expenses = Math.abs(monthlyExpenses._sum.amount?.toNumber() || 0)
-    const savingsRate = income > 0 ? ((income - expenses) / income) * 100 : 0
 
     // Hole wiederkehrende Zahlungen mit Details
     const recurringTransactions = await prisma.transaction.findMany({
@@ -288,11 +267,12 @@ export async function GET() {
     )
     const available = clearedBalance - totalPendingExpenses
 
+    const income = monthlyIncome._sum.amount?.toNumber() || 0
+    const expenses = Math.abs(monthlyExpenses._sum.amount?.toNumber() || 0)
+
     return NextResponse.json({
       monthlyIncome: income,
       monthlyExpenses: expenses,
-      recurringExpenses: Math.abs(recurringExpenses._sum.amount?.toNumber() || 0),
-      savingsRate: Math.max(0, savingsRate),
       totalBalance: totalBalance._sum.amount?.toNumber() || 0,
       clearedBalance,
       available,

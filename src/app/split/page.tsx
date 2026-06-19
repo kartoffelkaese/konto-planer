@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { PlusIcon, UserGroupIcon } from '@heroicons/react/24/outline'
 import PageContextHeader from '@/components/PageContextHeader'
 import PageLoader from '@/components/PageLoader'
@@ -10,6 +10,7 @@ import PageError from '@/components/PageError'
 import EmptyState from '@/components/EmptyState'
 import { Button } from '@/components/Button'
 import SplitInvitations from '@/components/split/SplitInvitations'
+import SplitListModal from '@/components/split/SplitListModal'
 import SplitPageShell from '@/components/split/SplitPageShell'
 import { formatCurrency } from '@/lib/formatters'
 import { getSplitLists } from '@/lib/api'
@@ -17,9 +18,19 @@ import type { SplitListSummary } from '@/types/split'
 
 export default function SplitOverviewPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [lists, setLists] = useState<SplitListSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [listModalOpen, setListModalOpen] = useState(false)
+
+  const closeListModal = useCallback(() => {
+    setListModalOpen(false)
+  }, [])
+
+  const openNewListModal = useCallback(() => {
+    setListModalOpen(true)
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -37,6 +48,20 @@ export default function SplitOverviewPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  useEffect(() => {
+    if (searchParams.get('new') !== '1' || loading) return
+    openNewListModal()
+    router.replace('/split', { scroll: false })
+  }, [searchParams, loading, openNewListModal, router])
+
+  const handleListCreated = useCallback(
+    async (list: SplitListSummary) => {
+      closeListModal()
+      router.push(`/split/${list.id}`)
+    },
+    [closeListModal, router]
+  )
 
   if (loading) {
     return <PageLoader message="Split-Listen werden geladen…" />
@@ -59,7 +84,7 @@ export default function SplitOverviewPage() {
         title="Split"
         subtitle="Gemeinsame Ausgaben aufteilen und ausgleichen"
         actions={
-          <Button onClick={() => router.push('/split/new')}>
+          <Button onClick={openNewListModal}>
             <PlusIcon className="h-4 w-4" aria-hidden="true" />
             Neue Liste
           </Button>
@@ -83,7 +108,7 @@ export default function SplitOverviewPage() {
             title="Noch keine Split-Listen"
             description="Legen Sie eine Liste für Urlaub, WG oder jedes gemeinsame Event an."
             actionLabel="Erste Liste anlegen"
-            onAction={() => router.push('/split/new')}
+            onAction={openNewListModal}
           />
         </div>
       )}
@@ -150,6 +175,11 @@ export default function SplitOverviewPage() {
           </div>
         </section>
       )}
+      <SplitListModal
+        isOpen={listModalOpen}
+        onClose={closeListModal}
+        onSaved={handleListCreated}
+      />
     </SplitPageShell>
   )
 }

@@ -102,7 +102,7 @@ export default function Navigation() {
       e.preventDefault()
 
       if (pathname === '/split') {
-        router.push('/split/new')
+        router.push('/split?new=1')
         return
       }
 

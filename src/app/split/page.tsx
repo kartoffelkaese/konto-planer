@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { PlusIcon, UserGroupIcon } from '@heroicons/react/24/outline'
@@ -16,7 +16,7 @@ import { formatCurrency } from '@/lib/formatters'
 import { getSplitLists } from '@/lib/api'
 import type { SplitListSummary } from '@/types/split'
 
-export default function SplitOverviewPage() {
+function SplitOverviewPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [lists, setLists] = useState<SplitListSummary[]>([])
@@ -181,5 +181,13 @@ export default function SplitOverviewPage() {
         onSaved={handleListCreated}
       />
     </SplitPageShell>
+  )
+}
+
+export default function SplitOverviewPage() {
+  return (
+    <Suspense fallback={<PageLoader message="Split-Listen werden geladen…" />}>
+      <SplitOverviewPageContent />
+    </Suspense>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ExclamationCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
@@ -45,7 +45,7 @@ function formatSplitListDeleteError(message: string, listName?: string): string 
   return message
 }
 
-export default function SplitDetailPage() {
+function SplitDetailPageContent() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -381,5 +381,13 @@ export default function SplitDetailPage() {
         </Button>
       )}
     </SplitPageShell>
+  )
+}
+
+export default function SplitDetailPage() {
+  return (
+    <Suspense fallback={<PageLoader message="Split-Liste wird geladen…" />}>
+      <SplitDetailPageContent />
+    </Suspense>
   )
 }

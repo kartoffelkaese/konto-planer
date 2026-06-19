@@ -7,6 +7,7 @@ import {
   CalendarIcon,
   PlusIcon,
   ListBulletIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline'
 import LandingPage from '@/components/LandingPage'
 import PageLoader from '@/components/PageLoader'
@@ -72,6 +73,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData>(emptyDashboard)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [availableExpanded, setAvailableExpanded] = useState(false)
 
   const fetchDashboardData = useCallback(async () => {
     setIsLoading(true)
@@ -140,13 +142,13 @@ export default function DashboardPage() {
           ) : null}
         </div>
         {!isSimpleAccount && (
-          <div className="flex flex-wrap gap-2 shrink-0">
+          <div className="flex flex-col gap-2 shrink-0 max-md:w-full sm:flex-row sm:flex-wrap">
             <Link
               href="/transactions?new=1"
               className={getButtonClassName({
                 variant: 'primary',
                 size: 'sm',
-                className: 'inline-flex items-center gap-1.5',
+                className: 'inline-flex items-center gap-1.5 max-md:min-h-11 max-md:w-full max-md:justify-center max-md:text-sm',
               })}
             >
               <PlusIcon className="h-4 w-4" aria-hidden />
@@ -157,7 +159,7 @@ export default function DashboardPage() {
               className={getButtonClassName({
                 variant: 'secondary',
                 size: 'sm',
-                className: 'inline-flex items-center gap-1.5',
+                className: 'inline-flex items-center gap-1.5 max-md:min-h-11 max-md:w-full max-md:justify-center max-md:text-sm',
               })}
             >
               <ListBulletIcon className="h-4 w-4" aria-hidden />
@@ -209,7 +211,71 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          <div className="rounded-card border border-border bg-surface p-6 space-y-6">
+          {/* Mobile: Verfügbar im Fokus, Details aufklappbar */}
+          <div className="md:hidden space-y-3">
+            <button
+              type="button"
+              onClick={() => setAvailableExpanded(!availableExpanded)}
+              className="w-full rounded-card border border-pending/40 bg-pending-bg border-l-4 border-l-pending p-4 flex items-center justify-between gap-3 text-left"
+            >
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-pending">Verfügbar</p>
+                <p className="mt-1 text-2xl font-semibold tabular-nums text-pending">
+                  {formatCurrency(data.available ?? 0)}
+                </p>
+                <p className="mt-1 text-xs text-secondary">
+                  Kontostand {formatCurrency(data.clearedBalance ?? 0)}
+                </p>
+              </div>
+              <ChevronDownIcon
+                className={`h-5 w-5 shrink-0 text-pending transition-transform duration-expand ${
+                  availableExpanded ? 'rotate-180' : ''
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+
+            <div
+              className={`grid transition-[grid-template-rows] duration-expand ease-out ${
+                availableExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+              }`}
+            >
+              <div className="overflow-hidden">
+                <div
+                  className={`rounded-card border border-border bg-surface p-4 space-y-3 transition-opacity duration-expand ${
+                    availableExpanded ? 'opacity-100' : 'opacity-0'
+                  }`}
+                >
+                  <p className="text-sm text-secondary">Kontostand − Ausstehend = Verfügbar</p>
+                  <div className="flex items-stretch gap-2 overflow-x-auto pb-1">
+                    <div className="min-w-[7.5rem] shrink-0 rounded-control border border-border bg-canvas px-3 py-2">
+                      <p className="text-xs text-secondary">Kontostand</p>
+                      <p className="mt-0.5 font-semibold tabular-nums text-accent">
+                        {formatCurrency(data.clearedBalance ?? 0)}
+                      </p>
+                    </div>
+                    <span className="flex shrink-0 items-center text-secondary" aria-hidden="true">−</span>
+                    <div className="min-w-[7.5rem] shrink-0 rounded-control border border-border bg-canvas px-3 py-2">
+                      <p className="text-xs text-secondary">Ausstehend</p>
+                      <p className="mt-0.5 font-semibold tabular-nums text-expense">
+                        {formatCurrency(data.totalPendingExpenses ?? 0)}
+                      </p>
+                    </div>
+                    <span className="flex shrink-0 items-center text-secondary" aria-hidden="true">=</span>
+                    <div className="min-w-[7.5rem] shrink-0 rounded-control border border-pending/40 bg-pending-bg px-3 py-2">
+                      <p className="text-xs font-semibold text-pending">Verfügbar</p>
+                      <p className="mt-0.5 font-semibold tabular-nums text-pending">
+                        {formatCurrency(data.available ?? 0)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop: unveränderte Darstellung */}
+          <div className="hidden md:block rounded-card border border-border bg-surface p-6 space-y-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               <p className="text-sm font-medium text-secondary">Kontostand (gebucht)</p>
               <p className="text-3xl font-semibold tabular-nums text-accent sm:text-right">

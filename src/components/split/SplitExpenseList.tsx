@@ -123,6 +123,7 @@ function ParticipantExpensePanel({
                   type="button"
                   size="sm"
                   variant="ghost"
+                  className="max-md:min-h-11 max-md:min-w-11"
                   onClick={() => onEdit?.(expense)}
                   aria-label={`${expense.description} bearbeiten`}
                 >
@@ -132,6 +133,7 @@ function ParticipantExpensePanel({
                   type="button"
                   size="sm"
                   variant="ghost"
+                  className="max-md:min-h-11 max-md:min-w-11"
                   onClick={() => onDelete?.(expense.id)}
                   aria-label={`${expense.description} löschen`}
                 >

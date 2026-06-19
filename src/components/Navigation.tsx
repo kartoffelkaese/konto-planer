@@ -119,6 +119,23 @@ export default function Navigation() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [session, router, pathname])
 
+  useEffect(() => {
+    if (!isOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const onEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false)
+    }
+    window.addEventListener('keydown', onEscape)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', onEscape)
+    }
+  }, [isOpen])
+
   if (!session) {
     return null
   }
@@ -202,7 +219,7 @@ export default function Navigation() {
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 -ml-1 rounded-control text-secondary hover:text-primary hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent"
+          className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center -ml-1 rounded-control text-secondary hover:text-primary hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent"
           aria-expanded={isOpen}
           aria-controls="mobile-sidebar"
         >

@@ -450,6 +450,34 @@ export default function TransactionList({
 
       {/* Mobile Ansicht */}
       <div className="md:hidden space-y-4">
+        {onSort && (
+          <div className="flex flex-wrap items-center gap-2 rounded-card border border-border bg-surface p-3">
+            <label htmlFor="tx-mobile-sort" className="text-sm font-medium text-secondary shrink-0">
+              Sortieren
+            </label>
+            <select
+              id="tx-mobile-sort"
+              value={sortField}
+              onChange={(e) => handleSort(e.target.value as SortField)}
+              className="min-h-11 flex-1 rounded-control border-border bg-canvas text-sm text-primary shadow-sm focus:border-accent focus:ring-accent"
+            >
+              <option value="date">Datum</option>
+              <option value="merchant">Händler</option>
+              <option value="category">Kategorie</option>
+              <option value="description">Beschreibung</option>
+              <option value="amount">Betrag</option>
+              <option value="status">Status</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => handleSort(sortField)}
+              className="inline-flex min-h-11 items-center rounded-control border border-border bg-canvas px-3 text-sm font-medium text-primary hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              aria-label={`Sortierung ${sortDirection === 'asc' ? 'aufsteigend' : 'absteigend'}`}
+            >
+              {sortDirection === 'asc' ? '↑' : '↓'}
+            </button>
+          </div>
+        )}
         {sortedTransactions.length === 0 ? (
           emptyList
         ) : (
@@ -484,13 +512,13 @@ export default function TransactionList({
                   {transaction.amount > 0 ? '+' : transaction.amount < 0 ? '-' : ''}{Math.abs(transaction.amount).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-between gap-2 min-w-0">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                   {(() => {
                     const category = resolveTransactionCategory(transaction)
                     return category ? (
                       <span 
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        className="inline-flex shrink-0 items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                         style={{
                           backgroundColor: category.color,
                           color: getContrastColor(category.color)
@@ -499,12 +527,16 @@ export default function TransactionList({
                         {category.name}
                       </span>
                   ) : (
-                    <span className="text-secondary">-</span>
+                    <span className="text-secondary shrink-0">-</span>
                   )
                   })()}
-                  <span className="text-sm text-secondary">{transaction.description}</span>
+                  {transaction.description ? (
+                    <span className="min-w-0 truncate text-sm text-secondary">
+                      {transaction.description}
+                    </span>
+                  ) : null}
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex shrink-0 items-center gap-1">
                   {readOnly ? (
                     <span className={getStatusPillClasses(transaction)}>
                       {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
@@ -521,7 +553,7 @@ export default function TransactionList({
                       <button
                         onClick={() => handleEditClick(transaction.id)}
                         title="Transaktion bearbeiten"
-                        className="text-accent hover:opacity-80"
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control text-accent hover:bg-surface-muted hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                       >
                         <PencilIcon className="h-5 w-5" />
                       </button>

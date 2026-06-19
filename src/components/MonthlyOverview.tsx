@@ -53,12 +53,15 @@ export default function MonthlyOverview({
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full bg-accent-subtle border border-accent rounded-card border-l-4 border-l-accent p-4 flex items-center justify-between"
+          className="w-full bg-accent-subtle border border-accent rounded-card border-l-4 border-l-accent p-4 flex items-center justify-between gap-3 text-left"
         >
-          <div>
-            <h3 className="text-sm font-medium text-secondary">Kontostand</h3>
-            <p className="text-xl font-semibold tabular-nums text-accent mt-1">
-              {formatCurrency(clearedBalance)}
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-pending">Verfügbar</p>
+            <p className="text-xl font-semibold tabular-nums text-pending mt-0.5">
+              {formatCurrency(available)}
+            </p>
+            <p className="text-xs text-secondary mt-1">
+              Kontostand {formatCurrency(clearedBalance)}
             </p>
           </div>
           <ChevronDownIcon

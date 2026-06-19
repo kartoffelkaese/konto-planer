@@ -80,20 +80,21 @@ export default function Modal({
         </Transition.Child>
 
         <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex min-h-full items-end justify-center p-0 text-center sm:items-center sm:p-4">
+          <div className="flex min-h-full items-end justify-center p-0 text-center md:items-center md:p-4">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
-              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              enterFrom="opacity-0 translate-y-4 md:translate-y-0 md:scale-95"
+              enterTo="opacity-100 translate-y-0 md:scale-100"
               leave="ease-in duration-200"
-              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              leaveFrom="opacity-100 translate-y-0 md:scale-100"
+              leaveTo="opacity-0 translate-y-4 md:translate-y-0 md:scale-95"
             >
               <Dialog.Panel
-                className={`relative flex max-h-[92dvh] w-full transform flex-col overflow-hidden rounded-t-card border border-border bg-surface text-left shadow-[0_16px_40px_var(--shadow-color)] transition-all sm:max-h-[min(90dvh,calc(100dvh-4rem))] sm:rounded-card sm:my-8 ${maxWidthClasses[maxWidth]}`}
+                className={`relative flex max-h-[92dvh] w-full transform flex-col overflow-hidden rounded-t-card border border-border bg-surface text-left shadow-[0_16px_40px_var(--shadow-color)] transition-all max-md:pb-[env(safe-area-inset-bottom,0px)] md:max-h-[min(90dvh,calc(100dvh-4rem))] md:rounded-card md:my-8 ${maxWidthClasses[maxWidth]}`}
               >
-                <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-4 py-4 sm:px-6 sm:py-5">
+                <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border md:hidden" aria-hidden="true" />
+                <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-4 py-4 md:px-6 md:py-5">
                   <Dialog.Title
                     as="h3"
                     className="min-w-0 flex-1 text-lg font-semibold leading-snug text-primary"
@@ -102,7 +103,7 @@ export default function Modal({
                   </Dialog.Title>
                   <button
                     type="button"
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-border bg-canvas text-secondary transition-colors duration-[var(--motion-duration-feedback)] hover:bg-surface-muted hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:pointer-events-none disabled:opacity-40"
+                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-border bg-canvas text-secondary transition-colors duration-[var(--motion-duration-feedback)] hover:bg-surface-muted hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:pointer-events-none disabled:opacity-40 md:h-9 md:w-9"
                     onClick={handleClose}
                     disabled={preventClose}
                     aria-label="Schließen"
@@ -112,7 +113,7 @@ export default function Modal({
                 </div>
                 <div
                   ref={contentRef}
-                  className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 text-secondary sm:px-6 sm:py-5"
+                  className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 text-secondary md:px-6 md:py-5"
                 >
                   {children}
                 </div>

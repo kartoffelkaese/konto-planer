@@ -424,9 +424,9 @@ export default function TransactionForm({
         idPrefix="create-transfer"
       />
 
-      <div className="flex justify-end gap-3">
+      <div className="flex justify-end gap-3 max-md:flex-col-reverse max-md:gap-2">
         {onCancel && (
-          <Button type="button" variant="secondary" onClick={onCancel} disabled={loading}>
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={loading} className="max-md:w-full">
             Abbrechen
           </Button>
         )}
@@ -434,6 +434,7 @@ export default function TransactionForm({
           type="submit"
           loading={loading}
           loadingText="Wird gespeichert…"
+          className="max-md:w-full"
         >
           Speichern
         </Button>

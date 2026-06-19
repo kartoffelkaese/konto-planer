@@ -403,7 +403,7 @@ function TransactionsPageContent() {
   }
 
   return (
-    <div id="transaction-page" className="min-h-screen bg-canvas pb-24 md:pb-8">
+    <div id="transaction-page" className="min-h-screen bg-canvas pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:pb-8">
       <div id="transaction-container" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && transactions.length > 0 && (
           <div
@@ -595,7 +595,7 @@ function TransactionsPageContent() {
       {canWrite && (
       <Button
         type="button"
-        className="md:hidden fixed bottom-6 right-6 z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
+        className="md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] right-[calc(1.5rem+env(safe-area-inset-right,0px))] z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
         onClick={() => setShowNewTransactionModal(true)}
         aria-label="Neue Transaktion"
       >

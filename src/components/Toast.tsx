@@ -88,7 +88,7 @@ export default function Toast({
       <button
         type="button"
         onClick={requestClose}
-        className="absolute right-2 top-2 rounded-control p-1.5 hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
+        className="absolute right-1 top-1 inline-flex min-h-11 min-w-11 items-center justify-center rounded-control hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 md:min-h-0 md:min-w-0 md:p-1.5 md:right-2 md:top-2"
         aria-label="Benachrichtigung schließen"
       >
         <XCircleIcon className="h-5 w-5" />

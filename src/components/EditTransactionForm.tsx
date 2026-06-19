@@ -447,21 +447,33 @@ export default function EditTransactionForm({
           </div>
         )}
 
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-3 max-md:flex-col-reverse max-md:gap-2 max-md:pt-1">
           <Button
             type="button"
             variant="danger-outline"
             onClick={() => setShowDeleteConfirm(true)}
             disabled={isSubmitting}
+            className="max-md:w-full"
           >
             Löschen
           </Button>
           {onCancel && (
-            <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className="max-md:w-full"
+            >
               Abbrechen
             </Button>
           )}
-          <Button type="submit" loading={isSubmitting} loadingText="Wird gespeichert…">
+          <Button
+            type="submit"
+            loading={isSubmitting}
+            loadingText="Wird gespeichert…"
+            className="max-md:w-full"
+          >
             Speichern
           </Button>
         </div>

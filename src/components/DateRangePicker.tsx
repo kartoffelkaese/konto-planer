@@ -192,7 +192,7 @@ export default function DateRangePicker({
                 <button
                   type="button"
                   onClick={() => setViewMonth((month) => month.subtract(1, 'month'))}
-                  className="rounded-control p-1.5 text-secondary hover:bg-surface-muted hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control text-secondary hover:bg-surface-muted hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent md:min-h-0 md:min-w-0 md:p-1.5"
                   aria-label="Vorheriger Monat"
                 >
                   <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
@@ -203,7 +203,7 @@ export default function DateRangePicker({
                 <button
                   type="button"
                   onClick={() => setViewMonth((month) => month.add(1, 'month'))}
-                  className="rounded-control p-1.5 text-secondary hover:bg-surface-muted hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control text-secondary hover:bg-surface-muted hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent md:min-h-0 md:min-w-0 md:p-1.5"
                   aria-label="Nächster Monat"
                 >
                   <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
@@ -235,7 +235,7 @@ export default function DateRangePicker({
                     isBetweenDays(day, draftFrom, previewTo)
 
                   let cellClass =
-                    'relative flex h-9 w-9 items-center justify-center rounded-control text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent '
+                    'relative flex h-11 w-11 md:h-9 md:w-9 items-center justify-center rounded-control text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent '
 
                   if (!inMonth) {
                     cellClass += 'text-secondary/40 '

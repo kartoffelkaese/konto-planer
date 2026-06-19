@@ -252,7 +252,7 @@ function SplitDetailPageContent() {
   }
 
   return (
-    <SplitPageShell>
+    <SplitPageShell fabPadding>
       <PageContextHeader
         title={list.name}
         subtitle={
@@ -274,17 +274,17 @@ function SplitDetailPageContent() {
               </Button>
             )}
             {isOwner && !readOnly && (
-              <Button variant="secondary" size="sm" onClick={handleArchive}>
+              <Button variant="secondary" size="sm" className="hidden md:inline-flex" onClick={handleArchive}>
                 Archivieren
               </Button>
             )}
             {isOwner && readOnly && (
-              <Button variant="secondary" size="sm" onClick={handleUnarchive}>
+              <Button variant="secondary" size="sm" className="hidden md:inline-flex" onClick={handleUnarchive}>
                 Reaktivieren
               </Button>
             )}
             {isOwner && (
-              <Button variant="danger-outline" size="sm" onClick={handleDelete}>
+              <Button variant="danger-outline" size="sm" className="hidden md:inline-flex" onClick={handleDelete}>
                 Löschen
               </Button>
             )}
@@ -373,7 +373,7 @@ function SplitDetailPageContent() {
       {canAddExpense && (
         <Button
           type="button"
-          className="md:hidden fixed bottom-5 right-4 z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
+          className="md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] right-[calc(1.5rem+env(safe-area-inset-right,0px))] z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
           onClick={openNewExpenseModal}
           aria-label="Neue Ausgabe"
         >

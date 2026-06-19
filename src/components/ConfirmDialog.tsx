@@ -92,7 +92,7 @@ export default function ConfirmDialog({
       aria-modal="true"
     >
       <div
-        className="fixed inset-0 z-10 flex min-h-screen items-end justify-center px-4 pt-4 pb-20 text-center sm:items-center sm:p-0 pointer-events-none"
+        className="fixed inset-0 z-10 flex min-h-screen items-end justify-center p-0 text-center md:items-center md:px-4 md:pt-4 md:pb-20 pointer-events-none"
       >
         <div
           className="fixed inset-0 z-0 bg-primary/50 transition-opacity pointer-events-auto"
@@ -102,14 +102,15 @@ export default function ConfirmDialog({
           }}
         />
 
-        <div className="relative z-10 inline-block w-full max-w-lg transform overflow-hidden rounded-card px-4 pt-5 pb-4 text-left align-bottom shadow-xl transition-all sm:my-8 sm:p-6 sm:align-middle bg-surface border border-border pointer-events-auto">
-          <div className="sm:flex sm:items-start">
+        <div className="relative z-10 inline-block w-full max-w-lg transform overflow-hidden rounded-t-card border border-border bg-surface px-4 pt-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] text-left align-bottom shadow-[0_16px_40px_var(--shadow-color)] transition-all md:rounded-card md:my-8 md:p-6 md:align-middle md:pb-6 pointer-events-auto">
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border md:hidden" aria-hidden="true" />
+          <div className="md:flex md:items-start">
             <div
-              className={`mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${styles.bg} sm:mx-0 sm:h-10 sm:w-10`}
+              className={`mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${styles.bg} md:mx-0 md:h-10 md:w-10`}
             >
               <ExclamationTriangleIcon className={`h-6 w-6 ${styles.icon}`} aria-hidden="true" />
             </div>
-            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-grow">
+            <div className="mt-3 text-center md:mt-0 md:ml-4 md:text-left flex-grow">
               <h3 className="text-lg font-medium leading-6 text-primary" id="modal-title">
                 {title}
               </h3>
@@ -122,11 +123,11 @@ export default function ConfirmDialog({
               </div>
             </div>
           </div>
-          <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse gap-3">
+          <div className="mt-5 flex flex-col-reverse gap-2 md:mt-4 md:flex-row-reverse md:gap-3">
             <Button
               variant={styles.confirmVariant}
               size="md"
-              className="w-full sm:w-auto"
+              className="w-full md:w-auto"
               onClick={() => void handleConfirm()}
               loading={isBusy}
               loadingText={confirmLoadingText ?? `${confirmText}…`}
@@ -137,7 +138,7 @@ export default function ConfirmDialog({
             <Button
               variant="secondary"
               size="md"
-              className="w-full sm:w-auto mt-3 sm:mt-0"
+              className="w-full md:w-auto md:mt-0"
               onClick={onClose}
               disabled={isBusy}
             >

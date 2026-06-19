@@ -91,25 +91,28 @@ export default function Modal({
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
               <Dialog.Panel
-                className={`relative flex max-h-[92dvh] w-full transform flex-col overflow-hidden rounded-t-card border border-border bg-surface text-left shadow-xl transition-all sm:max-h-[min(90dvh,calc(100dvh-4rem))] sm:rounded-card sm:my-8 ${maxWidthClasses[maxWidth]} sm:p-6`}
+                className={`relative flex max-h-[92dvh] w-full transform flex-col overflow-hidden rounded-t-card border border-border bg-surface text-left shadow-[0_16px_40px_var(--shadow-color)] transition-all sm:max-h-[min(90dvh,calc(100dvh-4rem))] sm:rounded-card sm:my-8 ${maxWidthClasses[maxWidth]}`}
               >
-                <div className="flex shrink-0 items-start justify-between gap-3 border-b border-border px-4 py-4 sm:border-0 sm:px-0 sm:pt-0 sm:pb-0">
-                  <Dialog.Title as="h3" className="text-lg font-semibold leading-6 text-primary pr-8 sm:pr-0">
+                <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-4 py-4 sm:px-6 sm:py-5">
+                  <Dialog.Title
+                    as="h3"
+                    className="min-w-0 flex-1 text-lg font-semibold leading-snug text-primary"
+                  >
                     {title}
                   </Dialog.Title>
                   <button
                     type="button"
-                    className="absolute right-3 top-3 rounded-control p-1 text-secondary hover:text-primary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-surface disabled:opacity-40 sm:right-0 sm:top-0 sm:p-0"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-border bg-canvas text-secondary transition-colors duration-[var(--motion-duration-feedback)] hover:bg-surface-muted hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:pointer-events-none disabled:opacity-40"
                     onClick={handleClose}
                     disabled={preventClose}
+                    aria-label="Schließen"
                   >
-                    <span className="sr-only">Schließen</span>
-                    <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                    <XMarkIcon className="h-5 w-5" aria-hidden="true" />
                   </button>
                 </div>
                 <div
                   ref={contentRef}
-                  className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-4 text-secondary sm:px-0 sm:pb-0 sm:pt-0"
+                  className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 text-secondary sm:px-6 sm:py-5"
                 >
                   {children}
                 </div>

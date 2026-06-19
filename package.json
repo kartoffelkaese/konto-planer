@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "8.0.14",
+  "version": "8.0.15",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
@@ -24,7 +24,7 @@
     "postcss": "^8.5.15",
     "@hono/node-server": "^1.19.13",
     "eslint": "10.5.0",
-    "nodemailer": "^9.0.0"
+    "nodemailer": "^9.0.1"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
@@ -36,7 +36,7 @@
     "dayjs": "^1.11.21",
     "next": "^16.2.9",
     "next-auth": "^5.0.0-beta.29",
-    "nodemailer": "^9.0.0",
+    "nodemailer": "^9.0.1",
     "prisma": "^7.8.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
@@ -45,7 +45,7 @@
   "devDependencies": {
     "@eslint/compat": "^2.1.0",
     "@tailwindcss/postcss": "^4.3.1",
-    "@types/node": "^25.9.3",
+    "@types/node": "^26.0.0",
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

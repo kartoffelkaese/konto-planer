@@ -79,33 +79,40 @@ export async function GET(request: Request) {
       ? transactionsRaw.filter((t) => transactionBelongsToCategory(t, category))
       : transactionsRaw
 
+    type MonthlyTotals = { income: number; expenses: number }
+
     const monthlyData = transactions.reduce(
-      (acc: { [key: string]: number }, transaction) => {
+      (acc: Record<string, MonthlyTotals>, transaction) => {
         const date = new Date(transaction.date)
         const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-        acc[monthKey] =
-          (acc[monthKey] || 0) + Math.abs(Number(transaction.amount))
+        const entry = acc[monthKey] ?? { income: 0, expenses: 0 }
+        const amount = Number(transaction.amount)
+        if (amount > 0) {
+          entry.income += amount
+        } else if (amount < 0) {
+          entry.expenses += Math.abs(amount)
+        }
+        acc[monthKey] = entry
         return acc
       },
       {}
     )
 
-    const chartData = Object.entries(monthlyData).map(([date, amount]) => {
-      const transaction = transactions.find((t) => {
-        const tDate = new Date(t.date)
-        const tMonthKey = `${tDate.getFullYear()}-${String(tDate.getMonth() + 1).padStart(2, '0')}`
-        return tMonthKey === date
-      })
-      const resolvedCategory = transaction
-        ? resolveTransactionCategory(transaction)
+    const selectedCategoryMeta =
+      category && transactions.length > 0
+        ? resolveTransactionCategory(transactions[0])
         : null
-      return {
+
+    const chartData = Object.entries(monthlyData)
+      .map(([date, totals]) => ({
         date,
-        amount,
-        category: resolvedCategory?.name || '',
-        color: resolvedCategory?.color || 'var(--color-chart-default)',
-      }
-    })
+        income: totals.income,
+        expenses: totals.expenses,
+        net: totals.income - totals.expenses,
+        category: selectedCategoryMeta?.name || '',
+        color: selectedCategoryMeta?.color || 'var(--color-chart-default)',
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date))
 
     return NextResponse.json(chartData)
   } catch (error) {

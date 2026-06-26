@@ -12,7 +12,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Cell,
+  Legend,
 } from 'recharts'
 import ChartContainer from '@/components/ChartContainer'
 import PageLoader from '@/components/PageLoader'
@@ -37,9 +37,22 @@ interface Merchant {
 
 interface StatisticsData {
   date: string
-  amount: number
+  income: number
+  expenses: number
+  net: number
   category: string
   color: string
+}
+
+function formatEuro(value: number) {
+  return `${value.toLocaleString('de-DE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}€`
+}
+
+function hasStatisticsData(data: StatisticsData[]) {
+  return data.some((entry) => entry.income > 0 || entry.expenses > 0)
 }
 
 export default function StatisticsPage() {
@@ -200,12 +213,16 @@ export default function StatisticsPage() {
   const selectedMerchantName = merchants.find((m) => m.id === selectedMerchant)?.name
   const filterSummary =
     selectedMerchantName ?? selectedCategoryName ?? 'Keine Auswahl'
+  const expenseBarColor = selectedCategory
+    ? statisticsData[0]?.color ?? 'var(--color-expense)'
+    : 'var(--color-expense)'
+  const showChart = hasStatisticsData(statisticsData)
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <PageContextHeader
         title="Statistiken"
-        subtitle={`${accountName} · Ausgabenentwicklung`}
+        subtitle={`${accountName} · Einnahmen und Ausgaben`}
       />
 
       <div className="rounded-lg border border-border bg-surface p-4 md:p-5 mb-6">
@@ -329,7 +346,7 @@ export default function StatisticsPage() {
             <div className="flex items-center justify-center h-[400px]">
               <LoadingSpinner size="md" />
             </div>
-          ) : statisticsData.length === 0 ? (
+          ) : !showChart ? (
             <EmptyState
               title="Keine Daten für die Auswahl"
               description="Wählen Sie eine andere Kategorie, einen anderen Händler oder einen anderen Zeitraum."
@@ -351,23 +368,24 @@ export default function StatisticsPage() {
                   stroke="var(--text-color)"
                 />
                 <YAxis
-                  tickFormatter={(value) =>
-                    `${value.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€`
-                  }
+                  tickFormatter={(value) => formatEuro(Number(value))}
                   tick={{ fontSize: 12, fill: 'var(--text-color)' }}
                   stroke="var(--text-color)"
                 />
                 <Tooltip
-                  formatter={(value) => [
-                    `${Number(value ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€`,
-                    'Ausgaben',
+                  formatter={(value, name) => [
+                    formatEuro(Number(value ?? 0)),
+                    name === 'income' ? 'Einnahmen' : 'Ausgaben',
                   ]}
                   labelFormatter={(label) => {
                     const date = new Date(label + '-01')
-                    return date.toLocaleDateString('de-DE', {
+                    const monthLabel = date.toLocaleDateString('de-DE', {
                       month: 'long',
                       year: 'numeric',
                     })
+                    const entry = statisticsData.find((item) => item.date === label)
+                    if (!entry) return monthLabel
+                    return `${monthLabel} · Saldo ${formatEuro(entry.net)}`
                   }}
                   contentStyle={{
                     backgroundColor: 'var(--card-bg)',
@@ -377,15 +395,23 @@ export default function StatisticsPage() {
                   }}
                   itemStyle={{ color: 'var(--text-color)' }}
                 />
+                <Legend
+                  formatter={(value) =>
+                    value === 'income' ? 'Einnahmen' : 'Ausgaben'
+                  }
+                />
                 <Bar
-                  dataKey="amount"
-                  fill="var(--color-chart-default)"
+                  dataKey="income"
+                  name="income"
+                  fill="var(--color-income)"
                   radius={[4, 4, 0, 0]}
-                >
-                  {statisticsData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
+                />
+                <Bar
+                  dataKey="expenses"
+                  name="expenses"
+                  fill={expenseBarColor}
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ChartContainer>
           )}

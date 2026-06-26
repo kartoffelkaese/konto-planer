@@ -3,17 +3,22 @@ import { getFirstAccountIdForUser } from '@/lib/accounts'
 import { resolveTransferSenderName } from '@/lib/transfers'
 
 /**
- * Anzeigename für Split-Teilnehmer mit konto-planer-Konto:
- * transferSenderName aus Einstellungen, sonst Kontobezeichnung (Account.name).
+ * Anzeigename für Split-Teilnehmer mit konto-planer-Konto.
+ * Nutzt den benutzerweiten Split-Namen; sonst Absendername/Kontobezeichnung
+ * des ersten Kontos (nicht des aktiven Kontos).
  */
-export async function getSplitDisplayNameForUser(
-  userId: string,
-  preferredAccountId?: string | null
-): Promise<string> {
-  let accountId = preferredAccountId ?? null
-  if (!accountId) {
-    accountId = await getFirstAccountIdForUser(userId)
+export async function getSplitDisplayNameForUser(userId: string): Promise<string> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { splitDisplayName: true },
+  })
+
+  const splitName = user?.splitDisplayName?.trim()
+  if (splitName) {
+    return splitName
   }
+
+  const accountId = await getFirstAccountIdForUser(userId)
   if (!accountId) {
     return 'Teilnehmer'
   }
@@ -71,37 +76,4 @@ export function dedupeDisplayNameAgainst(
     suffix += 1
   }
   return `${trimmed} (${suffix})`
-}
-
-/**
- * Aktualisiert den eigenen Split-Teilnehmer-Eintrag auf den Namen aus den
- * Kontoeinstellungen (Absendername oder Kontobezeichnung des aktiven Kontos).
- */
-export async function syncOwnSplitParticipantInList(
-  userId: string,
-  splitListId: string,
-  preferredAccountId?: string | null
-): Promise<void> {
-  const ownParticipants = await prisma.splitParticipant.findMany({
-    where: { splitListId, userId },
-  })
-
-  if (ownParticipants.length === 0) return
-
-  const settingsName = await getSplitDisplayNameForUser(userId, preferredAccountId)
-
-  for (const participant of ownParticipants) {
-    const uniqueName = await resolveUniqueSplitDisplayName(
-      splitListId,
-      settingsName,
-      participant.id
-    )
-
-    if (participant.displayName !== uniqueName) {
-      await prisma.splitParticipant.update({
-        where: { id: participant.id },
-        data: { displayName: uniqueName },
-      })
-    }
-  }
 }

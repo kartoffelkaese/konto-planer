@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { SplitInviteStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/lib/auth'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 import { normalizeEmail } from '@/lib/accounts'
 import {
@@ -108,13 +107,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
   let displayName = manualDisplayName ?? ''
   if (linkedUserId) {
-    const session = await auth()
-    const preferredAccountId =
-      linkedUserId === authResult.user.id ? session?.activeAccountId : null
-    displayName = await getSplitDisplayNameForUser(
-      linkedUserId,
-      preferredAccountId
-    )
+    displayName = await getSplitDisplayNameForUser(linkedUserId)
   }
   if (!displayName) {
     return NextResponse.json(

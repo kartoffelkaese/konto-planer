@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { SplitListRole } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/lib/auth'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 import { DEFAULT_SPLIT_CATEGORIES } from '@/lib/splitBalances'
 import {
@@ -75,11 +74,7 @@ export async function POST(request: Request) {
     DEFAULT_SPLIT_CATEGORIES.map((c) => [c.name, c.color])
   )
 
-  const session = await auth()
-  const creatorBaseName = await getSplitDisplayNameForUser(
-    user.id,
-    session?.activeAccountId
-  )
+  const creatorBaseName = await getSplitDisplayNameForUser(user.id)
   const ownerDisplayName = dedupeDisplayNameAgainst(creatorBaseName, uniqueParticipants)
 
   const list = await prisma.$transaction(async (tx) => {

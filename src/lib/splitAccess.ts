@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import { SplitListRole, SplitListStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/lib/auth'
-import { syncOwnSplitParticipantInList } from '@/lib/splitUserDisplayName'
 
 export type SplitListAccess = {
   splitListId: string
@@ -48,13 +46,6 @@ export async function requireSplitListAccess(
       { status: 404 }
     )
   }
-
-  const session = await auth()
-  await syncOwnSplitParticipantInList(
-    userId,
-    splitListId,
-    session?.activeAccountId
-  )
 
   return access
 }

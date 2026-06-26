@@ -11,6 +11,7 @@ export type UserSettings = {
   salaryDay: number
   accountName: string | null
   transferSenderName?: string | null
+  splitDisplayName?: string | null
   bankId?: string | null
   isSimpleAccount?: boolean
   createdAt: string

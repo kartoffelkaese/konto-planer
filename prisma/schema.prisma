@@ -49,6 +49,7 @@ model User {
   passwordHash            String
   emailVerified           DateTime?
   pendingEmail            String?
+  splitDisplayName        String?
   createdAt               DateTime                 @default(now())
   memberships             AccountMember[]
   invitesSent             AccountInvite[]          @relation("InvitedBy")

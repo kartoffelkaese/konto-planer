@@ -94,8 +94,9 @@ export default function SplitListForm({ onSaved, onCancel }: SplitListFormProps)
           className={`mt-1 ${splitInputClass}`}
         />
         <p className={splitHintClass}>
-          Sie werden automatisch mit Ihrem Namen aus den Kontoeinstellungen
-          (Absendername oder Kontobezeichnung) hinzugefügt. Standard-Kategorien:
+          Sie werden automatisch mit Ihrem Split-Anzeigenamen aus den Einstellungen
+          (unter Einstellungen → Split & Profil) hinzugefügt. Ohne eigenen Namen
+          wird der Absendername des ersten Kontos verwendet. Standard-Kategorien:
           Essen, Transport, Unterkunft, Sonstiges.
         </p>
       </div>

@@ -147,21 +147,34 @@ export function validateAccountDisplayName(
 export function validateTransferSenderName(
   name: unknown
 ): string | null | NextResponse {
+  return validateOptionalPersonName(name, {
+    invalidError: 'Ungültiger Absendername',
+    tooLongError: 'Absendername darf maximal 100 Zeichen lang sein',
+  })
+}
+
+export function validateSplitDisplayName(
+  name: unknown
+): string | null | NextResponse {
+  return validateOptionalPersonName(name, {
+    invalidError: 'Ungültiger Split-Anzeigename',
+    tooLongError: 'Split-Anzeigename darf maximal 100 Zeichen lang sein',
+  })
+}
+
+function validateOptionalPersonName(
+  name: unknown,
+  errors: { invalidError: string; tooLongError: string }
+): string | null | NextResponse {
   if (name === undefined || name === null || name === '') {
     return null
   }
   if (typeof name !== 'string') {
-    return NextResponse.json(
-      { error: 'Ungültiger Absendername' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: errors.invalidError }, { status: 400 })
   }
   const trimmed = name.trim()
   if (trimmed.length > 100) {
-    return NextResponse.json(
-      { error: 'Absendername darf maximal 100 Zeichen lang sein' },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: errors.tooLongError }, { status: 400 })
   }
   return trimmed.length > 0 ? trimmed : null
 }

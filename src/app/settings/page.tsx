@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
-import { TagIcon, BuildingStorefrontIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import { TagIcon, BuildingStorefrontIcon, ChevronRightIcon, UserGroupIcon } from '@heroicons/react/24/outline'
 import BackupManager from '@/components/BackupManager'
 import DeleteFinancialAccount from '@/components/DeleteFinancialAccount'
 import DeleteUserAccount from '@/components/DeleteUserAccount'
@@ -33,6 +33,8 @@ export default function SettingsPage() {
   const [salaryDay, setSalaryDay] = useState(1)
   const [accountName, setAccountName] = useState("Mein Konto")
   const [transferSenderName, setTransferSenderName] = useState('')
+  const [splitDisplayName, setSplitDisplayName] = useState('')
+  const [splitProfileLoading, setSplitProfileLoading] = useState(false)
   const [bankId, setBankId] = useState<string | null>(null)
   const [isSimpleAccount, setIsSimpleAccount] = useState(false)
   const [simpleAccountError, setSimpleAccountError] = useState<string | null>(null)
@@ -69,6 +71,7 @@ export default function SettingsPage() {
       setSalaryDay(data.salaryDay)
       setAccountName(data.accountName || "Mein Konto")
       setTransferSenderName(data.transferSenderName || '')
+      setSplitDisplayName(data.splitDisplayName || '')
       setBankId(data.bankId ?? null)
       setIsSimpleAccount(Boolean(data.isSimpleAccount))
       setPendingEmail(data.pendingEmail ?? null)
@@ -78,6 +81,32 @@ export default function SettingsPage() {
       setError('Fehler beim Laden der Einstellungen')
     } finally {
       setInitialLoadDone(true)
+    }
+  }
+
+  const handleSplitProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSplitProfileLoading(true)
+    setError(null)
+    try {
+      const response = await fetch('/api/users/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ splitDisplayName }),
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(
+          typeof data.error === 'string' ? data.error : 'Fehler beim Speichern'
+        )
+      }
+      showToast('Split-Anzeigename gespeichert', 'success')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Fehler beim Speichern'
+      setError(message)
+      showToast(message, 'error')
+    } finally {
+      setSplitProfileLoading(false)
     }
   }
 
@@ -236,6 +265,46 @@ export default function SettingsPage() {
 
           <div id="settings-sections" className="space-y-6">
             <AccountInvitations />
+
+            <form
+              onSubmit={handleSplitProfileSubmit}
+              className="rounded-lg border border-border p-4 bg-surface"
+            >
+              <div className="mb-4 flex items-start gap-3">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-accent-subtle text-accent">
+                  <UserGroupIcon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-medium text-primary">Split & Profil</h2>
+                  <p className="mt-1 text-sm text-secondary">
+                    Gilt für alle Konten — unabhängig vom Kontowechsel
+                  </p>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="splitDisplayName" className="block text-sm font-medium text-primary">
+                  Anzeigename in Split-Listen
+                </label>
+                <input
+                  type="text"
+                  id="splitDisplayName"
+                  value={splitDisplayName}
+                  onChange={(e) => setSplitDisplayName(e.target.value)}
+                  className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
+                  placeholder="z. B. Martin"
+                  disabled={splitProfileLoading}
+                />
+                <p className="mt-2 text-sm text-secondary">
+                  Wird beim Anlegen neuer Listen oder beim Beitreten per Einladung verwendet.
+                  Bestehende Namen in Listen bleiben unverändert.
+                </p>
+              </div>
+              <div className="mt-4">
+                <Button type="submit" loading={splitProfileLoading} loadingText="Speichern…" size="sm">
+                  Split-Namen speichern
+                </Button>
+              </div>
+            </form>
 
             <div id="data-management" className="rounded-lg border border-border p-4 bg-surface">
               <h2 className="text-lg font-medium text-primary mb-4">Datenverwaltung</h2>

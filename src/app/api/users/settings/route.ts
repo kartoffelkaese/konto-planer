@@ -7,6 +7,7 @@ import {
   validateSalaryDay,
   validateAccountDisplayName,
   validateTransferSenderName,
+  validateSplitDisplayName,
   validateBankId,
 } from '@/lib/api-auth'
 import {
@@ -19,11 +20,20 @@ export async function PATCH(request: NextRequest) {
     const ctx = await getAccountContext()
     if (isErrorResponse(ctx)) return ctx
 
-    const writeError = requireWritableContext(ctx)
-    if (writeError) return writeError
-
     const { user, account, membership } = ctx
     const body = await request.json()
+
+    let splitDisplayNameUpdated: string | null | undefined
+
+    if (body.splitDisplayName !== undefined) {
+      const splitDisplayName = validateSplitDisplayName(body.splitDisplayName)
+      if (isErrorResponse(splitDisplayName)) return splitDisplayName
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { splitDisplayName },
+      })
+      splitDisplayNameUpdated = splitDisplayName
+    }
 
     const data: {
       salaryDay?: number
@@ -76,14 +86,30 @@ export async function PATCH(request: NextRequest) {
       data.bankId = bankId ?? null
     }
 
-    if (Object.keys(data).length === 0) {
+    if (Object.keys(data).length === 0 && splitDisplayNameUpdated === undefined) {
       return NextResponse.json({ error: 'Keine Änderungen angegeben' }, { status: 400 })
     }
 
-    const updated = await prisma.account.update({
-      where: { id: account.id },
-      data,
-    })
+    if (Object.keys(data).length > 0) {
+      const writeError = requireWritableContext(ctx)
+      if (writeError) return writeError
+    }
+
+    const updated =
+      Object.keys(data).length > 0
+        ? await prisma.account.update({
+            where: { id: account.id },
+            data,
+          })
+        : account
+
+    const freshUser =
+      splitDisplayNameUpdated !== undefined
+        ? await prisma.user.findUniqueOrThrow({
+            where: { id: user.id },
+            select: { splitDisplayName: true },
+          })
+        : { splitDisplayName: user.splitDisplayName }
 
     return NextResponse.json({
       id: user.id,
@@ -92,6 +118,7 @@ export async function PATCH(request: NextRequest) {
       salaryDay: updated.salaryDay,
       accountName: updated.name,
       transferSenderName: updated.transferSenderName,
+      splitDisplayName: freshUser.splitDisplayName,
       bankId: updated.bankId,
       isSimpleAccount: updated.isSimpleAccount,
       createdAt: updated.createdAt,
@@ -121,6 +148,7 @@ export async function GET() {
       salaryDay: account.salaryDay,
       accountName: account.name,
       transferSenderName: account.transferSenderName,
+      splitDisplayName: user.splitDisplayName,
       bankId: account.bankId,
       isSimpleAccount: account.isSimpleAccount,
       createdAt: account.createdAt,

@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { SplitInviteStatus, SplitListRole } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/lib/auth'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 import { normalizeEmail } from '@/lib/accounts'
 import {
@@ -65,10 +64,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     })
   }
 
-  const session = await auth()
   const displayName = await resolveUniqueSplitDisplayName(
     invite.splitListId,
-    await getSplitDisplayNameForUser(user.id, session?.activeAccountId),
+    await getSplitDisplayNameForUser(user.id),
     invite.participantId ?? undefined
   )
 

@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "8.1.1",
+  "version": "8.1.2",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
@@ -40,16 +40,16 @@
     "prisma": "^7.8.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "recharts": "^3.8.1"
+    "recharts": "^3.9.0"
   },
   "devDependencies": {
     "@eslint/compat": "^2.1.0",
     "@tailwindcss/postcss": "^4.3.1",
-    "@types/node": "^26.0.0",
+    "@types/node": "^26.0.1",
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "autoprefixer": "^10.5.0",
+    "autoprefixer": "^10.5.2",
     "dotenv": "^17.4.2",
     "eslint": "10.5.0",
     "eslint-config-next": "^16.2.9",

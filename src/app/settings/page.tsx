@@ -266,48 +266,18 @@ export default function SettingsPage() {
           <div id="settings-sections" className="space-y-6">
             <AccountInvitations />
 
-            <form
-              onSubmit={handleSplitProfileSubmit}
-              className="rounded-lg border border-border p-4 bg-surface"
-            >
-              <div className="mb-4 flex items-start gap-3">
-                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-accent-subtle text-accent">
-                  <UserGroupIcon className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <div>
-                  <h2 className="text-lg font-medium text-primary">Split & Profil</h2>
-                  <p className="mt-1 text-sm text-secondary">
-                    Gilt für alle Konten — unabhängig vom Kontowechsel
-                  </p>
-                </div>
+            {!canWrite && (
+              <div className="rounded-lg border border-accent-border bg-accent-subtle p-4 text-sm text-primary">
+                Sie haben für dieses Konto nur Lesezugriff. Einstellungen und
+                Buchungen können nicht geändert werden.
               </div>
-              <div>
-                <label htmlFor="splitDisplayName" className="block text-sm font-medium text-primary">
-                  Anzeigename in Split-Listen
-                </label>
-                <input
-                  type="text"
-                  id="splitDisplayName"
-                  value={splitDisplayName}
-                  onChange={(e) => setSplitDisplayName(e.target.value)}
-                  className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
-                  placeholder="z. B. Martin"
-                  disabled={splitProfileLoading}
-                />
-                <p className="mt-2 text-sm text-secondary">
-                  Wird beim Anlegen neuer Listen oder beim Beitreten per Einladung verwendet.
-                  Bestehende Namen in Listen bleiben unverändert.
-                </p>
-              </div>
-              <div className="mt-4">
-                <Button type="submit" loading={splitProfileLoading} loadingText="Speichern…" size="sm">
-                  Split-Namen speichern
-                </Button>
-              </div>
-            </form>
+            )}
 
             <div id="data-management" className="rounded-lg border border-border p-4 bg-surface">
-              <h2 className="text-lg font-medium text-primary mb-4">Datenverwaltung</h2>
+              <h2 className="text-lg font-medium text-primary mb-1">Datenverwaltung</h2>
+              <p className="text-sm text-secondary mb-4">
+                Kategorien und Händler für {activeAccountName}
+              </p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <Link
                   href="/settings/categories"
@@ -332,16 +302,11 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {!canWrite && (
-              <div className="rounded-lg border border-accent-border bg-accent-subtle p-4 text-sm text-primary">
-                Sie haben für dieses Konto nur Lesezugriff. Einstellungen und
-                Buchungen können nicht geändert werden.
-              </div>
-            )}
-
-            {/* Allgemeine Einstellungen */}
             <form id="general-settings" onSubmit={handleSubmit} className="rounded-lg border border-border p-4 bg-surface">
-              <h2 className="text-lg font-medium text-primary mb-4">Allgemeine Einstellungen</h2>
+              <h2 className="text-lg font-medium text-primary mb-1">Aktuelles Konto</h2>
+              <p className="text-sm text-secondary mb-4">
+                Einstellungen für {activeAccountName}
+              </p>
               
               <div className="space-y-6">
                 <div>
@@ -374,27 +339,6 @@ export default function SettingsPage() {
                     onChange={setBankId}
                     disabled={loading || !canWrite}
                   />
-                </div>
-
-                <div>
-                  <label htmlFor="transferSenderName" className="block text-sm font-medium text-primary">
-                    Absendername für Umbuchungen
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      id="transferSenderName"
-                      value={transferSenderName}
-                      onChange={(e) => setTransferSenderName(e.target.value)}
-                      className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
-                      placeholder="z.B. Martin, Familie Müller"
-                      disabled={loading || !canWrite}
-                    />
-                  </div>
-                  <p className="mt-2 text-sm text-secondary">
-                    Erscheint als Händler bei eingehenden Umbuchungen in anderen Konten.
-                    Wenn leer, wird die Kontobezeichnung verwendet.
-                  </p>
                 </div>
 
                 {role === 'OWNER' && (
@@ -459,6 +403,27 @@ export default function SettingsPage() {
                 </div>
                 )}
 
+                <div>
+                  <label htmlFor="transferSenderName" className="block text-sm font-medium text-primary">
+                    Absendername für Umbuchungen
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      id="transferSenderName"
+                      value={transferSenderName}
+                      onChange={(e) => setTransferSenderName(e.target.value)}
+                      className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
+                      placeholder="z.B. Martin, Familie Müller"
+                      disabled={loading || !canWrite}
+                    />
+                  </div>
+                  <p className="mt-2 text-sm text-secondary">
+                    Erscheint als Händler bei eingehenden Umbuchungen in anderen Konten.
+                    Wenn leer, wird die Kontobezeichnung verwendet.
+                  </p>
+                </div>
+
                 {canWrite && (
                 <div className="flex justify-end">
                   <Button type="submit" loading={loading} loadingText="Wird gespeichert…">
@@ -468,12 +433,6 @@ export default function SettingsPage() {
                 )}
               </div>
             </form>
-
-            <div className="rounded-lg border border-border p-4 bg-surface">
-              <h2 className="text-lg font-medium text-primary mb-4">Buchführungs-Konten</h2>
-              <CreateAdditionalAccount />
-              <DeleteFinancialAccount />
-            </div>
 
             {role === 'OWNER' && (
             <div className="rounded-lg border border-border p-4 bg-surface">
@@ -486,9 +445,58 @@ export default function SettingsPage() {
             </div>
             )}
 
-            {/* E-Mail-Änderung */}
+            <div className="rounded-lg border border-border p-4 bg-surface">
+              <h2 className="text-lg font-medium text-primary mb-1">Weitere Konten</h2>
+              <p className="text-sm text-secondary mb-4">
+                Zusätzliche Buchführungs-Konten anlegen oder entfernen
+              </p>
+              <CreateAdditionalAccount />
+              <DeleteFinancialAccount />
+            </div>
+
+            <form
+              onSubmit={handleSplitProfileSubmit}
+              className="rounded-lg border border-border p-4 bg-surface"
+            >
+              <div className="mb-4 flex items-start gap-3">
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-accent-subtle text-accent">
+                  <UserGroupIcon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-medium text-primary">Profil & Split</h2>
+                  <p className="mt-1 text-sm text-secondary">
+                    Gilt für alle Konten — unabhängig vom Kontowechsel
+                  </p>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="splitDisplayName" className="block text-sm font-medium text-primary">
+                  Anzeigename in Split-Listen
+                </label>
+                <input
+                  type="text"
+                  id="splitDisplayName"
+                  value={splitDisplayName}
+                  onChange={(e) => setSplitDisplayName(e.target.value)}
+                  className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
+                  placeholder="z. B. Martin"
+                  disabled={splitProfileLoading}
+                />
+                <p className="mt-2 text-sm text-secondary">
+                  Wird beim Anlegen neuer Listen oder beim Beitreten per Einladung verwendet.
+                  Bestehende Namen in Listen bleiben unverändert.
+                </p>
+              </div>
+              <div className="mt-4">
+                <Button type="submit" loading={splitProfileLoading} loadingText="Speichern…" size="sm">
+                  Split-Namen speichern
+                </Button>
+              </div>
+            </form>
+
             <div id="email-settings" className="rounded-lg border border-border p-4 bg-surface">
-              <h2 className="text-lg font-medium text-primary mb-4">E-Mail-Adresse</h2>
+              <h2 className="text-lg font-medium text-primary mb-1">Benutzerkonto</h2>
+              <p className="text-sm text-secondary mb-4">Anmeldung und E-Mail-Adresse</p>
               
               {emailError && (
                 <div className="mb-4 p-4 bg-danger-subtle text-danger rounded-lg">
@@ -591,14 +599,13 @@ export default function SettingsPage() {
             </div>
 
             <div id="appearance-settings" className="rounded-lg border border-border p-4 bg-surface">
-              <h2 className="text-lg font-medium text-primary mb-2">Farbschema</h2>
+              <h2 className="text-lg font-medium text-primary mb-1">Darstellung</h2>
               <p className="text-sm text-secondary mb-4">
-                Wählen Sie ein Farbschema für die gesamte Oberfläche.
+                Farbschema für die gesamte Oberfläche
               </p>
               <ColorSchemeSwitcher />
             </div>
 
-            {/* Backup-Manager */}
             <div id="backup-settings" className="rounded-lg border border-border p-4 bg-surface">
               <BackupManager allowRestore={canWrite} />
             </div>

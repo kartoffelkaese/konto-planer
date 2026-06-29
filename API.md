@@ -14,7 +14,9 @@ Geschützte Routen erwarten eine **gültige NextAuth-Session** (`credentials: 'i
 { "error": "Nicht autorisiert" }
 ```
 
-**Ohne Session erreichbar:** `/api/auth/*`, `POST /api/auth/register`
+**Ohne Session erreichbar:** `/api/auth/*`, `POST /api/auth/register`, `/api/split/public/*`
+
+Öffentliche Split-Share-Seite im Browser: `/split/s/{token}` (nur Lesen, kein Login).
 
 Anmeldung: `/auth/login` (Credentials). Es gibt **keinen** Bearer-Token-Header.
 
@@ -51,7 +53,7 @@ Wenn das aktive Konto als **einfaches Konto** markiert ist:
 |---------|------|----------------|
 | `GET` | `/api/dashboard` | Kennzahlen fürs aktive Konto |
 
-**Planungskonto:** `monthlyIncome`, `monthlyExpenses`, `totalBalance`, `savingsRate`, `recurringExpenses`, `categoryDistribution`, `categoryPeriod`, `recurringTransactions` (30 Tage)
+**Planungskonto:** `monthlyIncome`, `monthlyExpenses`, `totalBalance`, `clearedBalance`, `available`, `totalPendingExpenses`, `categoryDistribution`, `categoryPeriod`, `monthLabel`, `recurringTransactions` (30 Tage), `recentTransactions` (max. 6)
 
 **Einfaches Konto:** `monthlyIncome`, `monthlyExpenses`, `totalBalance`, `monthLabel`, `recentTransactions` (max. 6); übrige Planungsfelder leer bzw. `0`
 
@@ -163,7 +165,7 @@ Antwort: `currentIncome`, `currentExpenses`, `totalIncome`, `totalExpenses`, `cl
 
 | Methode | Pfad | Beschreibung |
 |---------|------|----------------|
-| `GET` | `/api/nav-badges` | `unconfirmedTransactions`, `recurringAttention`, `pendingInvitations` |
+| `GET` | `/api/nav-badges` | `unconfirmedTransactions`, `recurringAttention`, `pendingInvitations`, `pendingSplitInvitations` |
 
 ### Kategorien
 
@@ -189,11 +191,13 @@ Antwort: `currentIncome`, `currentExpenses`, `totalIncome`, `totalExpenses`, `cl
 
 | Methode | Pfad | Beschreibung |
 |---------|------|----------------|
-| `GET` | `/api/statistics` | Monatliche Ausgaben-Serie für Charts |
+| `GET` | `/api/statistics` | Monatliche Einnahmen- und Ausgaben-Serie für Charts (Planungskonten) |
 
 **Query:** `category?`, `merchant?`, `timeRange` (`1month` \| `3months` \| `6months` \| `1year` \| `custom`), bei `custom` zusätzlich `startDate`, `endDate`
 
-Antwort: Array `{ date, amount, category, color }` (Monatsschlüssel `YYYY-MM`)
+Antwort: Array `{ date, income, expenses, net, category, color }` (Monatsschlüssel `YYYY-MM`). Positive Buchungen zählen als `income`, negative als `expenses` (Betrag absolut). `net` = Einnahmen minus Ausgaben.
+
+Nur für Konten mit `isSimpleAccount: false` (Statistik-Seite leitet sonst um).
 
 ### Nutzer & Kontoeinstellungen
 
@@ -208,9 +212,9 @@ Antwort: Array `{ date, amount, category, color }` (Monatsschlüssel `YYYY-MM`)
 
 **`GET/PATCH /api/users/settings` – Felder**
 
-`email`, `accountName`, `salaryDay`, `transferSenderName`, `bankId`, `isSimpleAccount`, `activeAccountId`, `role`, `createdAt`
+`email`, `accountName`, `salaryDay`, `transferSenderName`, `splitDisplayName`, `bankId`, `isSimpleAccount`, `activeAccountId`, `role`, `createdAt`, `pendingEmail`
 
-**`PATCH` – Body:** `accountName`, `salaryDay`, `transferSenderName`, `bankId`, `isSimpleAccount` (nur **OWNER**; Aktivierung nur ohne Recurring-Templates)
+**`PATCH` – Body:** `accountName`, `salaryDay`, `transferSenderName`, `bankId`, `isSimpleAccount` (nur **OWNER**; Aktivierung nur ohne Recurring-Templates), `splitDisplayName` (nutzerweit, auch bei Nur-Lese-Konto speicherbar)
 
 `bankId`: Slug aus dem Bank-Katalog (z. B. `ing`, `trade-republic`) oder `null`
 
@@ -239,6 +243,7 @@ Unabhängig vom Haushaltsbuch. Zugriff über **Session `user.id`**, nicht über 
 | `GET` | `/api/split/lists` | Alle Split-Listen des Nutzers |
 | `POST` | `/api/split/lists` | `{ name, description?, participantNames?, categoryNames? }` |
 | `GET`/`PATCH`/`DELETE` | `/api/split/lists/:id` | Detail, archivieren/umbenennen, löschen (Owner) |
+| `GET`/`PATCH`/`POST` | `/api/split/lists/:id/share` | Öffentlichen Lese-Link verwalten (nur **OWNER**) |
 | `GET`/`POST`/`DELETE` | `/api/split/lists/:id/participants` | Teilnehmer verwalten; POST `{ displayName, email? }` |
 | `GET`/`POST`/`PATCH`/`DELETE` | `/api/split/lists/:id/categories` | Kategorien pro Liste (getrennt von Haushalts-Kategorien) |
 | `GET`/`POST`/`PATCH`/`DELETE` | `/api/split/lists/:id/expenses` | Ausgaben CRUD inkl. `categoryId`, `shareParticipantIds` |
@@ -249,6 +254,24 @@ Unabhängig vom Haushaltsbuch. Zugriff über **Session `user.id`**, nicht über 
 | `PATCH` | `/api/split/invites/:id` | `{ action: "accept" \| "decline" }` |
 
 Archivierte Listen: nur Lesen (`403` bei Schreibzugriff).
+
+### Öffentlicher Share-Link (ohne Session)
+
+Owner aktiviert den Link in den Split-Einstellungen. Token wird nur gehasht in der DB gespeichert; Klartext-URL nur beim Aktivieren oder Neu-Generieren.
+
+| Methode | Pfad | Beschreibung |
+|---------|------|--------------|
+| `GET` | `/api/split/lists/:id/share` | `{ shareEnabled, shareEnabledAt? }` (Owner) |
+| `PATCH` | `/api/split/lists/:id/share` | `{ shareEnabled: true \| false }` — bei `true`: Antwort enthält `shareUrl`; bei `false`: Token wird gelöscht |
+| `POST` | `/api/split/lists/:id/share` | Link neu generieren; Antwort: `{ shareEnabled, shareEnabledAt, shareUrl }` |
+| `GET` | `/api/split/public/:token` | Listen-Metadaten für Gäste (ohne Rollen, E-Mails, Invite-Status) |
+| `GET` | `/api/split/public/:token/expenses` | Ausgaben (read-only) |
+| `GET` | `/api/split/public/:token/balances` | Salden und Schuldvorschläge |
+| `GET` | `/api/split/public/:token/history` | Historie |
+
+Share-URL: `{AUTH_URL}/split/s/{token}`
+
+Ungültiger oder deaktivierter Token → **`404`** (kein Unterschied für den Client).
 
 ## Fehlercodes
 

@@ -8,6 +8,7 @@ import { updateSplitList } from '@/lib/api'
 import type { SplitListDetail } from '@/types/split'
 import SplitParticipantList from '@/components/split/SplitParticipantList'
 import SplitCategoryManager from '@/components/split/SplitCategoryManager'
+import SplitSharePanel from '@/components/split/SplitSharePanel'
 import {
   splitInputClass,
   splitLabelClass,
@@ -200,6 +201,8 @@ export default function SplitSettingsPanel({
         isOwner={isOwner}
         onListChange={onListChange}
       />
+
+      <SplitSharePanel listId={listId} isOwner={isOwner} />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <SplitParticipantList

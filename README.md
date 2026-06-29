@@ -1,16 +1,18 @@
 # Konto-Planer
 
-Webapp zur Verwaltung persönlicher Finanzen: mehrere Konten, Transaktionen, Kategorien, Gehaltsmonat, wiederkehrende Zahlungen und Auswertungen.
+Webapp zur Verwaltung persönlicher Finanzen: mehrere Konten, Transaktionen, Kategorien, Gehaltsmonat, wiederkehrende Zahlungen, Auswertungen und gemeinsame Split-Listen.
 
 **Stack:** Next.js 16 · React 19 · Tailwind CSS 4 · Prisma 7 · MySQL/MariaDB · NextAuth.js v5
 
 ## Funktionen
 
 - Mehrere Buchführungs-Konten mit Bank-Logo und Wechsel in der Navigation
-- **Planungskonto:** Dashboard mit Kategorien, wiederkehrende Zahlungen, Gehaltsmonat, Bestätigungs-Workflow
+- **Planungskonto:** Dashboard mit Kategorien, wiederkehrende Zahlungen, Gehaltsmonat, Bestätigungs-Workflow, Verfügbar-Saldo
 - **Einfaches Konto:** reduzierte Ansicht für Sparkonten/Depots (Saldo, Kalendermonat, letzte Buchungen)
-- Transaktionen, Umbuchungen zwischen Konten, Statistiken
+- Transaktionen, Umbuchungen zwischen Konten, CSV-Import (DKB, ING)
+- Statistiken mit getrennter Darstellung von Einnahmen und Ausgaben pro Monat
 - Kategorien und Händler; geteilte Konten (OWNER, MEMBER, Nur-Lese)
+- **Split-Budget:** gemeinsame Ausgabenlisten, Salden, Ausgleich, E-Mail-Einladungen, **öffentliche Lese-Links** (`/split/s/…`)
 - Backup/Restore, Farbschemata, Registrierung per E-Mail
 
 ## Lokale Entwicklung
@@ -23,7 +25,7 @@ npm run db:migrate:dev
 npm run dev
 ```
 
-App: [http://localhost:3000](http://localhost:3000)
+App: [http://localhost:3000](http://localhost:3000) (Standard-Port von `next dev`)
 
 | Befehl | Zweck |
 |--------|--------|
@@ -32,7 +34,7 @@ App: [http://localhost:3000](http://localhost:3000)
 | `npm test` | Unit-Tests (Vitest) |
 | `npm run lint` | ESLint |
 
-Weitere Details: [API.md](API.md) · [LOGGING.md](LOGGING.md)
+Weitere Details: [INSTALL.md](INSTALL.md) (Server) · [API.md](API.md) · [LOGGING.md](LOGGING.md)
 
 ## Lizenz
 

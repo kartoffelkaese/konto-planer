@@ -1,5 +1,9 @@
 import { formatCurrency } from '@/lib/formatters'
 
+export function decimalToNumber(value: { toString(): string } | number): number {
+  return typeof value === 'number' ? value : Number(value.toString())
+}
+
 /** Anzeige: positive Ausgaben als Kosten, negative als Erstattung/Gutschrift. */
 export function formatSplitExpenseAmount(amount: number): string {
   return formatCurrency(-amount)

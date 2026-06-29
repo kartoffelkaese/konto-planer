@@ -34,7 +34,12 @@ export default auth((req) => {
     return NextResponse.next()
   }
 
-  if (!token && !pathname.startsWith('/auth/') && pathname !== '/') {
+  if (
+    !token &&
+    !pathname.startsWith('/auth/') &&
+    !pathname.startsWith('/split/s/') &&
+    pathname !== '/'
+  ) {
     if (isRscOrPrefetchRequest(req)) {
       return NextResponse.next()
     }

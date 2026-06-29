@@ -10,9 +10,11 @@ import type {
   SplitHistoryResponse,
   SplitInviteReceived,
   SplitListDetail,
+  SplitListGuestDetail,
   SplitListSummary,
   SplitParticipant,
   SplitSettlement,
+  SplitShareStatus,
 } from '@/types/split'
 
 interface TransactionsResponse {
@@ -453,4 +455,34 @@ export const respondToSplitInvite = (id: string, action: 'accept' | 'decline') =
   apiFetch<{ message: string; splitListId?: string; splitListName?: string }>(
     `/split/invites/${id}`,
     { method: 'PATCH', body: JSON.stringify({ action }) }
+  )
+
+export const getSplitShareStatus = (listId: string) =>
+  apiFetch<SplitShareStatus>(`/split/lists/${listId}/share`)
+
+export const updateSplitShare = (listId: string, shareEnabled: boolean) =>
+  apiFetch<SplitShareStatus>(`/split/lists/${listId}/share`, {
+    method: 'PATCH',
+    body: JSON.stringify({ shareEnabled }),
+  })
+
+export const regenerateSplitShare = (listId: string) =>
+  apiFetch<SplitShareStatus>(`/split/lists/${listId}/share`, {
+    method: 'POST',
+  })
+
+export const getPublicSplitList = (token: string) =>
+  apiFetch<SplitListGuestDetail>(`/split/public/${encodeURIComponent(token)}`)
+
+export const getPublicSplitExpenses = (token: string) =>
+  apiFetch<SplitExpense[]>(`/split/public/${encodeURIComponent(token)}/expenses`)
+
+export const getPublicSplitBalances = (token: string) =>
+  apiFetch<SplitBalancesResponse>(
+    `/split/public/${encodeURIComponent(token)}/balances`
+  )
+
+export const getPublicSplitHistory = (token: string) =>
+  apiFetch<SplitHistoryResponse>(
+    `/split/public/${encodeURIComponent(token)}/history`
   )

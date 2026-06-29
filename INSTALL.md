@@ -114,9 +114,12 @@ server {
 git pull
 npm install
 npm run db:migrate
+npx prisma generate
 npm run build
 npm run pm2:restart
 ```
+
+Bei Build-Problemen oder fehlenden JS-Chunks nach dem Deploy: `rm -rf .next` und `npm run build` erneut ausführen, danach PM2 neu starten.
 
 ## 7. Tests (optional)
 
@@ -131,7 +134,8 @@ npm test
 | Start bricht sofort ab | Pflicht-Env in Produktion prüfen (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `TRUST_PROXY`, SMTP-Variablen) |
 | Keine Bestätigungs-E-Mail | SMTP-Zugangsdaten und `AUTH_URL` prüfen; Spam-Ordner |
 | Login-Redirect falsch | `AUTH_URL` muss die öffentliche HTTPS-URL sein |
-| `Unknown field` / Prisma-Fehler | `npx prisma generate` nach Migration |
+| `Unknown field` / Prisma-Fehler | `npm run db:migrate` und `npx prisma generate`, danach PM2 neu starten |
+| Endlos-Ladebalken / Chunk-Fehler 500 | Unvollständiger Build: `rm -rf .next && npm run build && npm run pm2:restart` |
 | 502 vom Proxy | App läuft? `curl -I http://127.0.0.1:3001` |
 
 Logs bei PM2: `./logs/pm2-*.log` oder `npm run pm2:logs`.

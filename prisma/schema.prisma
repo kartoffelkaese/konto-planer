@@ -210,20 +210,23 @@ model Category {
 }
 
 model SplitList {
-  id           String            @id @default(uuid())
-  name         String
-  description  String?
-  status       SplitListStatus   @default(ACTIVE)
-  createdById  String
-  createdAt    DateTime          @default(now())
-  archivedAt   DateTime?
-  createdBy    User              @relation("SplitListsCreated", fields: [createdById], references: [id], onDelete: Cascade)
-  members      SplitListMember[]
-  participants SplitParticipant[]
-  categories   SplitCategory[]
-  expenses     SplitExpense[]
-  settlements  SplitSettlement[]
-  invites      SplitListInvite[]
+  id               String            @id @default(uuid())
+  name             String
+  description      String?
+  status           SplitListStatus   @default(ACTIVE)
+  createdById      String
+  shareEnabled     Boolean           @default(false)
+  shareTokenHash   String?           @unique
+  shareEnabledAt   DateTime?
+  createdAt        DateTime          @default(now())
+  archivedAt       DateTime?
+  createdBy        User              @relation("SplitListsCreated", fields: [createdById], references: [id], onDelete: Cascade)
+  members          SplitListMember[]
+  participants     SplitParticipant[]
+  categories       SplitCategory[]
+  expenses         SplitExpense[]
+  settlements      SplitSettlement[]
+  invites          SplitListInvite[]
 
   @@map("split_lists")
 }

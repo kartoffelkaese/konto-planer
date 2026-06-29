@@ -22,6 +22,14 @@ export interface SplitParticipant {
   pendingInvite?: boolean
 }
 
+export interface SplitParticipantGuest {
+  id: string
+  splitListId: string
+  displayName: string
+  sortOrder: number | null
+  createdAt: string
+}
+
 export interface SplitExpense {
   id: string
   splitListId: string
@@ -67,6 +75,22 @@ export interface SplitListSummary {
 export interface SplitListDetail extends SplitListSummary {
   participants: SplitParticipant[]
   categories: SplitCategory[]
+}
+
+export interface SplitListGuestDetail {
+  id: string
+  name: string
+  description: string | null
+  status: SplitListStatus
+  participantCount: number
+  participants: SplitParticipantGuest[]
+  categories: SplitCategory[]
+}
+
+export interface SplitShareStatus {
+  shareEnabled: boolean
+  shareUrl?: string
+  shareEnabledAt?: string | null
 }
 
 export interface SplitBalanceEntry {

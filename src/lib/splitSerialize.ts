@@ -2,11 +2,13 @@ import type {
   SplitCategory,
   SplitExpense,
   SplitListDetail,
+  SplitListGuestDetail,
   SplitListSummary,
   SplitParticipant,
+  SplitParticipantGuest,
   SplitSettlement,
 } from '@/types/split'
-import { decimalToNumber } from '@/lib/splitAccess'
+import { decimalToNumber } from '@/lib/splitFormatters'
 
 type ExpenseWithRelations = {
   id: string
@@ -112,6 +114,86 @@ export function serializeSettlement(
     toParticipant: s.toParticipant
       ? serializeParticipant(s.toParticipant)
       : undefined,
+  }
+}
+
+export function serializeParticipantForGuest(p: {
+  id: string
+  splitListId: string
+  displayName: string
+  sortOrder: number | null
+  createdAt: Date
+}): SplitParticipantGuest {
+  return {
+    id: p.id,
+    splitListId: p.splitListId,
+    displayName: p.displayName,
+    sortOrder: p.sortOrder,
+    createdAt: p.createdAt.toISOString(),
+  }
+}
+
+export function serializeExpenseForGuest(e: ExpenseWithRelations): SplitExpense {
+  const base = serializeExpense(e)
+  return {
+    ...base,
+    createdById: '',
+    paidBy: e.paidBy
+      ? ({ ...serializeParticipantForGuest(e.paidBy), userId: null } as SplitParticipant)
+      : undefined,
+  }
+}
+
+export function serializeSettlementForGuest(
+  s: {
+    id: string
+    splitListId: string
+    fromParticipantId: string
+    toParticipantId: string
+    amount: { toString(): string }
+    settledAt: Date
+    settledById: string
+    note: string | null
+    createdAt: Date
+    fromParticipant?: Parameters<typeof serializeParticipantForGuest>[0] | null
+    toParticipant?: Parameters<typeof serializeParticipantForGuest>[0] | null
+  }
+): SplitSettlement {
+  return {
+    id: s.id,
+    splitListId: s.splitListId,
+    fromParticipantId: s.fromParticipantId,
+    toParticipantId: s.toParticipantId,
+    amount: decimalToNumber(s.amount),
+    settledAt: s.settledAt.toISOString(),
+    settledById: '',
+    note: s.note,
+    createdAt: s.createdAt.toISOString(),
+    fromParticipant: s.fromParticipant
+      ? ({ ...serializeParticipantForGuest(s.fromParticipant), userId: null } as SplitParticipant)
+      : undefined,
+    toParticipant: s.toParticipant
+      ? ({ ...serializeParticipantForGuest(s.toParticipant), userId: null } as SplitParticipant)
+      : undefined,
+  }
+}
+
+export function serializeListForGuest(list: {
+  id: string
+  name: string
+  description: string | null
+  status: 'ACTIVE' | 'ARCHIVED'
+  participants: Parameters<typeof serializeParticipantForGuest>[0][]
+  categories: Parameters<typeof serializeCategory>[0][]
+}): SplitListGuestDetail {
+  return {
+    id: list.id,
+    name: list.name,
+    description: list.description,
+    status: list.status,
+    participantCount: list.participants.length,
+    participants: list.participants.map(serializeParticipantForGuest),
+    categories: list.categories.map(serializeCategory),
   }
 }
 

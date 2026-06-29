@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "8.2.0",
+  "version": "8.2.1",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
@@ -21,9 +21,9 @@
     "pm2:monitor": "pm2 monit konto-planer"
   },
   "overrides": {
-    "postcss": "^8.5.15",
+    "postcss": "^8.5.16",
     "@hono/node-server": "^1.19.13",
-    "eslint": "10.5.0",
+    "eslint": "10.6.0",
     "nodemailer": "^9.0.1"
   },
   "dependencies": {
@@ -51,9 +51,9 @@
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.5.2",
     "dotenv": "^17.4.2",
-    "eslint": "10.5.0",
+    "eslint": "10.6.0",
     "eslint-config-next": "^16.2.9",
-    "postcss": "^8.5.15",
+    "postcss": "^8.5.16",
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"

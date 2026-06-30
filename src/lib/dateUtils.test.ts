@@ -106,6 +106,11 @@ describe('getNextRecurringDueDate (Anker)', () => {
     expect(dayjs(next).tz('Europe/Berlin').format('YYYY-MM-DD')).toBe('2025-09-15')
   })
 
+  it('halbjährlich: Anker 15.01., Referenz 20.06. → 15.07.', () => {
+    const next = getNextRecurringDueDate('2025-01-15', 'semiannual', '2025-06-20')
+    expect(dayjs(next).tz('Europe/Berlin').format('YYYY-MM-DD')).toBe('2025-07-15')
+  })
+
   it('bleibt korrekt nach Vorlagen-Anker-Wechsel (neuer Anker)', () => {
     const next = getNextRecurringDueDate('2025-06-15', 'monthly', '2025-06-20')
     expect(dayjs(next).tz('Europe/Berlin').format('YYYY-MM-DD')).toBe('2025-07-15')

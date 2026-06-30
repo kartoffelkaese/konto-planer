@@ -11,6 +11,10 @@ import {
 import { getNextRecurringDueDate, formatDate } from '@/lib/dateUtils'
 import { computeRecurringTotals } from '@/lib/recurringTotals'
 import {
+  getRecurringIntervalBadgeClassName,
+  getRecurringIntervalLabel,
+} from '@/lib/recurringIntervals'
+import {
   getRecurringSalaryMonthStatus,
   type RecurringWithStatus,
 } from '@/lib/recurringStatus'
@@ -243,7 +247,7 @@ export default function RecurringTransactionsPage() {
 
         <div id="monthly-summary" className="rounded-lg border border-border p-4 mb-8 bg-surface">
           <h3 className="text-sm font-semibold mb-3 text-primary">Monatliche Belastung</h3>
-          <div id="summary-grid" className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div id="summary-grid" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             <div id="monthly-total" className="p-2 bg-income-bg rounded-lg border-l-4 border-l-income">
               <p className="text-xs text-income mb-1">Monatlich</p>
               <p className="text-lg font-semibold text-income">
@@ -256,6 +260,15 @@ export default function RecurringTransactionsPage() {
                 {formatCurrency(Math.abs(totals.quarterly.total))}
                 <span className="text-xs ml-1">
                   ({formatCurrency(Math.abs(totals.quarterly.perMonth))}/M)
+                </span>
+              </p>
+            </div>
+            <div id="semiannual-total" className="p-2 bg-expense-bg rounded-lg border-l-4 border-l-expense">
+              <p className="text-xs text-expense mb-1">Halbjährlich</p>
+              <p className="text-lg font-semibold tabular-nums text-expense">
+                {formatCurrency(Math.abs(totals.semiannual.total))}
+                <span className="text-xs ml-1">
+                  ({formatCurrency(Math.abs(totals.semiannual.perMonth))}/M)
                 </span>
               </p>
             </div>
@@ -316,16 +329,8 @@ export default function RecurringTransactionsPage() {
                         {formatCurrency(transaction.amount)}
                       </td>
                       <td className="p-4 text-sm text-center text-primary">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          transaction.recurringInterval === 'monthly' 
-                            ? 'bg-income-bg text-income' 
-                            : transaction.recurringInterval === 'quarterly'
-                            ? 'bg-pending-bg text-pending'
-                            : 'bg-accent-subtle text-accent'
-                        }`}>
-                          {transaction.recurringInterval === 'monthly' && 'Monatlich'}
-                          {transaction.recurringInterval === 'quarterly' && 'Vierteljährlich'}
-                          {transaction.recurringInterval === 'yearly' && 'Jährlich'}
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRecurringIntervalBadgeClassName(transaction.recurringInterval)}`}>
+                          {getRecurringIntervalLabel(transaction.recurringInterval)}
                         </span>
                       </td>
                       <td className="p-4 text-sm text-center">
@@ -457,16 +462,8 @@ export default function RecurringTransactionsPage() {
                       >
                         {salaryStatus.label}
                       </span>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        transaction.recurringInterval === 'monthly' 
-                          ? 'bg-income-bg text-income' 
-                          : transaction.recurringInterval === 'quarterly'
-                          ? 'bg-pending-bg text-pending'
-                          : 'bg-accent-subtle text-accent'
-                      }`}>
-                        {transaction.recurringInterval === 'monthly' && 'Monatlich'}
-                        {transaction.recurringInterval === 'quarterly' && 'Vierteljährlich'}
-                        {transaction.recurringInterval === 'yearly' && 'Jährlich'}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRecurringIntervalBadgeClassName(transaction.recurringInterval)}`}>
+                        {getRecurringIntervalLabel(transaction.recurringInterval)}
                       </span>
                     </div>
 

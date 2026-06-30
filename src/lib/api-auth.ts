@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 import { isGermanBankId } from '@/lib/germanBanks'
+import {
+  isRecurringInterval,
+  type RecurringIntervalId,
+} from '@/lib/recurringIntervals'
 
 import { prisma } from '@/lib/prisma'
 import type { Transaction } from '@prisma/client'
@@ -202,6 +206,21 @@ export function validateBankId(
     )
   }
   return trimmed
+}
+
+export function validateRecurringInterval(
+  interval: unknown
+): RecurringIntervalId | NextResponse {
+  if (interval === undefined || interval === null || interval === '') {
+    return 'monthly'
+  }
+  if (typeof interval !== 'string' || !isRecurringInterval(interval)) {
+    return NextResponse.json(
+      { error: 'Ungültiges Wiederholungsintervall' },
+      { status: 400 }
+    )
+  }
+  return interval
 }
 
 /** @deprecated use validateAccountDisplayName */

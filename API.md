@@ -34,7 +34,7 @@ Anmeldung: `/auth/login` (Credentials). Es gibt **keinen** Bearer-Token-Header.
 - `Content-Type: application/json` bei POST/PATCH/DELETE (wo Body erwartet)
 - Beträge: positiv = Einnahme, negativ = Ausgabe
 - Datumsfelder: ISO-8601
-- Wiederholung: `recurringInterval` z. B. `monthly`, `quarterly`, `yearly`
+- Wiederholung: `recurringInterval` z. B. `monthly`, `quarterly`, `semiannual`, `yearly`
 
 ## Einfaches Konto (`isSimpleAccount`)
 

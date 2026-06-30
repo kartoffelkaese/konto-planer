@@ -42,7 +42,7 @@ export function formatDateForInput(date: Date | string): string {
   return dayjs(date).tz(DEFAULT_TIMEZONE).format('YYYY-MM-DD')
 }
 
-export type RecurringInterval = 'monthly' | 'quarterly' | 'yearly' | string
+export type RecurringInterval = 'monthly' | 'quarterly' | 'semiannual' | 'yearly' | string
 
 function toBerlinDay(date: Date | string) {
   return dayjs(date).tz(DEFAULT_TIMEZONE).startOf('day')
@@ -60,6 +60,8 @@ export function addRecurringInterval(
       return d.add(1, 'month')
     case 'quarterly':
       return d.add(3, 'month')
+    case 'semiannual':
+      return d.add(6, 'month')
     case 'yearly':
       return d.add(1, 'year')
     default:

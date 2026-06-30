@@ -21,6 +21,15 @@ describe('computeRecurringTotals', () => {
     expect(totals.totalMonthly).toBe(-40)
   })
 
+  it('rechnet halbjährliche auf Monatsbasis um', () => {
+    const totals = computeRecurringTotals([
+      { amount: -120, recurringInterval: 'semiannual' },
+    ])
+    expect(totals.semiannual.total).toBe(-120)
+    expect(totals.semiannual.perMonth).toBe(-20)
+    expect(totals.totalMonthly).toBe(-20)
+  })
+
   it('ignoriert pausierte Zahlungen', () => {
     const totals = computeRecurringTotals([
       { amount: -100, recurringInterval: 'monthly' },

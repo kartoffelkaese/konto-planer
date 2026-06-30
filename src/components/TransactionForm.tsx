@@ -6,6 +6,7 @@ import { createTransaction } from '@/lib/api'
 import { formatDateForInput } from '@/lib/dateUtils'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
+import { RECURRING_INTERVALS } from '@/lib/recurringIntervals'
 import TransferAccountFields, { type TransferTarget } from '@/components/TransferAccountFields'
 import CategorySelect from '@/components/CategorySelect'
 import { suggestCategoryIdForMerchant } from '@/lib/suggestCategoryId'
@@ -402,9 +403,11 @@ export default function TransactionForm({
             className="mt-1 block w-full rounded-control border-border bg-surface shadow-sm focus:ring-accent sm:text-sm"
             disabled={loading}
           >
-            <option value="monthly">Monatlich</option>
-            <option value="quarterly">Vierteljährlich</option>
-            <option value="yearly">Jährlich</option>
+            {RECURRING_INTERVALS.map((interval) => (
+              <option key={interval.value} value={interval.value}>
+                {interval.label}
+              </option>
+            ))}
           </select>
         </div>
       )}

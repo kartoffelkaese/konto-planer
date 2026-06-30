@@ -7,6 +7,7 @@ import {
   getTransactionForAccount,
   assertMerchantOwned,
   isErrorResponse,
+  validateRecurringInterval,
 } from '@/lib/api-auth'
 import { resolveMerchantForTransaction } from '@/lib/resolveMerchantForTransaction'
 import {
@@ -140,6 +141,19 @@ export async function PATCH(
       updateData.isRecurring !== undefined
         ? Boolean(updateData.isRecurring)
         : existingTransaction.isRecurring
+
+    if (willBeRecurring) {
+      if (
+        updateData.recurringInterval !== undefined ||
+        updateData.isRecurring === true
+      ) {
+        const intervalResult = validateRecurringInterval(
+          updateData.recurringInterval ?? existingTransaction.recurringInterval
+        )
+        if (intervalResult instanceof NextResponse) return intervalResult
+        updateData.recurringInterval = intervalResult
+      }
+    }
 
     const sourceAccount = await prisma.account.findUnique({
       where: { id: account.id },

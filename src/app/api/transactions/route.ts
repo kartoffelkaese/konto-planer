@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { resolveSalaryDay } from '@/lib/salaryDay'
 import { getAccountContext, requireWritableContext } from '@/lib/account-context'
-import { isErrorResponse } from '@/lib/api-auth'
+import { isErrorResponse, validateRecurringInterval } from '@/lib/api-auth'
 import { resolveMerchantForTransaction } from '@/lib/resolveMerchantForTransaction'
 import {
   resolvePeriodFromRequest,
@@ -136,6 +136,13 @@ export async function POST(request: Request) {
       if (planningError) return planningError
     }
 
+    const validatedRecurringInterval = isRecurring
+      ? validateRecurringInterval(recurringInterval)
+      : null
+    if (validatedRecurringInterval instanceof NextResponse) {
+      return validatedRecurringInterval
+    }
+
     const resolvedMerchant = await resolveMerchantForTransaction(account.id, {
       merchantId,
       merchant,
@@ -179,7 +186,7 @@ export async function POST(request: Request) {
               date: transactionDate,
               categoryId,
               isRecurring: true,
-              recurringInterval: recurringInterval || 'monthly',
+              recurringInterval: validatedRecurringInterval,
               isTransfer: true,
               transferTargetAccountId,
             },
@@ -244,7 +251,7 @@ export async function POST(request: Request) {
           date: new Date(date),
           categoryId,
           isRecurring: isRecurring || false,
-          recurringInterval: isRecurring ? recurringInterval : null,
+          recurringInterval: isRecurring ? validatedRecurringInterval : null,
         },
       })
 

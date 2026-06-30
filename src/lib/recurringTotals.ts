@@ -7,6 +7,7 @@ export type RecurringForTotals = {
 export type RecurringTotals = {
   monthly: { total: number; perMonth: number }
   quarterly: { total: number; perMonth: number }
+  semiannual: { total: number; perMonth: number }
   yearly: { total: number; perMonth: number }
   totalMonthly: number
 }
@@ -23,10 +24,12 @@ export function computeRecurringTotals(
 
   const monthly = active.filter((t) => t.recurringInterval === 'monthly')
   const quarterly = active.filter((t) => t.recurringInterval === 'quarterly')
+  const semiannual = active.filter((t) => t.recurringInterval === 'semiannual')
   const yearly = active.filter((t) => t.recurringInterval === 'yearly')
 
   const monthlyTotal = sumAmounts(monthly)
   const quarterlyTotal = sumAmounts(quarterly)
+  const semiannualTotal = sumAmounts(semiannual)
   const yearlyTotal = sumAmounts(yearly)
 
   return {
@@ -35,10 +38,18 @@ export function computeRecurringTotals(
       total: quarterlyTotal,
       perMonth: quarterlyTotal / 3,
     },
+    semiannual: {
+      total: semiannualTotal,
+      perMonth: semiannualTotal / 6,
+    },
     yearly: {
       total: yearlyTotal,
       perMonth: yearlyTotal / 12,
     },
-    totalMonthly: monthlyTotal + quarterlyTotal / 3 + yearlyTotal / 12,
+    totalMonthly:
+      monthlyTotal +
+      quarterlyTotal / 3 +
+      semiannualTotal / 6 +
+      yearlyTotal / 12,
   }
 }

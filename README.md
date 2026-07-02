@@ -7,7 +7,7 @@ Webapp zur Verwaltung persönlicher Finanzen: mehrere Konten, Transaktionen, Kat
 ## Funktionen
 
 - Mehrere Buchführungs-Konten mit Bank-Logo und Wechsel in der Navigation
-- **Planungskonto:** Dashboard mit Kategorien, wiederkehrende Zahlungen, Gehaltsmonat, Bestätigungs-Workflow, Verfügbar-Saldo
+- **Planungskonto:** Dashboard mit Kategorien, wiederkehrende Zahlungen (monatlich, vierteljährlich, halbjährlich, jährlich), Gehaltsmonat, Bestätigungs-Workflow, Verfügbar-Saldo
 - **Einfaches Konto:** reduzierte Ansicht für Sparkonten/Depots (Saldo, Kalendermonat, letzte Buchungen)
 - Transaktionen, Umbuchungen zwischen Konten, CSV-Import (DKB, ING)
 - Statistiken mit getrennter Darstellung von Einnahmen und Ausgaben pro Monat

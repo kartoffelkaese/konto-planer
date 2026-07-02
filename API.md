@@ -34,7 +34,16 @@ Anmeldung: `/auth/login` (Credentials). Es gibt **keinen** Bearer-Token-Header.
 - `Content-Type: application/json` bei POST/PATCH/DELETE (wo Body erwartet)
 - Beträge: positiv = Einnahme, negativ = Ausgabe
 - Datumsfelder: ISO-8601
-- Wiederholung: `recurringInterval` z. B. `monthly`, `quarterly`, `semiannual`, `yearly`
+- Wiederholung: `recurringInterval` bei wiederkehrenden Vorlagen (`isRecurring: true`)
+
+| Wert | Bedeutung | Nächste Fälligkeit |
+|------|-----------|-------------------|
+| `monthly` | Monatlich (Standard) | +1 Monat |
+| `quarterly` | Vierteljährlich | +3 Monate |
+| `semiannual` | Halbjährlich | +6 Monate |
+| `yearly` | Jährlich | +1 Jahr |
+
+Unbekannter Wert bei `POST`/`PATCH` → **`400`** `{ "error": "Ungültiges Wiederholungsintervall" }`. In der Recurring-Übersicht werden viertel-, halbjährliche und jährliche Beträge auf Monatsbasis umgerechnet (÷3, ÷6, ÷12).
 
 ## Einfaches Konto (`isSimpleAccount`)
 
@@ -66,7 +75,7 @@ Wenn das aktive Konto als **einfaches Konto** markiert ist:
 | `GET` | `/api/transactions/:id` | Einzelbuchung |
 | `PATCH` | `/api/transactions/:id` | Aktualisieren (inkl. `isConfirmed`, `lastConfirmedDate`, Umbuchung) |
 | `DELETE` | `/api/transactions/:id` | Löschen |
-| `GET` | `/api/transactions/recurring` | Wiederkehrende Vorlagen (Planungskonto) |
+| `GET` | `/api/transactions/recurring` | Wiederkehrende Vorlagen inkl. Intervall und Fälligkeit (Planungskonto) |
 | `GET` | `/api/transactions/totals` | Summen fürs Konto/Gehaltsmonat |
 | `POST` | `/api/transactions/create-pending` | Fällige ausstehende Instanzen erzeugen |
 | `POST` | `/api/transactions/:id/create-instance` | Instanz einer wiederkehrenden Buchung |
@@ -88,7 +97,7 @@ Antwort: `{ transactions, total, page, hasMore }`
 
 **`POST /api/transactions` – Body (Auszug)**
 
-`merchant`, `merchantId?`, `createNewMerchant?`, `description?`, `amount`, `date`, `categoryId?`, `isRecurring?`, `recurringInterval?`, `isTransfer?`, `transferTargetAccountId?`
+`merchant`, `merchantId?`, `createNewMerchant?`, `description?`, `amount`, `date`, `categoryId?`, `isRecurring?`, `recurringInterval?` (siehe Konventionen), `isTransfer?`, `transferTargetAccountId?`
 
 ### CSV-Import
 

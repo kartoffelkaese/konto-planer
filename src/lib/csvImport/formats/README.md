@@ -28,7 +28,7 @@ Jedes Format mappt auf:
 - `isConfirmed` (nur bei gebuchten CSV-Zeilen `true`)
 - `errors[]`
 
-Preview, Duplikat-Erkennung, Wiederkehrend und Commit arbeiten nur mit diesem Modell.
+Preview, Duplikat-Erkennung, Wiederkehrend und Commit arbeiten nur mit diesem Modell. Wiederkehrende Vorlagen werden über `recurringInterval` gematcht (u. a. `monthly`, `quarterly`, `semiannual`, `yearly`); das Intervall wird beim Backup-Import unverändert übernommen.
 
 ## Checkliste
 

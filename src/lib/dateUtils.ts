@@ -68,14 +68,6 @@ export function addRecurringInterval(
   }
 }
 
-/**
- * Nächstes Fälligkeitsdatum: ein Intervall nach dem übergebenen Datum.
- * @deprecated Semantisch Anker – nutze addRecurringInterval oder getNextRecurringDueDate.
- */
-export function getNextDueDate(anchorOrDate: Date | string, interval: string): Date {
-  return addRecurringInterval(anchorOrDate, interval).toDate()
-}
-
 const MAX_RECURRING_ITERATIONS = 500
 
 /**

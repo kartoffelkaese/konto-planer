@@ -19,8 +19,8 @@ import {
 } from '@/lib/api'
 import type {
   SplitBalancesResponse,
-  SplitExpense,
-  SplitHistoryResponse,
+  SplitExpenseGuest,
+  SplitHistoryGuestResponse,
   SplitListGuestDetail,
   SplitParticipant,
 } from '@/types/split'
@@ -39,9 +39,9 @@ export default function SplitSharePage() {
   const token = params.token as string
 
   const [list, setList] = useState<SplitListGuestDetail | null>(null)
-  const [expenses, setExpenses] = useState<SplitExpense[]>([])
+  const [expenses, setExpenses] = useState<SplitExpenseGuest[]>([])
   const [balances, setBalances] = useState<SplitBalancesResponse | null>(null)
-  const [history, setHistory] = useState<SplitHistoryResponse | null>(null)
+  const [history, setHistory] = useState<SplitHistoryGuestResponse | null>(null)
   const [tab, setTab] = useState<Tab>('expenses')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

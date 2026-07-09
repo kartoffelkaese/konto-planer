@@ -29,7 +29,7 @@ describe('split guest serializers', () => {
     expect(guest).not.toHaveProperty('pendingInvite')
   })
 
-  it('omits createdById from guest expenses', () => {
+  it('anonymisiert createdById in Gast-Ausgaben', () => {
     const expense = serializeExpenseForGuest({
       id: 'e1',
       splitListId: 'l1',

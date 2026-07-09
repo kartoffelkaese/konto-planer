@@ -10,25 +10,27 @@ import {
 import { getContrastColor } from '@/lib/colorUtils'
 import { Button } from '@/components/Button'
 import EmptyState from '@/components/EmptyState'
-import type { SplitExpense, SplitParticipant } from '@/types/split'
+import type { SplitExpense, SplitExpenseGuest, SplitParticipant } from '@/types/split'
 import { splitSectionCardClass } from '@/components/split/splitUiClasses'
 import { getParticipantInitials } from '@/components/split/splitParticipantUtils'
 
+type SplitExpenseListItem = SplitExpense | SplitExpenseGuest
+
 type SplitExpenseListProps = {
-  expenses: SplitExpense[]
+  expenses: SplitExpenseListItem[]
   participants: SplitParticipant[]
   readOnly?: boolean
-  onEdit?: (expense: SplitExpense) => void
+  onEdit?: (expense: SplitExpenseListItem) => void
   onDelete?: (expenseId: string) => void
   onAdd?: () => void
 }
 
 type ParticipantExpensePanelProps = {
   participant: SplitParticipant
-  expenses: SplitExpense[]
+  expenses: SplitExpenseListItem[]
   participantCount: number
   readOnly?: boolean
-  onEdit?: (expense: SplitExpense) => void
+  onEdit?: (expense: SplitExpenseListItem) => void
   onDelete?: (expenseId: string) => void
 }
 
@@ -157,7 +159,7 @@ export default function SplitExpenseList({
   onAdd,
 }: SplitExpenseListProps) {
   const expensesByParticipant = useMemo(() => {
-    const map = new Map<string, SplitExpense[]>()
+    const map = new Map<string, SplitExpenseListItem[]>()
     for (const participant of participants) {
       map.set(participant.id, [])
     }

@@ -4,10 +4,9 @@ import { redirect } from 'next/navigation'
 export default async function EditTransactionPage({
   params,
 }: {
-  params: Promise<{ id: string }> | { id: string }
+  params: Promise<{ id: string }>
 }) {
-  const resolvedParams = await Promise.resolve(params)
-  const id = resolvedParams?.id
+  const { id } = await params
   if (!id) {
     redirect('/transactions')
   }

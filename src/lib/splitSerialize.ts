@@ -1,12 +1,14 @@
 import type {
   SplitCategory,
   SplitExpense,
+  SplitExpenseGuest,
   SplitListDetail,
   SplitListGuestDetail,
   SplitListSummary,
   SplitParticipant,
   SplitParticipantGuest,
   SplitSettlement,
+  SplitSettlementGuest,
 } from '@/types/split'
 import { decimalToNumber } from '@/lib/splitFormatters'
 
@@ -133,14 +135,12 @@ export function serializeParticipantForGuest(p: {
   }
 }
 
-export function serializeExpenseForGuest(e: ExpenseWithRelations): SplitExpense {
+export function serializeExpenseForGuest(e: ExpenseWithRelations): SplitExpenseGuest {
   const base = serializeExpense(e)
   return {
     ...base,
     createdById: '',
-    paidBy: e.paidBy
-      ? ({ ...serializeParticipantForGuest(e.paidBy), userId: null } as SplitParticipant)
-      : undefined,
+    paidBy: e.paidBy ? serializeParticipantForGuest(e.paidBy) : undefined,
   }
 }
 
@@ -158,7 +158,7 @@ export function serializeSettlementForGuest(
     fromParticipant?: Parameters<typeof serializeParticipantForGuest>[0] | null
     toParticipant?: Parameters<typeof serializeParticipantForGuest>[0] | null
   }
-): SplitSettlement {
+): SplitSettlementGuest {
   return {
     id: s.id,
     splitListId: s.splitListId,
@@ -170,10 +170,10 @@ export function serializeSettlementForGuest(
     note: s.note,
     createdAt: s.createdAt.toISOString(),
     fromParticipant: s.fromParticipant
-      ? ({ ...serializeParticipantForGuest(s.fromParticipant), userId: null } as SplitParticipant)
+      ? serializeParticipantForGuest(s.fromParticipant)
       : undefined,
     toParticipant: s.toParticipant
-      ? ({ ...serializeParticipantForGuest(s.toParticipant), userId: null } as SplitParticipant)
+      ? serializeParticipantForGuest(s.toParticipant)
       : undefined,
   }
 }

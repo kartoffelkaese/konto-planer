@@ -9,10 +9,10 @@ import {
   getCalendarMonthLabel,
   isTransactionDueInSalaryMonth,
   isTransactionPending,
-  getNextDueDate,
   getNextRecurringDueDate,
   getNextRecurringDueDateAfter,
   getRecurringDueDatesInRange,
+  addRecurringInterval,
 } from './dateUtils'
 
 dayjs.extend(utc)
@@ -74,9 +74,9 @@ describe('getCalendarMonthLabel', () => {
   })
 })
 
-describe('getNextDueDate', () => {
-  it('addiert monatlich', () => {
-    const next = getNextDueDate('2025-01-15', 'monthly')
+describe('addRecurringInterval (monatlich)', () => {
+  it('addiert ein Intervall ab Ankerdatum', () => {
+    const next = addRecurringInterval('2025-01-15', 'monthly').toDate()
     expect(dayjs(next).tz('Europe/Berlin').month()).toBe(1)
     expect(dayjs(next).tz('Europe/Berlin').date()).toBe(15)
   })

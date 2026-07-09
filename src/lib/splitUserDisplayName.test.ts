@@ -1,4 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('@/lib/prisma', () => ({ prisma: {} }))
+vi.mock('@/lib/accounts', () => ({ getFirstAccountIdForUser: vi.fn() }))
+vi.mock('@/lib/transfers', () => ({ resolveTransferSenderName: vi.fn() }))
+
 import { dedupeDisplayNameAgainst } from '@/lib/splitUserDisplayName'
 
 describe('dedupeDisplayNameAgainst', () => {

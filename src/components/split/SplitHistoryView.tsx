@@ -13,14 +13,23 @@ import {
   formatSplitExpenseAmount,
   splitExpenseAmountClass,
 } from '@/lib/splitFormatters'
-import type { SplitExpense, SplitHistoryResponse, SplitSettlement } from '@/types/split'
+import type {
+  SplitExpense,
+  SplitExpenseGuest,
+  SplitHistoryResponse,
+  SplitHistoryGuestResponse,
+  SplitSettlement,
+  SplitSettlementGuest,
+} from '@/types/split'
 import {
   splitSectionCardClass,
 } from '@/components/split/splitUiClasses'
 import { getParticipantInitials } from '@/components/split/splitParticipantUtils'
 
+type SplitHistoryViewData = SplitHistoryResponse | SplitHistoryGuestResponse
+
 type SplitHistoryViewProps = {
-  history: SplitHistoryResponse
+  history: SplitHistoryViewData
   participantCount?: number
   groupByCategory?: boolean
 }
@@ -32,7 +41,11 @@ function formatShareLabel(shareCount: number, participantCount: number): string 
   return `${shareCount} Personen`
 }
 
-function SettlementRow({ settlement }: { settlement: SplitSettlement }) {
+function SettlementRow({
+  settlement,
+}: {
+  settlement: SplitSettlement | SplitSettlementGuest
+}) {
   const fromName = settlement.fromParticipant?.displayName ?? '?'
   const toName = settlement.toParticipant?.displayName ?? '?'
 
@@ -89,7 +102,7 @@ function ExpenseHistoryRow({
   expense,
   participantCount,
 }: {
-  expense: SplitExpense
+  expense: SplitExpense | SplitExpenseGuest
   participantCount: number
 }) {
   const payerName = expense.paidBy?.displayName ?? '?'
@@ -131,7 +144,7 @@ type CategoryGroup = {
   categoryName: string
   total: number
   color: string | null
-  expenses: SplitExpense[]
+  expenses: Array<SplitExpense | SplitExpenseGuest>
 }
 
 export default function SplitHistoryView({

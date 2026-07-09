@@ -59,6 +59,19 @@ export interface SplitSettlement {
   toParticipant?: SplitParticipant
 }
 
+export interface SplitExpenseGuest
+  extends Omit<SplitExpense, 'paidBy' | 'createdById'> {
+  createdById: ''
+  paidBy?: SplitParticipantGuest
+}
+
+export interface SplitSettlementGuest
+  extends Omit<SplitSettlement, 'fromParticipant' | 'toParticipant' | 'settledById'> {
+  settledById: ''
+  fromParticipant?: SplitParticipantGuest
+  toParticipant?: SplitParticipantGuest
+}
+
 export interface SplitListSummary {
   id: string
   name: string
@@ -119,6 +132,13 @@ export interface SplitHistoryResponse {
   settlements: SplitSettlement[]
   expenses: SplitExpense[]
   categoryTotals: { categoryId: string | null; categoryName: string; total: number }[]
+  totalExpenses: number
+}
+
+export interface SplitHistoryGuestResponse {
+  settlements: SplitSettlementGuest[]
+  expenses: SplitExpenseGuest[]
+  categoryTotals: SplitHistoryResponse['categoryTotals']
   totalExpenses: number
 }
 

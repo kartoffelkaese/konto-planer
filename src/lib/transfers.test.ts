@@ -1,10 +1,16 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('@/lib/prisma', () => ({ prisma: {} }))
+vi.mock('@/lib/api-auth', () => ({
+  assertAccountWritable: vi.fn(),
+}))
+
 import {
   resolveTransferSenderName,
   isRecurringTemplate,
   shouldCreateTransferPair,
+  type TransferDecisionFields,
 } from './transfers'
-import type { Transaction } from '@prisma/client'
 
 describe('resolveTransferSenderName', () => {
   it('nutzt transferSenderName wenn gesetzt', () => {
@@ -31,7 +37,9 @@ describe('isRecurringTemplate', () => {
     const tx = {
       isRecurring: true,
       parentTransactionId: null,
-    } as Transaction
+      isTransfer: false,
+      transferTargetAccountId: null,
+    } satisfies TransferDecisionFields
     expect(isRecurringTemplate(tx)).toBe(true)
   })
 })
@@ -43,7 +51,7 @@ describe('shouldCreateTransferPair', () => {
       transferTargetAccountId: 'target-id',
       isRecurring: false,
       parentTransactionId: null,
-    } as Transaction
+    } satisfies TransferDecisionFields
     expect(shouldCreateTransferPair(tx)).toBe(true)
   })
 
@@ -53,7 +61,7 @@ describe('shouldCreateTransferPair', () => {
       transferTargetAccountId: 'target-id',
       isRecurring: true,
       parentTransactionId: null,
-    } as Transaction
+    } satisfies TransferDecisionFields
     expect(shouldCreateTransferPair(tx)).toBe(false)
   })
 })

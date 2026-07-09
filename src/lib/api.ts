@@ -7,7 +7,9 @@ import type {
   SplitBalancesResponse,
   SplitCategory,
   SplitExpense,
+  SplitExpenseGuest,
   SplitHistoryResponse,
+  SplitHistoryGuestResponse,
   SplitInviteReceived,
   SplitListDetail,
   SplitListGuestDetail,
@@ -475,7 +477,7 @@ export const getPublicSplitList = (token: string) =>
   apiFetch<SplitListGuestDetail>(`/split/public/${encodeURIComponent(token)}`)
 
 export const getPublicSplitExpenses = (token: string) =>
-  apiFetch<SplitExpense[]>(`/split/public/${encodeURIComponent(token)}/expenses`)
+  apiFetch<SplitExpenseGuest[]>(`/split/public/${encodeURIComponent(token)}/expenses`)
 
 export const getPublicSplitBalances = (token: string) =>
   apiFetch<SplitBalancesResponse>(
@@ -483,6 +485,6 @@ export const getPublicSplitBalances = (token: string) =>
   )
 
 export const getPublicSplitHistory = (token: string) =>
-  apiFetch<SplitHistoryResponse>(
+  apiFetch<SplitHistoryGuestResponse>(
     `/split/public/${encodeURIComponent(token)}/history`
   )

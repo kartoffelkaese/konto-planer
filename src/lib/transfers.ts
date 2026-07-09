@@ -223,11 +223,16 @@ export async function unlinkTransfersTargetingAccount(accountId: string) {
   })
 }
 
-export function isRecurringTemplate(transaction: Transaction): boolean {
+export type TransferDecisionFields = Pick<
+  Transaction,
+  'isRecurring' | 'parentTransactionId' | 'isTransfer' | 'transferTargetAccountId'
+>
+
+export function isRecurringTemplate(transaction: TransferDecisionFields): boolean {
   return transaction.isRecurring && !transaction.parentTransactionId
 }
 
-export function shouldCreateTransferPair(transaction: Transaction): boolean {
+export function shouldCreateTransferPair(transaction: TransferDecisionFields): boolean {
   return Boolean(
     transaction.isTransfer &&
       transaction.transferTargetAccountId &&

@@ -144,19 +144,6 @@ export async function setMerchantCategories(
   }
 }
 
-/** @deprecated Nutze setMerchantCategories */
-export async function setMerchantCategory(
-  tx: Prisma.TransactionClient,
-  merchantId: string,
-  categoryId: string | null | undefined
-) {
-  await setMerchantCategories(
-    tx,
-    merchantId,
-    categoryId ? [categoryId] : []
-  )
-}
-
 export async function ensureMerchantHasCategory(
   tx: Prisma.TransactionClient,
   merchantId: string,

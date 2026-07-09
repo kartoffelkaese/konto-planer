@@ -1,24 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import { buildRecurringInstanceData } from './recurringInstances'
-import type { Transaction } from '@prisma/client'
+import { Prisma } from '@prisma/client'
+import { buildRecurringInstanceData, type RecurringTemplate } from './recurringInstances'
 
 const template = {
   description: 'Miete',
   merchant: 'Vermieter',
   merchantId: 'm1',
-  amount: -500,
+  categoryId: null,
+  amount: new Prisma.Decimal(-500),
   isTransfer: false,
   transferTargetAccountId: null,
-} as Pick<
-  Transaction,
-  | 'description'
-  | 'merchant'
-  | 'merchantId'
-  | 'amount'
-  | 'categoryId'
-  | 'isTransfer'
-  | 'transferTargetAccountId'
->
+} satisfies RecurringTemplate
 
 describe('buildRecurringInstanceData', () => {
   it('übernimmt den aktuellen Vorlagenbetrag', () => {
@@ -28,7 +20,7 @@ describe('buildRecurringInstanceData', () => {
       'acc-1',
       'parent-1'
     )
-    expect(data.amount).toBe(-500)
+    expect(Number(data.amount)).toBe(-500)
     expect(data.parentTransactionId).toBe('parent-1')
     expect(data.isRecurring).toBe(false)
   })
@@ -44,13 +36,16 @@ describe('buildRecurringInstanceData', () => {
   })
 
   it('nutzt den geänderten Vorlagenbetrag für neue Instanzen', () => {
-    const updatedTemplate = { ...template, amount: -550 }
+    const updatedTemplate = {
+      ...template,
+      amount: new Prisma.Decimal(-550),
+    }
     const data = buildRecurringInstanceData(
       updatedTemplate,
       new Date('2025-07-01'),
       'acc-1',
       'parent-1'
     )
-    expect(data.amount).toBe(-550)
+    expect(Number(data.amount)).toBe(-550)
   })
 })

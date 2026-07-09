@@ -63,6 +63,8 @@ npm run build
 npm run start
 ```
 
+`npm run build` prüft zuerst die Typen mit TypeScript 7 (`tsc --noEmit`), danach baut Next.js die App. Dafür ist `@typescript/native-preview` als Marker nötig (TS 7 hat keine `lib/typescript.js`-API mehr).
+
 Produktionsbetrieb mit **PM2** (empfohlen):
 
 ```bash

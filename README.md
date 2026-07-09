@@ -30,7 +30,8 @@ App: [http://localhost:3000](http://localhost:3000) (Standard-Port von `next dev
 | Befehl | Zweck |
 |--------|--------|
 | `npm run dev` | Entwicklungsserver |
-| `npm run build` | Produktions-Build |
+| `npm run build` | Typprüfung (`tsc`) und Produktions-Build |
+| `npm run typecheck` | TypeScript-Prüfung (TS 7) |
 | `npm test` | Unit-Tests (Vitest) |
 | `npm run lint` | ESLint |
 

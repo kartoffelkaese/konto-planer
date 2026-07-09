@@ -1,10 +1,11 @@
 {
   "name": "konto-planer",
-  "version": "8.3.2",
+  "version": "8.4.0",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
-    "build": "next build",
+    "build": "npm run typecheck && next build",
+    "typecheck": "tsc --noEmit",
     "start": "next start -H 127.0.0.1 -p 3001",
     "lint": "next lint",
     "test": "vitest run",
@@ -40,23 +41,24 @@
     "prisma": "^7.8.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "recharts": "^3.9.1"
+    "recharts": "^3.9.2"
   },
   "devDependencies": {
     "@eslint/compat": "^2.1.0",
     "@tailwindcss/postcss": "^4.3.2",
-    "@types/node": "^26.1.0",
+    "@types/node": "^26.1.1",
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@typescript/native-preview": "^7.0.0-dev.20260707.2",
     "autoprefixer": "^10.5.2",
     "dotenv": "^17.4.2",
     "eslint": "10.6.0",
     "eslint-config-next": "^16.2.10",
     "postcss": "^8.5.16",
     "tailwindcss": "^4.3.2",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   },
   "allowScripts": {
     "@prisma/engines@7.8.0": true,

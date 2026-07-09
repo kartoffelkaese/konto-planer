@@ -1,4 +1,3 @@
-import { Transaction } from '@/types'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
@@ -270,7 +269,9 @@ export function isTransactionDueInSalaryMonth(
  * Prüft ob eine Transaktion ausstehend ist (Gehaltsmonat aus Einstellungen)
  */
 export function isTransactionPending(
-  transaction: Transaction,
+  transaction: Parameters<typeof isTransactionDueInSalaryMonth>[0] & {
+    isConfirmed: boolean
+  },
   salaryDay: number
 ): boolean {
   return (

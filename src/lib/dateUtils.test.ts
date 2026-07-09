@@ -14,7 +14,6 @@ import {
   getNextRecurringDueDateAfter,
   getRecurringDueDatesInRange,
 } from './dateUtils'
-import type { Transaction } from '@/types'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
@@ -221,7 +220,7 @@ describe('isTransactionPending', () => {
       isConfirmed: false,
       date: new Date(),
       recurringInterval: 'monthly',
-    } as Transaction
+    }
 
     expect(isTransactionPending(tx, 23)).toBe(true)
     expect(isTransactionPending({ ...tx, isConfirmed: true }, 23)).toBe(false)

@@ -63,7 +63,7 @@ npm run build
 npm run start
 ```
 
-`npm run build` prüft zuerst die Typen mit TypeScript 7 (`tsc --noEmit`), danach baut Next.js die App. Dafür ist `@typescript/native-preview` als Marker nötig (TS 7 hat keine `lib/typescript.js`-API mehr).
+`npm run build` prüft zuerst die Typen mit TypeScript 7 (`tsc --noEmit`), danach baut Next.js die App. Dafür ist `@typescript/native-preview` als Marker nötig (TS 7 hat keine `lib/typescript.js`-API mehr). ESLint nutzt TypeScript 6 (`typescript`-Paket), Typecheck und Build nutzen TypeScript 7 (`typescript-7`-Alias).
 
 Produktionsbetrieb mit **PM2** (empfohlen):
 

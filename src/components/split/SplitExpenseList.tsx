@@ -20,7 +20,7 @@ type SplitExpenseListProps = {
   expenses: SplitExpenseListItem[]
   participants: SplitParticipant[]
   readOnly?: boolean
-  onEdit?: (expense: SplitExpenseListItem) => void
+  onEdit?: (expense: SplitExpense) => void
   onDelete?: (expenseId: string) => void
   onAdd?: () => void
 }
@@ -30,7 +30,7 @@ type ParticipantExpensePanelProps = {
   expenses: SplitExpenseListItem[]
   participantCount: number
   readOnly?: boolean
-  onEdit?: (expense: SplitExpenseListItem) => void
+  onEdit?: (expense: SplitExpense) => void
   onDelete?: (expenseId: string) => void
 }
 
@@ -126,7 +126,7 @@ function ParticipantExpensePanel({
                   size="sm"
                   variant="ghost"
                   className="max-md:min-h-11 max-md:min-w-11"
-                  onClick={() => onEdit?.(expense)}
+                  onClick={() => onEdit?.(expense as SplitExpense)}
                   aria-label={`${expense.description} bearbeiten`}
                 >
                   <PencilIcon className="h-4 w-4" aria-hidden="true" />

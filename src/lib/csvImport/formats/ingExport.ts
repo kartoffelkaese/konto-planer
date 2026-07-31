@@ -48,7 +48,7 @@ function parseIngExportRow(
   const description = purpose || bookingText
 
   const amountRaw = getCell(row, COL_AMOUNT)
-  let amount = parseGermanAmount(amountRaw)
+  const amount = parseGermanAmount(amountRaw)
   if (!amountRaw) errors.push('Betrag fehlt')
   else if (amount === null) errors.push(`Ungültiger Betrag: ${amountRaw}`)
 

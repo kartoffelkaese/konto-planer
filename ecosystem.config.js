@@ -6,8 +6,10 @@ module.exports = {
       name: 'konto-planer',
       version,
       cwd: __dirname,
-      script: 'npm',
-      args: 'start',
+      // Next direkt starten — nicht über npm (PM2 cached sonst den npm-Pfad der NVM-Version)
+      script: 'node_modules/next/dist/bin/next',
+      args: 'start -H 127.0.0.1 -p 3001',
+      interpreter: 'node',
       env: {
         NODE_ENV: 'production',
         PORT: 3001

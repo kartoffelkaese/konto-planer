@@ -74,6 +74,14 @@ npm run pm2:start
 
 Weitere PM2-Befehle: `npm run pm2:restart`, `npm run pm2:logs`, `npm run pm2:stop`.
 
+Nach einem **Node-/NVM-Upgrade** PM2-Prozess neu registrieren (alter `npm`-/`node`-Pfad wird sonst gecacht):
+
+```bash
+pm2 delete konto-planer
+npm run pm2:start
+pm2 save
+```
+
 ### Cleanup unbestätigter Konten (Cron)
 
 Unbestätigte Registrierungen ohne gültigen Verifizierungs-Token werden gelöscht. Empfehlung: stündlich per Cron:
@@ -133,6 +141,7 @@ npm test
 
 | Problem | Hinweis |
 |---------|---------|
+| PM2: `Cannot find module '.../v24.../bin/npm'` | Node-Version gewechselt; `pm2 delete konto-planer && npm run pm2:start && pm2 save` |
 | Start bricht sofort ab | Pflicht-Env in Produktion prüfen (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `TRUST_PROXY`, SMTP-Variablen) |
 | Keine Bestätigungs-E-Mail | SMTP-Zugangsdaten und `AUTH_URL` prüfen; Spam-Ordner |
 | Login-Redirect falsch | `AUTH_URL` muss die öffentliche HTTPS-URL sein |

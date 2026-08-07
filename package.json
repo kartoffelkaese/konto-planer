@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "8.4.4",
+  "version": "8.4.5",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
@@ -22,10 +22,10 @@
     "pm2:monitor": "pm2 monit konto-planer"
   },
   "overrides": {
-    "postcss": "^8.5.25",
+    "postcss": "^8.5.26",
     "@hono/node-server": "^1.19.13",
     "eslint": "10.8.0",
-    "nodemailer": "^9.0.3",
+    "nodemailer": "^9.0.4",
     "sharp": "^0.35.0",
     "find-my-way": "^9.7.0",
     "valibot": "^1.4.2",
@@ -39,9 +39,9 @@
     "@prisma/client": "^7.9.1",
     "bcryptjs": "^3.0.3",
     "dayjs": "^1.11.21",
-    "next": "^16.2.12",
+    "next": "^16.3.0",
     "next-auth": "^5.0.0-beta.31",
-    "nodemailer": "^9.0.3",
+    "nodemailer": "^9.0.4",
     "prisma": "^7.9.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -58,8 +58,8 @@
     "autoprefixer": "^10.5.4",
     "dotenv": "^17.4.2",
     "eslint": "10.8.0",
-    "eslint-config-next": "^16.2.12",
-    "postcss": "^8.5.25",
+    "eslint-config-next": "^16.3.0",
+    "postcss": "^8.5.26",
     "tailwindcss": "^4.3.3",
     "typescript": "npm:@typescript/typescript6@^6.0.3",
     "typescript-7": "npm:typescript@^7.0.2",

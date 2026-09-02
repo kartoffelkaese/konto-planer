@@ -137,13 +137,48 @@ Bei Build-Problemen oder fehlenden JS-Chunks nach dem Deploy: `rm -rf .next` und
 npm test
 ```
 
+## Paket-Updates und Sicherheit
+
+Empfohlener Ablauf bei Dependency-Updates:
+
+1. `ncu` / `ncu -u` (Versionen in `package.json` anheben)
+2. `npm install` (Lockfile neu auflösen)
+3. `npm audit fix` (**ohne** `--force`)
+4. Verbleibende transitive Lücken: gezieltes `overrides` in `package.json`, **nicht** `npm audit fix --force`
+5. `npm run typecheck && npm run lint && npm test && npm run build`
+6. Prisma-Pakete synchron halten: `prisma`, `@prisma/client`, `@prisma/adapter-mariadb` auf gleiche Minor
+7. `allowScripts` bei Prisma-Versionswechsel anpassen
+
+Lokal prüfen: `npm run audit:check` (High/Critical müssen 0 sein).
+
+**`npm audit fix --force` nie ausführen** — downgraded Prisma, Next oder ESLint und bricht den Stack.
+
+### npm overrides (transitive Abhängigkeiten)
+
+| Override | Grund | Betroffener Pfad |
+|----------|-------|------------------|
+| `mariadb@^3.5.4` | SSL/Credential-CVEs im DB-Treiber | Runtime: `@prisma/adapter-mariadb` → App |
+| `mysql2@^3.24.3` | Auth-Plugin-Downgrade (Prisma-CLI) | Dev/Deploy: `prisma migrate` |
+| `sharp@^0.35.0` | libvips-CVEs | Next.js Build / Image-Opt |
+| `deepmerge-ts@^8.0.0` | Stack-Exhaustion | Prisma-CLI |
+| `nanoid@^3.3.18` | Generator-Loop | Next.js |
+| `find-my-way`, `valibot` | Prisma-Dev-CLI | Nur Entwicklung |
+| `brace-expansion@^5.0.8` | ReDoS | ESLint-Plugins |
+
+Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber offiziell anhebt — dann Override ggf. entfernen.
+
+### DB-Sicherheit
+
+- Die App lauscht nur auf `127.0.0.1:3001` (nicht öffentlich).
+- Datenbank idealerweise auf `localhost`; bei Remote-DB TLS mit verifizierter CA nutzen, nicht nur `ssl=true` ohne Zertifikatsprüfung.
+
 ## Fehlersuche
 
 | Problem | Hinweis |
 |---------|---------|
 | PM2: `Cannot find module '.../v24.../bin/npm'` | Node-Version gewechselt; `pm2 delete konto-planer && npm run pm2:start && pm2 save` |
 | `npm audit fix --force` bricht Abhängigkeiten | **Nicht ausführen** — downgraded Prisma/Next/ESLint. Stattdessen gezielte `overrides` in `package.json` oder `npm audit fix` ohne `--force` |
-| `mariadb`-Meldungen im Audit | Kein Fix verfügbar (Prisma MariaDB-Adapter); auf Prisma-/Adapter-Update warten |
+| Audit meldet `mariadb`/`mysql2` | `overrides` in `package.json` prüfen; `npm install` und `npm run audit:check` |
 | Start bricht sofort ab | Pflicht-Env in Produktion prüfen (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `TRUST_PROXY`, SMTP-Variablen) |
 | Keine Bestätigungs-E-Mail | SMTP-Zugangsdaten und `AUTH_URL` prüfen; Spam-Ordner |
 | Login-Redirect falsch | `AUTH_URL` muss die öffentliche HTTPS-URL sein |

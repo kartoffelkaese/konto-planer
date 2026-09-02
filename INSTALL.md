@@ -142,6 +142,8 @@ npm test
 | Problem | Hinweis |
 |---------|---------|
 | PM2: `Cannot find module '.../v24.../bin/npm'` | Node-Version gewechselt; `pm2 delete konto-planer && npm run pm2:start && pm2 save` |
+| `npm audit fix --force` bricht Abhängigkeiten | **Nicht ausführen** — downgraded Prisma/Next/ESLint. Stattdessen gezielte `overrides` in `package.json` oder `npm audit fix` ohne `--force` |
+| `mariadb`-Meldungen im Audit | Kein Fix verfügbar (Prisma MariaDB-Adapter); auf Prisma-/Adapter-Update warten |
 | Start bricht sofort ab | Pflicht-Env in Produktion prüfen (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `TRUST_PROXY`, SMTP-Variablen) |
 | Keine Bestätigungs-E-Mail | SMTP-Zugangsdaten und `AUTH_URL` prüfen; Spam-Ordner |
 | Login-Redirect falsch | `AUTH_URL` muss die öffentliche HTTPS-URL sein |

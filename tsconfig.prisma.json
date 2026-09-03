@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": [
+    "src/lib/prisma.ts",
+    "src/lib/prisma.typecheck.ts"
+  ]
+}

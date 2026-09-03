@@ -267,6 +267,53 @@ Unabhängig vom Haushaltsbuch. Zugriff über **Session `user.id`**, nicht über 
 
 Archivierte Listen: nur Lesen (`403` bei Schreibzugriff).
 
+### Fremdwährungen (Split)
+
+Split rechnet intern **immer in Euro**. Fremdwährungen dienen der Eingabe und Anzeige des Originalbetrags.
+
+| Regel | Wert |
+|-------|------|
+| Max. Währungen pro Liste | 5 (ohne Euro) |
+| Währungskatalog | [Frankfurter v2](https://api.frankfurter.dev/v2/currencies) (~165 Fiat-Währungen, dynamisch gecacht) |
+| Kursquelle | `GET /v2/rate/{currency}/EUR?date=…` (Tageskurs; für „heute“ ggf. Vortag) |
+| Konfiguration | Beim **Anlegen** (`POST /api/split/lists` mit `currencyCodes`) oder später in den Listeneinstellungen |
+
+**`GET /api/split/currencies`**
+
+Antwort: `[{ code, label }, …]` — alle unterstützten Fremdwährungen (sortiert), ohne EUR.
+
+**`GET/POST/DELETE /api/split/lists/:id/currencies`**
+
+- `GET`: konfigurierte Währungen der Liste (`id`, `currencyCode`, `sortOrder`, …)
+- `POST`: `{ currencyCode }` — Währung hinzufügen
+- `DELETE`: Body `{ currencyCode }` — Währung entfernen
+
+**`GET /api/split/lists/:id/exchange-rate`**
+
+| Query | Pflicht | Beschreibung |
+|-------|---------|--------------|
+| `currency` | ja | ISO-4217-Code (EUR oder konfigurierte Listenwährung) |
+| `date` | ja | Buchungsdatum (`YYYY-MM-DD`) |
+| `amount` | nein | Betrag in Fremdwährung → zusätzlich `eurAmount` in der Antwort |
+
+Antwort: `{ currency, rate, rateDate, eurAmount? }` — `rate` = Faktor „1 Einheit Fremdwährung → EUR“. Fehler bei nicht konfigurierter Währung → **`400`**; Kurs nicht verfügbar → **`502`**.
+
+**Ausgaben mit Fremdwährung**
+
+`POST`/`PATCH` `/api/split/lists/:id/expenses` akzeptiert optional `inputCurrency` (EUR oder konfigurierte Währung). Gespeichert werden:
+
+| Feld | Bedeutung |
+|------|-----------|
+| `amount` | Euro-Betrag (Basis für Salden) |
+| `originalAmount` | eingegebener Betrag in Fremdwährung |
+| `originalCurrencyCode` | ISO-Code |
+| `exchangeRate` | angewendeter Kurs |
+| `exchangeRateDate` | Kursdatum |
+
+In der UI: Euro-Betrag groß, Originalbetrag darunter (klein). Tooltip zeigt Kurs und Datum.
+
+Listen ohne konfigurierte Fremdwährungen verhalten sich wie bisher (nur Euro).
+
 ### Öffentlicher Share-Link (ohne Session)
 
 Owner aktiviert den Link in den Split-Einstellungen. Token wird nur gehasht in der DB gespeichert; Klartext-URL nur beim Aktivieren oder Neu-Generieren.

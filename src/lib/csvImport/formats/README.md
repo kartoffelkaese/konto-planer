@@ -17,7 +17,7 @@ Pro **Export-Layout** ein Modul unter `formats/`. Banken werden in [`bankFormats
 4. **`index.ts`:** Modul in `FORMATS`-Array registrieren.
 5. **`bankFormats.ts`:** `bankId → formatId` eintragen (mehrere Banken dürfen dasselbe Format nutzen).
 6. **Tests** unter `src/lib/csvImport/<formatId>.test.ts`.
-7. **`API.md`:** Spalten dokumentieren.
+7. **[API.md](../../../API.md):** Spalten unter „CSV-Import“ dokumentieren.
 
 ## Internes Zielmodell (`ParsedCsvRow`)
 
@@ -37,3 +37,5 @@ Preview, Duplikat-Erkennung, Wiederkehrend und Commit arbeiten nur mit diesem Mo
 - [ ] `headerMarkers` für Kopfzeilen-Suche gesetzt
 - [ ] Bank ohne Mapping **nicht** auf DKB-Fallback leiten
 - [ ] `detect()` für Header-Validierung (Warnung `headerMismatch`)
+
+Weitere Projekt-Doku: [README.md](../../../README.md)

@@ -1,11 +1,11 @@
 {
   "name": "konto-planer",
-  "version": "8.6.2",
+  "version": "8.6.3",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
     "build": "prisma generate && node scripts/verify-prisma-client.mjs && npm run typecheck && next build",
-    "typecheck": "node node_modules/typescript-7/bin/tsc --noEmit",
+    "typecheck": "rm -f tsconfig.tsbuildinfo tsconfig.prisma.tsbuildinfo && node node_modules/typescript-7/bin/tsc --noEmit",
     "start": "next start -H 127.0.0.1 -p 3001",
     "lint": "eslint .",
     "test": "vitest run",

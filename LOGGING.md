@@ -29,7 +29,9 @@ try {
 }
 ```
 
-**Stand im Code:** `logger` wird derzeit in [`/api/dashboard`](src/app/api/dashboard/route.ts) und [`/api/error-log`](src/app/api/error-log/route.ts) genutzt. Viele andere API-Routen schreiben noch direkt per `console.error` – bei neuen oder geänderten Routen `logger` bevorzugen.
+**Stand im Code:** `logger` wird u. a. in [`/api/dashboard`](src/app/api/dashboard/route.ts) und [`/api/error-log`](src/app/api/error-log/route.ts) genutzt. Viele andere API-Routen schreiben noch direkt per `console.error` — bei neuen oder geänderten Routen `logger` bevorzugen.
+
+Build- und Prisma-Fehler erscheinen in der Shell bzw. in den PM2-Logs, nicht über den Client-Logger.
 
 ## Client-Fehler
 

@@ -19,6 +19,8 @@ npm install
 
 `postinstall` führt automatisch `prisma generate` aus.
 
+**Wichtig:** Es darf kein Ordner `prisma/node_modules/` existieren — das wäre ein veralteter, eingecheckter Prisma-Client und führt zu Typecheck-Fehlern (`splitListCurrency`).
+
 ## 2. Umgebungsvariablen
 
 Datei `.env` im Projektroot anlegen:
@@ -54,7 +56,7 @@ Leere Datenbank anlegen, dann Migrationen ausführen:
 npm run db:migrate
 ```
 
-Bei Schema-Updates nach einem Git-Pull erneut `npm run db:migrate` und danach `npx prisma generate` (falls der Client veraltet ist).
+Bei Schema-Updates nach einem Git-Pull erneut `npm run db:migrate` ausführen, danach `npm run build` (generiert den Prisma Client automatisch neu).
 
 ## 4. Build und Start
 
@@ -63,7 +65,14 @@ npm run build
 npm run start
 ```
 
-`npm run build` prüft zuerst die Typen mit TypeScript 7 (`typescript-7`-Alias), danach baut Next.js die App. Dafür ist `@typescript/native-preview` als Marker nötig (TS 7 hat keine `lib/typescript.js`-API mehr). ESLint und andere Tooling-Peers nutzen das reguläre `typescript@6`-Paket — kein npm-Alias auf dem Namen `typescript`, damit `npm install` bei Updates stabil bleibt.
+Ablauf von `npm run build`:
+
+1. `prisma generate` — Client aus `prisma/schema.prisma`
+2. `scripts/verify-prisma-client.mjs` — prüft Schema, generierten Client und eine Mini-Typecheck-Runde
+3. `npm run typecheck` — TypeScript 7 (`typescript-7`-Alias)
+4. `next build`
+
+Typecheck und Next.js-Build nutzen `@typescript/native-preview` als Marker (TS 7 hat keine `lib/typescript.js`-API mehr). ESLint und andere Tooling-Peers nutzen das reguläre `typescript@6`-Paket — kein npm-Alias auf dem Namen `typescript`, damit `npm install` bei Updates stabil bleibt.
 
 Produktionsbetrieb mit **PM2** (empfohlen):
 
@@ -128,14 +137,23 @@ npm run build
 npm run pm2:restart
 ```
 
-`npm run build` führt automatisch `prisma generate` aus (Client-Typen aus dem aktuellen Schema). Nach Schema-Updates unbedingt vorher `npm run db:migrate` ausführen.
+Bei hartnäckigen Build-Problemen:
 
-Bei Build-Problemen oder fehlenden JS-Chunks nach dem Deploy: `rm -rf .next` und `npm run build` erneut ausführen, danach PM2 neu starten.
+```bash
+rm -rf prisma/node_modules node_modules/.prisma tsconfig.tsbuildinfo .next
+npm install
+npm run build
+npm run pm2:restart
+```
+
+Bei fehlenden JS-Chunks nach dem Deploy reicht oft: `rm -rf .next && npm run build && npm run pm2:restart`.
 
 ## 7. Tests (optional)
 
 ```bash
 npm test
+npm run lint
+npm run audit:check
 ```
 
 ## Paket-Updates und Sicherheit
@@ -183,7 +201,9 @@ Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber o
 | Start bricht sofort ab | Pflicht-Env in Produktion prüfen (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `TRUST_PROXY`, SMTP-Variablen) |
 | Keine Bestätigungs-E-Mail | SMTP-Zugangsdaten und `AUTH_URL` prüfen; Spam-Ordner |
 | Login-Redirect falsch | `AUTH_URL` muss die öffentliche HTTPS-URL sein |
-| `Unknown field` / Prisma-Fehler | `git pull`, dann `npm run db:migrate` und `npm run build` (generiert den Client neu). Fehlt `SplitListCurrency` in `prisma/schema.prisma`, ist der Server-Stand veraltet. |
+| `splitListCurrency` / Prisma-Typecheck-Fehler | Veralteter Client in `prisma/node_modules`: `rm -rf prisma/node_modules node_modules/.prisma tsconfig.tsbuildinfo && npm install && npm run build` |
+| Verify-Script schlägt fehl | Schema und generierter Client passen nicht zusammen — siehe Zeile oben |
+| `Unknown field` / Prisma-Laufzeitfehler | `git pull`, dann `npm run db:migrate` und `npm run build` |
 | Endlos-Ladebalken / Chunk-Fehler 500 | Unvollständiger Build: `rm -rf .next && npm run build && npm run pm2:restart` |
 | 502 vom Proxy | App läuft? `curl -I http://127.0.0.1:3001` |
 

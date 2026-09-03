@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/Button'
+import SplitCurrencyPicker from '@/components/split/SplitCurrencyPicker'
 import { createSplitList } from '@/lib/api'
 import { DEFAULT_SPLIT_CATEGORIES } from '@/lib/splitBalances'
 import type { SplitListSummary } from '@/types/split'
@@ -20,6 +21,7 @@ export default function SplitListForm({ onSaved, onCancel }: SplitListFormProps)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [participantInput, setParticipantInput] = useState('')
+  const [currencyCodes, setCurrencyCodes] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -44,6 +46,7 @@ export default function SplitListForm({ onSaved, onCancel }: SplitListFormProps)
         description: description.trim() || undefined,
         participantNames,
         categoryNames: DEFAULT_SPLIT_CATEGORIES.map((c) => c.name),
+        currencyCodes: currencyCodes.length > 0 ? currencyCodes : undefined,
       })
       await onSaved(list)
     } catch (err) {
@@ -100,6 +103,13 @@ export default function SplitListForm({ onSaved, onCancel }: SplitListFormProps)
           Essen, Transport, Unterkunft, Sonstiges.
         </p>
       </div>
+
+      <SplitCurrencyPicker
+        value={currencyCodes}
+        onChange={setCurrencyCodes}
+        idPrefix="split-list-currency"
+        disabled={loading}
+      />
 
       {error && (
         <div className="p-3 bg-danger-subtle text-danger rounded-control border border-danger/20 text-sm">

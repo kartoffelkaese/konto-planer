@@ -3,10 +3,8 @@
 import { useMemo } from 'react'
 import { PencilIcon, TrashIcon, UserGroupIcon } from '@heroicons/react/24/outline'
 import { formatDate } from '@/lib/dateUtils'
-import {
-  formatSplitExpenseAmount,
-  splitExpenseAmountClass,
-} from '@/lib/splitFormatters'
+import SplitAmountDisplay from '@/components/split/SplitAmountDisplay'
+import { splitExpenseAmountClass } from '@/lib/splitFormatters'
 import { getContrastColor } from '@/lib/colorUtils'
 import { Button } from '@/components/Button'
 import EmptyState from '@/components/EmptyState'
@@ -71,7 +69,7 @@ function ParticipantExpensePanel({
         <div className="text-right shrink-0">
           <p className="text-xs text-secondary">Bezahlt</p>
           <p className={`text-lg font-semibold tabular-nums ${splitExpenseAmountClass(total)}`}>
-            {formatSplitExpenseAmount(total)}
+            <SplitAmountDisplay amount={total} className="text-lg font-semibold" />
           </p>
         </div>
       </header>
@@ -112,11 +110,14 @@ function ParticipantExpensePanel({
                   </span>
                 </div>
               </div>
-              <span
-                className={`shrink-0 text-sm font-medium tabular-nums sm:min-w-[5.5rem] sm:text-right ${splitExpenseAmountClass(expense.amount)}`}
-              >
-                {formatSplitExpenseAmount(expense.amount)}
-              </span>
+              <SplitAmountDisplay
+                amount={expense.amount}
+                originalAmount={expense.originalAmount}
+                originalCurrencyCode={expense.originalCurrencyCode}
+                exchangeRate={expense.exchangeRate}
+                exchangeRateDate={expense.exchangeRateDate}
+                className="text-sm font-medium sm:min-w-[5.5rem]"
+              />
             </div>
 
             {!readOnly && (
@@ -239,7 +240,7 @@ export default function SplitExpenseList({
           <div>
             <dt className="text-xs text-secondary">Gesamt</dt>
             <dd className={`font-semibold tabular-nums ${splitExpenseAmountClass(totalAmount)}`}>
-              {formatSplitExpenseAmount(totalAmount)}
+              <SplitAmountDisplay amount={totalAmount} className="font-semibold" />
             </dd>
           </div>
         </dl>

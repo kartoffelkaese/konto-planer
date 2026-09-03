@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/Button'
 import SplitCategorySelect from '@/components/split/SplitCategorySelect'
 import { formatDateForInput } from '@/lib/dateUtils'
-import type { SplitCategory, SplitParticipant } from '@/types/split'
-import { createSplitExpense, updateSplitExpense } from '@/lib/api'
+import { formatCurrency, formatNumber } from '@/lib/formatters'
+import type { SplitCategory, SplitListCurrency, SplitParticipant } from '@/types/split'
+import { createSplitExpense, getSplitExchangeRate, updateSplitExpense } from '@/lib/api'
 import type { SplitExpense } from '@/types/split'
 import {
   splitInputClass,
@@ -17,21 +18,37 @@ type SplitExpenseFormProps = {
   listId: string
   participants: SplitParticipant[]
   categories: SplitCategory[]
+  currencies: SplitListCurrency[]
   expense?: SplitExpense | null
   onSaved: (expense: SplitExpense) => void
   onCancel?: () => void
+}
+
+function initialInputCurrency(expense: SplitExpense | null | undefined): string {
+  if (expense?.originalCurrencyCode) return expense.originalCurrencyCode
+  return 'EUR'
+}
+
+function initialAmount(expense: SplitExpense | null | undefined): string {
+  if (!expense) return ''
+  if (expense.originalCurrencyCode && expense.originalAmount != null) {
+    return String(expense.originalAmount)
+  }
+  return String(expense.amount)
 }
 
 export default function SplitExpenseForm({
   listId,
   participants,
   categories,
+  currencies,
   expense,
   onSaved,
   onCancel,
 }: SplitExpenseFormProps) {
   const [description, setDescription] = useState(expense?.description ?? '')
-  const [amount, setAmount] = useState(expense ? String(expense.amount) : '')
+  const [inputCurrency, setInputCurrency] = useState(() => initialInputCurrency(expense))
+  const [amount, setAmount] = useState(() => initialAmount(expense))
   const [date, setDate] = useState(
     expense ? formatDateForInput(expense.date) : formatDateForInput(new Date())
   )
@@ -45,8 +62,22 @@ export default function SplitExpenseForm({
       ? expense.shareParticipantIds
       : participants.map((p) => p.id)
   )
+  const [ratePreview, setRatePreview] = useState<{
+    eurAmount: number
+    rate: number
+    rateDate: string
+  } | null>(null)
+  const [rateLoading, setRateLoading] = useState(false)
+  const [rateError, setRateError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const currencyOptions = useMemo(
+    () => ['EUR', ...currencies.map((c) => c.currencyCode)],
+    [currencies]
+  )
+
+  const showCurrencyPicker = currencies.length > 0
 
   const toggleShare = (participantId: string) => {
     setShareParticipantIds((prev) =>
@@ -55,6 +86,52 @@ export default function SplitExpenseForm({
         : [...prev, participantId]
     )
   }
+
+  useEffect(() => {
+    if (inputCurrency === 'EUR') {
+      setRatePreview(null)
+      setRateError(null)
+      return
+    }
+
+    const parsedAmount = Number.parseFloat(amount.replace(',', '.'))
+    if (Number.isNaN(parsedAmount) || parsedAmount === 0) {
+      setRatePreview(null)
+      setRateError(null)
+      return
+    }
+
+    const timer = window.setTimeout(async () => {
+      setRateLoading(true)
+      setRateError(null)
+      try {
+        const result = await getSplitExchangeRate(listId, {
+          currency: inputCurrency,
+          date: new Date(date).toISOString(),
+          amount: parsedAmount,
+        })
+        if (result.eurAmount != null) {
+          setRatePreview({
+            eurAmount: result.eurAmount,
+            rate: result.rate,
+            rateDate: result.rateDate,
+          })
+        }
+      } catch (err) {
+        setRatePreview(null)
+        setRateError(
+          err instanceof Error ? err.message : 'Wechselkurs nicht verfügbar'
+        )
+      } finally {
+        setRateLoading(false)
+      }
+    }, 400)
+
+    return () => window.clearTimeout(timer)
+  }, [amount, date, inputCurrency, listId])
+
+  const amountLabel =
+    inputCurrency === 'EUR' ? 'Betrag (€)' : `Betrag (${inputCurrency})`
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,6 +144,10 @@ export default function SplitExpenseForm({
       setError('Mindestens ein Teilnehmer für die Aufteilung auswählen')
       return
     }
+    if (inputCurrency !== 'EUR' && rateError) {
+      setError(rateError)
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -74,6 +155,7 @@ export default function SplitExpenseForm({
       const payload = {
         paidByParticipantId,
         amount: parsedAmount,
+        inputCurrency,
         description: description.trim(),
         date: new Date(date).toISOString(),
         categoryId,
@@ -108,10 +190,29 @@ export default function SplitExpenseForm({
         />
       </div>
 
+      {showCurrencyPicker && (
+        <fieldset>
+          <legend className={`${splitLabelClass} mb-2`}>Währung</legend>
+          <div className="flex flex-wrap gap-2">
+            {currencyOptions.map((code) => (
+              <button
+                key={code}
+                type="button"
+                onClick={() => setInputCurrency(code)}
+                className={splitSegmentButtonClass(inputCurrency === code)}
+                aria-pressed={inputCurrency === code}
+              >
+                {code}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      )}
+
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
           <label htmlFor="split-amount" className={splitLabelClass}>
-            Betrag (€)
+            {amountLabel}
           </label>
           <input
             id="split-amount"
@@ -120,9 +221,28 @@ export default function SplitExpenseForm({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             required
-            placeholder="z. B. 42,50 oder -10 für Erstattung"
+            placeholder={
+              inputCurrency === 'EUR'
+                ? 'z. B. 42,50 oder -10 für Erstattung'
+                : `z. B. Betrag in ${inputCurrency}`
+            }
             className={`mt-1 ${splitInputClass}`}
           />
+          {inputCurrency !== 'EUR' && (
+            <p className="mt-1.5 text-xs text-secondary">
+              {rateLoading && 'Kurs wird geladen…'}
+              {!rateLoading && ratePreview && (
+                <>
+                  ≈ {formatCurrency(ratePreview.eurAmount)} (Kurs 1 {inputCurrency} ={' '}
+                  {formatNumber(ratePreview.rate, 4)} € vom{' '}
+                  {new Date(ratePreview.rateDate).toLocaleDateString('de-DE')})
+                </>
+              )}
+              {!rateLoading && rateError && (
+                <span className="text-danger">{rateError}</span>
+              )}
+            </p>
+          )}
         </div>
         <div>
           <label htmlFor="split-date" className={splitLabelClass}>

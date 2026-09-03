@@ -16,6 +16,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     include: {
       participants: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
       categories: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
+      currencies: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] },
     },
   })
 

@@ -6,20 +6,25 @@ import {
   requireSplitListAccess,
   requireSplitListWrite,
 } from '@/lib/splitAccess'
+import { resolveExpenseAmounts } from '@/lib/splitExpenseCurrency'
 import { serializeExpense } from '@/lib/splitSerialize'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
+type ExpenseBody = {
+  paidByParticipantId?: string
+  amount?: number
+  inputCurrency?: string
+  description?: string
+  date?: string
+  categoryId?: string | null
+  shareParticipantIds?: string[]
+  expenseId?: string
+}
+
 async function validateExpenseInput(
   splitListId: string,
-  body: {
-    paidByParticipantId?: string
-    amount?: number
-    description?: string
-    date?: string
-    categoryId?: string | null
-    shareParticipantIds?: string[]
-  }
+  body: ExpenseBody
 ) {
   if (!body.paidByParticipantId) {
     return NextResponse.json(
@@ -45,6 +50,11 @@ async function validateExpenseInput(
 
   if (!body.date) {
     return NextResponse.json({ error: 'Datum ist erforderlich' }, { status: 400 })
+  }
+
+  const date = new Date(body.date)
+  if (Number.isNaN(date.getTime())) {
+    return NextResponse.json({ error: 'Ungültiges Datum' }, { status: 400 })
   }
 
   const payer = await prisma.splitParticipant.findFirst({
@@ -96,11 +106,24 @@ async function validateExpenseInput(
     }
   }
 
+  const resolved = await resolveExpenseAmounts(splitListId, {
+    inputCurrency: body.inputCurrency,
+    amount: body.amount,
+    date,
+  })
+
+  if ('error' in resolved) {
+    return NextResponse.json(
+      { error: resolved.error },
+      { status: resolved.status }
+    )
+  }
+
   return {
     description,
     shareIds,
-    date: new Date(body.date),
-    amount: Math.round(body.amount * 100) / 100,
+    date,
+    ...resolved,
   }
 }
 
@@ -136,15 +159,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   const writeError = requireSplitListWrite(access)
   if (writeError) return writeError
 
-  let body: {
-    paidByParticipantId?: string
-    amount?: number
-    description?: string
-    date?: string
-    categoryId?: string | null
-    shareParticipantIds?: string[]
-  }
-
+  let body: ExpenseBody
   try {
     body = await request.json()
   } catch {
@@ -160,6 +175,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       paidByParticipantId: body.paidByParticipantId!,
       categoryId: body.categoryId ?? null,
       amount: validated.amount,
+      originalAmount: validated.originalAmount,
+      originalCurrencyCode: validated.originalCurrencyCode,
+      exchangeRate: validated.exchangeRate,
+      exchangeRateDate: validated.exchangeRateDate,
       description: validated.description,
       date: validated.date,
       createdById: authResult.user.id,
@@ -188,16 +207,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const writeError = requireSplitListWrite(access)
   if (writeError) return writeError
 
-  let body: {
-    expenseId?: string
-    paidByParticipantId?: string
-    amount?: number
-    description?: string
-    date?: string
-    categoryId?: string | null
-    shareParticipantIds?: string[]
-  }
-
+  let body: ExpenseBody
   try {
     body = await request.json()
   } catch {
@@ -230,6 +240,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         paidByParticipantId: body.paidByParticipantId!,
         categoryId: body.categoryId ?? null,
         amount: validated.amount,
+        originalAmount: validated.originalAmount,
+        originalCurrencyCode: validated.originalCurrencyCode,
+        exchangeRate: validated.exchangeRate,
+        exchangeRateDate: validated.exchangeRateDate,
         description: validated.description,
         date: validated.date,
         shares: {

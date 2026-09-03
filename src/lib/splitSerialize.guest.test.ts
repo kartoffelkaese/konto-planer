@@ -56,6 +56,7 @@ describe('split guest serializers', () => {
       status: 'ACTIVE',
       participants: [participant],
       categories: [],
+      currencies: [],
     })
     expect(list).not.toHaveProperty('role')
     expect(list.participants[0]).not.toHaveProperty('userId')

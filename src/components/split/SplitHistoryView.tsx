@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { formatCurrency } from '@/lib/formatters'
 import { formatDate } from '@/lib/dateUtils'
+import SplitAmountDisplay from '@/components/split/SplitAmountDisplay'
 import {
   formatSplitExpenseAmount,
   splitExpenseAmountClass,
@@ -130,11 +131,14 @@ function ExpenseHistoryRow({
         </div>
       </div>
 
-      <span
-        className={`text-sm font-medium tabular-nums sm:min-w-[5.5rem] sm:text-right sm:shrink-0 ${splitExpenseAmountClass(expense.amount)}`}
-      >
-        {formatSplitExpenseAmount(expense.amount)}
-      </span>
+      <SplitAmountDisplay
+        amount={expense.amount}
+        originalAmount={expense.originalAmount}
+        originalCurrencyCode={expense.originalCurrencyCode}
+        exchangeRate={expense.exchangeRate}
+        exchangeRateDate={expense.exchangeRateDate}
+        className="text-sm font-medium sm:min-w-[5.5rem] sm:shrink-0"
+      />
     </li>
   )
 }

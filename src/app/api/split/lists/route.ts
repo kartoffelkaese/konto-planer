@@ -4,6 +4,10 @@ import { prisma } from '@/lib/prisma'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 import { DEFAULT_SPLIT_CATEGORIES } from '@/lib/splitBalances'
 import {
+  ensureSplitCurrenciesFresh,
+  validateForeignCurrencyCodes,
+} from '@/lib/splitCurrencies'
+import {
   dedupeDisplayNameAgainst,
   getSplitDisplayNameForUser,
 } from '@/lib/splitUserDisplayName'
@@ -46,6 +50,7 @@ export async function POST(request: Request) {
     description?: string
     participantNames?: string[]
     categoryNames?: string[]
+    currencyCodes?: string[]
   }
 
   try {
@@ -73,6 +78,13 @@ export async function POST(request: Request) {
   const categoryColors = new Map<string, string>(
     DEFAULT_SPLIT_CATEGORIES.map((c) => [c.name, c.color])
   )
+
+  await ensureSplitCurrenciesFresh()
+  const currencyValidation = validateForeignCurrencyCodes(body.currencyCodes ?? [])
+  if (!currencyValidation.ok) {
+    return NextResponse.json({ error: currencyValidation.error }, { status: 400 })
+  }
+  const currencyCodes = currencyValidation.codes
 
   const creatorBaseName = await getSplitDisplayNameForUser(user.id)
   const ownerDisplayName = dedupeDisplayNameAgainst(creatorBaseName, uniqueParticipants)
@@ -107,6 +119,12 @@ export async function POST(request: Request) {
             name: categoryName,
             color: categoryColors.get(categoryName) ?? null,
             sortOrder: index,
+          })),
+        },
+        currencies: {
+          create: currencyCodes.map((currencyCode, sortOrder) => ({
+            currencyCode,
+            sortOrder,
           })),
         },
       },

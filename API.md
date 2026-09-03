@@ -250,12 +250,15 @@ Unabhängig vom Haushaltsbuch. Zugriff über **Session `user.id`**, nicht über 
 | Methode | Pfad | Beschreibung |
 |---------|------|--------------|
 | `GET` | `/api/split/lists` | Alle Split-Listen des Nutzers |
-| `POST` | `/api/split/lists` | `{ name, description?, participantNames?, categoryNames? }` |
+| `POST` | `/api/split/lists` | `{ name, description?, participantNames?, categoryNames?, currencyCodes? }` |
 | `GET`/`PATCH`/`DELETE` | `/api/split/lists/:id` | Detail, archivieren/umbenennen, löschen (Owner) |
 | `GET`/`PATCH`/`POST` | `/api/split/lists/:id/share` | Öffentlichen Lese-Link verwalten (nur **OWNER**) |
 | `GET`/`POST`/`DELETE` | `/api/split/lists/:id/participants` | Teilnehmer verwalten; POST `{ displayName, email? }` |
 | `GET`/`POST`/`PATCH`/`DELETE` | `/api/split/lists/:id/categories` | Kategorien pro Liste (getrennt von Haushalts-Kategorien) |
-| `GET`/`POST`/`PATCH`/`DELETE` | `/api/split/lists/:id/expenses` | Ausgaben CRUD inkl. `categoryId`, `shareParticipantIds` |
+| `GET` | `/api/split/currencies` | Alle von Frankfurter v2 unterstützten Fremdwährungen (dynamisch, gecacht) |
+| `GET`/`POST`/`DELETE` | `/api/split/lists/:id/currencies` | Fremdwährungen pro Liste (max. 5); POST `{ currencyCode }` |
+| `GET` | `/api/split/lists/:id/exchange-rate` | Query: `currency`, `date`, optional `amount` — Tageskurs (Frankfurter v2) |
+| `GET`/`POST`/`PATCH`/`DELETE` | `/api/split/lists/:id/expenses` | Ausgaben CRUD; optional `inputCurrency` (EUR oder konfigurierte Währung), Speicherung in EUR + Originalbetrag |
 | `GET` | `/api/split/lists/:id/balances` | Nettosalden + vereinfachte Schuldvorschläge |
 | `GET`/`POST` | `/api/split/lists/:id/settlements` | Ausgleich abhaken |
 | `GET` | `/api/split/lists/:id/history` | Ausgleiche + Gesamtausgaben (nach Kategorie) |

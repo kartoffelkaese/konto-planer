@@ -2,7 +2,7 @@
 
 import Modal from '@/components/Modal'
 import SplitExpenseForm from '@/components/split/SplitExpenseForm'
-import type { SplitCategory, SplitExpense, SplitParticipant } from '@/types/split'
+import type { SplitCategory, SplitExpense, SplitListCurrency, SplitParticipant } from '@/types/split'
 
 type SplitExpenseModalProps = {
   isOpen: boolean
@@ -10,6 +10,7 @@ type SplitExpenseModalProps = {
   listId: string
   participants: SplitParticipant[]
   categories: SplitCategory[]
+  currencies: SplitListCurrency[]
   expense?: SplitExpense | null
   onSaved: () => void | Promise<void>
 }
@@ -20,6 +21,7 @@ export default function SplitExpenseModal({
   listId,
   participants,
   categories,
+  currencies,
   expense,
   onSaved,
 }: SplitExpenseModalProps) {
@@ -36,6 +38,7 @@ export default function SplitExpenseModal({
           listId={listId}
           participants={participants}
           categories={categories}
+          currencies={currencies}
           expense={expense}
           onSaved={async () => {
             await onSaved()

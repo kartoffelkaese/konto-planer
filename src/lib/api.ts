@@ -11,6 +11,7 @@ import type {
   SplitHistoryResponse,
   SplitHistoryGuestResponse,
   SplitInviteReceived,
+  SplitListCurrency,
   SplitListDetail,
   SplitListGuestDetail,
   SplitListSummary,
@@ -405,6 +406,43 @@ export const deleteSplitCategory = (
     method: 'DELETE',
     body: JSON.stringify(data),
   })
+
+export const getSplitCurrencies = (listId: string) =>
+  apiFetch<SplitListCurrency[]>(`/split/lists/${listId}/currencies`)
+
+export const getSplitAvailableCurrencies = () =>
+  apiFetch<Array<{ code: string; label: string }>>('/split/currencies')
+
+export const addSplitCurrency = (listId: string, currencyCode: string) =>
+  apiFetch<SplitListCurrency>(`/split/lists/${listId}/currencies`, {
+    method: 'POST',
+    body: JSON.stringify({ currencyCode }),
+  })
+
+export const removeSplitCurrency = (listId: string, currencyCode: string) =>
+  apiFetch<{ message: string }>(`/split/lists/${listId}/currencies`, {
+    method: 'DELETE',
+    body: JSON.stringify({ currencyCode }),
+  })
+
+export const getSplitExchangeRate = (
+  listId: string,
+  params: { currency: string; date: string; amount?: number }
+) => {
+  const search = new URLSearchParams({
+    currency: params.currency,
+    date: params.date,
+  })
+  if (params.amount != null) {
+    search.set('amount', String(params.amount))
+  }
+  return apiFetch<{
+    currency: string
+    rate: number
+    rateDate: string
+    eurAmount?: number
+  }>(`/split/lists/${listId}/exchange-rate?${search.toString()}`)
+}
 
 export const getSplitExpenses = (listId: string) =>
   apiFetch<SplitExpense[]>(`/split/lists/${listId}/expenses`)

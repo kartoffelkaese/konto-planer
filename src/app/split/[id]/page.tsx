@@ -366,6 +366,7 @@ function SplitDetailPageContent() {
         listId={listId}
         participants={list.participants}
         categories={list.categories}
+        currencies={list.currencies ?? []}
         expense={editingExpense}
         onSaved={handleExpenseSaved}
       />

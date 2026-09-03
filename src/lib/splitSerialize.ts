@@ -2,6 +2,7 @@ import type {
   SplitCategory,
   SplitExpense,
   SplitExpenseGuest,
+  SplitListCurrency,
   SplitListDetail,
   SplitListGuestDetail,
   SplitListSummary,
@@ -18,6 +19,10 @@ type ExpenseWithRelations = {
   paidByParticipantId: string
   categoryId: string | null
   amount: { toString(): string }
+  originalAmount?: { toString(): string } | null
+  originalCurrencyCode?: string | null
+  exchangeRate?: { toString(): string } | null
+  exchangeRateDate?: Date | null
   description: string
   date: Date
   createdById: string
@@ -68,6 +73,22 @@ export function serializeCategory(c: {
   }
 }
 
+export function serializeListCurrency(c: {
+  id: string
+  splitListId: string
+  currencyCode: string
+  sortOrder: number | null
+  createdAt: Date
+}): SplitListCurrency {
+  return {
+    id: c.id,
+    splitListId: c.splitListId,
+    currencyCode: c.currencyCode,
+    sortOrder: c.sortOrder,
+    createdAt: c.createdAt.toISOString(),
+  }
+}
+
 export function serializeExpense(e: ExpenseWithRelations): SplitExpense {
   return {
     id: e.id,
@@ -75,6 +96,14 @@ export function serializeExpense(e: ExpenseWithRelations): SplitExpense {
     paidByParticipantId: e.paidByParticipantId,
     categoryId: e.categoryId,
     amount: decimalToNumber(e.amount),
+    originalAmount:
+      e.originalAmount != null ? decimalToNumber(e.originalAmount) : null,
+    originalCurrencyCode: e.originalCurrencyCode ?? null,
+    exchangeRate:
+      e.exchangeRate != null ? decimalToNumber(e.exchangeRate) : null,
+    exchangeRateDate: e.exchangeRateDate
+      ? e.exchangeRateDate.toISOString().slice(0, 10)
+      : null,
     description: e.description,
     date: e.date.toISOString(),
     createdById: e.createdById,
@@ -185,6 +214,7 @@ export function serializeListForGuest(list: {
   status: 'ACTIVE' | 'ARCHIVED'
   participants: Parameters<typeof serializeParticipantForGuest>[0][]
   categories: Parameters<typeof serializeCategory>[0][]
+  currencies?: Parameters<typeof serializeListCurrency>[0][]
 }): SplitListGuestDetail {
   return {
     id: list.id,
@@ -194,6 +224,7 @@ export function serializeListForGuest(list: {
     participantCount: list.participants.length,
     participants: list.participants.map(serializeParticipantForGuest),
     categories: list.categories.map(serializeCategory),
+    currencies: (list.currencies ?? []).map(serializeListCurrency),
   }
 }
 
@@ -237,6 +268,7 @@ export function serializeListDetail(
     archivedAt: Date | null
     participants: Parameters<typeof serializeParticipant>[0][]
     categories: Parameters<typeof serializeCategory>[0][]
+    currencies?: Parameters<typeof serializeListCurrency>[0][]
     _count?: { participants: number; expenses: number }
     expenses?: { amount: { toString(): string } }[]
   },
@@ -250,5 +282,6 @@ export function serializeListDetail(
       serializeParticipant(p, participantMeta?.get(p.id))
     ),
     categories: list.categories.map(serializeCategory),
+    currencies: (list.currencies ?? []).map(serializeListCurrency),
   }
 }

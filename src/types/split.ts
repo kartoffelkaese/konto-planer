@@ -36,6 +36,10 @@ export interface SplitExpense {
   paidByParticipantId: string
   categoryId: string | null
   amount: number
+  originalAmount: number | null
+  originalCurrencyCode: string | null
+  exchangeRate: number | null
+  exchangeRateDate: string | null
   description: string
   date: string
   createdById: string
@@ -43,6 +47,14 @@ export interface SplitExpense {
   paidBy?: SplitParticipant
   category?: SplitCategory | null
   shareParticipantIds: string[]
+}
+
+export interface SplitListCurrency {
+  id: string
+  splitListId: string
+  currencyCode: string
+  sortOrder: number | null
+  createdAt: string
 }
 
 export interface SplitSettlement {
@@ -88,6 +100,7 @@ export interface SplitListSummary {
 export interface SplitListDetail extends SplitListSummary {
   participants: SplitParticipant[]
   categories: SplitCategory[]
+  currencies: SplitListCurrency[]
 }
 
 export interface SplitListGuestDetail {
@@ -98,6 +111,7 @@ export interface SplitListGuestDetail {
   participantCount: number
   participants: SplitParticipantGuest[]
   categories: SplitCategory[]
+  currencies: SplitListCurrency[]
 }
 
 export interface SplitShareStatus {
@@ -156,11 +170,13 @@ export interface CreateSplitListData {
   description?: string
   participantNames?: string[]
   categoryNames?: string[]
+  currencyCodes?: string[]
 }
 
 export interface CreateSplitExpenseData {
   paidByParticipantId: string
   amount: number
+  inputCurrency?: string
   description: string
   date: string
   categoryId?: string | null

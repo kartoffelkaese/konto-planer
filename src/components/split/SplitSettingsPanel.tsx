@@ -8,6 +8,7 @@ import { updateSplitList } from '@/lib/api'
 import type { SplitListDetail } from '@/types/split'
 import SplitParticipantList from '@/components/split/SplitParticipantList'
 import SplitCategoryManager from '@/components/split/SplitCategoryManager'
+import SplitCurrencyManager from '@/components/split/SplitCurrencyManager'
 import SplitSharePanel from '@/components/split/SplitSharePanel'
 import {
   splitInputClass,
@@ -203,6 +204,13 @@ export default function SplitSettingsPanel({
       />
 
       <SplitSharePanel listId={listId} isOwner={isOwner} />
+
+      <SplitCurrencyManager
+        listId={listId}
+        currencies={list.currencies}
+        onChange={(currencies) => onListChange({ ...list, currencies })}
+        readOnly={readOnly}
+      />
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <SplitParticipantList

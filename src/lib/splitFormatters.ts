@@ -1,4 +1,4 @@
-import { formatCurrency } from '@/lib/formatters'
+import { formatCurrency, formatNumber } from '@/lib/formatters'
 
 export function decimalToNumber(value: { toString(): string } | number): number {
   return typeof value === 'number' ? value : Number(value.toString())
@@ -15,8 +15,41 @@ export function splitExpenseAmountClass(amount: number): string {
   return 'text-secondary'
 }
 
-export function splitExpenseAmountLabel(amount: number): string {
-  if (amount < -0.005) return 'Erstattung'
-  if (amount > 0.005) return 'Ausgabe'
-  return 'Neutral'
+export function formatForeignCurrency(amount: number, currencyCode: string): string {
+  try {
+    return new Intl.NumberFormat('de-DE', {
+      style: 'currency',
+      currency: currencyCode,
+    }).format(amount)
+  } catch {
+    return `${formatNumber(amount)} ${currencyCode}`
+  }
+}
+
+export function hasForeignOriginal(expense: {
+  originalAmount: number | null
+  originalCurrencyCode: string | null
+}): boolean {
+  return (
+    expense.originalAmount != null &&
+    expense.originalCurrencyCode != null &&
+    expense.originalCurrencyCode !== 'EUR'
+  )
+}
+
+export function formatSplitExpenseExchangeTooltip(expense: {
+  originalCurrencyCode: string | null
+  exchangeRate: number | null
+  exchangeRateDate: string | null
+}): string | null {
+  if (
+    expense.exchangeRate == null ||
+    !expense.originalCurrencyCode ||
+    !expense.exchangeRateDate
+  ) {
+    return null
+  }
+  const rateFormatted = formatNumber(expense.exchangeRate, 4)
+  const dateFormatted = new Date(expense.exchangeRateDate).toLocaleDateString('de-DE')
+  return `1 ${expense.originalCurrencyCode} = ${rateFormatted} € (${dateFormatted})`
 }

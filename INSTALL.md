@@ -124,10 +124,11 @@ server {
 git pull
 npm install
 npm run db:migrate
-npx prisma generate
 npm run build
 npm run pm2:restart
 ```
+
+`npm run build` führt automatisch `prisma generate` aus (Client-Typen aus dem aktuellen Schema). Nach Schema-Updates unbedingt vorher `npm run db:migrate` ausführen.
 
 Bei Build-Problemen oder fehlenden JS-Chunks nach dem Deploy: `rm -rf .next` und `npm run build` erneut ausführen, danach PM2 neu starten.
 

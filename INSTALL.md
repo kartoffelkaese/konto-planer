@@ -141,7 +141,7 @@ npm test
 
 Empfohlener Ablauf bei Dependency-Updates:
 
-1. `ncu` / `ncu -u` (Versionen in `package.json` anheben)
+1. `ncu` / `ncu -u` (Versionen in `package.json` anheben; `typescript` und `typescript-7` sind in [`.ncurc.json`](.ncurc.json) ausgenommen — Side-by-Side TS6/TS7)
 2. `npm install` (Lockfile neu auflösen)
 3. `npm audit fix` (**ohne** `--force`)
 4. Verbleibende transitive Lücken: gezieltes `overrides` in `package.json`, **nicht** `npm audit fix --force`

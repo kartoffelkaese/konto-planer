@@ -183,7 +183,7 @@ Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber o
 | Start bricht sofort ab | Pflicht-Env in Produktion prüfen (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `TRUST_PROXY`, SMTP-Variablen) |
 | Keine Bestätigungs-E-Mail | SMTP-Zugangsdaten und `AUTH_URL` prüfen; Spam-Ordner |
 | Login-Redirect falsch | `AUTH_URL` muss die öffentliche HTTPS-URL sein |
-| `Unknown field` / Prisma-Fehler | `npm run db:migrate` und `npx prisma generate`, danach PM2 neu starten |
+| `Unknown field` / Prisma-Fehler | `git pull`, dann `npm run db:migrate` und `npm run build` (generiert den Client neu). Fehlt `SplitListCurrency` in `prisma/schema.prisma`, ist der Server-Stand veraltet. |
 | Endlos-Ladebalken / Chunk-Fehler 500 | Unvollständiger Build: `rm -rf .next && npm run build && npm run pm2:restart` |
 | 502 vom Proxy | App läuft? `curl -I http://127.0.0.1:3001` |
 

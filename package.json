@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "8.6.3",
+  "version": "8.6.4",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
@@ -16,12 +16,7 @@
     "db:cleanup-unverified": "node scripts/cleanup-unverified-users.mjs",
     "audit:check": "npm audit --audit-level=high",
     "update:check": "ncu && npm run audit:check",
-    "postinstall": "prisma generate",
-    "pm2:start": "pm2 start ecosystem.config.js --env production",
-    "pm2:stop": "pm2 stop konto-planer",
-    "pm2:restart": "pm2 restart konto-planer",
-    "pm2:logs": "pm2 logs konto-planer",
-    "pm2:monitor": "pm2 monit konto-planer"
+    "postinstall": "prisma generate"
   },
   "overrides": {
     "postcss": "^8.5.28",

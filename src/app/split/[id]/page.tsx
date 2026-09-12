@@ -19,6 +19,7 @@ import SplitSettingsPanel from '@/components/split/SplitSettingsPanel'
 import {
   deleteSplitExpense,
   deleteSplitList,
+  deleteSplitSettlement,
   getSplitBalances,
   getSplitExpenses,
   getSplitHistory,
@@ -211,6 +212,23 @@ function SplitDetailPageContent() {
     }
   }
 
+  const handleDeleteSettlement = async (settlementId: string) => {
+    const settlement = history?.settlements.find((item) => item.id === settlementId)
+    const fromName = settlement?.fromParticipant?.displayName ?? '?'
+    const toName = settlement?.toParticipant?.displayName ?? '?'
+    if (!confirm(`Ausgleich ${fromName} → ${toName} löschen?`)) return
+    setError(null)
+    try {
+      await deleteSplitSettlement(listId, settlementId)
+      showToast('Ausgleich wurde gelöscht', 'success')
+      await reloadAll()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Ausgleich konnte nicht gelöscht werden'
+      setError(message)
+      showToast(message, 'error')
+    }
+  }
+
   const handleExpenseSaved = async () => {
     const wasEdit = Boolean(editingExpense)
     closeExpenseModal()
@@ -337,6 +355,8 @@ function SplitDetailPageContent() {
           <SplitSettlementCard
             listId={listId}
             suggestions={balances.suggestions}
+            participants={list.participants}
+            balances={balances.balances}
             onSettled={reloadAll}
             readOnly={readOnly}
           />
@@ -347,6 +367,7 @@ function SplitDetailPageContent() {
         <SplitHistoryView
           history={history}
           participantCount={list.participants.length}
+          onDeleteSettlement={readOnly ? undefined : handleDeleteSettlement}
         />
       )}
 

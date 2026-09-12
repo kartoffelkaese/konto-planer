@@ -74,20 +74,20 @@ Ablauf von `npm run build`:
 
 Typecheck und Next.js-Build nutzen `@typescript/native-preview` als Marker (TS 7 hat keine `lib/typescript.js`-API mehr). ESLint und andere Tooling-Peers nutzen das reguläre `typescript@6`-Paket — kein npm-Alias auf dem Namen `typescript`, damit `npm install` bei Updates stabil bleibt.
 
-Produktionsbetrieb mit **PM2** (empfohlen):
+Produktionsbetrieb mit **PM2** (empfohlen). Die App-Scripts in `package.json` enthalten keine `pm2:*`-Kurzbefehle mehr — PM2 direkt nutzen, Konfiguration in [`ecosystem.config.js`](ecosystem.config.js):
 
 ```bash
 mkdir -p logs
-npm run pm2:start
+pm2 start ecosystem.config.js --env production
 ```
 
-Weitere PM2-Befehle: `npm run pm2:restart`, `npm run pm2:logs`, `npm run pm2:stop`.
+Weitere Befehle: `pm2 restart konto-planer`, `pm2 logs konto-planer`, `pm2 stop konto-planer`.
 
-Nach einem **Node-/NVM-Upgrade** PM2-Prozess neu registrieren (alter `npm`-/`node`-Pfad wird sonst gecacht):
+Nach einem **Node-/NVM-Upgrade** PM2-Prozess neu registrieren (alter `node`-Pfad wird sonst gecacht):
 
 ```bash
 pm2 delete konto-planer
-npm run pm2:start
+pm2 start ecosystem.config.js --env production
 pm2 save
 ```
 
@@ -134,7 +134,7 @@ git pull
 npm install
 npm run db:migrate
 npm run build
-npm run pm2:restart
+pm2 restart konto-planer
 ```
 
 Bei hartnäckigen Build-Problemen:
@@ -143,10 +143,10 @@ Bei hartnäckigen Build-Problemen:
 rm -rf prisma/node_modules node_modules/.prisma tsconfig.tsbuildinfo .next
 npm install
 npm run build
-npm run pm2:restart
+pm2 restart konto-planer
 ```
 
-Bei fehlenden JS-Chunks nach dem Deploy reicht oft: `rm -rf .next && npm run build && npm run pm2:restart`.
+Bei fehlenden JS-Chunks nach dem Deploy reicht oft: `rm -rf .next && npm run build && pm2 restart konto-planer`.
 
 ## 7. Tests (optional)
 
@@ -178,6 +178,8 @@ Lokal prüfen: `npm run audit:check` (High/Critical müssen 0 sein).
 |----------|-------|------------------|
 | `mariadb@^3.5.4` | SSL/Credential-CVEs im DB-Treiber | Runtime: `@prisma/adapter-mariadb` → App |
 | `mysql2@^3.24.3` | Auth-Plugin-Downgrade (Prisma-CLI) | Dev/Deploy: `prisma migrate` |
+| `nodemailer@^10.0.9` | SMTP-Client auf aktueller Major | Runtime: E-Mail-Versand |
+| `eslint@10.10.0` | Tooling-Peers auf ESLint 10 halten | Dev: Lint/CI |
 | `sharp@^0.35.0` | libvips-CVEs | Next.js Build / Image-Opt |
 | `deepmerge-ts@^8.0.0` | Stack-Exhaustion | Prisma-CLI |
 | `nanoid@^3.3.18` | Generator-Loop | Next.js |
@@ -195,7 +197,7 @@ Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber o
 
 | Problem | Hinweis |
 |---------|---------|
-| PM2: `Cannot find module '.../v24.../bin/npm'` | Node-Version gewechselt; `pm2 delete konto-planer && npm run pm2:start && pm2 save` |
+| PM2: `Cannot find module '.../v24.../bin/npm'` oder alter Node-Pfad | Node-Version gewechselt; `pm2 delete konto-planer && pm2 start ecosystem.config.js --env production && pm2 save` |
 | `npm audit fix --force` bricht Abhängigkeiten | **Nicht ausführen** — downgraded Prisma/Next/ESLint. Stattdessen gezielte `overrides` in `package.json` oder `npm audit fix` ohne `--force` |
 | Audit meldet `mariadb`/`mysql2` | `overrides` in `package.json` prüfen; `npm install` und `npm run audit:check` |
 | Start bricht sofort ab | Pflicht-Env in Produktion prüfen (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `TRUST_PROXY`, SMTP-Variablen) |
@@ -204,9 +206,9 @@ Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber o
 | `splitListCurrency` / Prisma-Typecheck-Fehler | Veralteter Client in `prisma/node_modules`: `rm -rf prisma/node_modules node_modules/.prisma tsconfig.tsbuildinfo && npm install && npm run build` |
 | Verify-Script schlägt fehl | Schema und generierter Client passen nicht zusammen — siehe Zeile oben |
 | `Unknown field` / Prisma-Laufzeitfehler | `git pull`, dann `npm run db:migrate` und `npm run build` |
-| Endlos-Ladebalken / Chunk-Fehler 500 | Unvollständiger Build: `rm -rf .next && npm run build && npm run pm2:restart` |
+| Endlos-Ladebalken / Chunk-Fehler 500 | Unvollständiger Build: `rm -rf .next && npm run build && pm2 restart konto-planer` |
 | 502 vom Proxy | App läuft? `curl -I http://127.0.0.1:3001` |
 
-Logs bei PM2: `./logs/pm2-*.log` oder `npm run pm2:logs`.
+Logs bei PM2: `./logs/pm2-*.log` oder `pm2 logs konto-planer`.
 
 Weitere API-Details: [API.md](API.md) · Logging: [LOGGING.md](LOGGING.md)

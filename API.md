@@ -260,7 +260,7 @@ Unabhängig vom Haushaltsbuch. Zugriff über **Session `user.id`**, nicht über 
 | `GET` | `/api/split/lists/:id/exchange-rate` | Query: `currency`, `date`, optional `amount` — Tageskurs (Frankfurter v2) |
 | `GET`/`POST`/`PATCH`/`DELETE` | `/api/split/lists/:id/expenses` | Ausgaben CRUD; optional `inputCurrency` (EUR oder konfigurierte Währung), Speicherung in EUR + Originalbetrag |
 | `GET` | `/api/split/lists/:id/balances` | Nettosalden + vereinfachte Schuldvorschläge |
-| `GET`/`POST` | `/api/split/lists/:id/settlements` | Ausgleich abhaken |
+| `GET`/`POST`/`DELETE` | `/api/split/lists/:id/settlements` | Ausgleichszahlungen; POST `{ fromParticipantId, toParticipantId, amount, note?, settledAt? }` — Teilbeträge und freie Zahlungen; DELETE `{ settlementId }` |
 | `GET` | `/api/split/lists/:id/history` | Ausgleiche + Gesamtausgaben (nach Kategorie) |
 | `GET` | `/api/split/invites/received` | Offene Split-Einladungen |
 | `PATCH` | `/api/split/invites/:id` | `{ action: "accept" \| "decline" }` |
@@ -313,6 +313,28 @@ Antwort: `{ currency, rate, rateDate, eurAmount? }` — `rate` = Faktor „1 Ein
 In der UI: Euro-Betrag groß, Originalbetrag darunter (klein). Tooltip zeigt Kurs und Datum.
 
 Listen ohne konfigurierte Fremdwährungen verhalten sich wie bisher (nur Euro).
+
+### Ausgleichszahlungen (Split)
+
+Ausgleiche sind **eigene Einträge** (kein Statusflag an der Schuld). Teilbeträge und freie Paare sind erlaubt.
+
+**`POST /api/split/lists/:id/settlements`**
+
+| Feld | Pflicht | Beschreibung |
+|------|---------|--------------|
+| `fromParticipantId` | ja | Zahlende Person |
+| `toParticipantId` | ja | Empfänger (muss verschieden sein) |
+| `amount` | ja | Betrag in Euro, größer als 0 (auch kleiner als der offene Saldo) |
+| `note` | nein | z. B. „1. Teilzahlung von 2“ |
+| `settledAt` | nein | Zahlungsdatum (ISO); Standard: jetzt |
+
+Antwort: serialisierte Ausgleichszahlung (`201`). Die Salden werden neu berechnet; `GET …/balances` liefert aktualisierte Vorschläge.
+
+**`DELETE /api/split/lists/:id/settlements`**
+
+Body: `{ settlementId }`. Archivierte Listen und Gast-Ansicht: kein Schreibzugriff.
+
+In der UI: Dialog unter Salden (Vorschlag vorbelegt oder freie Auswahl), Papierkorb in der Historie.
 
 ### Öffentlicher Share-Link (ohne Session)
 

@@ -3,15 +3,20 @@
 import { useState } from 'react'
 import { ArrowLongRightIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 import { Button } from '@/components/Button'
-import { useToast } from '@/hooks/useToast'
 import { formatCurrency } from '@/lib/formatters'
-import type { SplitDebtSuggestion } from '@/types/split'
-import { createSplitSettlement } from '@/lib/api'
+import SplitSettlementModal from '@/components/split/SplitSettlementModal'
+import type {
+  SplitBalanceEntry,
+  SplitDebtSuggestion,
+  SplitParticipant,
+} from '@/types/split'
 import { splitSectionCardClass, splitSectionTitleClass } from '@/components/split/splitUiClasses'
 
 type SplitSettlementCardProps = {
   listId: string
   suggestions: SplitDebtSuggestion[]
+  participants: SplitParticipant[]
+  balances: SplitBalanceEntry[]
   onSettled: () => void
   readOnly?: boolean
 }
@@ -19,59 +24,90 @@ type SplitSettlementCardProps = {
 export default function SplitSettlementCard({
   listId,
   suggestions,
+  participants,
+  balances,
   onSettled,
   readOnly = false,
 }: SplitSettlementCardProps) {
-  const { showToast } = useToast()
-  const [loadingKey, setLoadingKey] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [activeSuggestion, setActiveSuggestion] = useState<SplitDebtSuggestion | null>(
+    null
+  )
 
-  const handleSettle = async (suggestion: SplitDebtSuggestion) => {
-    const key = `${suggestion.fromParticipantId}-${suggestion.toParticipantId}`
-    setLoadingKey(key)
-    setError(null)
-    try {
-      await createSplitSettlement(listId, {
-        fromParticipantId: suggestion.fromParticipantId,
-        toParticipantId: suggestion.toParticipantId,
-        amount: suggestion.amount,
-      })
-      showToast(
-        `${suggestion.fromDisplayName} → ${suggestion.toDisplayName}: Ausgleich erfasst`,
-        'success'
-      )
-      onSettled()
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Ausgleich konnte nicht gespeichert werden'
-      setError(message)
-      showToast(message, 'error')
-    } finally {
-      setLoadingKey(null)
-    }
+  const openSuggestion = (suggestion: SplitDebtSuggestion) => {
+    setActiveSuggestion(suggestion)
+    setModalOpen(true)
   }
+
+  const openFree = () => {
+    setActiveSuggestion(null)
+    setModalOpen(true)
+  }
+
+  const modal = (
+    <SplitSettlementModal
+      isOpen={modalOpen}
+      onClose={() => setModalOpen(false)}
+      listId={listId}
+      participants={participants}
+      balances={balances}
+      suggestion={activeSuggestion}
+      onSaved={onSettled}
+    />
+  )
 
   if (suggestions.length === 0) {
     return (
-      <div className="flex items-start gap-3 rounded-lg border border-accent-border bg-accent-subtle p-4 text-sm text-primary">
-        <CheckCircleIcon className="h-5 w-5 shrink-0 text-accent" aria-hidden="true" />
-        <div>
-          <p className="font-medium">Alles ausgeglichen</p>
-          <p className="mt-0.5 text-secondary">
-            Aktuell schuldet niemand etwas — oder offene Beträge wurden bereits ausgeglichen.
-          </p>
+      <>
+        <div className="flex flex-col gap-3 rounded-lg border border-accent-border bg-accent-subtle p-4 text-sm text-primary sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <CheckCircleIcon className="h-5 w-5 shrink-0 text-accent" aria-hidden="true" />
+            <div>
+              <p className="font-medium">Alles ausgeglichen</p>
+              <p className="mt-0.5 text-secondary">
+                Aktuell schuldet niemand etwas — oder offene Beträge wurden bereits ausgeglichen.
+                {!readOnly && ' Freie Zahlungen können trotzdem nachgetragen werden.'}
+              </p>
+            </div>
+          </div>
+          {!readOnly && (
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={openFree}
+              className="w-full shrink-0 sm:w-auto"
+            >
+              Zahlung erfassen
+            </Button>
+          )}
         </div>
-      </div>
+        {modal}
+      </>
     )
   }
 
   return (
     <section className={`${splitSectionCardClass} space-y-4`}>
-      <div>
-        <h3 className={splitSectionTitleClass}>Nächste Ausgleiche</h3>
-        <p className="text-sm text-secondary">
-          Minimale Anzahl Zahlungen, um alle Salden auszugleichen.
-          {!readOnly && ' Markieren Sie erledigte Überweisungen als ausgeglichen.'}
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className={splitSectionTitleClass}>Nächste Ausgleiche</h3>
+          <p className="text-sm text-secondary">
+            Minimale Anzahl Zahlungen, um alle Salden auszugleichen.
+            {!readOnly && ' Teilzahlungen und freie Zahlungen zwischen beliebigen Teilnehmern sind möglich.'}
+          </p>
+        </div>
+        {!readOnly && (
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={openFree}
+            className="w-full shrink-0 sm:w-auto"
+          >
+            Zahlung erfassen
+          </Button>
+        )}
       </div>
 
       <ul className="space-y-3">
@@ -95,13 +131,12 @@ export default function SplitSettlementCard({
               </div>
               {!readOnly && (
                 <Button
+                  type="button"
                   size="sm"
                   className="w-full shrink-0 sm:w-auto"
-                  onClick={() => handleSettle(suggestion)}
-                  loading={loadingKey === key}
-                  loadingText="…"
+                  onClick={() => openSuggestion(suggestion)}
                 >
-                  Ausgeglichen
+                  Ausgleich erfassen
                 </Button>
               )}
             </li>
@@ -109,11 +144,7 @@ export default function SplitSettlementCard({
         })}
       </ul>
 
-      {error && (
-        <p className="text-sm text-danger" role="alert">
-          {error}
-        </p>
-      )}
+      {modal}
     </section>
   )
 }

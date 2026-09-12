@@ -54,7 +54,7 @@ Details zur Route: [API.md](API.md) → `/api/error-log`.
 
 ## Produktion (PM2)
 
-Mit [`ecosystem.config.js`](ecosystem.config.js) und `npm run pm2:start`:
+Mit [`ecosystem.config.js`](ecosystem.config.js) und `pm2 start ecosystem.config.js --env production`:
 
 | Datei | Inhalt |
 |-------|--------|
@@ -62,7 +62,7 @@ Mit [`ecosystem.config.js`](ecosystem.config.js) und `npm run pm2:start`:
 | `./logs/pm2-error.log` | stderr |
 | `./logs/pm2-combined.log` | kombiniert, mit Zeitstempel |
 
-Befehle: `npm run pm2:logs`, `npm run pm2:restart`, `npm run pm2:stop`.
+Befehle: `pm2 logs konto-planer`, `pm2 restart konto-planer`, `pm2 stop konto-planer`.
 
 Vor dem ersten Start: `mkdir -p logs`.
 

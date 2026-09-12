@@ -102,3 +102,40 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
   return NextResponse.json(serializeSettlement(settlement), { status: 201 })
 }
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params
+  const authResult = await getUserBySession()
+  if (isErrorResponse(authResult)) return authResult
+
+  const access = await requireSplitListAccess(authResult.user.id, id)
+  if (access instanceof NextResponse) return access
+
+  const writeError = requireSplitListWrite(access)
+  if (writeError) return writeError
+
+  let body: { settlementId?: string }
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Ungültige Anfrage' }, { status: 400 })
+  }
+
+  if (!body.settlementId) {
+    return NextResponse.json(
+      { error: 'settlementId ist erforderlich' },
+      { status: 400 }
+    )
+  }
+
+  const existing = await prisma.splitSettlement.findFirst({
+    where: { id: body.settlementId, splitListId: id },
+  })
+  if (!existing) {
+    return NextResponse.json({ error: 'Ausgleich nicht gefunden' }, { status: 404 })
+  }
+
+  await prisma.splitSettlement.delete({ where: { id: existing.id } })
+
+  return NextResponse.json({ message: 'Ausgleich gelöscht' })
+}

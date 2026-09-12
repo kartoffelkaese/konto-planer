@@ -6,7 +6,9 @@ import {
   BanknotesIcon,
   CheckCircleIcon,
   ReceiptPercentIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline'
+import { Button } from '@/components/Button'
 import { formatCurrency } from '@/lib/formatters'
 import { formatDate } from '@/lib/dateUtils'
 import SplitAmountDisplay from '@/components/split/SplitAmountDisplay'
@@ -33,6 +35,7 @@ type SplitHistoryViewProps = {
   history: SplitHistoryViewData
   participantCount?: number
   groupByCategory?: boolean
+  onDeleteSettlement?: (settlementId: string) => void
 }
 
 function formatShareLabel(shareCount: number, participantCount: number): string {
@@ -44,14 +47,16 @@ function formatShareLabel(shareCount: number, participantCount: number): string 
 
 function SettlementRow({
   settlement,
+  onDelete,
 }: {
   settlement: SplitSettlement | SplitSettlementGuest
+  onDelete?: (settlementId: string) => void
 }) {
   const fromName = settlement.fromParticipant?.displayName ?? '?'
   const toName = settlement.toParticipant?.displayName ?? '?'
 
   return (
-    <li className="px-4 py-3 transition-colors hover:bg-surface-muted">
+    <li className="group px-4 py-3 transition-colors hover:bg-surface-muted">
       <div className="mb-2 flex items-center justify-between gap-3 sm:hidden">
         <p className="text-sm tabular-nums text-secondary">{formatDate(settlement.settledAt)}</p>
         <span className="text-sm font-semibold tabular-nums text-expense">
@@ -90,6 +95,19 @@ function SettlementRow({
             <span className="max-w-xs text-right text-xs text-secondary">{settlement.note}</span>
           )}
         </div>
+
+        {onDelete && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="self-end max-md:min-h-11 max-md:min-w-11 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+            onClick={() => onDelete(settlement.id)}
+            aria-label={`Ausgleich ${fromName} an ${toName} löschen`}
+          >
+            <TrashIcon className="h-4 w-4 text-expense" aria-hidden="true" />
+          </Button>
+        )}
       </div>
 
       {settlement.note && (
@@ -155,6 +173,7 @@ export default function SplitHistoryView({
   history,
   participantCount = 0,
   groupByCategory = true,
+  onDeleteSettlement,
 }: SplitHistoryViewProps) {
   const totalSettled = useMemo(
     () => history.settlements.reduce((sum, settlement) => sum + settlement.amount, 0),
@@ -257,7 +276,11 @@ export default function SplitHistoryView({
         ) : (
           <ul className="divide-y divide-border bg-canvas">
             {history.settlements.map((settlement) => (
-              <SettlementRow key={settlement.id} settlement={settlement} />
+              <SettlementRow
+                key={settlement.id}
+                settlement={settlement}
+                onDelete={onDeleteSettlement}
+              />
             ))}
           </ul>
         )}

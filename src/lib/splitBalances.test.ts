@@ -65,6 +65,36 @@ describe('computeParticipantBalances', () => {
     expect(balances.find((b) => b.participantId === 'c')?.net).toBe(-20)
   })
 
+  it('applies a partial settlement and leaves the remainder open', () => {
+    const { balances, suggestions } = computeBalancesWithSuggestions(
+      [
+        { id: 'a', displayName: 'Anna' },
+        { id: 'b', displayName: 'Ben' },
+      ],
+      [
+        {
+          id: 'e1',
+          amount: 300,
+          paidByParticipantId: 'a',
+          shareParticipantIds: ['b'],
+        },
+      ],
+      [{ fromParticipantId: 'b', toParticipantId: 'a', amount: 200 }]
+    )
+
+    expect(balances.find((b) => b.participantId === 'a')?.net).toBe(100)
+    expect(balances.find((b) => b.participantId === 'b')?.net).toBe(-100)
+    expect(suggestions).toEqual([
+      {
+        fromParticipantId: 'b',
+        fromDisplayName: 'Ben',
+        toParticipantId: 'a',
+        toDisplayName: 'Anna',
+        amount: 100,
+      },
+    ])
+  })
+
   it('applies settlements to net balances', () => {
     const balances = computeParticipantBalances(
       participants,

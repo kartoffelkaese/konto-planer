@@ -478,11 +478,18 @@ export const createSplitSettlement = (
     toParticipantId: string
     amount: number
     note?: string
+    settledAt?: string
   }
 ) =>
   apiFetch<SplitSettlement>(`/split/lists/${listId}/settlements`, {
     method: 'POST',
     body: JSON.stringify(data),
+  })
+
+export const deleteSplitSettlement = (listId: string, settlementId: string) =>
+  apiFetch<{ message: string }>(`/split/lists/${listId}/settlements`, {
+    method: 'DELETE',
+    body: JSON.stringify({ settlementId }),
   })
 
 export const getSplitHistory = (listId: string) =>

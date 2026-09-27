@@ -5,6 +5,9 @@ import { SMTP_ENV_KEYS } from '@/lib/email'
  */
 export function assertProductionEnv(): void {
   if (process.env.NODE_ENV !== 'production') return
+  // `next build` lädt Routen-Module zum Sammeln der Seitendaten – dort sind keine
+  // Laufzeit-Secrets nötig (z. B. CI ohne .env). Geprüft wird beim Serverstart.
+  if (process.env.NEXT_PHASE === 'phase-production-build') return
 
   const missing: string[] = []
   if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET) {

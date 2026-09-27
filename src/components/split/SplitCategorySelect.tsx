@@ -112,12 +112,12 @@ export default function SplitCategorySelect({
             setShowNew(true)
           }}
           disabled={disabled}
-          className="mt-2 text-sm text-accent hover:underline disabled:opacity-50"
+          className="mt-1 -ml-2 inline-flex min-h-11 items-center rounded-pill px-2 text-sm font-medium text-accent hover:bg-accent-subtle disabled:opacity-50"
         >
           + Neue Kategorie
         </button>
       ) : (
-        <div className="mt-3 space-y-3 rounded-lg border border-border bg-canvas p-3">
+        <div className="mt-2 space-y-3 rounded-control bg-surface-muted/70 p-3">
           <input
             type="text"
             value={newName}

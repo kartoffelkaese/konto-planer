@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ExclamationCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { ChevronLeftIcon, ExclamationCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
 import PageContextHeader from '@/components/PageContextHeader'
 import PageLoader from '@/components/PageLoader'
 import { Button } from '@/components/Button'
@@ -271,6 +271,13 @@ function SplitDetailPageContent() {
 
   return (
     <SplitPageShell fabPadding>
+      <Link
+        href="/split"
+        className="mb-1 -ml-1 inline-flex min-h-11 items-center gap-1 rounded-pill px-1 text-sm font-medium text-secondary hover:text-primary"
+      >
+        <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
+        Alle Listen
+      </Link>
       <PageContextHeader
         title={list.name}
         subtitle={
@@ -280,29 +287,24 @@ function SplitDetailPageContent() {
         }
         actions={
           <div className="flex flex-wrap gap-2">
-            <Link href="/split">
-              <Button variant="secondary" size="sm">
-                Zurück
-              </Button>
-            </Link>
             {canAddExpense && (
-              <Button size="sm" className="hidden md:inline-flex" onClick={openNewExpenseModal}>
+              <Button size="sm" className="max-md:hidden" onClick={openNewExpenseModal}>
                 <PlusIcon className="h-4 w-4" aria-hidden="true" />
                 Ausgabe
               </Button>
             )}
             {isOwner && !readOnly && (
-              <Button variant="secondary" size="sm" className="hidden md:inline-flex" onClick={handleArchive}>
+              <Button variant="secondary" size="sm" className="max-md:hidden" onClick={handleArchive}>
                 Archivieren
               </Button>
             )}
             {isOwner && readOnly && (
-              <Button variant="secondary" size="sm" className="hidden md:inline-flex" onClick={handleUnarchive}>
+              <Button variant="secondary" size="sm" className="max-md:hidden" onClick={handleUnarchive}>
                 Reaktivieren
               </Button>
             )}
             {isOwner && (
-              <Button variant="danger-outline" size="sm" className="hidden md:inline-flex" onClick={handleDelete}>
+              <Button variant="danger-outline" size="sm" className="max-md:hidden" onClick={handleDelete}>
                 Löschen
               </Button>
             )}
@@ -311,7 +313,7 @@ function SplitDetailPageContent() {
       />
 
       {readOnly && (
-        <div className="mb-4 rounded-lg border border-accent-border bg-accent-subtle p-4 text-sm text-primary">
+        <div className="mb-4 rounded-card bg-accent-subtle p-4 text-sm text-primary">
           Diese Liste ist archiviert. Ausgaben und Einstellungen können nicht mehr geändert werden.
           {isOwner && (
             <span>
@@ -324,7 +326,7 @@ function SplitDetailPageContent() {
 
       {error && (
         <div
-          className="mb-4 flex items-start gap-3 rounded-card border border-danger/20 bg-danger-subtle p-4 text-sm text-danger"
+          className="mb-4 flex items-start gap-3 rounded-card bg-danger-subtle p-4 text-sm text-danger"
           role="alert"
         >
           <ExclamationCircleIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
@@ -395,7 +397,7 @@ function SplitDetailPageContent() {
       {canAddExpense && (
         <Button
           type="button"
-          className="md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] right-[calc(1.5rem+env(safe-area-inset-right,0px))] z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
+          className="md:hidden fixed bottom-[calc(1rem+var(--mobile-tabbar-space,env(safe-area-inset-bottom,0px)))] right-[calc(1.5rem+env(safe-area-inset-right,0px))] z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
           onClick={openNewExpenseModal}
           aria-label="Neue Ausgabe"
         >

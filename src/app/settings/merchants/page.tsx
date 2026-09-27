@@ -226,17 +226,18 @@ export default function MerchantsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 md:py-8">
       <SettingsBreadcrumb current="Händler" />
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex items-center justify-between gap-3 mb-6">
         <h1 className="page-title">Händler verwalten</h1>
         {canWrite && (
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-control shadow-sm text-accent-foreground bg-accent hover:bg-accent-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+          aria-label="Händler hinzufügen"
+          className="btn-primary inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-control px-4 text-sm font-semibold"
         >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          Händler hinzufügen
+          <PlusIcon className="h-5 w-5" aria-hidden="true" />
+          <span className="max-sm:hidden">Händler hinzufügen</span>
         </button>
         )}
       </div>
@@ -248,7 +249,7 @@ export default function MerchantsPage() {
       )}
 
       {/* Filter-Bereich */}
-      <div className="bg-surface rounded-lg border border-border p-4 mb-8">
+      <div className="card p-4 md:p-5 mb-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="search" className="block text-sm font-medium text-primary mb-1">
@@ -284,7 +285,7 @@ export default function MerchantsPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border border-border p-4 mb-8 bg-surface">
+      <div className="card p-4 md:p-5 mb-8">
         {merchants.length === 0 ? (
           <div className="px-6 py-8 text-center text-secondary">
             Keine Händler vorhanden
@@ -302,13 +303,13 @@ export default function MerchantsPage() {
               return (
               <div
                 key={merchant.id}
-                className="bg-surface rounded-lg shadow-sm border border-border p-4"
+                className="rounded-control bg-surface-muted/60 p-4"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-medium text-primary">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <h3 className="min-w-0 truncate text-base font-semibold text-primary">
                     {merchant.name}
                   </h3>
-                  <div className="flex items-center space-x-2">
+                  <div className="-mr-2 flex shrink-0 items-center">
                     {canWrite && (
                     <>
                     <button
@@ -320,18 +321,20 @@ export default function MerchantsPage() {
                         })
                         setShowEditModal(true)
                       }}
-                      className="text-secondary hover:text-primary"
+                      aria-label={`${merchant.name} bearbeiten`}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-full text-secondary hover:bg-surface hover:text-primary"
                     >
-                      <PencilIcon className="h-5 w-5" />
+                      <PencilIcon className="h-5 w-5" aria-hidden="true" />
                     </button>
                     <button
                       onClick={() => {
                         setSelectedMerchant(merchant)
                         setShowDeleteModal(true)
                       }}
-                      className="text-secondary hover:text-danger"
+                      aria-label={`${merchant.name} löschen`}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-full text-secondary hover:bg-danger-subtle hover:text-danger"
                     >
-                      <TrashIcon className="h-5 w-5" />
+                      <TrashIcon className="h-5 w-5" aria-hidden="true" />
                     </button>
                     </>
                     )}

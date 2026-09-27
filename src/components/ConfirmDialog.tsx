@@ -95,14 +95,14 @@ export default function ConfirmDialog({
         className="fixed inset-0 z-10 flex min-h-screen items-end justify-center p-0 text-center md:items-center md:px-4 md:pt-4 md:pb-20 pointer-events-none"
       >
         <div
-          className="fixed inset-0 z-0 bg-primary/50 transition-opacity pointer-events-auto"
+          className="fixed inset-0 z-0 bg-black/40 backdrop-blur-sm transition-opacity pointer-events-auto"
           aria-hidden="true"
           onClick={() => {
             if (!isBusy) onClose()
           }}
         />
 
-        <div className="relative z-10 inline-block w-full max-w-lg transform overflow-hidden rounded-t-card border border-border bg-surface px-4 pt-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] text-left align-bottom shadow-[0_16px_40px_var(--shadow-color)] transition-all md:rounded-card md:my-8 md:p-6 md:align-middle md:pb-6 pointer-events-auto">
+        <div className="relative z-10 inline-block w-full max-w-lg transform overflow-hidden rounded-t-[1.5rem] border border-hairline bg-surface-raised px-4 pt-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] text-left align-bottom shadow-raised transition-all md:rounded-[1.5rem] md:my-8 md:p-6 md:align-middle md:pb-6 pointer-events-auto">
           <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border md:hidden" aria-hidden="true" />
           <div className="md:flex md:items-start">
             <div

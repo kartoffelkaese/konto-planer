@@ -53,11 +53,14 @@ export default function MonthlyOverview({
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full bg-accent-subtle border border-accent rounded-card border-l-4 border-l-accent p-4 flex items-center justify-between gap-3 text-left"
+          aria-expanded={isExpanded}
+          className="hero-card w-full p-5 flex items-center justify-between gap-3 text-left active:!scale-100"
         >
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-pending">Verfügbar</p>
-            <p className="text-xl font-semibold tabular-nums text-pending mt-0.5">
+            <p className="eyebrow">Verfügbar</p>
+            <p
+              className={`amount-lg mt-1 ${available < 0 ? 'text-expense' : 'text-primary'}`}
+            >
               {formatCurrency(available)}
             </p>
             <p className="text-xs text-secondary mt-1">
@@ -65,7 +68,8 @@ export default function MonthlyOverview({
             </p>
           </div>
           <ChevronDownIcon
-            className={`h-5 w-5 text-accent transition-transform duration-expand ${
+            aria-hidden="true"
+            className={`h-5 w-5 shrink-0 text-secondary transition-transform duration-expand ${
               isExpanded ? 'rotate-180' : ''
             }`}
           />
@@ -78,7 +82,7 @@ export default function MonthlyOverview({
         >
           <div className="overflow-hidden">
             <div
-              className={`mt-4 space-y-4 transition-opacity duration-expand ${
+              className={`mt-3 grid grid-cols-2 gap-3 transition-opacity duration-expand ${
                 isExpanded ? 'opacity-100' : 'opacity-0'
               }`}
             >

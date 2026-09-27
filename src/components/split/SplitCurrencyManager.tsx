@@ -105,7 +105,7 @@ export default function SplitCurrencyManager({
         <ul className="flex flex-wrap gap-2">
           {currencies.map((currency) => (
             <li key={currency.id}>
-              <span className="inline-flex items-center gap-1 rounded-full border border-accent-border bg-accent-subtle px-3 py-1 text-sm text-primary">
+              <span className="inline-flex items-center gap-1 rounded-full bg-accent-subtle px-3 py-1 text-sm text-primary">
                 {currency.currencyCode}
                 {!readOnly && (
                   <button

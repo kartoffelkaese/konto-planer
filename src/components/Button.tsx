@@ -14,29 +14,29 @@ export type ButtonVariant =
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'text-xs px-3 py-1.5',
-  md: 'text-sm px-4 py-2',
-  lg: 'text-sm px-4 py-3',
+  sm: 'text-xs px-3 min-h-11 md:min-h-9',
+  md: 'text-sm px-4 min-h-11',
+  lg: 'text-base px-5 min-h-12',
 }
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'btn-primary border border-transparent shadow-sm text-accent-foreground focus:ring-accent',
-  secondary: 'btn-secondary shadow-sm focus:ring-accent',
+    'btn-primary border border-transparent text-accent-foreground focus-visible:ring-accent',
+  secondary: 'btn-secondary focus-visible:ring-accent',
   danger:
-    'bg-danger text-danger-foreground border border-transparent shadow-sm hover:bg-danger-hover focus:ring-danger',
+    'bg-danger text-danger-foreground border border-transparent hover:bg-danger-hover focus-visible:ring-danger',
   'danger-outline':
-    'text-expense bg-surface border border-danger shadow-sm hover:bg-danger-subtle focus:ring-danger',
+    'text-danger bg-danger-subtle border border-transparent hover:border-danger focus-visible:ring-danger',
   ghost:
-    'bg-transparent text-accent border-transparent hover:text-accent-hover focus:ring-accent',
+    'bg-transparent text-accent border border-transparent hover:bg-accent-subtle hover:text-accent-hover focus-visible:ring-accent',
   'accent-subtle':
-    'text-accent bg-accent-subtle border border-transparent hover:opacity-90 focus:ring-accent',
+    'text-accent bg-accent-subtle border border-transparent hover:border-accent-border focus-visible:ring-accent',
   warning:
-    'bg-pending text-pending-foreground border border-transparent shadow-sm hover:opacity-90 focus:ring-pending',
+    'bg-pending text-pending-foreground border border-transparent hover:opacity-90 focus-visible:ring-pending',
 }
 
 const baseClasses =
-  'inline-flex items-center justify-center gap-2 rounded-control font-medium transition-colors duration-[var(--motion-duration-feedback)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-canvas disabled:pointer-events-none disabled:opacity-50'
+  'inline-flex items-center justify-center gap-2 rounded-control font-semibold transition-colors duration-[var(--motion-duration-feedback)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:pointer-events-none disabled:opacity-50'
 
 function ButtonSpinner({ className = '' }: { className?: string }) {
   return (

@@ -7,10 +7,10 @@ interface SettingsBreadcrumbProps {
 
 export default function SettingsBreadcrumb({ current }: SettingsBreadcrumbProps) {
   return (
-    <nav aria-label="Breadcrumb" className="mb-6">
+    <nav aria-label="Breadcrumb" className="mb-3 md:mb-4">
       <Link
         href="/settings"
-        className="inline-flex items-center gap-1 text-sm text-accent hover:underline"
+        className="inline-flex min-h-11 items-center gap-1 text-sm text-accent hover:underline"
       >
         <ChevronLeftIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
         Einstellungen

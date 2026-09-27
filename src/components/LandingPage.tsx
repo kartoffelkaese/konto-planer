@@ -313,7 +313,7 @@ function LandingHeader() {
             className={getButtonClassName({
               variant: 'ghost',
               size: 'sm',
-              className: 'hidden sm:inline-flex',
+              className: 'max-sm:hidden',
             })}
           >
             Anmelden
@@ -438,7 +438,7 @@ export default function LandingPage() {
             {highlights.map(({ title, description }) => (
               <article
                 key={title}
-                className="rounded-card border border-border bg-surface p-5 transition-[border-color,box-shadow] duration-feedback hover:border-accent-border hover:shadow-[0_8px_24px_var(--shadow-color)]"
+                className="card p-5 transition-[border-color,box-shadow] duration-feedback hover:border-accent-border hover:shadow-[0_8px_24px_var(--shadow-color)]"
               >
                 <h2 className="text-base font-semibold text-primary">{title}</h2>
                 <p className="mt-2 text-sm leading-relaxed text-secondary">{description}</p>
@@ -464,7 +464,7 @@ export default function LandingPage() {
             {features.map(({ icon: Icon, title, description }) => (
               <article
                 key={title}
-                className="landing-feature-card group rounded-card border border-border bg-surface p-6 transition-[border-color,box-shadow,transform] duration-feedback hover:-translate-y-0.5 hover:border-accent-border hover:shadow-[0_12px_32px_var(--shadow-color)]"
+                className="landing-feature-card group card p-6 transition-[border-color,box-shadow,transform] duration-feedback hover:-translate-y-0.5 hover:border-accent-border hover:shadow-[0_12px_32px_var(--shadow-color)]"
               >
                 <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-control bg-accent-subtle text-accent transition-colors duration-feedback group-hover:bg-accent group-hover:text-accent-foreground">
                   <Icon className="h-5 w-5" aria-hidden="true" />

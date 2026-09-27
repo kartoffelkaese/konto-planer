@@ -120,7 +120,7 @@ export default function SplitSharePanel({ listId, isOwner }: SplitSharePanelProp
   return (
     <section className={`${splitSectionCardClass} space-y-4`}>
       <div className="flex items-start gap-3">
-        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-accent-subtle text-accent">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent">
           <LinkIcon className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
@@ -160,7 +160,7 @@ export default function SplitSharePanel({ listId, isOwner }: SplitSharePanelProp
           </label>
 
           {shareEnabled && (
-            <div className="space-y-3 rounded-control border border-border bg-canvas p-4">
+            <div className="space-y-3 rounded-control bg-surface-muted/70 p-4">
               {shareUrl ? (
                 <p className="break-all text-sm text-primary font-mono">{shareUrl}</p>
               ) : (

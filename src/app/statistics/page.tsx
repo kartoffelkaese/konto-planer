@@ -12,7 +12,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
 } from 'recharts'
 import ChartContainer from '@/components/ChartContainer'
 import PageLoader from '@/components/PageLoader'
@@ -20,6 +19,7 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import PageError from '@/components/PageError'
 import EmptyState from '@/components/EmptyState'
 import PageContextHeader from '@/components/PageContextHeader'
+import KpiCard from '@/components/KpiCard'
 import { ChevronDownIcon } from '@heroicons/react/24/outline'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { useActiveAccountReload } from '@/hooks/useActiveAccountReload'
@@ -48,7 +48,7 @@ function formatEuro(value: number) {
   return `${value.toLocaleString('de-DE', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })}€`
+  })} €`
 }
 
 function hasStatisticsData(data: StatisticsData[]) {
@@ -212,24 +212,63 @@ export default function StatisticsPage() {
   const selectedCategoryName = categories.find((c) => c.id === selectedCategory)?.name
   const selectedMerchantName = merchants.find((m) => m.id === selectedMerchant)?.name
   const filterSummary =
-    selectedMerchantName ?? selectedCategoryName ?? 'Keine Auswahl'
+    selectedMerchantName ?? selectedCategoryName ?? 'Alle Buchungen'
   const expenseBarColor = selectedCategory
     ? statisticsData[0]?.color ?? 'var(--color-expense)'
     : 'var(--color-expense)'
   const showChart = hasStatisticsData(statisticsData)
+  const rangeLabel = timeRanges.find((r) => r.value === timeRange)?.label
+
+  const totalIncome = statisticsData.reduce((sum, entry) => sum + entry.income, 0)
+  const totalExpenses = statisticsData.reduce((sum, entry) => sum + entry.expenses, 0)
+  const totalNet = totalIncome - totalExpenses
+  const monthsWithData = statisticsData.filter((e) => e.income > 0 || e.expenses > 0).length
+  const averageExpenses = monthsWithData > 0 ? totalExpenses / monthsWithData : 0
+  const formatMonth = (value: string, month: 'short' | 'long' = 'short') =>
+    new Date(value + '-01').toLocaleDateString('de-DE', {
+      month,
+      year: month === 'short' ? '2-digit' : 'numeric',
+    })
+
+  const selectClass = 'block w-full appearance-none rounded-control pr-10 text-sm'
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 md:py-8">
       <PageContextHeader
         title="Statistiken"
         subtitle={`${accountName} · Einnahmen und Ausgaben`}
       />
 
-      <div className="rounded-lg border border-border bg-surface p-4 md:p-5 mb-6">
-        <p className="text-sm font-medium text-primary mb-3">Filter</p>
-        <div className="flex flex-col md:flex-row flex-wrap gap-4">
-          <div className="relative flex-1 min-w-[200px]">
-            <label htmlFor="stats-category" className="sr-only">
+      <section className="card p-4 md:p-5 mb-4 md:mb-6 space-y-4">
+        <div
+          className="-mx-1 flex gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="radiogroup"
+          aria-label="Zeitraum"
+        >
+          {timeRanges.map((range) => {
+            const selected = timeRange === range.value
+            return (
+              <button
+                key={range.value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => setTimeRange(range.value)}
+                className={`shrink-0 whitespace-nowrap rounded-pill px-3.5 min-h-10 text-sm font-medium transition-colors duration-feedback ${
+                  selected
+                    ? 'bg-accent text-accent-foreground'
+                    : 'bg-surface-muted text-secondary hover:text-primary'
+                }`}
+              >
+                {range.label}
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="relative">
+            <label htmlFor="stats-category" className="eyebrow mb-1 block">
               Kategorie
             </label>
             <select
@@ -241,7 +280,7 @@ export default function StatisticsPage() {
                   setSelectedMerchant('')
                 }
               }}
-              className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control appearance-none bg-surface text-primary border"
+              className={selectClass}
             >
               <option value="">Alle Kategorien</option>
               {categories.map((category) => (
@@ -250,13 +289,14 @@ export default function StatisticsPage() {
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-primary">
-              <ChevronDownIcon className="h-4 w-4" />
-            </div>
+            <ChevronDownIcon
+              className="pointer-events-none absolute bottom-3.5 right-3 h-4 w-4 text-secondary"
+              aria-hidden="true"
+            />
           </div>
 
-          <div className="relative flex-1 min-w-[200px]">
-            <label htmlFor="stats-merchant" className="sr-only">
+          <div className="relative">
+            <label htmlFor="stats-merchant" className="eyebrow mb-1 block">
               Händler
             </label>
             <select
@@ -268,7 +308,7 @@ export default function StatisticsPage() {
                   setSelectedCategory('')
                 }
               }}
-              className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control appearance-none bg-surface text-primary border"
+              className={selectClass}
             >
               <option value="">Alle Händler</option>
               {merchants.map((merchant) => (
@@ -277,36 +317,16 @@ export default function StatisticsPage() {
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-primary">
-              <ChevronDownIcon className="h-4 w-4" />
-            </div>
-          </div>
-
-          <div className="relative flex-1 min-w-[200px]">
-            <label htmlFor="stats-range" className="sr-only">
-              Zeitraum
-            </label>
-            <select
-              id="stats-range"
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-              className="block w-full pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control appearance-none bg-surface text-primary border"
-            >
-              {timeRanges.map((range) => (
-                <option key={range.value} value={range.value}>
-                  {range.label}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-primary">
-              <ChevronDownIcon className="h-4 w-4" />
-            </div>
+            <ChevronDownIcon
+              className="pointer-events-none absolute bottom-3.5 right-3 h-4 w-4 text-secondary"
+              aria-hidden="true"
+            />
           </div>
 
           {timeRange === 'custom' && (
             <>
-              <div className="relative flex-1 min-w-[160px]">
-                <label htmlFor="stats-start" className="sr-only">
+              <div>
+                <label htmlFor="stats-start" className="eyebrow mb-1 block">
                   Von
                 </label>
                 <input
@@ -314,11 +334,11 @@ export default function StatisticsPage() {
                   type="date"
                   value={customStartDate}
                   onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="block w-full pl-3 pr-3 py-2 text-base border border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control bg-surface text-primary"
+                  className="block w-full text-sm"
                 />
               </div>
-              <div className="relative flex-1 min-w-[160px]">
-                <label htmlFor="stats-end" className="sr-only">
+              <div>
+                <label htmlFor="stats-end" className="eyebrow mb-1 block">
                   Bis
                 </label>
                 <input
@@ -326,24 +346,59 @@ export default function StatisticsPage() {
                   type="date"
                   value={customEndDate}
                   onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="block w-full pl-3 pr-3 py-2 text-base border border-border focus:outline-none focus:ring-accent focus:border-accent sm:text-sm rounded-control bg-surface text-primary"
+                  className="block w-full text-sm"
                 />
               </div>
             </>
           )}
         </div>
-      </div>
+      </section>
 
-      <div className="bg-surface rounded-lg border border-border p-4 md:p-6">
-        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-lg font-medium text-primary">{filterSummary}</h2>
-          <p className="text-sm text-secondary">
-            {timeRanges.find((r) => r.value === timeRange)?.label}
-          </p>
+      {showChart && !isLoading && (
+        <div className="mb-4 grid grid-cols-2 gap-3 md:mb-6 md:grid-cols-4 md:gap-4">
+          <KpiCard label="Einnahmen" subtitle={rangeLabel} amount={totalIncome} stripe="income" />
+          <KpiCard label="Ausgaben" subtitle={rangeLabel} amount={totalExpenses} stripe="expense" />
+          <KpiCard
+            label="Netto"
+            subtitle={rangeLabel}
+            amount={totalNet}
+            stripe={totalNet >= 0 ? 'income' : 'expense'}
+            signed
+          />
+          <KpiCard
+            label="Ø Ausgaben"
+            subtitle="pro Monat mit Buchungen"
+            amount={averageExpenses}
+            stripe="accent"
+          />
+        </div>
+      )}
+
+      <section className="card p-4 md:p-6">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-primary">{filterSummary}</h2>
+            <p className="text-sm text-secondary">{rangeLabel}</p>
+          </div>
+          {showChart && !isLoading && (
+            <div className="flex items-center gap-2" aria-hidden="true">
+              <span className="chip">
+                <span className="h-2.5 w-2.5 rounded-full bg-income" />
+                Einnahmen
+              </span>
+              <span className="chip">
+                <span
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: expenseBarColor }}
+                />
+                Ausgaben
+              </span>
+            </div>
+          )}
         </div>
         <div className="w-full min-w-0">
           {isLoading ? (
-            <div className="flex items-center justify-center h-[400px]">
+            <div className="flex items-center justify-center h-[320px] md:h-[380px]">
               <LoadingSpinner size="md" />
             </div>
           ) : !showChart ? (
@@ -352,25 +407,22 @@ export default function StatisticsPage() {
               description="Wählen Sie eine andere Kategorie, einen anderen Händler oder einen anderen Zeitraum."
             />
           ) : (
-            <ChartContainer height={400}>
-              <BarChart data={statisticsData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+            <ChartContainer height={340}>
+              <BarChart data={statisticsData} barGap={4} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="var(--color-hairline)" />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 12, fill: 'var(--text-color)' }}
-                  tickFormatter={(value) => {
-                    const date = new Date(value + '-01')
-                    return date.toLocaleDateString('de-DE', {
-                      month: 'short',
-                      year: '2-digit',
-                    })
-                  }}
-                  stroke="var(--text-color)"
+                  tick={{ fontSize: 12, fill: 'var(--color-text-secondary)' }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => formatMonth(String(value))}
                 />
                 <YAxis
                   tickFormatter={(value) => formatEuro(Number(value))}
-                  tick={{ fontSize: 12, fill: 'var(--text-color)' }}
-                  stroke="var(--text-color)"
+                  tick={{ fontSize: 12, fill: 'var(--color-text-secondary)' }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={80}
                 />
                 <Tooltip
                   formatter={(value, name) => [
@@ -378,45 +430,71 @@ export default function StatisticsPage() {
                     name === 'income' ? 'Einnahmen' : 'Ausgaben',
                   ]}
                   labelFormatter={(label) => {
-                    const date = new Date(label + '-01')
-                    const monthLabel = date.toLocaleDateString('de-DE', {
-                      month: 'long',
-                      year: 'numeric',
-                    })
+                    const monthLabel = formatMonth(String(label), 'long')
                     const entry = statisticsData.find((item) => item.date === label)
                     if (!entry) return monthLabel
                     return `${monthLabel} · Saldo ${formatEuro(entry.net)}`
                   }}
+                  cursor={{ fill: 'var(--color-surface-muted)', opacity: 0.6 }}
                   contentStyle={{
-                    backgroundColor: 'var(--card-bg)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '0.5rem',
+                    backgroundColor: 'var(--color-surface-raised)',
+                    border: '1px solid var(--color-hairline)',
+                    borderRadius: '0.75rem',
+                    boxShadow: 'var(--shadow-raised)',
                     color: 'var(--text-color)',
                   }}
                   itemStyle={{ color: 'var(--text-color)' }}
-                />
-                <Legend
-                  formatter={(value) =>
-                    value === 'income' ? 'Einnahmen' : 'Ausgaben'
-                  }
                 />
                 <Bar
                   dataKey="income"
                   name="income"
                   fill="var(--color-income)"
-                  radius={[4, 4, 0, 0]}
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={28}
                 />
                 <Bar
                   dataKey="expenses"
                   name="expenses"
                   fill={expenseBarColor}
-                  radius={[4, 4, 0, 0]}
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={28}
                 />
               </BarChart>
             </ChartContainer>
           )}
         </div>
-      </div>
+      </section>
+
+      {showChart && !isLoading && (
+        <section className="card mt-4 p-4 md:mt-6 md:p-6">
+          <h2 className="mb-2 text-base font-semibold text-primary">Monate</h2>
+          <ul className="-mx-2">
+            {[...statisticsData].reverse().map((entry) => (
+              <li
+                key={entry.date}
+                className="flex items-center gap-3 rounded-control px-2 py-2.5 hover:bg-surface-muted/60"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium text-primary">
+                    {formatMonth(entry.date, 'long')}
+                  </span>
+                  <span className="block text-sm text-secondary tabular-nums">
+                    <span className="text-income">+{formatEuro(entry.income)}</span>
+                    {' · '}
+                    <span>−{formatEuro(entry.expenses)}</span>
+                  </span>
+                </span>
+                <span
+                  className={`amount shrink-0 ${entry.net >= 0 ? 'text-income' : 'text-expense'}`}
+                >
+                  {entry.net > 0 ? '+' : entry.net < 0 ? '−' : ''}
+                  {formatEuro(Math.abs(entry.net))}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   )
 }

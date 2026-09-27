@@ -273,7 +273,7 @@ export default function SettingsPage() {
               </div>
             )}
 
-            <div id="data-management" className="rounded-lg border border-border p-4 bg-surface">
+            <div id="data-management" className="card p-4 md:p-5">
               <h2 className="text-lg font-medium text-primary mb-1">Datenverwaltung</h2>
               <p className="text-sm text-secondary mb-4">
                 Kategorien und Händler für {activeAccountName}
@@ -302,7 +302,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <form id="general-settings" onSubmit={handleSubmit} className="rounded-lg border border-border p-4 bg-surface">
+            <form id="general-settings" onSubmit={handleSubmit} className="card p-4 md:p-5">
               <h2 className="text-lg font-medium text-primary mb-1">Aktuelles Konto</h2>
               <p className="text-sm text-secondary mb-4">
                 Einstellungen für {activeAccountName}
@@ -435,7 +435,7 @@ export default function SettingsPage() {
             </form>
 
             {role === 'OWNER' && (
-            <div className="rounded-lg border border-border p-4 bg-surface">
+            <div className="card p-4 md:p-5">
               <h2 className="text-lg font-medium text-primary mb-4">Konto teilen</h2>
               <p className="text-sm text-secondary mb-4">
                 Laden Sie andere Nutzer per E-Mail ein. Sie können vollen Zugriff
@@ -445,7 +445,7 @@ export default function SettingsPage() {
             </div>
             )}
 
-            <div className="rounded-lg border border-border p-4 bg-surface">
+            <div className="card p-4 md:p-5">
               <h2 className="text-lg font-medium text-primary mb-1">Weitere Konten</h2>
               <p className="text-sm text-secondary mb-4">
                 Zusätzliche Buchführungs-Konten anlegen oder entfernen
@@ -456,7 +456,7 @@ export default function SettingsPage() {
 
             <form
               onSubmit={handleSplitProfileSubmit}
-              className="rounded-lg border border-border p-4 bg-surface"
+              className="card p-4 md:p-5"
             >
               <div className="mb-4 flex items-start gap-3">
                 <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-accent-subtle text-accent">
@@ -494,7 +494,7 @@ export default function SettingsPage() {
               </div>
             </form>
 
-            <div id="email-settings" className="rounded-lg border border-border p-4 bg-surface">
+            <div id="email-settings" className="card p-4 md:p-5">
               <h2 className="text-lg font-medium text-primary mb-1">Benutzerkonto</h2>
               <p className="text-sm text-secondary mb-4">Anmeldung und E-Mail-Adresse</p>
               
@@ -598,19 +598,19 @@ export default function SettingsPage() {
               )}
             </div>
 
-            <div id="appearance-settings" className="rounded-lg border border-border p-4 bg-surface">
+            <div id="appearance-settings" className="card p-4 md:p-5">
               <h2 className="text-lg font-medium text-primary mb-1">Darstellung</h2>
               <p className="text-sm text-secondary mb-4">
-                Farbschema für die gesamte Oberfläche
+                Hell, Dunkel oder automatisch wie im Betriebssystem
               </p>
               <ColorSchemeSwitcher />
             </div>
 
-            <div id="backup-settings" className="rounded-lg border border-border p-4 bg-surface">
+            <div id="backup-settings" className="card p-4 md:p-5">
               <BackupManager allowRestore={canWrite} />
             </div>
 
-            <div id="delete-user-account" className="rounded-lg border border-border p-4 bg-surface">
+            <div id="delete-user-account" className="card p-4 md:p-5">
               <DeleteUserAccount />
             </div>
           </div>

@@ -56,11 +56,11 @@ function SettlementRow({
   const toName = settlement.toParticipant?.displayName ?? '?'
 
   return (
-    <li className="group px-4 py-3 transition-colors hover:bg-surface-muted">
+    <li className="group rounded-control px-2 py-2.5 transition-colors hover:bg-surface-muted/60">
       <div className="mb-2 flex items-center justify-between gap-3 sm:hidden">
         <p className="text-sm tabular-nums text-secondary">{formatDate(settlement.settledAt)}</p>
-        <span className="text-sm font-semibold tabular-nums text-expense">
-          {formatCurrency(-settlement.amount)}
+        <span className="text-sm font-semibold tabular-nums text-primary">
+          {formatCurrency(settlement.amount)}
         </span>
       </div>
 
@@ -71,7 +71,7 @@ function SettlementRow({
 
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
         <span
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-accent-border bg-accent-subtle text-[11px] font-semibold text-accent"
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-[11px] font-semibold text-accent"
           aria-hidden="true"
         >
           {getParticipantInitials(fromName) || '?'}
@@ -79,7 +79,7 @@ function SettlementRow({
         <span className="font-medium text-primary">{fromName}</span>
         <ArrowLongRightIcon className="h-4 w-4 shrink-0 text-secondary" aria-hidden="true" />
         <span
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-accent-border bg-accent-subtle text-[11px] font-semibold text-accent"
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-[11px] font-semibold text-accent"
           aria-hidden="true"
         >
           {getParticipantInitials(toName) || '?'}
@@ -88,8 +88,8 @@ function SettlementRow({
       </div>
 
         <div className="hidden flex-col items-end gap-0.5 sm:flex sm:shrink-0">
-          <span className="text-sm font-semibold tabular-nums text-expense">
-            {formatCurrency(-settlement.amount)}
+          <span className="text-sm font-semibold tabular-nums text-primary">
+            {formatCurrency(settlement.amount)}
           </span>
           {settlement.note && (
             <span className="max-w-xs text-right text-xs text-secondary">{settlement.note}</span>
@@ -101,7 +101,7 @@ function SettlementRow({
             type="button"
             size="sm"
             variant="ghost"
-            className="self-end max-md:min-h-11 max-md:min-w-11 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+            className="self-end max-md:min-h-11 max-md:min-w-11 sm:opacity-60 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
             onClick={() => onDelete(settlement.id)}
             aria-label={`Ausgleich ${fromName} an ${toName} löschen`}
           >
@@ -127,26 +127,24 @@ function ExpenseHistoryRow({
   const payerName = expense.paidBy?.displayName ?? '?'
 
   return (
-    <li className="flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-surface-muted sm:flex-row sm:items-center sm:gap-4">
-      <div className="w-full sm:w-28 shrink-0">
-        <p className="text-sm tabular-nums text-secondary">{formatDate(expense.date)}</p>
-      </div>
+    <li className="flex items-center gap-3 rounded-control px-2 py-2.5 transition-colors hover:bg-surface-muted/60">
+      <span
+        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-muted text-xs font-semibold text-secondary"
+        title={`Bezahlt von ${payerName}`}
+        aria-hidden="true"
+      >
+        {getParticipantInitials(payerName) || '?'}
+      </span>
 
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-primary">{expense.description}</p>
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-secondary">
-          <span className="inline-flex items-center gap-1.5">
-            <span
-              className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border bg-surface-muted text-[10px] font-semibold text-primary"
-              aria-hidden="true"
-            >
-              {getParticipantInitials(payerName) || '?'}
-            </span>
-            Bezahlt von {payerName}
-          </span>
-          <span aria-hidden="true">·</span>
-          <span>{formatShareLabel(expense.shareParticipantIds.length, participantCount)}</span>
-        </div>
+        <p className="font-medium text-primary truncate">{expense.description}</p>
+        <p className="text-sm text-secondary truncate">
+          <span className="tabular-nums">{formatDate(expense.date)}</span>
+          {' · '}
+          {payerName}
+          {' · '}
+          {formatShareLabel(expense.shareParticipantIds.length, participantCount)}
+        </p>
       </div>
 
       <SplitAmountDisplay
@@ -155,7 +153,7 @@ function ExpenseHistoryRow({
         originalCurrencyCode={expense.originalCurrencyCode}
         exchangeRate={expense.exchangeRate}
         exchangeRateDate={expense.exchangeRateDate}
-        className="text-sm font-medium sm:min-w-[5.5rem] sm:shrink-0"
+        className="amount shrink-0"
       />
     </li>
   )
@@ -213,55 +211,44 @@ export default function SplitHistoryView({
 
   if (isEmpty) {
     return (
-      <div className="rounded-lg border border-border bg-surface px-4 py-10 text-center text-sm text-secondary">
+      <div className="card px-4 py-10 text-center text-sm text-secondary">
         Noch keine Historie — Ausgaben und Ausgleiche erscheinen hier, sobald sie erfasst werden.
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className={`${splitSectionCardClass} flex flex-wrap items-center justify-between gap-4`}>
-        <div>
-          <p className="text-sm font-medium text-primary">Historie</p>
-          <p className="text-xs text-secondary">
-            {history.expenses.length}{' '}
-            {history.expenses.length === 1 ? 'Ausgabe' : 'Ausgaben'}
-            {history.settlements.length > 0 &&
-              ` · ${history.settlements.length} ${
-                history.settlements.length === 1 ? 'Ausgleich' : 'Ausgleiche'
-              }`}
-            {expensesByCategory.length > 0 &&
-              ` · ${expensesByCategory.length} ${
-                expensesByCategory.length === 1 ? 'Kategorie' : 'Kategorien'
-              }`}
-          </p>
-        </div>
-        <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-          <div>
-            <dt className="text-xs text-secondary">Gesamtausgaben</dt>
-            <dd className={`font-semibold tabular-nums ${splitExpenseAmountClass(history.totalExpenses)}`}>
-              {formatSplitExpenseAmount(history.totalExpenses)}
-            </dd>
-          </div>
+    <div className="space-y-4">
+      <section className="hero-card p-6 md:p-8">
+        <p className="eyebrow">Gesamtausgaben</p>
+        <p className="amount-hero mt-2 text-primary">{formatCurrency(history.totalExpenses)}</p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <span className="chip">
+            {history.expenses.length} {history.expenses.length === 1 ? 'Ausgabe' : 'Ausgaben'}
+          </span>
           {history.settlements.length > 0 && (
-            <div>
-              <dt className="text-xs text-secondary">Ausgeglichen</dt>
-              <dd className="font-semibold tabular-nums text-income">
-                {formatCurrency(-totalSettled)}
-              </dd>
-            </div>
+            <span className="chip">
+              {history.settlements.length}{' '}
+              {history.settlements.length === 1 ? 'Ausgleich' : 'Ausgleiche'} ·{' '}
+              <span className="amount text-income">{formatCurrency(totalSettled)}</span>
+            </span>
           )}
-        </dl>
-      </div>
+          {expensesByCategory.length > 0 && (
+            <span className="chip">
+              {expensesByCategory.length}{' '}
+              {expensesByCategory.length === 1 ? 'Kategorie' : 'Kategorien'}
+            </span>
+          )}
+        </div>
+      </section>
 
       <section className={`${splitSectionCardClass} overflow-hidden p-0`}>
-        <header className="flex items-start gap-3 border-b border-accent-border bg-accent-subtle px-4 py-3">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-surface text-accent">
+        <header className="flex items-start gap-3 px-4 pt-4 pb-2 md:px-5 md:pt-5">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent">
             <BanknotesIcon className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <h3 className="text-base font-medium text-primary">Ausgleichszahlungen</h3>
+            <h3 className="text-base font-semibold text-primary">Ausgleichszahlungen</h3>
             <p className="text-xs text-secondary">
               Erledigte Überweisungen zwischen Teilnehmern
             </p>
@@ -274,7 +261,7 @@ export default function SplitHistoryView({
             <p>Noch keine Ausgleiche erfasst.</p>
           </div>
         ) : (
-          <ul className="divide-y divide-border bg-canvas">
+          <ul className="px-2 pb-2 md:px-3 md:pb-3">
             {history.settlements.map((settlement) => (
               <SettlementRow
                 key={settlement.id}
@@ -288,11 +275,11 @@ export default function SplitHistoryView({
 
       <section className="space-y-4">
         <div className="flex items-start gap-3">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-accent-subtle text-accent">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent">
             <ReceiptPercentIcon className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <h3 className="text-base font-medium text-primary">Ausgaben nach Kategorie</h3>
+            <h3 className="text-base font-semibold text-primary">Ausgaben nach Kategorie</h3>
             <p className="text-xs text-secondary">
               Chronologisch sortiert, gruppiert nach Kategorie
             </p>
@@ -300,7 +287,7 @@ export default function SplitHistoryView({
         </div>
 
         {history.expenses.length === 0 ? (
-          <div className="rounded-lg border border-border bg-surface px-4 py-6 text-center text-sm text-secondary">
+          <div className="card px-4 py-6 text-center text-sm text-secondary">
             Noch keine Ausgaben in der Historie.
           </div>
         ) : (
@@ -310,14 +297,7 @@ export default function SplitHistoryView({
                 key={group.categoryName}
                 className={`${splitSectionCardClass} overflow-hidden p-0`}
               >
-                <header
-                  className="flex items-center justify-between gap-3 border-b border-border px-4 py-3"
-                  style={
-                    group.color
-                      ? { borderLeftWidth: 4, borderLeftColor: group.color }
-                      : { borderLeftWidth: 4, borderLeftColor: 'var(--color-border)' }
-                  }
-                >
+                <header className="flex items-center justify-between gap-3 px-4 pt-4 pb-2 md:px-5 md:pt-5">
                   <div className="flex min-w-0 items-center gap-2">
                     {group.color && (
                       <span
@@ -327,7 +307,7 @@ export default function SplitHistoryView({
                       />
                     )}
                     <div>
-                      <h4 className="truncate text-sm font-medium text-primary">
+                      <h4 className="truncate font-semibold text-primary">
                         {group.categoryName}
                       </h4>
                       <p className="text-xs text-secondary">
@@ -337,14 +317,14 @@ export default function SplitHistoryView({
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-xs text-secondary">Summe</p>
-                    <p className={`text-base font-semibold tabular-nums ${splitExpenseAmountClass(group.total)}`}>
+                    <p className="eyebrow">Summe</p>
+                    <p className={`amount ${splitExpenseAmountClass(group.total)}`}>
                       {formatSplitExpenseAmount(group.total)}
                     </p>
                   </div>
                 </header>
 
-                <ul className="divide-y divide-border bg-canvas">
+                <ul className="px-2 pb-2 md:px-3 md:pb-3">
                   {group.expenses.map((expense) => (
                     <ExpenseHistoryRow
                       key={expense.id}

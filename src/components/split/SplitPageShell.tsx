@@ -14,11 +14,11 @@ export default function SplitPageShell({
 }: SplitPageShellProps) {
   return (
     <div
-      className={`min-h-screen bg-canvas md:pb-8 ${fabPadding ? 'pb-24 max-md:pb-[calc(6rem+env(safe-area-inset-bottom,0px))]' : 'pb-8'}`}
+      className={`md:pb-8 ${fabPadding ? 'max-md:pb-24' : 'pb-8'}`}
     >
       <div
-        className={`mx-auto px-3 py-4 sm:px-6 sm:py-8 lg:px-8 ${
-          narrow ? 'max-w-2xl' : 'max-w-7xl'
+        className={`mx-auto px-4 py-6 sm:px-6 md:py-8 ${
+          narrow ? 'max-w-2xl' : 'max-w-6xl'
         }`}
       >
         {children}

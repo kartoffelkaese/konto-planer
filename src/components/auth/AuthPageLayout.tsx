@@ -70,7 +70,7 @@ export function AuthCard({ title, subtitle, children, footer }: AuthCardProps) {
         <p className="mt-2 text-sm text-secondary">{subtitle}</p>
       </div>
 
-      <div className="rounded-card border border-border bg-surface p-6 shadow-[0_12px_32px_var(--shadow-color)] sm:p-8">
+      <div className="card p-6 sm:p-8">
         {children}
       </div>
 

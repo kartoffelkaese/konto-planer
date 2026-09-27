@@ -160,7 +160,7 @@ export default function SplitSettingsPanel({
     <div className="space-y-6">
       <div className={`${splitSectionCardClass} flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4`}>
         <div className="flex min-w-0 items-start gap-3">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-accent-subtle text-accent">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent">
             <Cog6ToothIcon className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>

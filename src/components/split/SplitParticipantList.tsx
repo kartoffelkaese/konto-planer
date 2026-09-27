@@ -45,7 +45,7 @@ function ParticipantStatusBadge({ participant }: { participant: SplitParticipant
     )
   }
   return (
-    <span className="inline-flex items-center rounded-full border border-border bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-secondary">
+    <span className="inline-flex items-center rounded-full bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-secondary">
       Fiktiv
     </span>
   )
@@ -124,8 +124,8 @@ export default function SplitParticipantList({
 
   return (
     <section className={`${splitSectionCardClass} overflow-hidden p-0`}>
-      <header className="flex items-start gap-3 border-b border-accent-border bg-accent-subtle px-4 py-3">
-        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-surface text-accent">
+      <header className="flex items-start gap-3 px-4 pt-4 pb-2 md:px-5 md:pt-5">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent">
           <UserGroupIcon className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
@@ -139,7 +139,7 @@ export default function SplitParticipantList({
 
       {error && (
         <div
-          className="mx-4 mt-4 flex items-start gap-3 rounded-card border border-danger/20 bg-danger-subtle px-3 py-2.5 text-sm text-danger"
+          className="mx-4 mt-4 flex items-start gap-3 rounded-card bg-danger-subtle px-3 py-2.5 text-sm text-danger"
           role="alert"
         >
           <ExclamationCircleIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
@@ -147,14 +147,14 @@ export default function SplitParticipantList({
         </div>
       )}
 
-      <ul className="divide-y divide-border bg-canvas">
+      <ul className="divide-y divide-hairline px-2 md:px-3">
         {participants.map((participant) => (
           <li
             key={participant.id}
             className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-muted"
           >
             <span
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-accent-border bg-accent-subtle text-sm font-semibold text-accent"
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-sm font-semibold text-accent"
               aria-hidden="true"
             >
               {getParticipantInitials(participant.displayName) || '?'}
@@ -181,7 +181,7 @@ export default function SplitParticipantList({
       </ul>
 
       {canManage && !readOnly && (
-        <div className="border-t border-border bg-surface px-4 py-3">
+        <div className="border-t border-hairline px-4 py-3 md:px-5">
           {!showAddForm ? (
             <Button
               variant="secondary"

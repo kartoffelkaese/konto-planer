@@ -72,7 +72,7 @@ export default function Toast({
       aria-live="polite"
       className={`
         relative flex items-center p-4 max-w-sm
-        rounded-card border shadow-lg
+        rounded-card border shadow-raised backdrop-blur-sm
         ${getStyles()}
         ${isExiting ? 'animate-fade-out-down' : 'animate-fade-in-up'}
       `}

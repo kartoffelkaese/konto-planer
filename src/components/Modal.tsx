@@ -76,7 +76,7 @@ export default function Modal({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-primary/50 transition-opacity" />
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" />
         </Transition.Child>
 
         <div className="fixed inset-0 z-10 overflow-y-auto">
@@ -91,10 +91,10 @@ export default function Modal({
               leaveTo="opacity-0 translate-y-4 md:translate-y-0 md:scale-95"
             >
               <Dialog.Panel
-                className={`relative flex max-h-[92dvh] w-full transform flex-col overflow-hidden rounded-t-card border border-border bg-surface text-left shadow-[0_16px_40px_var(--shadow-color)] transition-all max-md:pb-[env(safe-area-inset-bottom,0px)] md:max-h-[min(90dvh,calc(100dvh-4rem))] md:rounded-card md:my-8 ${maxWidthClasses[maxWidth]}`}
+                className={`relative flex max-h-[92dvh] w-full transform flex-col overflow-hidden rounded-t-[1.5rem] border border-hairline bg-surface-raised text-left shadow-raised transition-all max-md:pb-[env(safe-area-inset-bottom,0px)] md:max-h-[min(90dvh,calc(100dvh-4rem))] md:rounded-[1.5rem] md:my-8 ${maxWidthClasses[maxWidth]}`}
               >
                 <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-border md:hidden" aria-hidden="true" />
-                <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-4 py-4 md:px-6 md:py-5">
+                <div className="flex shrink-0 items-start justify-between gap-4 px-4 pt-4 pb-2 md:px-6 md:pt-6 md:pb-3">
                   <Dialog.Title
                     as="h3"
                     className="min-w-0 flex-1 text-lg font-semibold leading-snug text-primary"
@@ -103,7 +103,7 @@ export default function Modal({
                   </Dialog.Title>
                   <button
                     type="button"
-                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-border bg-canvas text-secondary transition-colors duration-[var(--motion-duration-feedback)] hover:bg-surface-muted hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:pointer-events-none disabled:opacity-40 md:h-9 md:w-9"
+                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-pill bg-surface-muted text-secondary transition-colors duration-[var(--motion-duration-feedback)] hover:bg-hairline hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:pointer-events-none disabled:opacity-40 md:h-9 md:w-9"
                     onClick={handleClose}
                     disabled={preventClose}
                     aria-label="Schließen"

@@ -186,7 +186,7 @@ export default function DateRangePicker({
               role="dialog"
               aria-modal="true"
               aria-labelledby={`${id}-label`}
-              className="absolute left-0 right-0 z-50 mt-2 rounded-card border border-border bg-surface p-4 shadow-[0_16px_40px_var(--shadow-color)] sm:right-auto sm:w-[20rem]"
+              className="absolute left-0 right-0 z-50 mt-2 rounded-card border border-hairline bg-surface-raised p-4 shadow-raised sm:right-auto sm:w-[20rem]"
             >
               <div className="mb-3 flex items-center justify-between gap-2">
                 <button

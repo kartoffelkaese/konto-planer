@@ -5,7 +5,7 @@ import { PencilIcon, TrashIcon, UserGroupIcon } from '@heroicons/react/24/outlin
 import { formatDate } from '@/lib/dateUtils'
 import SplitAmountDisplay from '@/components/split/SplitAmountDisplay'
 import { splitExpenseAmountClass } from '@/lib/splitFormatters'
-import { getContrastColor } from '@/lib/colorUtils'
+import { formatCurrency } from '@/lib/formatters'
 import { Button } from '@/components/Button'
 import EmptyState from '@/components/EmptyState'
 import type { SplitExpense, SplitExpenseGuest, SplitParticipant } from '@/types/split'
@@ -51,15 +51,15 @@ function ParticipantExpensePanel({
 
   return (
     <section className={`${splitSectionCardClass} overflow-hidden p-0`}>
-      <header className="flex items-center gap-3 border-b border-accent-border bg-accent-subtle px-4 py-3">
+      <header className="flex items-center gap-3 px-4 pt-4 pb-2 md:px-5 md:pt-5">
         <span
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-accent-border bg-surface text-sm font-semibold text-accent"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-sm font-semibold text-accent"
           aria-hidden="true"
         >
           {initials || '?'}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-medium text-primary">
+          <h3 className="truncate text-base font-semibold text-primary">
             {participant.displayName}
           </h3>
           <p className="text-xs text-secondary">
@@ -67,18 +67,18 @@ function ParticipantExpensePanel({
           </p>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-xs text-secondary">Bezahlt</p>
-          <p className={`text-lg font-semibold tabular-nums ${splitExpenseAmountClass(total)}`}>
-            <SplitAmountDisplay amount={total} className="text-lg font-semibold" />
+          <p className="eyebrow">Bezahlt</p>
+          <p className={`amount-lg text-lg ${splitExpenseAmountClass(total)}`}>
+            <SplitAmountDisplay amount={total} className="amount" />
           </p>
         </div>
       </header>
 
-      <ul className="divide-y divide-border bg-canvas">
+      <ul className="px-2 pb-2 md:px-3 md:pb-3">
         {expenses.map((expense) => (
           <li
             key={expense.id}
-            className="group px-4 py-3 transition-colors hover:bg-surface-muted sm:relative sm:flex sm:items-center sm:gap-4"
+            className="group relative rounded-control px-2 py-2.5 transition-colors hover:bg-surface-muted/60 sm:flex sm:items-center sm:gap-4"
           >
             <div className="hidden w-24 shrink-0 sm:block">
               <p className="text-sm tabular-nums text-secondary">{formatDate(expense.date)}</p>
@@ -87,20 +87,19 @@ function ParticipantExpensePanel({
             <div className="flex items-start justify-between gap-3 sm:min-w-0 sm:flex-1 sm:items-center">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                  <p className="text-sm font-medium text-primary">{expense.description}</p>
+                  <p className="font-medium text-primary">{expense.description}</p>
                   <p className="text-xs tabular-nums text-secondary sm:hidden">
                     {formatDate(expense.date)}
                   </p>
                 </div>
-                <div className="mt-1 flex flex-wrap items-center gap-2">
+                <div className={`mt-1 flex flex-wrap items-center gap-2 ${readOnly ? '' : 'max-sm:pr-24'}`}>
                   {expense.category && (
-                    <span
-                      className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
-                      style={{
-                        backgroundColor: expense.category.color ?? '#A7C7E7',
-                        color: getContrastColor(expense.category.color ?? '#A7C7E7'),
-                      }}
-                    >
+                    <span className="inline-flex items-center gap-1.5 rounded-pill bg-surface-muted px-2 py-0.5 text-[11px] font-medium text-primary">
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: expense.category.color ?? '#A7C7E7' }}
+                        aria-hidden="true"
+                      />
                       {expense.category.name}
                     </span>
                   )}
@@ -116,12 +115,12 @@ function ParticipantExpensePanel({
                 originalCurrencyCode={expense.originalCurrencyCode}
                 exchangeRate={expense.exchangeRate}
                 exchangeRateDate={expense.exchangeRateDate}
-                className="text-sm font-medium sm:min-w-[5.5rem]"
+                className="amount sm:min-w-[5.5rem]"
               />
             </div>
 
             {!readOnly && (
-              <div className="mt-2 flex justify-end gap-0.5 border-t border-border pt-2 sm:mt-0 sm:w-auto sm:shrink-0 sm:border-0 sm:pt-0 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+              <div className="flex justify-end gap-0.5 max-sm:absolute max-sm:bottom-0.5 max-sm:right-1 sm:w-auto sm:shrink-0 sm:border-0 sm:pt-0 sm:opacity-60 sm:transition-opacity sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                 <Button
                   type="button"
                   size="sm"
@@ -211,7 +210,7 @@ export default function SplitExpenseList({
 
   if (expenses.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="card overflow-hidden">
         <EmptyState
           title="Noch keine Ausgaben erfasst"
           description="Erfassen Sie gemeinsame Kosten — die App rechnet automatisch aus, wer wem was schuldet."
@@ -224,27 +223,21 @@ export default function SplitExpenseList({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-primary">Ausgabenübersicht</p>
-          <p className="text-xs text-secondary">
-            Gruppiert nach „Bezahlt von“ · {participantsWithExpenses.length}{' '}
-            {participantsWithExpenses.length === 1 ? 'Person' : 'Personen'} mit Posten
-          </p>
+      <section className="hero-card p-6 md:p-8">
+        <p className="eyebrow">Ausgaben gesamt</p>
+        <p className="amount-hero mt-2 text-primary">
+          {formatCurrency(totalAmount)}
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <span className="chip">
+            {expenses.length} {expenses.length === 1 ? 'Posten' : 'Posten'}
+          </span>
+          <span className="chip">
+            {participantsWithExpenses.length}{' '}
+            {participantsWithExpenses.length === 1 ? 'Person hat' : 'Personen haben'} bezahlt
+          </span>
         </div>
-        <dl className="grid grid-cols-2 gap-3 text-sm sm:flex sm:flex-wrap sm:gap-x-6 sm:gap-y-1">
-          <div>
-            <dt className="text-xs text-secondary">Posten</dt>
-            <dd className="font-medium tabular-nums text-primary">{expenses.length}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-secondary">Gesamt</dt>
-            <dd className={`font-semibold tabular-nums ${splitExpenseAmountClass(totalAmount)}`}>
-              <SplitAmountDisplay amount={totalAmount} className="font-semibold" />
-            </dd>
-          </div>
-        </dl>
-      </div>
+      </section>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         {participantsWithExpenses.map((participant) => (

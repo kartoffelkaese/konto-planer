@@ -245,52 +245,52 @@ export default function RecurringTransactionsPage() {
           </div>
         )}
 
-        <div id="monthly-summary" className="rounded-lg border border-border p-4 mb-8 bg-surface">
-          <h3 className="text-sm font-semibold mb-3 text-primary">Monatliche Belastung</h3>
+        <div id="monthly-summary" className="card p-4 md:p-5 mb-8">
+          <h3 className="text-base font-semibold mb-3 text-primary">Monatliche Belastung</h3>
           <div id="summary-grid" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            <div id="monthly-total" className="p-2 bg-income-bg rounded-lg border-l-4 border-l-income">
+            <div id="monthly-total" className="rounded-control bg-income-bg p-3">
               <p className="text-xs text-income mb-1">Monatlich</p>
-              <p className="text-lg font-semibold text-income">
+              <p className="amount text-lg text-income">
                 {formatCurrency(Math.abs(totals.monthly.total))}
               </p>
             </div>
-            <div id="quarterly-total" className="p-2 bg-pending-bg rounded-lg border-l-4 border-l-pending">
+            <div id="quarterly-total" className="rounded-control bg-pending-bg p-3">
               <p className="text-xs text-pending mb-1">Vierteljährlich</p>
-              <p className="text-lg font-semibold tabular-nums text-pending">
+              <p className="amount text-lg text-pending">
                 {formatCurrency(Math.abs(totals.quarterly.total))}
-                <span className="text-xs ml-1">
+                <span className="block text-xs font-medium opacity-80">
                   ({formatCurrency(Math.abs(totals.quarterly.perMonth))}/M)
                 </span>
               </p>
             </div>
-            <div id="semiannual-total" className="p-2 bg-expense-bg rounded-lg border-l-4 border-l-expense">
+            <div id="semiannual-total" className="rounded-control bg-expense-bg p-3">
               <p className="text-xs text-expense mb-1">Halbjährlich</p>
-              <p className="text-lg font-semibold tabular-nums text-expense">
+              <p className="amount text-lg text-expense">
                 {formatCurrency(Math.abs(totals.semiannual.total))}
-                <span className="text-xs ml-1">
+                <span className="block text-xs font-medium opacity-80">
                   ({formatCurrency(Math.abs(totals.semiannual.perMonth))}/M)
                 </span>
               </p>
             </div>
-            <div id="yearly-total" className="p-2 bg-accent-subtle rounded-lg border-l-4 border-l-accent">
+            <div id="yearly-total" className="rounded-control bg-accent-subtle p-3">
               <p className="text-xs text-accent mb-1">Jährlich</p>
-              <p className="text-lg font-semibold tabular-nums text-accent">
+              <p className="amount text-lg text-accent">
                 {formatCurrency(Math.abs(totals.yearly.total))}
-                <span className="text-xs ml-1">
+                <span className="block text-xs font-medium opacity-80">
                   ({formatCurrency(Math.abs(totals.yearly.perMonth))}/M)
                 </span>
               </p>
             </div>
-            <div id="total-monthly" className="p-2 bg-surface-muted rounded-lg border-l-4 border-l-border">
+            <div id="total-monthly" className="col-span-2 md:col-span-1 rounded-control bg-surface-muted p-3">
               <p className="text-xs text-secondary mb-1">Gesamt pro Monat</p>
-              <p className="text-lg font-semibold tabular-nums text-primary">
+              <p className="amount text-lg text-primary">
                 {formatCurrency(Math.abs(totalMonthly))}
               </p>
             </div>
           </div>
         </div>
 
-        <div id="transactions-table" className="rounded-lg border border-border p-4 mb-8 bg-surface">
+        <div id="transactions-table" className="card p-4 md:p-5 mb-8">
           <div className="overflow-x-auto">
             {/* Desktop-Ansicht */}
             <table className="min-w-full hidden md:table">
@@ -425,29 +425,40 @@ export default function RecurringTransactionsPage() {
                 sortedTransactions.map((transaction) => {
                   const salaryStatus = getRecurringSalaryMonthStatus(transaction)
                   return (
-                  <div key={transaction.id} className="rounded-lg shadow-sm border border-border p-4 bg-surface">
-                    <div className="flex items-center space-x-3">
-                      <div className="flex-shrink-0">
-                        <div className="p-1.5 bg-accent-subtle rounded-lg">
-                          <svg className="w-4 h-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
+                  <div key={transaction.id} className="rounded-control bg-surface-muted/60 p-4">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
+                          transaction.isRecurringPaused
+                            ? 'bg-surface text-secondary'
+                            : 'bg-accent-subtle text-accent'
+                        }`}
+                        aria-hidden="true"
+                      >
+                        {transaction.isRecurringPaused ? (
+                          <PauseIcon className="h-5 w-5" />
+                        ) : (
+                          <ArrowPathIcon className="h-5 w-5" />
+                        )}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="truncate font-medium text-primary">
+                          {resolveTransactionMerchantName(transaction)}
+                        </h3>
+                        {transaction.description && (
+                          <p className="truncate text-sm text-secondary">{transaction.description}</p>
+                        )}
                       </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-primary">{transaction.description}</h3>
-                        <p className="text-xs text-secondary">{resolveTransactionMerchantName(transaction)}</p>
-                      </div>
+                      <p
+                        className={`amount shrink-0 ${
+                          transaction.amount > 0 ? 'text-income' : 'text-primary'
+                        }`}
+                      >
+                        {formatCurrency(transaction.amount)}
+                      </p>
                     </div>
-                    <p
-                      className={`mt-2 text-sm font-medium ${
-                        transaction.amount > 0 ? 'text-income' : 'text-expense'
-                      }`}
-                    >
-                      {formatCurrency(transaction.amount)}
-                    </p>
 
-                    <div className="flex flex-wrap gap-2 mb-3">
+                    <div className="mt-3 flex flex-wrap gap-2 mb-3">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           transaction.isRecurringPaused
@@ -486,21 +497,21 @@ export default function RecurringTransactionsPage() {
                     </div>
 
                     {canWrite && (
-                    <div className="flex flex-wrap justify-end gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                       <button
                         type="button"
                         onClick={() => handleTogglePause(transaction)}
                         disabled={togglingPauseId === transaction.id}
-                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-control border border-border text-primary hover:bg-surface-muted transition-colors duration-feedback disabled:opacity-50"
+                        className="inline-flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-control bg-surface px-1 py-1.5 text-xs font-semibold text-primary transition-colors duration-feedback hover:bg-hairline disabled:opacity-50"
                       >
                         {transaction.isRecurringPaused ? (
                           <>
-                            <PlayIcon className="h-4 w-4 mr-1" />
+                            <PlayIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
                             Fortsetzen
                           </>
                         ) : (
                           <>
-                            <PauseIcon className="h-4 w-4 mr-1" />
+                            <PauseIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
                             Pausieren
                           </>
                         )}
@@ -509,9 +520,9 @@ export default function RecurringTransactionsPage() {
                         type="button"
                         onClick={() => handleCreateNextInstance(transaction)}
                         disabled={transaction.isRecurringPaused}
-                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-control border border-accent text-accent hover:bg-accent-subtle transition-colors duration-feedback disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="inline-flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-control bg-surface px-1 py-1.5 text-xs font-semibold text-accent transition-colors duration-feedback hover:bg-accent-subtle disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        <ArrowPathIcon className="h-4 w-4 mr-1" />
+                        <ArrowPathIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
                         Neue Instanz
                       </button>
                       <button
@@ -520,9 +531,9 @@ export default function RecurringTransactionsPage() {
                           setSelectedTransactionId(transaction.id)
                           setShowEditTransactionModal(true)
                         }}
-                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-control border border-accent text-accent hover:bg-accent-subtle transition-colors duration-feedback"
+                        className="inline-flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-control bg-surface px-1 py-1.5 text-xs font-semibold text-accent transition-colors duration-feedback hover:bg-accent-subtle"
                       >
-                        <PencilIcon className="h-4 w-4 mr-1" />
+                        <PencilIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
                         Bearbeiten
                       </button>
                     </div>

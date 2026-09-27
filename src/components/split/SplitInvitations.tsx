@@ -47,7 +47,7 @@ export default function SplitInvitations({ onResponded }: SplitInvitationsProps)
   if (loading || invites.length === 0) return null
 
   return (
-    <div className="mb-6 rounded-lg border border-accent-border bg-accent-subtle p-4">
+    <div className="mb-6 rounded-card bg-accent-subtle p-4">
       <h2 className="text-lg font-medium text-primary mb-1">Einladungen zu Split-Listen</h2>
       <p className="text-sm text-secondary mb-4">
         Sie wurden eingeladen, Ausgaben in einer Split-Liste mitzuerfassen. Dies ist
@@ -57,7 +57,7 @@ export default function SplitInvitations({ onResponded }: SplitInvitationsProps)
         {invites.map((invite) => (
           <li
             key={invite.id}
-            className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-control border border-border bg-surface p-3"
+            className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-control bg-surface p-3 shadow-card"
           >
             <div className="min-w-0 flex-1">
               <p className="font-medium text-primary truncate">{invite.splitListName}</p>

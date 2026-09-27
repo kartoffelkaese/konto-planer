@@ -4,11 +4,7 @@ import { Inter } from 'next/font/google'
 import Navigation from '@/components/Navigation'
 import AccountSwitchTransition from '@/components/AccountSwitchTransition'
 import { Providers } from './providers'
-import {
-  COLOR_SCHEMES_JSON,
-  DARK_COLOR_SCHEMES_JSON,
-  DEFAULT_COLOR_SCHEME,
-} from '@/lib/colorSchemes'
+import { THEME_INIT_SCRIPT } from '@/lib/colorSchemes'
 import {
   SITE_DESCRIPTION,
   SITE_NAME,
@@ -70,7 +66,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var v=${COLOR_SCHEMES_JSON};var dark=${DARK_COLOR_SCHEMES_JSON};var d='${DEFAULT_COLOR_SCHEME}';var s=localStorage.getItem('colorScheme');if(s==='ocean'){s='lagoon';localStorage.setItem('colorScheme','lagoon');}if(s==='twilight'){s=d;localStorage.setItem('colorScheme',d);}var scheme=v.indexOf(s)>=0?s:d;document.documentElement.setAttribute('data-color-scheme',scheme);document.documentElement.classList.toggle('dark',dark.indexOf(scheme)>=0);document.documentElement.classList.remove('light');})();`,
+            __html: THEME_INIT_SCRIPT,
           }}
         />
       </head>
@@ -86,7 +82,7 @@ export default function RootLayout({
           <main
             id="main-content"
             tabIndex={-1}
-            className="md:ml-[var(--sidebar-width)] transition-[margin-left] duration-300 ease-in-out outline-none"
+            className="md:ml-[var(--sidebar-width)] max-md:pb-[var(--mobile-tabbar-space,0px)] transition-[margin-left] duration-300 ease-in-out outline-none"
           >
             <AccountSwitchTransition>{children}</AccountSwitchTransition>
           </main>

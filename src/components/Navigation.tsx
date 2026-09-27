@@ -11,11 +11,11 @@ import {
   ArrowPathIcon,
   Cog6ToothIcon,
   UserGroupIcon,
-  Bars3Icon,
   XMarkIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ArrowRightOnRectangleIcon,
+  EllipsisHorizontalIcon,
 } from '@heroicons/react/24/outline'
 import { APP_VERSION } from '@/lib/version'
 import { signOut } from 'next-auth/react'
@@ -49,13 +49,16 @@ export default function Navigation() {
   })
 
   useEffect(() => {
+    const root = document.documentElement.style
     if (!session) {
-      document.documentElement.style.setProperty('--sidebar-width', '0')
+      root.setProperty('--sidebar-width', '0')
+      root.setProperty('--mobile-tabbar-space', '0px')
       return
     }
-    document.documentElement.style.setProperty(
-      '--sidebar-width',
-      isCollapsed ? '4rem' : '16rem'
+    root.setProperty('--sidebar-width', isCollapsed ? '4.5rem' : '16rem')
+    root.setProperty(
+      '--mobile-tabbar-space',
+      'calc(var(--mobile-tabbar-height) + env(safe-area-inset-bottom, 0px))'
     )
   }, [session, isCollapsed])
 
@@ -201,50 +204,124 @@ export default function Navigation() {
       ? 'md:justify-center md:px-2 py-2 px-3'
       : 'px-3 py-2'
 
-    const base = `flex items-center min-h-10 rounded-control transition-colors duration-feedback ${layout}`
+    const base = `flex items-center min-h-11 rounded-control transition-colors duration-feedback ${layout}`
 
     if (active) {
-      if (iconOnlyMode) {
-        return `${base} bg-accent-subtle text-accent font-semibold`
-      }
-      return `${base} bg-accent-subtle text-accent border-l-[3px] border-l-accent font-semibold`
+      return `${base} bg-accent-subtle text-accent font-semibold`
     }
 
-    return `${base} text-secondary hover:bg-accent-muted hover:text-accent border-l-[3px] border-l-transparent`
+    return `${base} text-secondary hover:bg-surface-muted hover:text-primary`
   }
+
+  /** Mobile Tab-Bar: Hauptziele direkt, Rest hinter „Mehr“ */
+  const tabHrefs = ['/', '/transactions', '/split']
+  const tabLabels: Record<string, string> = {
+    '/': 'Übersicht',
+    '/transactions': 'Buchungen',
+    '/split': 'Split',
+  }
+  const tabItems = navigation.filter((item) => tabHrefs.includes(item.href))
+  const moreItems = navigation.filter((item) => !tabHrefs.includes(item.href))
+  const moreBadge = moreItems.reduce((sum, item) => sum + item.badge, 0)
+  const moreActive = isOpen || moreItems.some((item) => isActive(item.href))
 
   return (
     <>
-      <header className="md:hidden sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-canvas px-3">
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center -ml-1 rounded-control text-secondary hover:text-primary hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent"
-          aria-expanded={isOpen}
-          aria-controls="mobile-sidebar"
-        >
-          <span className="sr-only">{isOpen ? 'Menü schließen' : 'Menü öffnen'}</span>
-          <span className="relative inline-flex h-6 w-6 shrink-0" aria-hidden="true">
-            <Bars3Icon
-              className={`mobile-menu-icon absolute inset-0 h-6 w-6 ${
-                isOpen ? 'scale-75 opacity-0 rotate-90' : 'scale-100 opacity-100 rotate-0'
-              }`}
-            />
-            <XMarkIcon
-              className={`mobile-menu-icon absolute inset-0 h-6 w-6 ${
-                isOpen ? 'scale-100 opacity-100 rotate-0' : 'scale-75 opacity-0 -rotate-90'
-              }`}
-            />
-          </span>
-        </button>
+      <header className="md:hidden sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-hairline bg-canvas/85 px-4 backdrop-blur-md">
         <Link
           href="/"
-          className="text-lg font-semibold text-accent tracking-tight truncate"
+          className="flex min-h-11 items-center gap-2 text-lg font-semibold tracking-tight text-primary truncate"
           onClick={() => setIsOpen(false)}
         >
+          <span
+            className="flex h-7 w-7 items-center justify-center rounded-[0.6rem] bg-accent text-sm font-bold text-accent-foreground"
+            aria-hidden="true"
+          >
+            K
+          </span>
           KontoPlaner
         </Link>
       </header>
+
+      <nav
+        aria-label="Hauptnavigation mobil"
+        className="mobile-tabbar md:hidden fixed inset-x-0 bottom-0 z-50"
+      >
+        <ul className="mx-auto flex h-[var(--mobile-tabbar-height)] max-w-lg items-stretch px-2">
+          {tabItems.map((item) => {
+            const active = isActive(item.href) && !isOpen
+            return (
+              <li key={item.href} className="flex-1">
+                <Link
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  aria-current={active ? 'page' : undefined}
+                  aria-label={
+                    item.badge > 0 && item.badgeLabel
+                      ? `${tabLabels[item.href]}, ${item.badge} ${item.badgeLabel}`
+                      : undefined
+                  }
+                  className={`flex h-full flex-col items-center justify-center gap-1 text-[11px] font-medium ${
+                    active ? 'text-accent' : 'text-secondary'
+                  }`}
+                >
+                  <span
+                    className={`relative flex h-8 w-14 items-center justify-center rounded-pill transition-colors duration-feedback ${
+                      active ? 'bg-accent-subtle' : ''
+                    }`}
+                  >
+                    <item.icon className="h-6 w-6" aria-hidden="true" />
+                    {item.badge > 0 && (
+                      <span
+                        className="absolute top-0 right-2 flex min-w-[1.125rem] h-[1.125rem] items-center justify-center rounded-full bg-pending px-1 text-[10px] font-semibold leading-none text-pending-foreground"
+                        aria-hidden="true"
+                      >
+                        {formatBadgeCount(item.badge)}
+                      </span>
+                    )}
+                  </span>
+                  {tabLabels[item.href]}
+                </Link>
+              </li>
+            )
+          })}
+          <li className="flex-1">
+            <button
+              type="button"
+              onClick={() => setIsOpen(!isOpen)}
+              aria-expanded={isOpen}
+              aria-controls="mobile-sidebar"
+              aria-label={
+                moreBadge > 0 ? `Mehr, ${moreBadge} offene Hinweise` : 'Mehr'
+              }
+              className={`flex h-full w-full flex-col items-center justify-center gap-1 text-[11px] font-medium active:!scale-100 ${
+                moreActive ? 'text-accent' : 'text-secondary'
+              }`}
+            >
+              <span
+                className={`relative flex h-8 w-14 items-center justify-center rounded-pill transition-colors duration-feedback ${
+                  moreActive ? 'bg-accent-subtle' : ''
+                }`}
+              >
+                {isOpen ? (
+                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+                ) : (
+                  <EllipsisHorizontalIcon className="h-6 w-6" aria-hidden="true" />
+                )}
+                {moreBadge > 0 && !isOpen && (
+                  <span
+                    className="absolute top-0 right-2 flex min-w-[1.125rem] h-[1.125rem] items-center justify-center rounded-full bg-pending px-1 text-[10px] font-semibold leading-none text-pending-foreground"
+                    aria-hidden="true"
+                  >
+                    {formatBadgeCount(moreBadge)}
+                  </span>
+                )}
+              </span>
+              Mehr
+            </button>
+          </li>
+        </ul>
+      </nav>
 
       {!isCollapsed && (
         <div
@@ -255,21 +332,22 @@ export default function Navigation() {
 
       <div
         id="mobile-sidebar"
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-surface border-r border-border md:w-[var(--sidebar-width)] md:translate-x-0 md:transition-[transform,width] md:duration-300 md:ease-in-out max-md:mobile-nav-drawer max-md:top-14 max-md:h-[calc(100%-3.5rem)] ${
+        data-open={isOpen}
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col bg-surface border-r border-hairline md:w-[var(--sidebar-width)] md:translate-x-0 mobile-nav-drawer max-md:top-14 max-md:h-[calc(100%-3.5rem)] max-md:pb-[var(--mobile-tabbar-space)] max-md:rounded-r-[1.5rem] ${
           isOpen
-            ? 'max-md:translate-x-0 max-md:shadow-xl'
-            : 'max-md:-translate-x-full max-md:shadow-none'
+            ? 'max-md:translate-x-0 max-md:shadow-raised max-md:visible'
+            : 'max-md:-translate-x-full max-md:shadow-none max-md:invisible'
         }`}
       >
         <div className="flex-1 overflow-x-hidden overflow-y-auto">
           <div
-            className={`hidden md:flex h-16 shrink-0 items-center border-b border-border bg-surface-muted px-4 transition-[padding] duration-300 ease-in-out ${
+            className={`hidden md:flex h-16 shrink-0 items-center px-4 transition-[padding] duration-300 ease-in-out ${
               iconOnlyMode ? 'md:justify-center md:px-2' : 'justify-between'
             }`}
           >
             <Link
               href="/"
-              className={`text-xl font-semibold text-accent tracking-tight ${labelTransition} ${
+              className={`text-xl font-semibold text-primary tracking-tight ${labelTransition} ${
                 showExpandedContent
                   ? 'max-w-[8rem] opacity-100'
                   : 'max-w-0 opacity-0 pointer-events-none'
@@ -282,7 +360,7 @@ export default function Navigation() {
             <button
               type="button"
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className={`hidden md:flex shrink-0 items-center justify-center w-8 h-8 rounded-control hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent ${
+              className={`hidden md:flex shrink-0 items-center justify-center w-9 h-9 rounded-pill hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${
                 isCollapsed ? '' : 'ml-auto'
               }`}
               aria-label={isCollapsed ? 'Menü ausklappen' : 'Menü einklappen'}
@@ -312,7 +390,7 @@ export default function Navigation() {
                     badgeAria ? `${item.name}, ${badgeAria}` : undefined
                   }
                   className={`${navItemClasses(isActivePath)}${
-                    isOpen ? ' max-md:mobile-nav-item-in' : ''
+                    isOpen ? ' mobile-nav-item-in' : ''
                   }`}
                   style={
                     isOpen
@@ -330,7 +408,7 @@ export default function Navigation() {
                     />
                     {showBadge && iconOnlyMode && (
                       <span
-                        className="absolute -top-1.5 -right-1.5 flex min-w-[1.125rem] h-[1.125rem] items-center justify-center rounded-full bg-pending px-1 text-[10px] font-semibold leading-none text-canvas"
+                        className="absolute -top-1.5 -right-1.5 flex min-w-[1.125rem] h-[1.125rem] items-center justify-center rounded-full bg-pending px-1 text-[10px] font-semibold leading-none text-pending-foreground"
                         aria-hidden="true"
                       >
                         {formatBadgeCount(item.badge)}
@@ -343,7 +421,7 @@ export default function Navigation() {
                     <span className="truncate">{item.name}</span>
                     {showBadge && !iconOnlyMode && (
                       <span
-                        className="ml-auto flex min-w-[1.125rem] h-[1.125rem] shrink-0 items-center justify-center rounded-full bg-pending px-1 text-[10px] font-semibold leading-none text-canvas"
+                        className="ml-auto flex min-w-[1.125rem] h-[1.125rem] shrink-0 items-center justify-center rounded-full bg-pending px-1 text-[10px] font-semibold leading-none text-pending-foreground"
                         aria-hidden="true"
                       >
                         {formatBadgeCount(item.badge)}
@@ -373,9 +451,9 @@ export default function Navigation() {
                     : 'Vom Konto abmelden'
                 }
                 aria-label="Ausloggen"
-                className={`flex items-center w-full min-h-10 text-sm font-medium text-danger rounded-control hover:bg-danger-subtle transition-colors duration-feedback ${
+                className={`flex items-center w-full min-h-11 text-sm font-medium text-danger rounded-control hover:bg-danger-subtle transition-colors duration-feedback ${
                   iconOnlyMode ? 'md:justify-center md:px-2 py-2 px-3' : 'px-3 py-2'
-                }${isOpen ? ' max-md:mobile-nav-item-in' : ''}`}
+                }${isOpen ? ' mobile-nav-item-in' : ''}`}
                 style={
                   isOpen
                     ? ({ animationDelay: `${60 + navigation.length * 40}ms` } satisfies CSSProperties)
@@ -393,7 +471,7 @@ export default function Navigation() {
 
         <div
           className={`shrink-0 px-2 py-2 overflow-hidden transition-[border-color] duration-300 ${
-            showExpandedContent ? 'border-t border-border' : ''
+            showExpandedContent ? 'border-t border-hairline' : ''
           }`}
         >
           <a
@@ -414,7 +492,7 @@ export default function Navigation() {
       </div>
 
       <div
-        className={`mobile-nav-backdrop fixed inset-0 top-14 z-30 bg-black/40 md:hidden ${
+        className={`mobile-nav-backdrop fixed inset-0 top-14 z-[35] bg-black/30 backdrop-blur-[2px] md:hidden ${
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setIsOpen(false)}

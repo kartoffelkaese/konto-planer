@@ -445,7 +445,7 @@ function TransactionsPageContent() {
                   />
                   <Button
                     type="button"
-                    className="hidden md:inline-flex shrink-0"
+                    className="max-md:hidden shrink-0"
                     onClick={() => setShowNewTransactionModal(true)}
                   >
                     Neue Transaktion
@@ -518,7 +518,7 @@ function TransactionsPageContent() {
 
         <div
           id="monthly-overview-section"
-          className="rounded-lg border border-border p-4 mb-8 bg-surface"
+          className="mb-6"
         >
           <MonthlyOverview
             currentIncome={totals.currentIncome}
@@ -534,7 +534,7 @@ function TransactionsPageContent() {
 
         <div
           id="transaction-list-section"
-          className="rounded-lg border border-border p-4 mb-8 bg-surface"
+          className="card p-4 md:p-5 mb-8"
         >
           <TransactionList
             transactions={transactions}
@@ -595,7 +595,7 @@ function TransactionsPageContent() {
       {canWrite && (
       <Button
         type="button"
-        className="md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] right-[calc(1.5rem+env(safe-area-inset-right,0px))] z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
+        className="md:hidden fixed bottom-[calc(1rem+var(--mobile-tabbar-space,env(safe-area-inset-bottom,0px)))] right-[calc(1.5rem+env(safe-area-inset-right,0px))] z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
         onClick={() => setShowNewTransactionModal(true)}
         aria-label="Neue Transaktion"
       >

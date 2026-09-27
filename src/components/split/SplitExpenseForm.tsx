@@ -307,7 +307,7 @@ export default function SplitExpenseForm({
       </fieldset>
 
       {error && (
-        <div className="p-3 bg-danger-subtle text-danger rounded-control border border-danger/20 text-sm">
+        <div className="p-3 bg-danger-subtle text-danger rounded-control text-sm">
           {error}
         </div>
       )}

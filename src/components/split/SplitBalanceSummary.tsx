@@ -2,12 +2,7 @@
 
 import { useMemo } from 'react'
 import { formatCurrency } from '@/lib/formatters'
-import {
-  formatSplitExpenseAmount,
-  splitExpenseAmountClass,
-} from '@/lib/splitFormatters'
 import type { SplitBalanceEntry } from '@/types/split'
-import { splitSectionCardClass } from '@/components/split/splitUiClasses'
 import {
   getBalanceStatus,
   getBalanceStatusLabel,
@@ -22,15 +17,15 @@ type SplitBalanceSummaryProps = {
 }
 
 const statusBadgeClass: Record<BalanceStatus, string> = {
-  creditor: 'border-income/30 bg-income-bg text-income',
-  debtor: 'border-expense/30 bg-expense-bg text-expense',
-  settled: 'border-border bg-surface-muted text-secondary',
+  creditor: 'bg-income-bg text-income',
+  debtor: 'bg-expense-bg text-expense',
+  settled: 'bg-surface-muted text-secondary',
 }
 
-const statusStripeClass: Record<BalanceStatus, string> = {
-  creditor: 'border-l-income',
-  debtor: 'border-l-expense',
-  settled: 'border-l-border',
+const statusAvatarClass: Record<BalanceStatus, string> = {
+  creditor: 'bg-income-bg text-income',
+  debtor: 'bg-expense-bg text-expense',
+  settled: 'bg-surface-muted text-secondary',
 }
 
 function BalanceParticipantRow({ entry, totalExpenses }: { entry: SplitBalanceEntry; totalExpenses: number }) {
@@ -39,74 +34,60 @@ function BalanceParticipantRow({ entry, totalExpenses }: { entry: SplitBalanceEn
   const owedShare = totalExpenses > 0 ? Math.min(100, (entry.owed / totalExpenses) * 100) : 0
 
   return (
-    <li
-      className={`rounded-lg border border-border border-l-4 bg-surface ${statusStripeClass[status]} overflow-hidden`}
-    >
-      <div className="flex items-start gap-3 px-4 py-3">
+    <li className="rounded-control px-2 py-3 transition-colors hover:bg-surface-muted/60">
+      <div className="flex items-center gap-3">
         <span
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-accent-border bg-accent-subtle text-sm font-semibold text-accent"
+          className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${statusAvatarClass[status]}`}
           aria-hidden="true"
         >
           {getParticipantInitials(entry.displayName) || '?'}
         </span>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h4 className="truncate text-sm font-medium text-primary">{entry.displayName}</h4>
-            <span
-              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusBadgeClass[status]}`}
-            >
-              {getBalanceStatusLabel(status)}
-            </span>
-          </div>
+          <h4 className="truncate font-medium text-primary">{entry.displayName}</h4>
+          <p className="text-sm text-secondary tabular-nums truncate">
+            Bezahlt {formatCurrency(entry.paid)} · Anteil {formatCurrency(entry.owed)}
+          </p>
+        </div>
 
-          <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-3">
-            <div>
-              <dt className="text-secondary">Bezahlt</dt>
-              <dd className="font-medium tabular-nums text-primary">{formatCurrency(-entry.paid)}</dd>
-            </div>
-            <div>
-              <dt className="text-secondary">Anteil</dt>
-              <dd className="font-medium tabular-nums text-primary">{formatCurrency(-entry.owed)}</dd>
-            </div>
-            <div className="col-span-2 sm:col-span-1">
-              <dt className="text-secondary">Saldo</dt>
-              <dd
-                className={`font-semibold tabular-nums ${
-                  status === 'creditor'
-                    ? 'text-income'
-                    : status === 'debtor'
-                      ? 'text-expense'
-                      : 'text-secondary'
-                }`}
-              >
-                {status === 'creditor' && '+'}
-                {formatCurrency(entry.net)}
-              </dd>
-            </div>
-          </dl>
-
-          {totalExpenses > 0 && (
-            <div className="mt-3 space-y-1">
-              <div className="flex h-1.5 overflow-hidden rounded-full bg-surface-muted">
-                <span
-                  className="bg-accent/70"
-                  style={{ width: `${paidShare}%` }}
-                  title={`Bezahlt: ${Math.round(paidShare)} % der Gesamtausgaben`}
-                />
-                <span
-                  className="bg-border"
-                  style={{ width: `${Math.max(0, owedShare - paidShare)}%` }}
-                  title={`Anteil über Bezahlt: ${Math.round(Math.max(0, owedShare - paidShare))} %`}
-                />
-              </div>
-              <p className="text-[11px] text-secondary">
-                {Math.round(paidShare)} % bezahlt · {Math.round(owedShare)} % Anteil am Gesamtbetrag
-              </p>
-            </div>
-          )}
+        <div className="shrink-0 text-right">
+          <p
+            className={`amount ${
+              status === 'creditor'
+                ? 'text-income'
+                : status === 'debtor'
+                  ? 'text-expense'
+                  : 'text-secondary'
+            }`}
+          >
+            {status === 'creditor' && '+'}
+            {formatCurrency(entry.net)}
+          </p>
+          <span
+            className={`mt-0.5 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass[status]}`}
+          >
+            {getBalanceStatusLabel(status)}
+          </span>
         </div>
       </div>
+
+      {totalExpenses > 0 && (
+        <div className="mt-2.5 pl-[3.25rem]">
+          <div
+            className="flex h-1.5 overflow-hidden rounded-full bg-surface-muted"
+            title={`${Math.round(paidShare)} % bezahlt · ${Math.round(owedShare)} % Anteil am Gesamtbetrag`}
+          >
+            <span className="rounded-full bg-accent" style={{ width: `${paidShare}%` }} />
+            <span
+              className="bg-border/60"
+              style={{ width: `${Math.max(0, owedShare - paidShare)}%` }}
+            />
+          </div>
+          <p className="sr-only">
+            {Math.round(paidShare)} % bezahlt, {Math.round(owedShare)} % Anteil am Gesamtbetrag
+          </p>
+        </div>
+      )}
     </li>
   )
 }
@@ -123,9 +104,9 @@ function BalanceSection({
   if (entries.length === 0) return null
 
   return (
-    <section>
-      <h3 className="mb-3 text-sm font-medium text-secondary">{title}</h3>
-      <ul className="space-y-3">
+    <section className="card p-4 md:p-5">
+      <h3 className="mb-1 text-base font-semibold text-primary">{title}</h3>
+      <ul className="-mx-2">
         {entries.map((entry) => (
           <BalanceParticipantRow
             key={entry.participantId}
@@ -167,44 +148,43 @@ export default function SplitBalanceSummary({
 
   return (
     <div className="space-y-4">
-      <div className={`${splitSectionCardClass} flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4`}>
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-primary">Saldenübersicht</p>
-          <p className="text-xs text-secondary">
-            {balances.length} {balances.length === 1 ? 'Teilnehmer' : 'Teilnehmer'}
-            {openSettlements > 0
-              ? ` · ${openSettlements} ${openSettlements === 1 ? 'offener Ausgleich' : 'offene Ausgleiche'}`
-              : ' · alle Salden ausgeglichen'}
-          </p>
-        </div>
-        <dl className="grid grid-cols-2 gap-3 text-sm sm:flex sm:flex-wrap sm:gap-x-6 sm:gap-y-1">
-          <div>
-            <dt className="text-xs text-secondary">Gesamtausgaben</dt>
-            <dd className={`font-semibold tabular-nums ${splitExpenseAmountClass(totalExpenses)}`}>
-              {formatSplitExpenseAmount(totalExpenses)}
-            </dd>
-          </div>
+      <section className="hero-card p-6 md:p-8">
+        <p className="eyebrow">Gesamtausgaben</p>
+        <p className="amount-hero mt-2 text-primary">{formatCurrency(totalExpenses)}</p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <span className="chip">
+            {balances.length} Teilnehmer
+          </span>
+          {openSettlements > 0 ? (
+            <span className="chip">
+              <span className="h-2 w-2 rounded-full bg-pending" aria-hidden="true" />
+              {openSettlements} {openSettlements === 1 ? 'offener Ausgleich' : 'offene Ausgleiche'}
+            </span>
+          ) : (
+            <span className="chip">
+              <span className="h-2 w-2 rounded-full bg-income" aria-hidden="true" />
+              Alle Salden ausgeglichen
+            </span>
+          )}
           {creditorCount > 0 && (
-            <div>
-              <dt className="text-xs text-secondary">Bekommen zurück</dt>
-              <dd className="font-medium tabular-nums text-income">{creditorCount}</dd>
-            </div>
+            <span className="chip">
+              <span className="text-income font-semibold">{creditorCount}</span> bekommen zurück
+            </span>
           )}
           {debtorCount > 0 && (
-            <div>
-              <dt className="text-xs text-secondary">Schulden offen</dt>
-              <dd className="font-medium tabular-nums text-expense">{debtorCount}</dd>
-            </div>
+            <span className="chip">
+              <span className="text-expense font-semibold">{debtorCount}</span> schulden noch
+            </span>
           )}
-        </dl>
-      </div>
+        </div>
+      </section>
 
       {totalExpenses === 0 ? (
-        <div className="rounded-lg border border-border bg-surface px-4 py-8 text-center text-sm text-secondary">
+        <div className="card px-4 py-8 text-center text-sm text-secondary">
           Noch keine Ausgaben erfasst — Salden erscheinen, sobald Kosten eingetragen werden.
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <BalanceSection
             title="Bekommt Geld zurück"
             entries={grouped.creditors}

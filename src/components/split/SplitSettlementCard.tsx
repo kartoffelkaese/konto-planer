@@ -10,7 +10,8 @@ import type {
   SplitDebtSuggestion,
   SplitParticipant,
 } from '@/types/split'
-import { splitSectionCardClass, splitSectionTitleClass } from '@/components/split/splitUiClasses'
+import { splitSectionCardClass } from '@/components/split/splitUiClasses'
+import { getParticipantInitials } from '@/components/split/splitParticipantUtils'
 
 type SplitSettlementCardProps = {
   listId: string
@@ -59,9 +60,11 @@ export default function SplitSettlementCard({
   if (suggestions.length === 0) {
     return (
       <>
-        <div className="flex flex-col gap-3 rounded-lg border border-accent-border bg-accent-subtle p-4 text-sm text-primary sm:flex-row sm:items-start sm:justify-between">
+        <div className="card flex flex-col gap-3 p-4 text-sm text-primary sm:flex-row sm:items-center sm:justify-between md:p-5">
           <div className="flex items-start gap-3">
-            <CheckCircleIcon className="h-5 w-5 shrink-0 text-accent" aria-hidden="true" />
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-income-bg text-income">
+              <CheckCircleIcon className="h-5 w-5" aria-hidden="true" />
+            </span>
             <div>
               <p className="font-medium">Alles ausgeglichen</p>
               <p className="mt-0.5 text-secondary">
@@ -91,7 +94,7 @@ export default function SplitSettlementCard({
     <section className={`${splitSectionCardClass} space-y-4`}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className={splitSectionTitleClass}>Nächste Ausgleiche</h3>
+          <h3 className="text-base font-semibold text-primary">Nächste Ausgleiche</h3>
           <p className="text-sm text-secondary">
             Minimale Anzahl Zahlungen, um alle Salden auszugleichen.
             {!readOnly && ' Teilzahlungen und freie Zahlungen zwischen beliebigen Teilnehmern sind möglich.'}
@@ -110,23 +113,32 @@ export default function SplitSettlementCard({
         )}
       </div>
 
-      <ul className="space-y-3">
+      <ul className="space-y-2">
         {suggestions.map((suggestion) => {
           const key = `${suggestion.fromParticipantId}-${suggestion.toParticipantId}`
           return (
             <li
               key={key}
-              className="flex flex-col gap-3 rounded-lg border border-border bg-canvas px-4 py-3 sm:flex-row sm:items-center"
+              className="flex flex-col gap-3 rounded-control bg-surface-muted/70 p-3 sm:flex-row sm:items-center"
             >
-              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                <span className="font-medium text-primary">{suggestion.fromDisplayName}</span>
-                <ArrowLongRightIcon
-                  className="h-4 w-4 shrink-0 text-secondary"
-                  aria-hidden="true"
-                />
-                <span className="font-medium text-primary">{suggestion.toDisplayName}</span>
-                <span className="font-semibold tabular-nums text-expense">
-                  {formatCurrency(-suggestion.amount)}
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <span className="flex -space-x-2 shrink-0" aria-hidden="true">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-expense-bg text-xs font-semibold text-expense ring-2 ring-surface">
+                    {getParticipantInitials(suggestion.fromDisplayName) || '?'}
+                  </span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-income-bg text-xs font-semibold text-income ring-2 ring-surface">
+                    {getParticipantInitials(suggestion.toDisplayName) || '?'}
+                  </span>
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium text-primary">
+                    <span className="truncate">{suggestion.fromDisplayName}</span>
+                    <ArrowLongRightIcon className="h-4 w-4 shrink-0 text-secondary" aria-label="an" />
+                    <span className="truncate">{suggestion.toDisplayName}</span>
+                  </span>
+                  <span className="amount block text-primary">
+                    {formatCurrency(suggestion.amount)}
+                  </span>
                 </span>
               </div>
               {!readOnly && (

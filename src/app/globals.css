@@ -3,214 +3,192 @@
 
 :root {
   --motion-duration-feedback: 150ms;
-  --motion-duration-expand: 200ms;
-  --motion-easing: cubic-bezier(0.4, 0, 0.2, 1);
-  --sidebar-width: 4rem;
-  --radius-card: 0.75rem;
-  --radius-control: 0.5rem;
+  --motion-duration-expand: 220ms;
+  --motion-easing: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --sidebar-width: 4.5rem;
+  --radius-card: 1.25rem;
+  --radius-control: 0.75rem;
+  --radius-pill: 9999px;
+  --mobile-tabbar-height: 4rem;
 }
 
 /*
- * Nebel & Veilchen – kühles neutrales UI, Indigo-Akzent; Semantik getrennt.
- * WCAG AA: Text 4.5:1, UI-Komponenten 3:1.
+ * Konto-Planer 2026 – „Soft & ruhig“. Ein Design, Hell und Dunkel.
+ * Werte gespiegelt in src/lib/colorSchemeTokens.ts (WCAG-AA-Test).
+ * Text 4.5:1, UI-Komponenten 3:1.
  */
-html[data-color-scheme="nebel"],
-html:not([data-color-scheme]) {
-  --color-canvas: #f4f5f8;
+:root {
+  color-scheme: light;
+  --color-canvas: #f5f6f8;
   --color-surface: #ffffff;
-  --color-surface-muted: #e8eaef;
-  --color-border: #8a8d98;
-  --color-text-primary: #1a1b26;
-  --color-text-secondary: #52556a;
-  --color-accent: #4455a8;
-  --color-accent-hover: #364489;
-  --color-accent-subtle: #e4e8f4;
-  --color-accent-muted: #eef0f5;
+  --color-surface-muted: #eef0f4;
+  --color-surface-raised: #ffffff;
+  --color-border: #7e8396;
+  --color-hairline: #e6e8ee;
+  --color-text-primary: #12141a;
+  --color-text-secondary: #5b6070;
+  --color-accent: #4f46e5;
+  --color-accent-hover: #4338ca;
+  --color-accent-subtle: #eef0ff;
+  --color-accent-muted: #f4f5fd;
   --color-accent-foreground: #ffffff;
-  --color-accent-border: #6b7ac4;
-  --color-income: #1f6b52;
-  --color-income-bg: #e0f0e9;
-  --color-expense: #a83832;
-  --color-expense-bg: #fae8e6;
-  --color-pending: #826016;
-  --color-pending-bg: #f5eed8;
+  --color-accent-border: #a5a1f5;
+  --color-income: #0f7a52;
+  --color-income-bg: #e3f5ec;
+  --color-expense: #c2362f;
+  --color-expense-bg: #fdecea;
+  --color-pending: #8a5c00;
+  --color-pending-bg: #fdf3d6;
   --color-pending-foreground: #ffffff;
-  --color-danger: #8c2e28;
-  --color-danger-hover: #742520;
+  --color-danger: #b42318;
+  --color-danger-hover: #912018;
   --color-danger-foreground: #ffffff;
-  --color-danger-subtle: #fae0dc;
-  --color-chart-default: #4455a8;
-  --shadow-color: rgba(26, 27, 38, 0.06);
+  --color-danger-subtle: #fee4e2;
+  --color-chart-default: #4f46e5;
+  --shadow-color: rgba(16, 24, 40, 0.08);
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 16px rgb(16 24 40 / 0.06);
+  --shadow-raised: 0 4px 12px rgb(16 24 40 / 0.06), 0 24px 48px rgb(16 24 40 / 0.14);
+  --card-edge: transparent;
 }
 
-/*
- * Kupfer & Kreide – warmes Kupfer-UI; kühles Grün & Ziegel semantisch.
- */
-html[data-color-scheme="kupfer"] {
-  --color-canvas: #f8f4f0;
-  --color-surface: #ffffff;
-  --color-surface-muted: #efe8e2;
-  --color-border: #948578;
-  --color-text-primary: #2a221e;
-  --color-text-secondary: #5a4e46;
-  --color-accent: #8a4e2a;
-  --color-accent-hover: #6d3c20;
-  --color-accent-subtle: #f2e6dc;
-  --color-accent-muted: #f5ede6;
-  --color-accent-foreground: #ffffff;
-  --color-accent-border: #a66a44;
-  --color-income: #256b50;
-  --color-income-bg: #e2f0ea;
-  --color-expense: #9a3830;
-  --color-expense-bg: #faeae6;
-  --color-pending: #826018;
-  --color-pending-bg: #f5eed6;
-  --color-pending-foreground: #ffffff;
-  --color-danger: #7e2218;
-  --color-danger-hover: #681a12;
-  --color-danger-foreground: #ffffff;
-  --color-danger-subtle: #fae0dc;
-  --color-chart-default: #8a4e2a;
-  --shadow-color: rgba(42, 34, 30, 0.08);
-}
-
-/*
- * Moor & Torf – erdiges Petrol-UI; Moosgrün, Ocker & Ziegel semantisch getrennt.
- */
-html[data-color-scheme="moor"] {
-  --color-canvas: #f0f2ef;
-  --color-surface: #ffffff;
-  --color-surface-muted: #e3e8e4;
-  --color-border: #7a8a80;
-  --color-text-primary: #141c18;
-  --color-text-secondary: #47564e;
-  --color-accent: #2a5856;
-  --color-accent-hover: #1f4543;
-  --color-accent-subtle: #d8e8e5;
-  --color-accent-muted: #e8eeea;
-  --color-accent-foreground: #ffffff;
-  --color-accent-border: #4a8078;
-  --color-income: #236b44;
-  --color-income-bg: #ddf0e6;
-  --color-expense: #a83830;
-  --color-expense-bg: #fae8e5;
-  --color-pending: #826016;
-  --color-pending-bg: #f3ecd8;
-  --color-pending-foreground: #ffffff;
-  --color-danger: #7c2418;
-  --color-danger-hover: #681c12;
-  --color-danger-foreground: #ffffff;
-  --color-danger-subtle: #f8e0da;
-  --color-chart-default: #2a5856;
-  --shadow-color: rgba(20, 28, 24, 0.07);
-}
-
-/*
- * Nachtviolett (Dunkel) – Pflaume UI; Mint, Lilac & Rosa semantisch.
- */
-html[data-color-scheme="plum"] {
+html.dark {
   color-scheme: dark;
-  --color-canvas: #0a0909;
-  --color-surface: #2a1c28;
-  --color-surface-muted: #3d2240;
-  --color-border: #927a88;
-  --color-text-primary: #eaeaea;
-  --color-text-secondary: #b8a8b2;
-  --color-accent: #a87898;
-  --color-accent-hover: #c498b0;
-  --color-accent-subtle: #352030;
-  --color-accent-muted: #2a1c28;
-  --color-accent-foreground: #0a0909;
-  --color-accent-border: #986888;
-  --color-income: #5ec492;
-  --color-income-bg: #0c2e22;
-  --color-expense: #e07898;
-  --color-expense-bg: #381020;
-  --color-pending: #c8a0d8;
-  --color-pending-bg: #2a2030;
-  --color-pending-foreground: #0a0909;
-  --color-danger: #ff6080;
-  --color-danger-hover: #ff8098;
-  --color-danger-foreground: #0a0909;
-  --color-danger-subtle: #381020;
-  --color-chart-default: #a87898;
-  --shadow-color: rgba(0, 0, 0, 0.4);
+  --color-canvas: #0b0d12;
+  --color-surface: #151821;
+  --color-surface-muted: #1e222d;
+  --color-surface-raised: #1b1f2a;
+  --color-border: #6f7689;
+  --color-hairline: #262b37;
+  --color-text-primary: #eef0f5;
+  --color-text-secondary: #9aa1b2;
+  --color-accent: #8b87ff;
+  --color-accent-hover: #a5a2ff;
+  --color-accent-subtle: #1f2040;
+  --color-accent-muted: #171a2a;
+  --color-accent-foreground: #0b0d12;
+  --color-accent-border: #5b57c9;
+  --color-income: #4ade9a;
+  --color-income-bg: #0f2a1f;
+  --color-expense: #ff7a72;
+  --color-expense-bg: #321514;
+  --color-pending: #f5c451;
+  --color-pending-bg: #2e2510;
+  --color-pending-foreground: #0b0d12;
+  --color-danger: #ff6b61;
+  --color-danger-hover: #ff8a82;
+  --color-danger-foreground: #0b0d12;
+  --color-danger-subtle: #3a1614;
+  --color-chart-default: #8b87ff;
+  --shadow-color: rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-raised: 0 24px 48px rgb(0 0 0 / 0.5);
+  --card-edge: var(--color-hairline);
 }
 
-/*
- * Lagune – Aquatisches Cyan UI; gedämpfter Fließtext, Amber & Koralle für Werte.
- */
-html[data-color-scheme="lagoon"] {
-  --color-canvas: #eef6f9;
-  --color-surface: #ffffff;
-  --color-surface-muted: #e0f0f5;
-  --color-border: #6a9490;
-  --color-text-primary: #001219;
-  --color-text-secondary: #3d5a66;
-  --color-accent: #006d9e;
-  --color-accent-hover: #004d70;
-  --color-accent-subtle: #cce8f2;
-  --color-accent-muted: #e5f2f7;
-  --color-accent-foreground: #ffffff;
-  --color-accent-border: #0a8890;
-  --color-income: #0a7068;
-  --color-income-bg: #d0f0ec;
-  --color-expense: #9b2226;
-  --color-expense-bg: #fcecea;
-  --color-pending: #8a5208;
-  --color-pending-bg: #faf0d4;
-  --color-pending-foreground: #ffffff;
-  --color-danger: #8a1a0e;
-  --color-danger-hover: #721408;
-  --color-danger-foreground: #ffffff;
-  --color-danger-subtle: #fce4e0;
-  --color-chart-default: #006d9e;
-  --shadow-color: rgba(0, 18, 25, 0.1);
-}
+/* Element-Basis im Layer, damit Tailwind-Utilities (z. B. text-*, rounded-*) Vorrang haben */
+@layer base {
+  html {
+    --card-bg: var(--color-surface);
+    --border-color: var(--color-border);
+    --text-color: var(--color-text-primary);
+  }
 
-/*
- * Heritage (Dunkel) – Marine UI; Creme Text; Mint, Amber & Koralle semantisch.
- */
-html[data-color-scheme="heritage"] {
-  color-scheme: dark;
-  --color-canvas: #001820;
-  --color-surface: #002236;
-  --color-surface-muted: #003048;
-  --color-border: #507890;
-  --color-text-primary: #fdf0d5;
-  --color-text-secondary: #90b8d0;
-  --color-accent: #5a94b8;
-  --color-accent-hover: #7ab4d8;
-  --color-accent-subtle: #0c3048;
-  --color-accent-muted: #002236;
-  --color-accent-foreground: #001820;
-  --color-accent-border: #4080a0;
-  --color-income: #60c890;
-  --color-income-bg: #0c2e22;
-  --color-expense: #e86878;
-  --color-expense-bg: #381018;
-  --color-pending: #d8a850;
-  --color-pending-bg: #283818;
-  --color-pending-foreground: #001820;
-  --color-danger: #ec5868;
-  --color-danger-hover: #f07080;
-  --color-danger-foreground: #001820;
-  --color-danger-subtle: #381018;
-  --color-chart-default: #5a94b8;
-  --shadow-color: rgba(0, 0, 0, 0.35);
-}
+  body {
+    color: var(--color-text-primary);
+    background-color: var(--color-canvas);
+    font-family: var(--font-inter, ui-sans-serif, system-ui, sans-serif);
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+  }
 
-html {
-  --card-bg: var(--color-surface);
-  --border-color: var(--color-border);
-  --text-color: var(--color-text-primary);
-}
+  .tabular-nums {
+    font-feature-settings: "tnum", "cv11", "ss01";
+  }
 
-body {
-  color: var(--color-text-primary);
-  background-color: var(--color-canvas);
-  font-family: var(--font-inter, ui-sans-serif, system-ui, sans-serif);
-  -webkit-font-smoothing: antialiased;
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  table {
+    color: var(--color-text-primary);
+  }
+
+  a[href]:not(.btn-primary):not(.btn-secondary):not(.landing-cta-solid):not(
+      .landing-cta-outline
+    ) {
+    color: var(--color-accent);
+    cursor: pointer;
+  }
+
+  a[href]:not(.btn-primary):not(.btn-secondary):not(.landing-cta-solid):not(
+      .landing-cta-outline
+    ):hover {
+    color: var(--color-accent-hover);
+  }
+
+  button {
+    color: var(--color-text-primary);
+    transition: color var(--motion-duration-feedback) var(--motion-easing),
+      background-color var(--motion-duration-feedback) var(--motion-easing),
+      border-color var(--motion-duration-feedback) var(--motion-easing),
+      transform var(--motion-duration-feedback) var(--motion-easing);
+  }
+
+  button:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label[for],
+  label:has(input:not([disabled]):not([type="hidden"])),
+  summary,
+  th.select-none {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 0.625rem 0.875rem;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    color: var(--color-text-primary);
+    transition: border-color var(--motion-duration-feedback) var(--motion-easing),
+      box-shadow var(--motion-duration-feedback) var(--motion-easing);
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+  select {
+    min-height: 2.75rem;
+  }
+
+  input:hover:not(:disabled):not(:focus),
+  select:hover:not(:disabled):not(:focus),
+  textarea:hover:not(:disabled):not(:focus) {
+    border-color: var(--color-text-secondary);
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 4px var(--color-accent-subtle);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-text-secondary);
+    opacity: 0.8;
+  }
 }
 
 .text-gray-500 {
@@ -219,67 +197,6 @@ body {
 
 .text-gray-600 {
   color: var(--color-text-primary);
-}
-
-table {
-  color: var(--color-text-primary);
-}
-
-a[href]:not(.btn-primary):not(.btn-secondary):not(.landing-cta-solid):not(
-    .landing-cta-outline
-  ) {
-  color: var(--color-accent);
-  cursor: pointer;
-}
-
-a[href]:not(.btn-primary):not(.btn-secondary):not(.landing-cta-solid):not(
-    .landing-cta-outline
-  ):hover {
-  color: var(--color-accent-hover);
-}
-
-button {
-  color: var(--color-text-primary);
-  transition: color var(--motion-duration-feedback) var(--motion-easing),
-    background-color var(--motion-duration-feedback) var(--motion-easing),
-    border-color var(--motion-duration-feedback) var(--motion-easing),
-    transform var(--motion-duration-feedback) var(--motion-easing);
-}
-
-button:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-button:not(:disabled),
-[role="button"]:not([aria-disabled="true"]),
-label[for],
-label:has(input:not([disabled]):not([type="hidden"])),
-summary,
-th.select-none {
-  cursor: pointer;
-}
-
-button:disabled,
-[role="button"][aria-disabled="true"] {
-  cursor: not-allowed;
-}
-
-input,
-select,
-textarea {
-  padding: 0.5rem 0.75rem;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  color: var(--color-text-primary);
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  outline: 2px solid var(--color-accent-subtle);
-  outline-offset: 1px;
-  border-color: var(--color-accent);
 }
 
 .kpi-card--accent {
@@ -301,15 +218,14 @@ a[href].btn-primary:hover {
 
 .btn-secondary,
 a[href].btn-secondary {
-  background-color: var(--color-surface);
-  color: var(--color-accent);
-  border: 1px solid var(--color-accent-border);
+  background-color: var(--color-surface-muted);
+  color: var(--color-text-primary);
+  border: 1px solid transparent;
 }
 
 .btn-secondary:hover:not(:disabled),
 a[href].btn-secondary:hover {
   background-color: var(--color-accent-subtle);
-  border-color: var(--color-accent);
   color: var(--color-accent);
 }
 
@@ -342,12 +258,108 @@ a[href].landing-cta-outline:hover {
   border-color: rgb(255 255 255 / 0.75);
 }
 
-.section-card-accent {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-accent-border);
-  border-top: 3px solid var(--color-accent);
-  border-radius: var(--radius-card);
-  padding: 1rem;
+@layer components {
+  /* Karten – weiche Fläche statt Rahmen; im Dunkelmodus feine Kante */
+  .card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--card-edge);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .section-card-accent {
+    background-color: var(--color-surface);
+    border: 1px solid var(--card-edge);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: 1.25rem;
+  }
+
+  /* Hero-Karte Dashboard */
+  .hero-card {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--color-surface);
+    border: 1px solid var(--card-edge);
+    border-radius: calc(var(--radius-card) + 0.25rem);
+    box-shadow: var(--shadow-card);
+  }
+
+  .hero-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 70% 90% at 100% 0%, var(--color-accent-subtle), transparent 60%),
+      radial-gradient(ellipse 50% 60% at 0% 100%, var(--color-accent-muted), transparent 60%);
+  }
+
+  .hero-card > * {
+    position: relative;
+  }
+
+  /* Beträge */
+  .amount-hero,
+  .amount-lg,
+  .amount {
+    font-feature-settings: "tnum", "cv11", "ss01";
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .amount-hero {
+    font-size: clamp(2.25rem, 7vw, 3.25rem);
+    line-height: 1.05;
+    font-weight: 650;
+    letter-spacing: -0.035em;
+  }
+
+  .amount-lg {
+    font-size: 1.5rem;
+    line-height: 1.2;
+    font-weight: 600;
+  }
+
+  .amount {
+    font-weight: 600;
+  }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: var(--radius-pill);
+    background-color: var(--color-surface-muted);
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+  }
+}
+
+/* iOS zoomt bei Feldern < 16px beim Fokus – mobil mindestens 16px (bewusst ohne Layer, schlägt text-sm) */
+@media (max-width: 47.99rem) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+}
+
+/* Mobile Bottom-Tab-Bar */
+.mobile-tabbar {
+  background-color: color-mix(in srgb, var(--color-surface) 88%, transparent);
+  -webkit-backdrop-filter: saturate(1.6) blur(16px);
+  backdrop-filter: saturate(1.6) blur(16px);
+  border-top: 1px solid var(--color-hairline);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Landing page */
@@ -378,9 +390,10 @@ a[href].landing-cta-outline:hover {
 }
 
 .page-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  letter-spacing: -0.025em;
+  font-size: 1.75rem;
+  line-height: 2.125rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
   color: var(--color-text-primary);
 }
 
@@ -434,7 +447,19 @@ a[href].landing-cta-outline:hover {
 .mobile-nav-drawer {
   transition:
     transform 280ms cubic-bezier(0.32, 0.72, 0, 1),
-    box-shadow 280ms cubic-bezier(0.32, 0.72, 0, 1);
+    box-shadow 280ms cubic-bezier(0.32, 0.72, 0, 1),
+    visibility 0s linear 280ms;
+}
+
+/* Beim Öffnen sofort sichtbar, beim Schließen erst nach der Animation unsichtbar (nicht fokussierbar) */
+.mobile-nav-drawer[data-open="true"] {
+  transition-delay: 0s;
+}
+
+@media (min-width: 48rem) {
+  .mobile-nav-drawer {
+    transition: width 300ms ease-in-out;
+  }
 }
 
 .mobile-nav-backdrop {

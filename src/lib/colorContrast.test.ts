@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { COLOR_SCHEME_TOKENS } from './colorSchemeTokens'
-import { COLOR_SCHEMES } from './colorSchemes'
+import { normalizeThemeMode } from './colorSchemes'
 import {
   contrastRatio,
   meetsContrast,
@@ -9,7 +9,7 @@ import {
 } from './colorContrast'
 
 describe('color scheme contrast (WCAG AA)', () => {
-  for (const scheme of COLOR_SCHEMES) {
+  for (const scheme of ['light', 'dark'] as const) {
     describe(scheme, () => {
       const t = COLOR_SCHEME_TOKENS[scheme]
 
@@ -65,6 +65,27 @@ describe('color scheme contrast (WCAG AA)', () => {
         expect(meetsContrast(t.border, t.surface, WCAG_AA_LARGE_UI)).toBe(true)
       })
 
+      it('border on surface-muted (UI components)', () => {
+        expect(meetsContrast(t.border, t.surfaceMuted, WCAG_AA_LARGE_UI)).toBe(true)
+      })
+
+      it('secondary text on surface-muted', () => {
+        expect(
+          meetsContrast(t.textSecondary, t.surfaceMuted, WCAG_AA_NORMAL_TEXT)
+        ).toBe(true)
+      })
+
+      it('accent on surface and accent-subtle', () => {
+        expect(meetsContrast(t.accent, t.surface, WCAG_AA_NORMAL_TEXT)).toBe(true)
+        expect(meetsContrast(t.accent, t.accentSubtle, WCAG_AA_NORMAL_TEXT)).toBe(true)
+      })
+
+      it('semantic amounts on surface', () => {
+        for (const c of [t.income, t.expense, t.pending]) {
+          expect(meetsContrast(c, t.surface, WCAG_AA_NORMAL_TEXT)).toBe(true)
+        }
+      })
+
       it('expense differs from danger', () => {
         expect(t.expense).not.toBe(t.danger)
       })
@@ -76,7 +97,27 @@ describe('color scheme contrast (WCAG AA)', () => {
   }
 
   it('reports contrast ratios for debugging', () => {
-    const nebel = COLOR_SCHEME_TOKENS.nebel
-    expect(contrastRatio(nebel.textPrimary, nebel.canvas)).toBeGreaterThan(10)
+    const light = COLOR_SCHEME_TOKENS.light
+    expect(contrastRatio(light.textPrimary, light.canvas)).toBeGreaterThan(10)
+  })
+})
+
+describe('theme mode migration', () => {
+  it('keeps valid modes', () => {
+    expect(normalizeThemeMode('light')).toBe('light')
+    expect(normalizeThemeMode('dark')).toBe('dark')
+    expect(normalizeThemeMode('system')).toBe('system')
+  })
+
+  it('maps legacy dark schemes to dark', () => {
+    expect(normalizeThemeMode('plum')).toBe('dark')
+    expect(normalizeThemeMode('heritage')).toBe('dark')
+  })
+
+  it('maps legacy light schemes and unknown values to system', () => {
+    expect(normalizeThemeMode('kupfer')).toBe('system')
+    expect(normalizeThemeMode('nebel')).toBe('system')
+    expect(normalizeThemeMode(null)).toBe('system')
+    expect(normalizeThemeMode('foo')).toBe('system')
   })
 })

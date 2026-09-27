@@ -4,13 +4,13 @@ import Link from 'next/link'
 import { Transaction } from '@/types'
 import { formatDate, isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
 import { formatCurrency } from '@/lib/formatters'
-import { PencilIcon, CheckIcon, MinusCircleIcon, ClockIcon, CalendarIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
+import { PencilIcon, CheckIcon, MinusCircleIcon, ClockIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import ConfirmDialog from '@/components/ConfirmDialog'
-import { getContrastColor } from '@/lib/colorUtils'
 import { useToast } from '@/hooks/useToast'
 import TransferBadge from '@/components/TransferBadge'
 import EmptyState from '@/components/EmptyState'
+import TransactionAvatar from '@/components/TransactionAvatar'
 import { resolveTransactionCategory, resolveTransactionMerchantName } from '@/lib/merchantCategories'
 
 type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
@@ -132,7 +132,7 @@ export default function TransactionList({
         <button
           type="button"
           onClick={() => handleSort(field)}
-          className={`flex w-full items-center gap-1 min-h-12 px-4 py-3 text-sm font-medium transition-colors duration-100 hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-inset focus:ring-accent ${justify} ${
+          className={`flex w-full items-center gap-1 min-h-11 px-4 py-2.5 text-xs font-medium transition-colors duration-100 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${justify} ${
             isActive ? 'text-primary' : 'text-secondary'
           }`}
         >
@@ -173,7 +173,7 @@ export default function TransactionList({
   )
 
   const statusPillClass =
-    'inline-flex items-center px-2.5 py-1.5 border text-xs font-medium rounded-full transition-colors duration-150 active:scale-95'
+    'inline-flex items-center px-2.5 py-1 border border-transparent text-xs font-semibold rounded-full transition-colors duration-150 hover:border-current active:scale-95'
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) {
@@ -238,10 +238,10 @@ export default function TransactionList({
   const getStatusPillClasses = (transaction: Transaction) => {
     const isToggling = togglingTransactionIds.includes(transaction.id)
     const stateClasses = transaction.isConfirmed
-      ? 'bg-income-bg text-income border-income/30'
+      ? 'bg-income-bg text-income'
       : checkIsPending(transaction)
-        ? 'bg-pending-bg text-pending border-pending/30'
-        : 'bg-surface-muted text-secondary border-border'
+        ? 'bg-pending-bg text-pending'
+        : 'bg-surface-muted text-secondary'
 
     return `${statusPillClass} ${stateClasses}${isToggling ? ' opacity-60 pointer-events-none' : ''}`
   }
@@ -341,13 +341,87 @@ export default function TransactionList({
     }
   }
 
+  const getStatusLabel = (transaction: Transaction) =>
+    transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'
+
+  const formatSignedAmount = (amount: number) =>
+    `${amount > 0 ? '+' : amount < 0 ? '−' : ''}${Math.abs(amount).toLocaleString('de-DE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })} €`
+
+  const amountClass = (amount: number) => (amount > 0 ? 'text-income' : 'text-primary')
+
+  /** Gruppierung nach Tag nur bei Datums-Sortierung sinnvoll */
+  const groupByDay = sortField === 'date'
+  const dayKey = (value: string | Date) => {
+    const d = new Date(value)
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+  }
+  const formatDayLabel = (value: string | Date) => {
+    const d = new Date(value)
+    const today = new Date()
+    const yesterday = new Date()
+    yesterday.setDate(today.getDate() - 1)
+    if (dayKey(d) === dayKey(today)) return 'Heute'
+    if (dayKey(d) === dayKey(yesterday)) return 'Gestern'
+    return d.toLocaleDateString('de-DE', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      ...(d.getFullYear() !== today.getFullYear() ? { year: 'numeric' } : {}),
+    })
+  }
+
+  const mobileStatusButton = (transaction: Transaction) => {
+    const isToggling = togglingTransactionIds.includes(transaction.id)
+    const label = getStatusLabel(transaction)
+    const Icon = transaction.isConfirmed
+      ? CheckIcon
+      : checkIsPending(transaction)
+        ? ClockIcon
+        : MinusCircleIcon
+    const tone = transaction.isConfirmed
+      ? 'bg-income-bg text-income'
+      : checkIsPending(transaction)
+        ? 'bg-pending-bg text-pending'
+        : 'bg-surface-muted text-secondary'
+    const inner = (
+      <span className={`flex h-8 w-8 items-center justify-center rounded-full ${tone}`}>
+        <Icon className="h-4 w-4" aria-hidden="true" />
+      </span>
+    )
+    if (readOnly) {
+      return (
+        <span className="inline-flex min-h-11 min-w-11 items-center justify-center" title={label}>
+          {inner}
+          <span className="sr-only">{label}</span>
+        </span>
+      )
+    }
+    return (
+      <button
+        type="button"
+        onClick={() => handleToggleConfirmation(transaction)}
+        aria-label={`${label} – ${
+          transaction.isConfirmed ? 'als nicht bestätigt markieren' : 'als bestätigt markieren'
+        }`}
+        className={`inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full${
+          isToggling ? ' opacity-60 pointer-events-none' : ''
+        }`}
+      >
+        {inner}
+      </button>
+    )
+  }
+
   return (
-    <div className="overflow-hidden">
+    <div>
       {/* Desktop Ansicht */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="min-w-full divide-y divide-border">
+      <div className="hidden md:block overflow-x-auto -mx-4 md:-mx-5">
+        <table className="min-w-full">
           <thead>
-            <tr className="border-b border-accent-border bg-accent-subtle">
+            <tr className="border-b border-hairline">
               <SortableHeader field="date" label="Datum" />
               <SortableHeader field="merchant" label="Händler" />
               <SortableHeader field="category" label="Kategorie" />
@@ -355,214 +429,224 @@ export default function TransactionList({
               <SortableHeader field="amount" label="Betrag" align="right" />
               <SortableHeader field="status" label="Status" align="center" />
               {!readOnly && (
-                <th className="text-right p-4 text-secondary text-sm font-medium">Aktionen</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-secondary">
+                  <span className="sr-only">Aktionen</span>
+                </th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-border bg-canvas">
+          <tbody className="divide-y divide-hairline">
             {sortedTransactions.length === 0 ? (
               <tr>
                 <td colSpan={readOnly ? 6 : 7}>{emptyList}</td>
               </tr>
             ) : (
-              sortedTransactions.map((transaction, index) => (
-                <tr 
-                  key={transaction.id} 
-                  ref={index === sortedTransactions.length - 1 ? lastElementRef : undefined}
-                  className="transition-colors duration-100 hover:bg-surface-muted"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-primary">
-                    <div className="flex items-center">
+              sortedTransactions.map((transaction, index) => {
+                const category = resolveTransactionCategory(transaction)
+                const merchantName = resolveTransactionMerchantName(transaction)
+                return (
+                  <tr
+                    key={transaction.id}
+                    ref={index === sortedTransactions.length - 1 ? lastElementRef : undefined}
+                    className="group transition-colors duration-100 hover:bg-surface-muted/60"
+                  >
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-secondary tabular-nums">
                       {readOnly ? (
                         <span>{formatDate(transaction.date)}</span>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => handleEditClick(transaction.id)}
-                          className="text-secondary hover:text-primary"
+                          className="hover:text-primary"
                         >
                           {formatDate(transaction.date)}
                         </button>
                       )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-primary">
-                    <span>{resolveTransactionMerchantName(transaction)}</span>
-                    <TransferBadge transaction={transaction} />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    {(() => {
-                      const category = resolveTransactionCategory(transaction)
-                      return category ? (
-                      <span 
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                        style={{
-                          backgroundColor: category.color,
-                          color: getContrastColor(category.color)
-                        }}
-                      >
-                        {category.name}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-primary">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <TransactionAvatar
+                          name={merchantName}
+                          amount={transaction.amount}
+                          color={category?.color}
+                          className="h-8 w-8 text-xs"
+                        />
+                        <span className="font-medium truncate">{merchantName}</span>
+                        <TransferBadge transaction={transaction} />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm">
+                      {category ? (
+                        <span className="inline-flex items-center gap-2 rounded-pill bg-surface-muted px-2.5 py-1 text-xs font-medium text-primary">
+                          <span
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: category.color }}
+                            aria-hidden="true"
+                          />
+                          {category.name}
+                        </span>
+                      ) : (
+                        <span className="text-secondary">–</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-secondary">{transaction.description}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right">
+                      <span className={`amount text-sm ${amountClass(transaction.amount)}`}>
+                        {formatSignedAmount(transaction.amount)}
                       </span>
-                    ) : (
-                      <span className="text-secondary">-</span>
-                    )
-                    })()}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-primary">
-                    {transaction.description}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                    <span className={transaction.amount > 0 ? 'text-income' : transaction.amount < 0 ? 'text-expense' : 'text-primary'}>
-                      {transaction.amount > 0 ? '+' : transaction.amount < 0 ? '-' : ''}{Math.abs(transaction.amount).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
-                    {readOnly ? (
-                      <span className={getStatusPillClasses(transaction)}>
-                        {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => handleToggleConfirmation(transaction)}
-                        title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
-                        className={getStatusPillClasses(transaction)}
-                      >
-                        {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
-                      </button>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-center">
+                      {readOnly ? (
+                        <span className={getStatusPillClasses(transaction)}>
+                          {getStatusLabel(transaction)}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleToggleConfirmation(transaction)}
+                          title={
+                            transaction.isConfirmed
+                              ? 'Als nicht bestätigt markieren'
+                              : 'Als bestätigt markieren'
+                          }
+                          className={getStatusPillClasses(transaction)}
+                        >
+                          {getStatusLabel(transaction)}
+                        </button>
+                      )}
+                    </td>
+                    {!readOnly && (
+                      <td className="px-4 py-3 whitespace-nowrap text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleEditClick(transaction.id)}
+                          title="Transaktion bearbeiten"
+                          aria-label={`${merchantName} bearbeiten`}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-full text-secondary opacity-60 transition-opacity hover:bg-accent-subtle hover:text-accent group-hover:opacity-100 focus-visible:opacity-100"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </button>
+                      </td>
                     )}
-                  </td>
-                  {!readOnly && (
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleEditClick(transaction.id)}
-                      title="Transaktion bearbeiten"
-                      className="text-accent hover:opacity-80"
-                    >
-                      <PencilIcon className="h-5 w-5" />
-                    </button>
-                  </td>
-                  )}
-                </tr>
-              ))
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>
       </div>
 
       {/* Mobile Ansicht */}
-      <div className="md:hidden space-y-4">
+      <div className="md:hidden">
         {onSort && (
-          <div className="flex flex-wrap items-center gap-2 rounded-card border border-border bg-surface p-3">
-            <label htmlFor="tx-mobile-sort" className="text-sm font-medium text-secondary shrink-0">
-              Sortieren
+          <div className="mb-3 flex items-center gap-2">
+            <label htmlFor="tx-mobile-sort" className="sr-only">
+              Sortieren nach
             </label>
             <select
               id="tx-mobile-sort"
               value={sortField}
               onChange={(e) => handleSort(e.target.value as SortField)}
-              className="min-h-11 flex-1 rounded-control border-border bg-canvas text-sm text-primary shadow-sm focus:border-accent focus:ring-accent"
+              className="min-h-11 flex-1 rounded-pill text-sm"
             >
-              <option value="date">Datum</option>
-              <option value="merchant">Händler</option>
-              <option value="category">Kategorie</option>
-              <option value="description">Beschreibung</option>
-              <option value="amount">Betrag</option>
-              <option value="status">Status</option>
+              <option value="date">Sortiert nach Datum</option>
+              <option value="merchant">Sortiert nach Händler</option>
+              <option value="category">Sortiert nach Kategorie</option>
+              <option value="description">Sortiert nach Beschreibung</option>
+              <option value="amount">Sortiert nach Betrag</option>
+              <option value="status">Sortiert nach Status</option>
             </select>
             <button
               type="button"
               onClick={() => handleSort(sortField)}
-              className="inline-flex min-h-11 items-center rounded-control border border-border bg-canvas px-3 text-sm font-medium text-primary hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-muted text-primary hover:bg-accent-subtle hover:text-accent"
               aria-label={`Sortierung ${sortDirection === 'asc' ? 'aufsteigend' : 'absteigend'}`}
             >
-              {sortDirection === 'asc' ? '↑' : '↓'}
+              {sortDirection === 'asc' ? (
+                <ChevronUpIcon className="h-5 w-5" aria-hidden="true" />
+              ) : (
+                <ChevronDownIcon className="h-5 w-5" aria-hidden="true" />
+              )}
             </button>
           </div>
         )}
         {sortedTransactions.length === 0 ? (
           emptyList
         ) : (
-          sortedTransactions.map((transaction, index) => (
-            <div
-              key={transaction.id}
-              ref={index === sortedTransactions.length - 1 ? lastElementRef : undefined}
-              className="bg-canvas rounded-lg shadow-sm border border-border p-4 space-y-2"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  {readOnly ? (
-                    <span className="text-sm font-medium text-primary">
-                      {formatDate(transaction.date)}
+          <ul className="-mx-2">
+            {sortedTransactions.map((transaction, index) => {
+              const category = resolveTransactionCategory(transaction)
+              const merchantName = resolveTransactionMerchantName(transaction)
+              const prev = sortedTransactions[index - 1]
+              const showDayHeader =
+                groupByDay && (!prev || dayKey(prev.date) !== dayKey(transaction.date))
+              const statusLabel = getStatusLabel(transaction)
+              const subline = [
+                groupByDay ? null : formatDate(transaction.date),
+                category?.name,
+                transaction.description,
+              ]
+                .filter(Boolean)
+                .join(' · ')
+
+              const rowContent = (
+                <>
+                  <TransactionAvatar
+                    name={merchantName}
+                    amount={transaction.amount}
+                    color={category?.color}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium text-primary truncate">
+                      {merchantName}
                     </span>
-                  ) : (
-                    <button
-                      onClick={() => handleEditClick(transaction.id)}
-                      className="text-sm font-medium text-primary"
-                    >
-                      {formatDate(transaction.date)}
-                    </button>
+                    <span className="flex items-center gap-1.5 min-w-0 text-sm text-secondary">
+                      {checkIsPending(transaction) && (
+                        <span className="shrink-0 rounded-pill bg-pending-bg px-2 py-0.5 text-[11px] font-semibold text-pending">
+                          {statusLabel}
+                        </span>
+                      )}
+                      <TransferBadge transaction={transaction} className="shrink" />
+                      <span className="truncate">{subline || '–'}</span>
+                    </span>
+                  </span>
+                  <span className={`amount shrink-0 ${amountClass(transaction.amount)}`}>
+                    {formatSignedAmount(transaction.amount)}
+                  </span>
+                </>
+              )
+
+              return (
+                <li
+                  key={transaction.id}
+                  ref={index === sortedTransactions.length - 1 ? lastElementRef : undefined}
+                >
+                  {showDayHeader && (
+                    <p className="eyebrow sticky top-14 z-10 -mx-2 bg-surface/95 px-4 pb-1.5 pt-4 backdrop-blur-sm first:pt-1">
+                      {formatDayLabel(transaction.date)}
+                    </p>
                   )}
-                  <div className="text-sm text-secondary">
-                    {resolveTransactionMerchantName(transaction)}
-                    <TransferBadge transaction={transaction} />
-                  </div>
-                </div>
-                <span className={`text-sm font-medium ${
-                  transaction.amount > 0 ? 'text-income' : transaction.amount < 0 ? 'text-expense' : 'text-primary'
-                }`}>
-                  {transaction.amount > 0 ? '+' : transaction.amount < 0 ? '-' : ''}{Math.abs(transaction.amount).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-2 min-w-0">
-                <div className="flex min-w-0 flex-1 items-center gap-2">
-                  {(() => {
-                    const category = resolveTransactionCategory(transaction)
-                    return category ? (
-                      <span 
-                        className="inline-flex shrink-0 items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                        style={{
-                          backgroundColor: category.color,
-                          color: getContrastColor(category.color)
-                        }}
-                      >
-                        {category.name}
-                      </span>
-                  ) : (
-                    <span className="text-secondary shrink-0">-</span>
-                  )
-                  })()}
-                  {transaction.description ? (
-                    <span className="min-w-0 truncate text-sm text-secondary">
-                      {transaction.description}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  {readOnly ? (
-                    <span className={getStatusPillClasses(transaction)}>
-                      {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
-                    </span>
-                  ) : (
-                    <>
+                  <div className="flex items-center gap-1 rounded-control pl-2 transition-colors hover:bg-surface-muted/60">
+                    {readOnly ? (
+                      <div className="flex min-w-0 flex-1 items-center gap-3 py-2.5">
+                        {rowContent}
+                      </div>
+                    ) : (
                       <button
-                        onClick={() => handleToggleConfirmation(transaction)}
-                        title={transaction.isConfirmed ? 'Als nicht bestätigt markieren' : 'Als bestätigt markieren'}
-                        className={getStatusPillClasses(transaction)}
-                      >
-                        {transaction.isConfirmed ? 'Bestätigt' : checkIsPending(transaction) ? 'Ausstehend' : 'Offen'}
-                      </button>
-                      <button
+                        type="button"
                         onClick={() => handleEditClick(transaction.id)}
-                        title="Transaktion bearbeiten"
-                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control text-accent hover:bg-surface-muted hover:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                        aria-label={`${merchantName}, ${formatSignedAmount(transaction.amount)} – bearbeiten`}
+                        className="flex min-w-0 flex-1 items-center gap-3 py-2.5 text-left active:!scale-100"
                       >
-                        <PencilIcon className="h-5 w-5" />
+                        {rowContent}
                       </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))
+                    )}
+                    {mobileStatusButton(transaction)}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
         )}
       </div>
 

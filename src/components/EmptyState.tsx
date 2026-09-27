@@ -31,8 +31,8 @@ export default function EmptyState({
         <Link
           href={actionHref}
           className={[
-            'inline-flex items-center justify-center rounded-control font-medium transition-colors',
-            'text-sm px-3 py-1.5 btn-primary border border-transparent shadow-sm',
+            'inline-flex items-center justify-center rounded-control font-semibold transition-colors',
+            'text-sm px-3.5 min-h-11 md:min-h-9 btn-primary border border-transparent',
           ].join(' ')}
         >
           {actionLabel}

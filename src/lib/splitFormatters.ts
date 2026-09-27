@@ -11,7 +11,8 @@ export function formatSplitExpenseAmount(amount: number): string {
 
 export function splitExpenseAmountClass(amount: number): string {
   if (amount < -0.005) return 'text-income'
-  if (amount > 0.005) return 'text-expense'
+  // Ausgaben neutral wie im Haushaltsbuch (Minus ohne Warnfarbe)
+  if (amount > 0.005) return 'text-primary'
   return 'text-secondary'
 }
 

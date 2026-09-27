@@ -245,7 +245,7 @@ function SplitSettlementForm({
       </div>
 
       {error && (
-        <div className="rounded-control border border-danger/20 bg-danger-subtle p-3 text-sm text-danger">
+        <div className="rounded-control bg-danger-subtle p-3 text-sm text-danger">
           {error}
         </div>
       )}

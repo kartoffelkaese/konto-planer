@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import {
+  ArrowRightIcon,
   CalendarIcon,
   PlusIcon,
   ListBulletIcon,
@@ -16,7 +17,7 @@ import EmptyState from '@/components/EmptyState'
 import CategoryExpenseBars from '@/components/CategoryExpenseBars'
 import KpiCard from '@/components/KpiCard'
 import DashboardRecentTransactions from '@/components/DashboardRecentTransactions'
-import { Button, getButtonClassName } from '@/components/Button'
+import { getButtonClassName } from '@/components/Button'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { resolveTransactionMerchantName } from '@/lib/merchantCategories'
 import { formatCurrency } from '@/lib/formatters'
@@ -126,9 +127,15 @@ export default function DashboardPage() {
   const recentTransactions = data.recentTransactions ?? []
   const periodLabel = data.categoryPeriod?.rangeLabel
 
+  const clearedBalance = data.clearedBalance ?? 0
+  const pendingExpenses = data.totalPendingExpenses ?? 0
+  const available = data.available ?? 0
+  const availableShare =
+    clearedBalance > 0 ? Math.min(Math.max(available / clearedBalance, 0), 1) : 0
+
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="px-4 py-6 sm:px-6 md:py-8 max-w-6xl mx-auto">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="page-title">{isSimpleAccount ? accountName : 'Dashboard'}</h1>
           {isSimpleAccount ? (
@@ -142,43 +149,56 @@ export default function DashboardPage() {
           ) : null}
         </div>
         {!isSimpleAccount && (
-          <div className="flex flex-col gap-2 shrink-0 max-md:w-full sm:flex-row sm:flex-wrap">
+          <div className="flex gap-2 shrink-0">
             <Link
               href="/transactions?new=1"
               className={getButtonClassName({
                 variant: 'primary',
-                size: 'sm',
-                className: 'inline-flex items-center gap-1.5 max-md:min-h-11 max-md:w-full max-md:justify-center max-md:text-sm',
+                className: 'max-sm:flex-1 whitespace-nowrap',
               })}
             >
-              <PlusIcon className="h-4 w-4" aria-hidden />
+              <PlusIcon className="h-5 w-5" aria-hidden />
               Neue Transaktion
             </Link>
             <Link
               href="/transactions"
               className={getButtonClassName({
                 variant: 'secondary',
-                size: 'sm',
-                className: 'inline-flex items-center gap-1.5 max-md:min-h-11 max-md:w-full max-md:justify-center max-md:text-sm',
+                className: 'max-sm:hidden whitespace-nowrap',
               })}
             >
-              <ListBulletIcon className="h-4 w-4" aria-hidden />
-              Alle Transaktionen
+              <ListBulletIcon className="h-5 w-5" aria-hidden />
+              Alle Buchungen
             </Link>
           </div>
         )}
       </div>
 
       {isSimpleAccount ? (
-        <div className="space-y-8">
-          <div className="rounded-card border border-accent bg-accent-subtle border-l-4 border-l-accent p-6">
-            <p className="text-sm font-medium text-secondary">Kontostand</p>
-            <p className="mt-2 text-3xl font-semibold tabular-nums text-accent">
+        <div className="space-y-4 md:space-y-6">
+          <section className="hero-card p-6 md:p-8">
+            <p className="eyebrow">Kontostand</p>
+            <p
+              className={`amount-hero mt-2 ${
+                data.totalBalance < 0 ? 'text-expense' : 'text-primary'
+              }`}
+            >
               {formatCurrency(data.totalBalance)}
             </p>
-          </div>
+            {(data.monthlyIncome > 0 || data.monthlyExpenses > 0) && (
+              <p className="mt-4 chip">
+                Saldo {monthLabel}
+                <span
+                  className={`amount ${monthNet >= 0 ? 'text-income' : 'text-expense'}`}
+                >
+                  {monthNet > 0 ? '+' : ''}
+                  {formatCurrency(monthNet)}
+                </span>
+              </p>
+            )}
+          </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 md:gap-4">
             <KpiCard
               label="Einnahmen"
               subtitle={monthLabel}
@@ -192,144 +212,111 @@ export default function DashboardPage() {
               stripe="expense"
             />
           </div>
-
-          {(data.monthlyIncome > 0 || data.monthlyExpenses > 0) && (
-            <p className="text-sm text-secondary">
-              Saldo im Monat:{' '}
-              <span
-                className={`font-medium tabular-nums ${
-                  monthNet >= 0 ? 'text-income' : 'text-expense'
-                }`}
-              >
-                {monthNet >= 0 ? '+' : ''}
-                {formatCurrency(monthNet)}
-              </span>
-            </p>
-          )}
 
           <DashboardRecentTransactions transactions={recentTransactions} />
         </div>
       ) : (
-        <div className="space-y-8">
-          {/* Mobile: Verfügbar im Fokus, Details aufklappbar */}
-          <div className="md:hidden space-y-3">
-            <button
-              type="button"
-              onClick={() => setAvailableExpanded(!availableExpanded)}
-              className="w-full rounded-card border border-pending/40 bg-pending-bg border-l-4 border-l-pending p-4 flex items-center justify-between gap-3 text-left"
-            >
+        <div className="space-y-4 md:space-y-6">
+          <section className="hero-card p-6 md:p-8" aria-labelledby="available-label">
+            <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-wide text-pending">Verfügbar</p>
-                <p className="mt-1 text-2xl font-semibold tabular-nums text-pending">
-                  {formatCurrency(data.available ?? 0)}
+                <p id="available-label" className="eyebrow">
+                  Verfügbar
                 </p>
-                <p className="mt-1 text-xs text-secondary">
-                  Kontostand {formatCurrency(data.clearedBalance ?? 0)}
+                <p
+                  className={`amount-hero mt-2 ${
+                    available < 0 ? 'text-expense' : 'text-primary'
+                  }`}
+                >
+                  {formatCurrency(available)}
                 </p>
               </div>
-              <ChevronDownIcon
-                className={`h-5 w-5 shrink-0 text-pending transition-transform duration-expand ${
-                  availableExpanded ? 'rotate-180' : ''
-                }`}
-                aria-hidden="true"
-              />
-            </button>
+              <button
+                type="button"
+                onClick={() => setAvailableExpanded(!availableExpanded)}
+                aria-expanded={availableExpanded}
+                aria-controls="available-details"
+                className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-pill bg-surface-muted/80 px-3 text-sm font-medium text-secondary hover:text-primary"
+              >
+                <span className="max-sm:sr-only">So berechnet</span>
+                <ChevronDownIcon
+                  className={`h-4 w-4 transition-transform duration-expand ${
+                    availableExpanded ? 'rotate-180' : ''
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="chip">
+                Kontostand
+                <span className="amount text-primary">{formatCurrency(clearedBalance)}</span>
+              </span>
+              <span className="chip">
+                Ausstehend
+                <span className="amount text-expense">
+                  {formatCurrency(-pendingExpenses)}
+                </span>
+              </span>
+            </div>
+
+            <div className="mt-6">
+              <div
+                className="h-2 overflow-hidden rounded-full bg-surface-muted"
+                role="progressbar"
+                aria-label="Anteil verfügbar am Kontostand"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(availableShare * 100)}
+              >
+                <div
+                  className="h-full rounded-full bg-accent transition-[width] duration-500"
+                  style={{ width: `${availableShare * 100}%` }}
+                />
+              </div>
+              <p className="mt-2 text-xs text-secondary">
+                {Math.round(availableShare * 100)} % des Kontostands frei verfügbar
+              </p>
+            </div>
 
             <div
+              id="available-details"
               className={`grid transition-[grid-template-rows] duration-expand ease-out ${
                 availableExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
               }`}
             >
-              <div className="overflow-hidden">
-                <div
-                  className={`rounded-card border border-border bg-surface p-4 space-y-3 transition-opacity duration-expand ${
-                    availableExpanded ? 'opacity-100' : 'opacity-0'
-                  }`}
-                >
-                  <p className="text-sm text-secondary">Kontostand − Ausstehend = Verfügbar</p>
-                  <div className="flex items-stretch gap-2 overflow-x-auto pb-1">
-                    <div className="min-w-[7.5rem] shrink-0 rounded-control border border-border bg-canvas px-3 py-2">
-                      <p className="text-xs text-secondary">Kontostand</p>
-                      <p className="mt-0.5 font-semibold tabular-nums text-accent">
-                        {formatCurrency(data.clearedBalance ?? 0)}
-                      </p>
-                    </div>
-                    <span className="flex shrink-0 items-center text-secondary" aria-hidden="true">−</span>
-                    <div className="min-w-[7.5rem] shrink-0 rounded-control border border-border bg-canvas px-3 py-2">
-                      <p className="text-xs text-secondary">Ausstehend</p>
-                      <p className="mt-0.5 font-semibold tabular-nums text-expense">
-                        {formatCurrency(data.totalPendingExpenses ?? 0)}
-                      </p>
-                    </div>
-                    <span className="flex shrink-0 items-center text-secondary" aria-hidden="true">=</span>
-                    <div className="min-w-[7.5rem] shrink-0 rounded-control border border-pending/40 bg-pending-bg px-3 py-2">
-                      <p className="text-xs font-semibold text-pending">Verfügbar</p>
-                      <p className="mt-0.5 font-semibold tabular-nums text-pending">
-                        {formatCurrency(data.available ?? 0)}
-                      </p>
-                    </div>
+              <div className="overflow-hidden" inert={!availableExpanded}>
+                <div className="mt-5 grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 rounded-control bg-surface-muted/70 p-3 text-center sm:p-4">
+                  <div>
+                    <p className="eyebrow">Kontostand</p>
+                    <p className="amount mt-0.5 text-sm sm:text-base">
+                      {formatCurrency(clearedBalance)}
+                    </p>
+                  </div>
+                  <span className="text-secondary" aria-hidden="true">−</span>
+                  <div>
+                    <p className="eyebrow">Ausstehend</p>
+                    <p className="amount mt-0.5 text-sm text-expense sm:text-base">
+                      {formatCurrency(pendingExpenses)}
+                    </p>
+                  </div>
+                  <span className="text-secondary" aria-hidden="true">=</span>
+                  <div>
+                    <p className="eyebrow">Verfügbar</p>
+                    <p className="amount mt-0.5 text-sm text-accent sm:text-base">
+                      {formatCurrency(available)}
+                    </p>
                   </div>
                 </div>
+                <p className="mt-2 text-xs text-secondary">
+                  Verfügbar ist, was nach offenen Ausgaben vom gebuchten Kontostand übrig bleibt.
+                </p>
               </div>
             </div>
-          </div>
+          </section>
 
-          {/* Desktop: unveränderte Darstellung */}
-          <div className="hidden md:block rounded-card border border-border bg-surface p-6 space-y-6">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-              <p className="text-sm font-medium text-secondary">Kontostand (gebucht)</p>
-              <p className="text-3xl font-semibold tabular-nums text-accent sm:text-right">
-                {formatCurrency(data.clearedBalance ?? 0)}
-              </p>
-            </div>
-
-            <div className="border-t border-border pt-6 space-y-4">
-              <p className="text-sm text-secondary">
-                Verfügbar = was nach offenen Ausgaben übrig bleibt
-              </p>
-
-              <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-                <div className="flex-1 rounded-control border border-border bg-canvas px-4 py-3">
-                  <p className="text-xs font-medium text-secondary">Kontostand</p>
-                  <p className="mt-1 text-lg font-semibold tabular-nums text-accent">
-                    {formatCurrency(data.clearedBalance ?? 0)}
-                  </p>
-                </div>
-
-                <p
-                  className="text-center text-lg font-medium text-secondary sm:px-1"
-                  aria-hidden="true"
-                >
-                  −
-                </p>
-
-                <div className="flex-1 rounded-control border border-border bg-canvas px-4 py-3">
-                  <p className="text-xs font-medium text-secondary">Ausstehend</p>
-                  <p className="mt-1 text-lg font-semibold tabular-nums text-expense">
-                    {formatCurrency(data.totalPendingExpenses ?? 0)}
-                  </p>
-                </div>
-
-                <p
-                  className="text-center text-lg font-medium text-secondary sm:px-1"
-                  aria-hidden="true"
-                >
-                  =
-                </p>
-
-                <div className="flex-1 rounded-control border border-pending/40 bg-pending-bg border-l-4 border-l-pending px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-pending">
-                    Verfügbar
-                  </p>
-                  <p className="mt-1 text-xl font-semibold tabular-nums text-pending">
-                    {formatCurrency(data.available ?? 0)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
             <KpiCard
               label="Einnahmen"
               subtitle={periodLabel ?? monthLabel}
@@ -342,93 +329,103 @@ export default function DashboardPage() {
               amount={data.monthlyExpenses}
               stripe="expense"
             />
+            <div className="col-span-2 md:col-span-1">
+              <KpiCard
+                label="Netto"
+                subtitle={periodLabel ?? monthLabel}
+                amount={monthNet}
+                stripe={monthNet >= 0 ? 'income' : 'expense'}
+                signed
+              />
+            </div>
           </div>
 
-          <DashboardRecentTransactions transactions={recentTransactions} />
+          <div className="grid grid-cols-1 gap-4 md:gap-6 lg:grid-cols-2">
+            <DashboardRecentTransactions transactions={recentTransactions} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-surface rounded-lg border border-border p-6">
-              <div className="mb-4">
-                <h2 className="text-lg font-medium text-primary">
-                  Ausgaben nach Kategorien
-                </h2>
-                {data.categoryPeriod && (
-                  <p className="mt-1 text-sm text-secondary">
-                    {data.categoryPeriod.rangeLabel} · nur bestätigte Ausgaben
-                  </p>
-                )}
+            <section className="card p-5 md:p-6">
+              <div className="flex items-center justify-between gap-4 mb-3">
+                <div>
+                  <h2 className="text-base font-semibold text-primary">
+                    Wiederkehrend
+                  </h2>
+                  <p className="text-sm text-secondary">Nächste 30 Tage</p>
+                </div>
+                <Link
+                  href="/recurring"
+                  className="inline-flex min-h-11 items-center gap-1 rounded-pill px-3 -mr-3 text-sm font-medium text-accent hover:bg-accent-subtle"
+                >
+                  Alle
+                  <ArrowRightIcon className="h-4 w-4" aria-hidden />
+                </Link>
               </div>
-              {data.categoryDistribution.length === 0 ? (
+              {data.recurringTransactions.length === 0 ? (
                 <EmptyState
-                  title="Keine Ausgaben im Gehaltsmonat"
-                  description="Sobald Sie Ausgaben erfassen, erscheint hier die Verteilung nach Kategorien."
-                  actionLabel="Transaktion erfassen"
-                  actionHref="/transactions?new=1"
+                  title="Keine fälligen Zahlungen"
+                  description="In den nächsten 30 Tagen sind keine wiederkehrenden Buchungen geplant."
+                  actionLabel="Wiederkehrende anlegen"
+                  actionHref="/recurring"
                 />
               ) : (
-                <div className="rounded-control border border-border bg-canvas p-4">
-                  <CategoryExpenseBars
-                    categories={data.categoryDistribution}
-                    formatCurrency={formatCurrency}
-                  />
-                </div>
+                <ul className="-mx-2">
+                  {data.recurringTransactions.map((transaction) => {
+                    const name = resolveTransactionMerchantName(transaction)
+                    return (
+                      <li key={transaction.id}>
+                        <Link
+                          href="/recurring"
+                          className="flex items-center gap-3 rounded-control px-2 py-2.5 transition-colors hover:bg-surface-muted"
+                        >
+                          <span
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent"
+                            aria-hidden="true"
+                          >
+                            <CalendarIcon className="h-5 w-5" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-primary truncate">{name}</p>
+                            <p className="text-sm text-secondary truncate">
+                              {formatDate(new Date(transaction.date))} · {transaction.category}
+                            </p>
+                          </div>
+                          {/* API liefert Beträge ohne Vorzeichen (Math.abs) */}
+                          <p className="amount shrink-0 text-primary">
+                            {formatCurrency(transaction.amount)}
+                          </p>
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </section>
+          </div>
+
+          <section className="card p-5 md:p-6">
+            <div className="mb-4">
+              <h2 className="text-base font-semibold text-primary">
+                Ausgaben nach Kategorien
+              </h2>
+              {data.categoryPeriod && (
+                <p className="text-sm text-secondary">
+                  {data.categoryPeriod.rangeLabel} · nur bestätigte Ausgaben
+                </p>
               )}
             </div>
-
-            <div className="bg-surface rounded-lg border border-border p-6">
-              <div className="flex items-center justify-between gap-4 mb-4">
-                <div>
-                  <h2 className="text-lg font-medium text-primary">
-                    Wiederkehrende Zahlungen
-                  </h2>
-                  <p className="mt-1 text-sm text-secondary">Nächste 30 Tage</p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Link
-                    href="/recurring"
-                    className="text-sm font-medium text-accent hover:underline"
-                  >
-                    Alle
-                  </Link>
-                  <CalendarIcon className="h-5 w-5 text-secondary" aria-hidden />
-                </div>
-              </div>
-              <div className="space-y-1">
-                {data.recurringTransactions.map((transaction) => (
-                  <Link
-                    key={transaction.id}
-                    href="/recurring"
-                    className="flex items-center justify-between gap-4 py-3 border-b border-border last:border-0 rounded-control -mx-2 px-2 hover:bg-surface-muted/80 transition-colors"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium text-primary truncate">
-                        {resolveTransactionMerchantName(transaction)}
-                      </p>
-                      <p className="text-sm text-secondary truncate">
-                        {transaction.category}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-medium tabular-nums text-primary">
-                        {formatCurrency(transaction.amount)}
-                      </p>
-                      <p className="text-sm text-secondary">
-                        {formatDate(new Date(transaction.date))}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-                {data.recurringTransactions.length === 0 && (
-                  <EmptyState
-                    title="Keine fälligen Zahlungen"
-                    description="In den nächsten 30 Tagen sind keine wiederkehrenden Buchungen geplant."
-                    actionLabel="Wiederkehrende anlegen"
-                    actionHref="/recurring"
-                  />
-                )}
-              </div>
-            </div>
-          </div>
+            {data.categoryDistribution.length === 0 ? (
+              <EmptyState
+                title="Keine Ausgaben im Gehaltsmonat"
+                description="Sobald Sie Ausgaben erfassen, erscheint hier die Verteilung nach Kategorien."
+                actionLabel="Transaktion erfassen"
+                actionHref="/transactions?new=1"
+              />
+            ) : (
+              <CategoryExpenseBars
+                categories={data.categoryDistribution}
+                formatCurrency={formatCurrency}
+              />
+            )}
+          </section>
         </div>
       )}
     </div>

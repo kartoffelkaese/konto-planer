@@ -120,8 +120,8 @@ export default function AccountSwitcher({
           compact ? 'px-3 py-2.5' : 'px-2 py-2'
         } ${
           isActive
-            ? 'bg-accent-subtle border-l-[3px] border-l-accent pl-[calc(0.5rem-3px)]'
-            : 'border-l-[3px] border-l-transparent hover:bg-accent-muted'
+            ? 'bg-accent-subtle'
+            : 'hover:bg-surface-muted'
         } ${isSwitching ? 'opacity-80' : ''}`}
         aria-current={isActive ? 'true' : undefined}
         aria-busy={isSwitching || undefined}
@@ -167,7 +167,7 @@ export default function AccountSwitcher({
   if (!session || !showSwitcher) return null
 
   const borderWrapper = (children: ReactNode) => (
-    <div className="border-t border-border">{children}</div>
+    <div className="border-t border-hairline">{children}</div>
   )
 
   if (listMode) {

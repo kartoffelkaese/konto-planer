@@ -93,7 +93,7 @@ function SplitOverviewPageContent() {
 
       {error && (
         <div
-          className="mb-4 p-4 bg-danger-subtle text-danger rounded-card border border-danger/20"
+          className="mb-4 p-4 bg-danger-subtle text-danger rounded-card"
           role="alert"
         >
           {error}
@@ -103,7 +103,7 @@ function SplitOverviewPageContent() {
       <SplitInvitations onResponded={load} />
 
       {lists.length === 0 && (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="card overflow-hidden">
           <EmptyState
             title="Noch keine Split-Listen"
             description="Legen Sie eine Liste für Urlaub, WG oder jedes gemeinsame Event an."
@@ -115,20 +115,20 @@ function SplitOverviewPageContent() {
 
       {activeLists.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-lg font-medium text-primary mb-4">Aktive Listen</h2>
+          <h2 className="text-base font-semibold text-primary mb-3">Aktive Listen</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {activeLists.map((list) => (
               <Link
                 key={list.id}
                 href={`/split/${list.id}`}
-                className="group rounded-card border border-border bg-surface p-5 transition-[border-color,box-shadow] duration-feedback hover:border-accent-border hover:shadow-[0_8px_24px_var(--shadow-color)]"
+                className="group card p-5 transition-[box-shadow,transform] duration-feedback hover:-translate-y-0.5 hover:shadow-raised"
               >
                 <div className="flex items-start gap-3">
-                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-control border border-accent-border bg-accent-subtle text-accent">
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent">
                     <UserGroupIcon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-medium text-primary group-hover:text-accent transition-colors">
+                    <h3 className="font-semibold text-primary truncate">
                       {list.name}
                     </h3>
                     {list.description && (
@@ -138,17 +138,15 @@ function SplitOverviewPageContent() {
                     )}
                   </div>
                 </div>
-                <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 text-sm">
+                <dl className="mt-5 grid grid-cols-2 gap-3 rounded-control bg-surface-muted/70 p-3">
                   <div>
-                    <dt className="text-secondary">Teilnehmer</dt>
-                    <dd className="font-medium tabular-nums text-primary">
-                      {list.participantCount}
-                    </dd>
+                    <dt className="eyebrow">Teilnehmer</dt>
+                    <dd className="amount mt-0.5 text-primary">{list.participantCount}</dd>
                   </div>
                   <div>
-                    <dt className="text-secondary">Ausgaben</dt>
-                    <dd className="font-medium tabular-nums text-expense">
-                      {formatCurrency(-list.totalExpenses)}
+                    <dt className="eyebrow">Ausgaben gesamt</dt>
+                    <dd className="amount mt-0.5 text-primary">
+                      {formatCurrency(list.totalExpenses)}
                     </dd>
                   </div>
                 </dl>
@@ -160,15 +158,15 @@ function SplitOverviewPageContent() {
 
       {archivedLists.length > 0 && (
         <section>
-          <h2 className="text-lg font-medium text-primary mb-4">Archiviert</h2>
+          <h2 className="text-base font-semibold text-primary mb-3">Archiviert</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {archivedLists.map((list) => (
               <Link
                 key={list.id}
                 href={`/split/${list.id}`}
-                className="rounded-card border border-border bg-surface-muted p-5 opacity-90 transition-colors hover:border-accent-border"
+                className="rounded-card bg-surface-muted p-5 transition-colors hover:bg-hairline"
               >
-                <h3 className="font-medium text-primary">{list.name}</h3>
+                <h3 className="font-semibold text-primary">{list.name}</h3>
                 <p className="mt-1 text-sm text-secondary">Archiviert · nur Lesen</p>
               </Link>
             ))}

@@ -129,8 +129,8 @@ export default function SplitCategoryManager({
 
   return (
     <section className={`${splitSectionCardClass} overflow-hidden p-0`}>
-      <header className="flex items-start gap-3 border-b border-accent-border bg-accent-subtle px-4 py-3">
-        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-surface text-accent">
+      <header className="flex items-start gap-3 px-4 pt-4 pb-2 md:px-5 md:pt-5">
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent">
           <TagIcon className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
@@ -144,7 +144,7 @@ export default function SplitCategoryManager({
 
       {error && (
         <div
-          className="mx-4 mt-4 flex items-start gap-3 rounded-card border border-danger/20 bg-danger-subtle px-3 py-2.5 text-sm text-danger"
+          className="mx-4 mt-4 flex items-start gap-3 rounded-card bg-danger-subtle px-3 py-2.5 text-sm text-danger"
           role="alert"
         >
           <ExclamationCircleIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
@@ -157,7 +157,7 @@ export default function SplitCategoryManager({
           Noch keine Kategorien — legen Sie welche an, um Ausgaben zu gruppieren.
         </p>
       ) : (
-        <ul className="divide-y divide-border bg-canvas">
+        <ul className="divide-y divide-hairline px-2 md:px-3">
           {categories.map((category) => {
             const bg = category.color ?? DEFAULT_CATEGORY_COLOR
             const isEditing = editingId === category.id
@@ -234,7 +234,7 @@ export default function SplitCategoryManager({
       )}
 
       {!readOnly && (
-        <div className="border-t border-border bg-surface px-4 py-3">
+        <div className="border-t border-hairline px-4 py-3 md:px-5">
           {!showAddForm ? (
             <Button
               variant="secondary"

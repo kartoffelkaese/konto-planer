@@ -1,69 +1,60 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { ComputerDesktopIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline'
 import {
-  applyColorScheme,
-  COLOR_SCHEME_LABELS,
-  COLOR_SCHEMES,
-  getStoredColorScheme,
-  type ColorScheme,
+  applyThemeMode,
+  getStoredThemeMode,
+  THEME_CHANGE_EVENT,
+  THEME_MODE_LABELS,
+  THEME_MODES,
+  type ThemeMode,
 } from '@/lib/colorSchemes'
 
+const icons: Record<ThemeMode, typeof SunIcon> = {
+  light: SunIcon,
+  dark: MoonIcon,
+  system: ComputerDesktopIcon,
+}
+
 export default function ColorSchemeSwitcher() {
-  const [mounted, setMounted] = useState(false)
-  const [scheme, setScheme] = useState<ColorScheme>('nebel')
+  const [mode, setMode] = useState<ThemeMode | null>(null)
 
   useEffect(() => {
-    setMounted(true)
-    setScheme(getStoredColorScheme())
+    setMode(getStoredThemeMode())
   }, [])
 
-  const handleChange = (next: ColorScheme) => {
-    setScheme(next)
-    applyColorScheme(next)
-  }
-
-  if (!mounted) {
-    return (
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 max-w-3xl">
-        {COLOR_SCHEMES.map((id) => (
-          <div key={id} className="h-20 rounded-card bg-surface-muted animate-pulse" />
-        ))}
-      </div>
-    )
+  const handleChange = (next: ThemeMode) => {
+    setMode(next)
+    applyThemeMode(next)
+    window.dispatchEvent(new Event(THEME_CHANGE_EVENT))
   }
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 max-w-3xl" role="radiogroup" aria-label="Farbschema">
-      {COLOR_SCHEMES.map((id) => {
-        const { title, description, swatches } = COLOR_SCHEME_LABELS[id]
-        const selected = scheme === id
+    <div
+      className="grid w-full max-w-md grid-cols-3 gap-1 rounded-pill bg-surface-muted p-1"
+      role="radiogroup"
+      aria-label="Darstellung"
+    >
+      {THEME_MODES.map((id) => {
+        const Icon = icons[id]
+        const selected = mode === id
         return (
           <button
             key={id}
             type="button"
             role="radio"
             aria-checked={selected}
+            disabled={mode === null}
             onClick={() => handleChange(id)}
-            className={`flex flex-col gap-2 rounded-card border p-3 text-left transition-colors duration-feedback ${
+            className={`flex min-w-0 min-h-10 items-center justify-center gap-1.5 rounded-pill px-2 text-sm font-medium transition-colors duration-feedback ${
               selected
-                ? 'border-accent bg-accent-subtle ring-2 ring-accent/25'
-                : 'border-border bg-surface hover:bg-surface-muted'
+                ? 'bg-surface text-primary shadow-card'
+                : 'text-secondary hover:text-primary'
             }`}
           >
-            <div className="flex gap-1" aria-hidden>
-              {swatches.map((color) => (
-                <span
-                  key={color}
-                  className="h-6 flex-1 rounded-md border border-border shadow-sm first:rounded-l-lg last:rounded-r-lg"
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
-            <span>
-              <span className="block text-sm font-medium text-primary">{title}</span>
-              <span className="block text-xs text-secondary mt-0.5">{description}</span>
-            </span>
+            <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="truncate">{THEME_MODE_LABELS[id]}</span>
           </button>
         )
       })}

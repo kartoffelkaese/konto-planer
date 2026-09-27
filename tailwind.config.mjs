@@ -12,7 +12,9 @@ const config = {
         surface: {
           DEFAULT: 'var(--color-surface)',
           muted: 'var(--color-surface-muted)',
+          raised: 'var(--color-surface-raised)',
         },
+        hairline: 'var(--color-hairline)',
         border: {
           DEFAULT: 'var(--color-border)',
         },
@@ -60,6 +62,11 @@ const config = {
       borderRadius: {
         card: 'var(--radius-card)',
         control: 'var(--radius-control)',
+        pill: 'var(--radius-pill)',
+      },
+      boxShadow: {
+        card: 'var(--shadow-card)',
+        raised: 'var(--shadow-raised)',
       },
       transitionDuration: {
         feedback: 'var(--motion-duration-feedback)',

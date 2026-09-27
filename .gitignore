@@ -7,7 +7,7 @@
 .pnp.js
 # testing
 /coverage
-/.cursor
+/.claude
 
 # next.js
 /.next/

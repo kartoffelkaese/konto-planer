@@ -2,28 +2,39 @@
 
 import Link from 'next/link'
 import {
+  ArrowDownLeftIcon,
   ArrowDownTrayIcon,
   ArrowPathIcon,
+  ArrowRightIcon,
   ArrowsRightLeftIcon,
+  ArrowUpRightIcon,
   BanknotesIcon,
   ChartBarIcon,
   ChartPieIcon,
-  CheckCircleIcon,
+  CheckIcon,
+  DevicePhoneMobileIcon,
   ShieldCheckIcon,
-  SwatchIcon,
   TagIcon,
   UserGroupIcon,
+  UsersIcon,
 } from '@heroicons/react/24/outline'
-import CategoryExpenseBars from '@/components/CategoryExpenseBars'
 import { getButtonClassName } from '@/components/Button'
 import { APP_VERSION } from '@/lib/version'
 
-const features = [
+type Feature = {
+  icon: typeof ChartBarIcon
+  title: string
+  description: string
+  /** Breite Kachel im Bento-Raster (ab lg) */
+  wide?: boolean
+}
+
+const features: Feature[] = [
   {
     icon: ChartBarIcon,
     title: 'Dashboard auf einen Blick',
     description:
-      'Verfügbar, Einnahmen, Ausgaben und letzte Buchungen – KPIs statt Tabellen-Chaos.',
+      'Verfügbar, Einnahmen, Ausgaben und letzte Buchungen – die wichtigsten Zahlen sofort, ohne Tabellen-Chaos.',
   },
   {
     icon: BanknotesIcon,
@@ -35,7 +46,14 @@ const features = [
     icon: ArrowDownTrayIcon,
     title: 'CSV-Import von der Bank',
     description:
-      'Umsätze von DKB und ING importieren – mit Vorschau, Duplikatprüfung und Zuordnung zu Händlern.',
+      'Umsätze von DKB und ING importieren – mit Vorschau, Duplikatprüfung und Händler-Zuordnung.',
+  },
+  {
+    icon: UsersIcon,
+    title: 'Split-Budget für Reisen & WG',
+    description:
+      'Gemeinsame Ausgaben erfassen, fair aufteilen und mit wenigen Zahlungen ausgleichen – auch in Fremdwährung und per Lese-Link für Gäste.',
+    wide: true,
   },
   {
     icon: ArrowPathIcon,
@@ -68,10 +86,10 @@ const features = [
       'Konten per Einladung teilen – mit vollem Zugriff oder Nur-Lesen für Partner und Familie.',
   },
   {
-    icon: SwatchIcon,
-    title: 'Bank-Logo & Farbschemen',
+    icon: DevicePhoneMobileIcon,
+    title: 'Mobil, hell & dunkel',
     description:
-      'Deutsche Banken im Seitenmenü erkennen, zwischen sechs Farbschemen wählen – auch im Dunkelmodus.',
+      'Für das Smartphone gebaut, mit Tab-Leiste und großen Tippflächen. Hell, Dunkel oder automatisch wie das System.',
   },
   {
     icon: ShieldCheckIcon,
@@ -83,31 +101,22 @@ const features = [
 
 const steps = [
   {
-    number: '01',
     title: 'Registrieren',
-    description:
-      'In wenigen Sekunden starten – optional Bank zuordnen und Farbschema wählen.',
+    description: 'In wenigen Sekunden starten und optional Ihre Bank zuordnen.',
   },
   {
-    number: '02',
     title: 'Finanzen strukturieren',
     description:
       'Transaktionen erfassen oder per CSV importieren, Kategorien anlegen, wiederkehrende Zahlungen definieren.',
   },
   {
-    number: '03',
     title: 'Planen & teilen',
     description:
-      'Dashboard und Statistiken nutzen, Konten verknüpfen oder mit anderen gemeinsam führen.',
+      'Dashboard und Statistiken nutzen, Konten gemeinsam führen oder Ausgaben per Split aufteilen.',
   },
 ]
 
-const trustPoints = [
-  'Kostenlos nutzbar',
-  'Deutsche Oberfläche',
-  'Mehrere Konten',
-  'CSV-Import (DKB & ING)',
-]
+const trustPoints = ['Kostenlos', 'Ohne Werbung', 'DKB & ING Import', 'Mehrere Konten']
 
 const highlights = [
   {
@@ -124,148 +133,113 @@ const highlights = [
   },
 ]
 
-const previewFormatCurrency = (amount: number) =>
-  new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0,
-  }).format(amount)
-
-const PREVIEW_ACCOUNT_NAME = 'Haushalt'
-const PREVIEW_BANK_NAME = 'Waldbank'
-
-const previewRecentTransactions = [
-  { merchant: 'REWE', amount: -42.3, date: '28.05.' },
-  { merchant: 'Gehalt', amount: 3240, date: '01.05.' },
-  { merchant: 'Spotify', amount: -9.99, date: '15.05.' },
+const previewTransactions = [
+  { merchant: 'REWE', meta: 'Heute · Lebensmittel', amount: '−42,30 €', initial: 'R', color: '#f59e0b' },
+  { merchant: 'Gehalt', meta: '01.05. · Einkommen', amount: '+3.240,00 €', income: true },
+  { merchant: 'Spotify', meta: '15.05. · Abos', amount: '−9,99 €', initial: 'S', color: '#10b981' },
 ]
 
-function PreviewBankLogo() {
+function LogoMark({ className = '' }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-full w-full text-secondary"
-      fill="currentColor"
-      aria-hidden
+    <span
+      className={`flex h-8 w-8 items-center justify-center rounded-[0.65rem] bg-accent text-sm font-bold text-accent-foreground ${className}`}
+      aria-hidden="true"
     >
-      <path d="M12 3 4 9v1h16V9l-8-6zm-1 10v6h2v-6h-2zm-4 0v6h2v-6H7zm8 0v6h2v-6h-2zM4 19h16v2H4v-2z" />
-    </svg>
+      K
+    </span>
   )
 }
 
+/** Stilisierte App-Vorschau im Design der echten Übersicht */
 function LandingPreview() {
-  const categories = [
-    { name: 'Wohnen', value: 720, color: 'var(--color-accent)' },
-    { name: 'Lebensmittel', value: 480, color: 'var(--color-expense)' },
-    { name: 'Mobilität', value: 350, color: 'var(--color-pending)' },
-    { name: 'Freizeit', value: 280, color: 'var(--color-income)' },
-  ]
-
   return (
-    <div
-      className="relative mx-auto w-full max-w-lg lg:max-w-none"
-      aria-hidden="true"
-    >
-      <div className="absolute -inset-4 rounded-[1.25rem] bg-accent/15 blur-2xl" />
-      <div className="relative rounded-card border border-accent-border bg-surface p-5 shadow-[0_20px_50px_var(--shadow-color)]">
-        <div className="mb-4 flex items-center justify-between gap-3 border-b border-border pb-3">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-muted p-1.5">
-              <PreviewBankLogo />
-            </span>
-            <div className="min-w-0">
-              <p className="text-xs font-medium uppercase tracking-wide text-secondary">
-                Vorschau
-              </p>
-              <p className="truncate text-sm font-semibold text-primary">
-                {PREVIEW_ACCOUNT_NAME} · {PREVIEW_BANK_NAME}
-              </p>
+    <div className="relative mx-auto w-full max-w-md" aria-hidden="true">
+      <div className="absolute -inset-6 rounded-[2.5rem] bg-accent/20 blur-3xl" />
+
+      <div className="relative rounded-[2rem] border border-hairline bg-canvas p-3 shadow-raised">
+        <div className="space-y-3">
+          <div className="hero-card p-5">
+            <p className="eyebrow">Verfügbar</p>
+            <p className="amount-hero mt-1 text-[2.5rem] text-primary">2.840,00 €</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="chip">
+                Kontostand <span className="amount text-primary">3.120 €</span>
+              </span>
+              <span className="chip">
+                Ausstehend <span className="amount text-expense">−280 €</span>
+              </span>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-surface-muted">
+              <div className="h-full w-[91%] rounded-full bg-accent" />
             </div>
           </div>
-          <span className="shrink-0 rounded-full bg-income-bg px-2.5 py-1 text-xs font-medium text-income">
-            Gehaltsmonat
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="card p-4">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-income-bg text-income">
+                <ArrowDownLeftIcon className="h-4 w-4" />
+              </span>
+              <p className="mt-3 text-xs text-secondary">Einnahmen</p>
+              <p className="amount text-lg text-income">3.240 €</p>
+            </div>
+            <div className="card p-4">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-expense-bg text-expense">
+                <ArrowUpRightIcon className="h-4 w-4" />
+              </span>
+              <p className="mt-3 text-xs text-secondary">Ausgaben</p>
+              <p className="amount text-lg text-expense">2.180 €</p>
+            </div>
+          </div>
+
+          <div className="card p-4">
+            <p className="mb-1 text-sm font-semibold text-primary">Letzte Buchungen</p>
+            <ul>
+              {previewTransactions.map((tx) => (
+                <li key={tx.merchant} className="flex items-center gap-3 py-2">
+                  {tx.income ? (
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-income-bg text-income">
+                      <ArrowDownLeftIcon className="h-4 w-4" />
+                    </span>
+                  ) : (
+                    <span
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
+                      style={{ backgroundColor: tx.color }}
+                    >
+                      {tx.initial}
+                    </span>
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-primary">
+                      {tx.merchant}
+                    </span>
+                    <span className="block truncate text-xs text-secondary">{tx.meta}</span>
+                  </span>
+                  <span
+                    className={`amount shrink-0 text-sm ${tx.income ? 'text-income' : 'text-primary'}`}
+                  >
+                    {tx.amount}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Schwebende Split-Karte für Tiefe */}
+      <div className="absolute -bottom-24 -left-4 hidden w-56 rounded-card border border-hairline bg-surface-raised p-4 shadow-raised sm:block lg:-left-10">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-subtle text-accent">
+            <UsersIcon className="h-4 w-4" />
           </span>
-        </div>
-
-        <div className="rounded-control border border-accent bg-accent-subtle border-l-4 border-l-accent px-3 py-2.5 mb-3">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-secondary">
-            Verfügbar
-          </p>
-          <p className="mt-0.5 text-lg font-semibold tabular-nums text-accent">2.840 €</p>
-          <p className="mt-0.5 text-[10px] text-secondary">
-            Kontostand 3.120 € · Ausstehend 280 €
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2">
-          <div className="kpi-card--accent rounded-control px-2.5 py-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-secondary">
-              Einnahmen
-            </p>
-            <p className="mt-0.5 text-xs font-semibold text-income sm:text-sm">3.240 €</p>
-          </div>
-          <div className="rounded-control border border-border bg-surface-muted px-2.5 py-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-secondary">
-              Ausgaben
-            </p>
-            <p className="mt-0.5 text-xs font-semibold text-expense sm:text-sm">2.180 €</p>
-          </div>
-          <div className="rounded-control border border-border bg-surface px-2.5 py-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-secondary">
-              Kontostand
-            </p>
-            <p className="mt-0.5 text-xs font-semibold text-accent sm:text-sm">3.120 €</p>
-          </div>
-          <div className="rounded-control border border-pending/30 bg-pending-bg px-2.5 py-2">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-secondary">
-              Ausstehend
-            </p>
-            <p className="mt-0.5 text-xs font-semibold text-pending sm:text-sm">280 €</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-primary">Urlaub Lissabon</p>
+            <p className="text-xs text-secondary">3 Personen · Split</p>
           </div>
         </div>
-
-        <div className="mt-3 rounded-control border border-border bg-canvas p-3">
-          <p className="mb-2 text-xs font-medium text-primary">Letzte Buchungen</p>
-          <ul className="space-y-1.5">
-            {previewRecentTransactions.map((tx) => (
-              <li
-                key={tx.merchant + tx.date}
-                className="flex items-center justify-between gap-2 text-xs"
-              >
-                <span className="truncate text-primary">{tx.merchant}</span>
-                <span className="shrink-0 tabular-nums text-secondary">{tx.date}</span>
-                <span
-                  className={`shrink-0 font-medium tabular-nums ${
-                    tx.amount >= 0 ? 'text-income' : 'text-expense'
-                  }`}
-                >
-                  {previewFormatCurrency(tx.amount)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="mt-3 rounded-control border border-border bg-canvas p-3">
-          <p className="mb-3 text-xs font-medium text-primary">Ausgaben nach Kategorie</p>
-          <CategoryExpenseBars categories={categories} formatCurrency={previewFormatCurrency} />
-        </div>
-
-        <div className="mt-3 space-y-2">
-          <div className="flex items-center gap-2 rounded-control border border-pending/30 bg-pending-bg px-3 py-2">
-            <ArrowPathIcon className="h-4 w-4 shrink-0 text-pending" />
-            <p className="text-xs text-primary">
-              <span className="font-medium">3 wiederkehrende</span>
-              <span className="text-secondary"> · nächste in 4 Tagen</span>
-            </p>
-          </div>
-          <div className="flex items-center gap-2 rounded-control border border-accent-border bg-accent-subtle px-3 py-2">
-            <ArrowDownTrayIcon className="h-4 w-4 shrink-0 text-accent" />
-            <p className="text-xs text-primary">
-              <span className="font-medium">CSV-Import</span>
-              <span className="text-secondary"> · 12 neue Umsätze</span>
-            </p>
-          </div>
+        <div className="mt-3 flex items-center justify-between rounded-control bg-surface-muted/70 px-3 py-2">
+          <span className="text-xs text-secondary">Lena → Tom</span>
+          <span className="amount text-sm text-primary">48,50 €</span>
         </div>
       </div>
     </div>
@@ -274,59 +248,42 @@ function LandingPreview() {
 
 function LandingHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 border-b border-hairline bg-canvas/80 backdrop-blur-md">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <Link
           href="/"
-          className="shrink-0 text-lg font-semibold tracking-tight text-accent"
+          className="flex min-h-11 shrink-0 items-center gap-2 text-lg font-semibold tracking-tight text-primary"
         >
+          <LogoMark />
           KontoPlaner
         </Link>
 
-        <nav
-          className="hidden items-center gap-6 md:flex"
-          aria-label="Seitenabschnitte"
-        >
-          <a
-            href="#highlights"
-            className="text-sm font-medium text-secondary transition-colors duration-feedback hover:text-accent"
-          >
-            Vorteile
-          </a>
-          <a
-            href="#features"
-            className="text-sm font-medium text-secondary transition-colors duration-feedback hover:text-accent"
-          >
-            Funktionen
-          </a>
-          <a
-            href="#steps"
-            className="text-sm font-medium text-secondary transition-colors duration-feedback hover:text-accent"
-          >
-            So starten
-          </a>
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Seitenabschnitte">
+          {[
+            ['#highlights', 'Vorteile'],
+            ['#features', 'Funktionen'],
+            ['#steps', 'So starten'],
+          ].map(([href, label]) => (
+            <a
+              key={href}
+              href={href}
+              className="rounded-pill px-3 py-2 text-sm font-medium text-secondary transition-colors duration-feedback hover:bg-surface-muted hover:text-primary"
+            >
+              {label}
+            </a>
+          ))}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           <Link
             href="/auth/login"
-            className={getButtonClassName({
-              variant: 'ghost',
-              size: 'sm',
-              className: 'max-sm:hidden',
-            })}
-          >
-            Anmelden
-          </Link>
-          <Link
-            href="/auth/login"
-            className="rounded-control px-3 py-2 text-sm font-medium text-secondary transition-colors duration-feedback hover:text-accent sm:hidden"
+            className="inline-flex min-h-11 items-center rounded-pill px-3 text-sm font-medium text-secondary transition-colors duration-feedback hover:bg-surface-muted hover:text-primary max-sm:hidden"
           >
             Anmelden
           </Link>
           <Link
             href="/auth/register"
-            className={getButtonClassName({ variant: 'primary', size: 'sm' })}
+            className={getButtonClassName({ variant: 'primary', size: 'sm', className: 'rounded-pill px-4' })}
           >
             Registrieren
           </Link>
@@ -338,25 +295,48 @@ function LandingHeader() {
 
 function LandingFooter() {
   return (
-    <footer className="border-t border-border bg-surface py-10">
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-4 sm:flex-row sm:px-6 lg:px-8">
-        <div className="text-center sm:text-left">
-          <p className="font-semibold text-primary">KontoPlaner</p>
-          <p className="mt-1 text-sm text-secondary">
-            Persönliche Finanzverwaltung – klar, lokal, ohne Werbung.
-          </p>
+    <footer className="border-t border-hairline py-10">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 sm:flex-row sm:px-6">
+        <div className="flex items-center gap-3 text-center sm:text-left">
+          <LogoMark className="max-sm:hidden" />
+          <div>
+            <p className="font-semibold text-primary">KontoPlaner</p>
+            <p className="text-sm text-secondary">
+              Persönliche Finanzverwaltung – klar, lokal, ohne Werbung.
+            </p>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
-          <Link href="/auth/login" className="text-secondary hover:text-accent">
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm">
+          <Link
+            href="/auth/login"
+            className="inline-flex min-h-11 items-center rounded-pill px-3 text-secondary hover:text-primary"
+          >
             Anmelden
           </Link>
-          <Link href="/auth/register" className="text-secondary hover:text-accent">
+          <Link
+            href="/auth/register"
+            className="inline-flex min-h-11 items-center rounded-pill px-3 text-secondary hover:text-primary"
+          >
             Registrieren
           </Link>
-          <span className="text-secondary/70">Version {APP_VERSION}</span>
+          <span className="px-3 text-secondary/80">Version {APP_VERSION}</span>
         </div>
       </div>
     </footer>
+  )
+}
+
+function SectionIntro({ eyebrow, title, text }: { eyebrow: string; title: string; text?: string }) {
+  return (
+    <div className="mx-auto max-w-2xl text-center">
+      <p className="inline-flex rounded-pill bg-accent-subtle px-3 py-1 text-sm font-medium text-accent">
+        {eyebrow}
+      </p>
+      <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] text-primary sm:text-4xl">
+        {title}
+      </h2>
+      {text && <p className="mt-3 text-base leading-relaxed text-secondary sm:text-lg">{text}</p>}
+    </div>
   )
 }
 
@@ -365,26 +345,27 @@ export default function LandingPage() {
     <div className="landing-page min-h-screen bg-canvas">
       <LandingHeader />
 
-      <section className="landing-hero relative overflow-hidden border-b border-border">
+      <section className="relative overflow-hidden">
         <div className="landing-hero-glow pointer-events-none absolute inset-0" aria-hidden="true" />
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid items-center gap-12 py-14 lg:grid-cols-2 lg:gap-16 lg:py-20">
+        <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="grid items-center gap-14 pt-12 pb-20 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:pt-20 lg:pb-28">
             <div className="text-center lg:text-left">
-              <p className="landing-fade-in mb-4 inline-flex items-center gap-2 rounded-full border border-accent-border bg-accent-subtle px-3 py-1 text-xs font-medium text-accent">
+              <p className="landing-fade-in inline-flex items-center gap-2 rounded-pill bg-accent-subtle px-3 py-1 text-sm font-medium text-accent">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
                 Persönliche Finanzverwaltung
               </p>
 
-              <h1 className="landing-fade-in landing-fade-in-delay-1 text-4xl font-semibold tracking-tight text-primary sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
-                Finanzen planen,{' '}
-                <span className="text-accent">nicht raten</span>
+              <h1 className="landing-fade-in landing-fade-in-delay-1 mt-5 text-[2.75rem] font-semibold leading-[1.05] tracking-[-0.04em] text-primary sm:text-6xl lg:text-[4rem]">
+                Finanzen planen,
+                <br />
+                <span className="text-accent">nicht raten.</span>
               </h1>
 
-              <p className="landing-fade-in landing-fade-in-delay-2 mx-auto mt-5 max-w-xl text-base leading-relaxed text-secondary sm:text-lg lg:mx-0">
+              <p className="landing-fade-in landing-fade-in-delay-2 mx-auto mt-6 max-w-xl text-base leading-relaxed text-secondary sm:text-lg lg:mx-0">
                 KontoPlaner bündelt Einnahmen, Ausgaben und wiederkehrende Zahlungen – für ein
-                Konto oder mehrere, allein oder gemeinsam. Mit Gehaltsmonat, CSV-Import und klarem
-                Überblick statt Tabellen-Chaos.
+                Konto oder mehrere, allein oder gemeinsam. Mit Gehaltsmonat, CSV-Import und
+                Split-Budget für geteilte Kosten.
               </p>
 
               <div className="landing-fade-in landing-fade-in-delay-3 mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
@@ -393,54 +374,48 @@ export default function LandingPage() {
                   className={getButtonClassName({
                     variant: 'primary',
                     size: 'lg',
-                    className:
-                      'w-full shadow-sm transition-transform duration-feedback hover:scale-[1.02] active:scale-[0.98] sm:w-auto',
+                    className: 'w-full rounded-pill px-7 sm:w-auto',
                   })}
                 >
                   Kostenlos starten
+                  <ArrowRightIcon className="h-5 w-5" aria-hidden="true" />
                 </Link>
                 <Link
                   href="/auth/login"
                   className={getButtonClassName({
                     variant: 'secondary',
                     size: 'lg',
-                    className:
-                      'w-full shadow-sm transition-transform duration-feedback hover:scale-[1.02] active:scale-[0.98] sm:w-auto',
+                    className: 'w-full rounded-pill px-7 sm:w-auto',
                   })}
                 >
                   Anmelden
                 </Link>
               </div>
 
-              <ul className="landing-fade-in landing-fade-in-delay-4 mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 lg:justify-start">
+              <ul className="landing-fade-in landing-fade-in-delay-4 mt-8 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
                 {trustPoints.map((point) => (
-                  <li key={point} className="flex items-center gap-1.5 text-sm text-secondary">
-                    <CheckCircleIcon className="h-4 w-4 shrink-0 text-income" aria-hidden="true" />
+                  <li key={point} className="chip">
+                    <CheckIcon className="h-4 w-4 shrink-0 text-income" aria-hidden="true" />
                     {point}
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="landing-fade-in landing-fade-in-delay-2 lg:pl-4">
+            <div className="landing-fade-in landing-fade-in-delay-2 px-2 sm:px-8 lg:px-0">
               <LandingPreview />
             </div>
           </div>
         </div>
       </section>
 
-      <section
-        id="highlights"
-        className="border-b border-border bg-surface-muted/40 py-12 sm:py-14 scroll-mt-14"
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
-            {highlights.map(({ title, description }) => (
-              <article
-                key={title}
-                className="card p-5 transition-[border-color,box-shadow] duration-feedback hover:border-accent-border hover:shadow-[0_8px_24px_var(--shadow-color)]"
-              >
-                <h2 className="text-base font-semibold text-primary">{title}</h2>
+      <section id="highlights" className="scroll-mt-16 pb-16 sm:pb-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="card grid divide-y divide-hairline sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            {highlights.map(({ title, description }, index) => (
+              <article key={title} className="p-6 sm:p-8">
+                <span className="amount text-sm text-accent">0{index + 1}</span>
+                <h2 className="mt-2 text-lg font-semibold text-primary">{title}</h2>
                 <p className="mt-2 text-sm leading-relaxed text-secondary">{description}</p>
               </article>
             ))}
@@ -448,113 +423,92 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="features" className="py-16 sm:py-20 scroll-mt-14">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-medium uppercase tracking-wide text-accent">Funktionen</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
-              Alles für Ihren Finanzüberblick
-            </h2>
-            <p className="mt-3 text-secondary">
-              Von der ersten Buchung bis zum gemeinsamen Haushaltskonto – ohne unnötige Komplexität.
-            </p>
-          </div>
+      <section id="features" className="scroll-mt-16 py-16 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <SectionIntro
+            eyebrow="Funktionen"
+            title="Alles für Ihren Finanzüberblick"
+            text="Von der ersten Buchung bis zum gemeinsamen Haushalt – ohne unnötige Komplexität."
+          />
 
-          <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-            {features.map(({ icon: Icon, title, description }) => (
+          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map(({ icon: Icon, title, description, wide }) => (
               <article
                 key={title}
-                className="landing-feature-card group card p-6 transition-[border-color,box-shadow,transform] duration-feedback hover:-translate-y-0.5 hover:border-accent-border hover:shadow-[0_12px_32px_var(--shadow-color)]"
+                className={`group card p-6 transition-[box-shadow,transform] duration-feedback hover:-translate-y-0.5 hover:shadow-raised ${
+                  wide ? 'lg:col-span-2 hero-card' : ''
+                }`}
               >
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-control bg-accent-subtle text-accent transition-colors duration-feedback group-hover:bg-accent group-hover:text-accent-foreground">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent-subtle text-accent transition-colors duration-feedback group-hover:bg-accent group-hover:text-accent-foreground">
                   <Icon className="h-5 w-5" aria-hidden="true" />
-                </div>
-                <h3 className="text-lg font-semibold text-primary">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-secondary">{description}</p>
+                </span>
+                <h3 className={`mt-4 font-semibold text-primary ${wide ? 'text-xl' : 'text-lg'}`}>
+                  {title}
+                </h3>
+                <p
+                  className={`mt-2 leading-relaxed text-secondary ${wide ? 'max-w-lg text-base' : 'text-sm'}`}
+                >
+                  {description}
+                </p>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section
-        id="steps"
-        className="border-y border-border bg-surface-muted/50 py-16 sm:py-20 scroll-mt-14"
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="text-sm font-medium uppercase tracking-wide text-accent">
-              In drei Schritten
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
-              So starten Sie mit KontoPlaner
-            </h2>
-          </div>
+      <section id="steps" className="scroll-mt-16 py-16 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <SectionIntro eyebrow="In drei Schritten" title="So starten Sie mit KontoPlaner" />
 
-          <ol className="mt-12 grid gap-8 md:grid-cols-3 md:gap-6">
+          <ol className="mt-12 grid gap-4 md:grid-cols-3">
             {steps.map((step, index) => (
-              <li key={step.number} className="relative text-center md:text-left">
-                {index < steps.length - 1 && (
-                  <span
-                    className="absolute top-8 left-[calc(50%+2.5rem)] hidden h-px w-[calc(100%-5rem)] bg-accent-border md:block"
-                    aria-hidden="true"
-                  />
-                )}
-                <span className="inline-flex h-14 w-14 items-center justify-center rounded-card border-2 border-accent bg-accent-subtle text-lg font-semibold text-accent">
-                  {step.number}
+              <li key={step.title} className="card p-6">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
+                  {index + 1}
                 </span>
                 <h3 className="mt-4 text-lg font-semibold text-primary">{step.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-secondary">{step.description}</p>
               </li>
             ))}
           </ol>
-
-          <div className="mt-12 flex justify-center">
-            <Link
-              href="/auth/register"
-              className={getButtonClassName({ variant: 'primary', size: 'md' })}
-            >
-              Jetzt kostenlos registrieren
-            </Link>
-          </div>
         </div>
       </section>
 
-      <section className="relative overflow-hidden py-16 sm:py-20">
-        <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent via-accent-hover to-accent opacity-[0.97]"
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl"
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-accent-subtle/20 blur-2xl"
-          aria-hidden="true"
-        />
-
-        <div className="relative mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-semibold tracking-tight text-accent-foreground sm:text-3xl">
-            Bereit für mehr Klarheit?
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-accent-foreground/90">
-            Legen Sie jetzt los – Konto anlegen, erste Buchung erfassen oder CSV importieren,
-            optional Bank zuordnen und Farbschema wählen. In unter einer Minute eingerichtet.
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              href="/auth/register"
-              className="landing-cta-solid inline-flex w-full items-center justify-center rounded-control px-7 py-3.5 text-base font-semibold shadow-sm transition-colors duration-feedback sm:w-auto"
-            >
-              Jetzt registrieren
-            </Link>
-            <Link
-              href="/auth/login"
-              className="landing-cta-outline inline-flex w-full items-center justify-center rounded-control px-7 py-3.5 text-base font-medium transition-colors duration-feedback sm:w-auto"
-            >
-              Bereits Konto? Anmelden
-            </Link>
+      <section className="pb-16 sm:pb-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-accent to-accent-hover px-6 py-14 text-center shadow-raised sm:px-12 sm:py-20">
+            <div
+              className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl"
+              aria-hidden="true"
+            />
+            <div
+              className="pointer-events-none absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-black/10 blur-3xl"
+              aria-hidden="true"
+            />
+            <div className="relative mx-auto max-w-2xl">
+              <h2 className="text-3xl font-semibold tracking-[-0.03em] text-accent-foreground sm:text-4xl">
+                Bereit für mehr Klarheit?
+              </h2>
+              <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-accent-foreground/85 sm:text-lg">
+                Konto anlegen, erste Buchung erfassen oder CSV importieren – in unter einer Minute
+                eingerichtet.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  href="/auth/register"
+                  className="landing-cta-solid inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-pill px-7 text-base font-semibold transition-colors duration-feedback sm:w-auto"
+                >
+                  Jetzt registrieren
+                  <ArrowRightIcon className="h-5 w-5" aria-hidden="true" />
+                </Link>
+                <Link
+                  href="/auth/login"
+                  className="landing-cta-outline inline-flex min-h-12 w-full items-center justify-center rounded-pill px-7 text-base font-medium transition-colors duration-feedback sm:w-auto"
+                >
+                  Bereits Konto? Anmelden
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>

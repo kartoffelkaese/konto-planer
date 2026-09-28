@@ -1,13 +1,11 @@
-const { version } = require('./package.json')
-
 module.exports = {
   apps: [
     {
       name: 'konto-planer',
-      version,
       cwd: __dirname,
-      // Next direkt starten — nicht über npm (PM2 cached sonst den npm-Pfad der NVM-Version)
-      script: 'node_modules/next/dist/bin/next',
+      // Next direkt starten — nicht über npm (PM2 cached sonst den npm-Pfad der NVM-Version).
+      // Wrapper im Projekt, damit PM2 die App-Version aus package.json anzeigt (nicht die von Next).
+      script: 'scripts/start-server.cjs',
       args: 'start -H 127.0.0.1 -p 3001',
       interpreter: 'node',
       env: {

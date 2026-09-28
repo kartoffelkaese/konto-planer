@@ -173,7 +173,7 @@ export default function AccountSwitcher({
   if (listMode) {
     return borderWrapper(
       <div className="px-2 py-2">
-        <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-secondary">
+        <p className="eyebrow px-2 pt-1 pb-2">
           Konto wechseln
         </p>
         <div className="space-y-0.5" role="list" aria-label="Konten">

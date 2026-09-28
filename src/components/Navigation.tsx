@@ -333,7 +333,7 @@ export default function Navigation() {
       <div
         id="mobile-sidebar"
         data-open={isOpen}
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col bg-surface border-r border-hairline md:w-[var(--sidebar-width)] md:translate-x-0 mobile-nav-drawer max-md:top-14 max-md:h-[calc(100%-3.5rem)] max-md:pb-[var(--mobile-tabbar-space)] max-md:rounded-r-[1.5rem] ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col bg-surface border-r border-hairline md:w-[var(--sidebar-width)] md:translate-x-0 mobile-nav-drawer max-md:top-14 max-md:h-[calc(100%-3.5rem)] max-md:pb-[var(--mobile-tabbar-space)] ${
           isOpen
             ? 'max-md:translate-x-0 max-md:shadow-raised max-md:visible'
             : 'max-md:-translate-x-full max-md:shadow-none max-md:invisible'

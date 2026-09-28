@@ -12,6 +12,12 @@ import {
   type TransactionPeriod,
 } from '@/lib/transactionPeriodRange'
 
+/** Kurzformen für schmale Displays (volle Bezeichnung bleibt als aria-label) */
+const SHORT_LABELS: Partial<Record<TransactionPeriod, string>> = {
+  all: 'Alle',
+  custom: 'Zeitraum',
+}
+
 type TransactionPeriodFilterProps = {
   period: TransactionPeriod
   customStartDate: string
@@ -57,96 +63,87 @@ export default function TransactionPeriodFilter({
     customValidation.message.length > 0
 
   return (
-    <section
-      className={`rounded-lg border bg-surface p-4 mb-8 ${
-        filterActive ? 'border-accent-border' : 'border-border'
-      }`}
-      aria-label="Suchen und filtern"
-    >
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-medium text-primary">Suchen &amp; filtern</h2>
-          {activeRange ? (
-            <p className="mt-1 flex items-center gap-1.5 text-xs text-secondary">
-              <CalendarDaysIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              {activeRange.label}
+    <section className="card p-4 md:p-5 mb-4 md:mb-6 space-y-4" aria-label="Suchen und filtern">
+      <div className="relative">
+        <label htmlFor="transaction-search" className="sr-only">
+          Transaktionen durchsuchen
+        </label>
+        <MagnifyingGlassIcon
+          className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-secondary"
+          aria-hidden="true"
+        />
+        <input
+          id="transaction-search"
+          type="search"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Händler oder Beschreibung…"
+          className="block w-full rounded-control pl-11 text-sm"
+        />
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <div
+          className="grid w-full grid-cols-3 gap-1 rounded-pill bg-surface-muted p-1 sm:w-auto"
+          role="radiogroup"
+          aria-label="Zeitraum auswählen"
+        >
+          {options.map((option) => {
+            const selected = period === option.value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                aria-label={option.label}
+                onClick={() => {
+                  if (isValidTransactionPeriod(option.value)) {
+                    onPeriodChange(option.value)
+                  }
+                }}
+                className={`min-h-10 min-w-0 whitespace-nowrap rounded-pill px-3 text-sm font-medium transition-colors duration-feedback ${
+                  selected
+                    ? 'bg-surface text-primary shadow-card'
+                    : 'text-secondary hover:text-primary'
+                }`}
+              >
+                <span className="truncate sm:hidden" aria-hidden="true">
+                  {SHORT_LABELS[option.value] ?? option.label.replace(/^Nur /, '')}
+                </span>
+                <span className="max-sm:hidden" aria-hidden="true">
+                  {option.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="flex min-w-0 items-center gap-2">
+          {activeRange && (
+            <p className="flex min-w-0 items-center gap-1.5 text-sm text-secondary">
+              <CalendarDaysIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="truncate">{activeRange.label}</span>
             </p>
-          ) : (
-            <p className="mt-1 text-xs text-secondary">Alle Buchungen</p>
+          )}
+          {filterActive && (
+            <Button type="button" variant="ghost" size="sm" onClick={onReset} className="shrink-0">
+              Zurücksetzen
+            </Button>
           )}
         </div>
-        {filterActive && (
-          <Button type="button" variant="secondary" size="sm" onClick={onReset}>
-            Zurücksetzen
-          </Button>
-        )}
       </div>
 
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="transaction-search" className="sr-only">
-            Transaktionen durchsuchen
-          </label>
-          <div className="flex items-center gap-3 w-full rounded-control border border-border bg-surface px-3 py-2 shadow-sm focus-within:border-accent focus-within:outline focus-within:outline-2 focus-within:outline-accent-subtle focus-within:outline-offset-1">
-            <MagnifyingGlassIcon
-              className="h-5 w-5 shrink-0 text-secondary"
-              aria-hidden="true"
-            />
-            <input
-              id="transaction-search"
-              type="search"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Händler oder Beschreibung suchen…"
-              className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-primary shadow-none focus:outline-none focus:ring-0"
-            />
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs font-medium text-secondary">Zeitraum</p>
-          <div
-            className="grid grid-cols-1 gap-2 sm:grid-cols-3"
-            role="radiogroup"
-            aria-label="Zeitraum auswählen"
-          >
-            {options.map((option) => {
-              const selected = period === option.value
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  onClick={() => {
-                    if (isValidTransactionPeriod(option.value)) {
-                      onPeriodChange(option.value)
-                    }
-                  }}
-                  className={`rounded-control border px-3 py-2.5 text-left text-sm font-medium transition-colors duration-feedback focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
-                    selected
-                      ? 'border-accent bg-accent-subtle text-accent'
-                      : 'border-border bg-surface text-primary hover:border-accent-border hover:bg-surface-muted'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {period === 'custom' && (
-          <DateRangePicker
-            id="transaction-period"
-            startDate={customStartDate}
-            endDate={customEndDate}
-            onRangeChange={onCustomRangeChange}
-            invalid={showInvalidRange}
-            statusMessage={showStatusMessage ? customValidation.message : undefined}
-          />
-        )}
-      </div>
+      {period === 'custom' && (
+        <DateRangePicker
+          id="transaction-period"
+          startDate={customStartDate}
+          endDate={customEndDate}
+          onRangeChange={onCustomRangeChange}
+          invalid={showInvalidRange}
+          statusMessage={showStatusMessage ? customValidation.message : undefined}
+        />
+      )}
     </section>
   )
 }

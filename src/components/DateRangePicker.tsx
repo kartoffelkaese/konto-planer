@@ -151,7 +151,7 @@ export default function DateRangePicker({
 
   return (
     <div className="space-y-2">
-      <label id={`${id}-label`} className="block text-xs font-medium text-secondary">
+      <label id={`${id}-label`} className="eyebrow block">
         Datumszeitraum
       </label>
 
@@ -164,7 +164,7 @@ export default function DateRangePicker({
           aria-labelledby={`${id}-label`}
           aria-invalid={invalid || undefined}
           onClick={() => setOpen((value) => !value)}
-          className={`flex w-full items-center gap-3 rounded-control border bg-surface px-3 py-2.5 text-left text-sm shadow-sm transition-colors duration-feedback focus:outline-none focus-visible:ring-2 ${borderClass} ${
+          className={`flex min-h-11 w-full items-center gap-3 rounded-control border bg-surface px-3.5 text-left text-sm transition-colors duration-feedback focus:outline-none focus-visible:ring-2 ${borderClass} ${
             open ? 'border-accent ring-2 ring-accent/30' : 'hover:border-accent-border'
           }`}
         >

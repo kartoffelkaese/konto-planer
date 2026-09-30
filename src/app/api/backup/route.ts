@@ -8,6 +8,7 @@ import {
 } from '@/lib/backup-validation'
 import { setMerchantCategories } from '@/lib/merchantCategories'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
   try {
@@ -52,7 +53,7 @@ export async function GET() {
 
     return NextResponse.json(backup)
   } catch (error) {
-    console.error('Fehler beim Erstellen des Backups:', error)
+    logger.error('Fehler beim Erstellen des Backups', error, { endpoint: '/api/backup' })
     return NextResponse.json({ error: 'Interner Server-Fehler' }, { status: 500 })
   }
 }
@@ -204,7 +205,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: 'Backup erfolgreich wiederhergestellt' })
   } catch (error) {
-    console.error('Fehler beim Wiederherstellen des Backups:', error)
+    logger.error('Fehler beim Wiederherstellen des Backups', error, { endpoint: '/api/backup' })
     return NextResponse.json({ error: 'Interner Server-Fehler' }, { status: 500 })
   }
 }

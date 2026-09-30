@@ -8,6 +8,14 @@ import { Button } from '@/components/Button'
 import PageLoader from '@/components/PageLoader'
 import SettingsBreadcrumb from '@/components/SettingsBreadcrumb'
 import { useUserSettings } from '@/hooks/useUserSettings'
+import {
+  createMerchant,
+  deleteMerchant,
+  getCategories,
+  getMerchants,
+  updateMerchant,
+  withApiErrorFallback,
+} from '@/lib/api'
 
 // Funktion zur Berechnung der Textfarbe basierend auf der Hintergrundfarbe
 function getContrastColor(hexcolor: string) {
@@ -70,11 +78,7 @@ export default function MerchantsPage() {
 
   const loadMerchants = async () => {
     try {
-      const response = await fetch('/api/merchants')
-      if (!response.ok) {
-        throw new Error('Fehler beim Laden der Händler')
-      }
-      const data = await response.json()
+      const data = await getMerchants()
       setMerchants(data)
     } catch (err) {
       console.error('Error loading merchants:', err)
@@ -86,11 +90,7 @@ export default function MerchantsPage() {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('/api/categories')
-      if (!response.ok) {
-        throw new Error('Fehler beim Laden der Kategorien')
-      }
-      const data = await response.json()
+      const data = await getCategories()
       setCategories(data)
     } catch (err) {
       console.error('Error loading categories:', err)
@@ -104,18 +104,7 @@ export default function MerchantsPage() {
     setIsSaving(true)
 
     try {
-      const response = await fetch('/api/merchants', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Fehler beim Erstellen des Händlers')
-      }
+      await withApiErrorFallback(createMerchant(formData), 'Fehler beim Erstellen des Händlers')
 
       await loadMerchants()
       setShowAddModal(false)
@@ -138,18 +127,7 @@ export default function MerchantsPage() {
     setIsSaving(true)
 
     try {
-      const response = await fetch(`/api/merchants/${selectedMerchant.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Fehler beim Aktualisieren des Händlers')
-      }
+      await withApiErrorFallback(updateMerchant(selectedMerchant.id, formData), 'Fehler beim Aktualisieren des Händlers')
 
       await loadMerchants()
       setShowEditModal(false)
@@ -172,14 +150,7 @@ export default function MerchantsPage() {
     setIsSaving(true)
 
     try {
-      const response = await fetch(`/api/merchants/${selectedMerchant.id}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Fehler beim Löschen des Händlers')
-      }
+      await withApiErrorFallback(deleteMerchant(selectedMerchant.id), 'Fehler beim Löschen des Händlers')
 
       await loadMerchants()
       setShowDeleteModal(false)

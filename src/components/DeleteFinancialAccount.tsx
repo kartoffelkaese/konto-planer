@@ -11,6 +11,7 @@ import {
   dispatchAccountChanged,
   dispatchAccountSwitching,
 } from '@/lib/accountSwitchEvents'
+import { deleteAccount, getAccounts, getUserSettings, withApiErrorFallback } from '@/lib/api'
 
 export default function DeleteFinancialAccount() {
   const router = useRouter()
@@ -27,18 +28,19 @@ export default function DeleteFinancialAccount() {
 
   const load = useCallback(async () => {
     try {
-      const [settingsRes, accountsRes] = await Promise.all([
-        fetch('/api/users/settings'),
-        fetch('/api/accounts'),
+      // Beide Anfragen unabhängig: eine Fehlerantwort blockiert die andere nicht
+      const [settingsResult, accountsResult] = await Promise.allSettled([
+        getUserSettings(),
+        getAccounts<unknown>(),
       ])
-      if (settingsRes.ok) {
-        const settings = await settingsRes.json()
+      if (settingsResult.status === 'fulfilled') {
+        const settings = settingsResult.value
         setAccountName(settings.accountName ?? 'Mein Konto')
         setAccountId(settings.activeAccountId ?? null)
         setRole(settings.role ?? null)
       }
-      if (accountsRes.ok) {
-        const accounts = await accountsRes.json()
+      if (accountsResult.status === 'fulfilled') {
+        const accounts = accountsResult.value
         setAccountCount(Array.isArray(accounts) ? accounts.length : 0)
       }
     } catch {
@@ -66,11 +68,7 @@ export default function DeleteFinancialAccount() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/accounts/${accountId}`, { method: 'DELETE' })
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || 'Löschen fehlgeschlagen')
-      }
+      const data = await withApiErrorFallback(deleteAccount(accountId), 'Löschen fehlgeschlagen')
 
       if (data.nextAccountId) {
         dispatchAccountSwitching()

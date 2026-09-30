@@ -18,6 +18,7 @@ import {
 import { CSV_IMPORT_MAX_BYTES } from '@/lib/csvImport/types'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { getBankById } from '@/lib/germanBanks'
+import { logger } from '@/lib/logger'
 
 function parseFormatIdOverride(value: unknown): CsvImportFormatId | undefined {
   if (typeof value !== 'string' || !value.trim()) return undefined
@@ -218,7 +219,7 @@ export async function POST(request: Request) {
       summary,
     })
   } catch (error) {
-    console.error('CSV preview error:', error)
+    logger.error('CSV preview error', error, { endpoint: '/api/transactions/import/preview' })
     const message =
       error instanceof CsvParseError
         ? error.message

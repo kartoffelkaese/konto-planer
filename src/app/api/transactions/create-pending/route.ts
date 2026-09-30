@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
@@ -11,8 +10,9 @@ import {
   resolveTransferSenderName,
   transactionTransferInclude,
 } from '@/lib/transfers'
+import { logger } from '@/lib/logger'
 
-export async function POST(_request: NextRequest) {
+export async function POST() {
   try {
     const ctx = await getAccountContext()
     if (isErrorResponse(ctx)) return ctx
@@ -102,7 +102,7 @@ export async function POST(_request: NextRequest) {
 
     return NextResponse.json(newTransactions)
   } catch (error) {
-    console.error('Error creating pending transactions:', error)
+    logger.error('Error creating pending transactions', error, { endpoint: '/api/transactions/create-pending' })
     return NextResponse.json(
       {
         error: 'Fehler beim Erstellen der ausstehenden Transaktionen',

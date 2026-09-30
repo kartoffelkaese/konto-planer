@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error logging failed:', error)
+    logger.error('Error logging failed', error, { endpoint: '/api/error-log' })
     return NextResponse.json({ success: false }, { status: 500 })
   }
 }

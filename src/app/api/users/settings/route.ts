@@ -9,11 +9,13 @@ import {
   validateTransferSenderName,
   validateSplitDisplayName,
   validateBankId,
+  readJsonBody,
 } from '@/lib/api-auth'
 import {
   assertCanEnableSimpleAccount,
   assertOwnerForSimpleAccountToggle,
 } from '@/lib/simpleAccount'
+import { logger } from '@/lib/logger'
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -21,7 +23,8 @@ export async function PATCH(request: NextRequest) {
     if (isErrorResponse(ctx)) return ctx
 
     const { user, account, membership } = ctx
-    const body = await request.json()
+    const body = await readJsonBody<Record<string, unknown>>(request)
+    if (isErrorResponse(body)) return body
 
     let splitDisplayNameUpdated: string | null | undefined
 
@@ -126,7 +129,7 @@ export async function PATCH(request: NextRequest) {
       role: membership.role,
     })
   } catch (error) {
-    console.error('Error updating user settings:', error)
+    logger.error('Error updating user settings', error, { endpoint: '/api/users/settings' })
     return NextResponse.json(
       { error: 'Interner Serverfehler' },
       { status: 500 }
@@ -156,7 +159,7 @@ export async function GET() {
       role: membership.role,
     })
   } catch (error) {
-    console.error('Error fetching user settings:', error)
+    logger.error('Error fetching user settings', error, { endpoint: '/api/users/settings' })
     return NextResponse.json(
       { error: 'Interner Serverfehler' },
       { status: 500 }

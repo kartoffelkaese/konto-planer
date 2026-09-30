@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAccountContext, requireWritableContext } from '@/lib/account-context'
-import { isErrorResponse } from '@/lib/api-auth'
+import {
+  isErrorResponse,
+  readJsonBody,
+} from '@/lib/api-auth'
 import { resolveMerchantForTransaction } from '@/lib/resolveMerchantForTransaction'
 import {
   applyTransactionCategoryOnSave,
@@ -18,6 +21,7 @@ import {
   createTransferPair,
   resolveTransferSenderName,
 } from '@/lib/transfers'
+import { logger } from '@/lib/logger'
 
 type CommitBody = {
   rows?: ImportCommitRow[]
@@ -111,7 +115,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = (await request.json()) as CommitBody
+    const body = await readJsonBody<CommitBody>(request)
+    if (isErrorResponse(body)) return body
     const rawRows = Array.isArray(body.rows) ? body.rows : []
 
     if (rawRows.length === 0) {
@@ -395,7 +400,7 @@ export async function POST(request: Request) {
       errors,
     })
   } catch (error) {
-    console.error('CSV import error:', error)
+    logger.error('CSV import error', error, { endpoint: '/api/transactions/import' })
     return NextResponse.json(
       { error: 'Fehler beim Importieren der Transaktionen' },
       { status: 500 }

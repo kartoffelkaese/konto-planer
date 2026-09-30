@@ -11,6 +11,7 @@ import {
   transactionBelongsToCategory,
   transactionCategoryInclude,
 } from '@/lib/merchantCategories'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: Request) {
   try {
@@ -116,7 +117,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(chartData)
   } catch (error) {
-    console.error('Fehler beim Abrufen der Statistiken:', error)
+    logger.error('Fehler beim Abrufen der Statistiken', error, { endpoint: '/api/statistics' })
     return NextResponse.json({ error: 'Interner Server-Fehler' }, { status: 500 })
   }
 }

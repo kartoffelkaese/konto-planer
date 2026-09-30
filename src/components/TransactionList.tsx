@@ -1,17 +1,14 @@
 'use client'
 
-import Link from 'next/link'
 import { Transaction } from '@/types'
 import { formatDate, isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
-import { formatCurrency } from '@/lib/formatters'
 import { PencilIcon, CheckIcon, MinusCircleIcon, ClockIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
-import ConfirmDialog from '@/components/ConfirmDialog'
 import { useToast } from '@/hooks/useToast'
 import TransferBadge from '@/components/TransferBadge'
 import EmptyState from '@/components/EmptyState'
 import TransactionAvatar from '@/components/TransactionAvatar'
 import { resolveTransactionCategory, resolveTransactionMerchantName } from '@/lib/merchantCategories'
+import { ApiError, updateTransaction } from '@/lib/api'
 
 type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
 type SortDirection = 'asc' | 'desc'
@@ -50,11 +47,6 @@ export default function TransactionList({
   readOnly = false,
 }: TransactionListProps) {
   const { showToast } = useToast()
-  const [editingDate, setEditingDate] = useState<string | null>(null)
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
-  const [error, setError] = useState<string | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   // Hilfsfunktion für isTransactionPending mit salaryDay
   const checkIsPending = (transaction: Transaction): boolean => {
@@ -204,29 +196,18 @@ export default function TransactionList({
         lastConfirmedDate: !transaction.isConfirmed ? currentDate : null,
       }
 
-      const response = await fetch(`/api/transactions/${transaction.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedTransaction),
-      })
-
-      if (!response.ok) {
-        throw new Error('Fehler beim Aktualisieren der Transaktion')
-      }
+      await updateTransaction(transaction.id, updatedTransaction)
 
       if (transaction.parentTransactionId) {
-        const parentResponse = await fetch(`/api/transactions/${transaction.parentTransactionId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lastConfirmedDate: currentDate }),
-        })
-
-        if (!parentResponse.ok) {
+        // Fehlerantwort nur protokollieren (wie bisher), Netzwerkfehler weiterreichen
+        await updateTransaction(transaction.parentTransactionId, {
+          lastConfirmedDate: currentDate,
+        }).catch((err) => {
+          if (!(err instanceof ApiError)) throw err
           console.error('Fehler beim Aktualisieren der Eltern-Transaktion')
-        }
+        })
       }
 
-      setEditingDate(null)
       await onTransactionChange()
       showToast('Status aktualisiert', 'success')
     } catch (err) {
@@ -246,98 +227,10 @@ export default function TransactionList({
     return `${statusPillClass} ${stateClasses}${isToggling ? ' opacity-60 pointer-events-none' : ''}`
   }
 
-  const handleUpdateDate = async (transaction: Transaction, newDate: string) => {
-    try {
-      const updatedTransaction = {
-        ...transaction,
-        date: newDate,
-        lastConfirmedDate: transaction.isConfirmed ? newDate : transaction.lastConfirmedDate
-      }
-      
-      const response = await fetch(`/api/transactions/${transaction.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedTransaction),
-      })
-
-      if (!response.ok) {
-        throw new Error('Fehler beim Aktualisieren der Transaktion')
-      }
-
-      setEditingDate(null)
-      await onTransactionChange()
-      showToast('Datum aktualisiert', 'success')
-    } catch (err) {
-      console.error('Fehler beim Aktualisieren der Transaktion:', err)
-      showToast('Datum konnte nicht geändert werden', 'error')
-    }
-  }
-
   const handleEditClick = (transactionId: string) => {
     if (readOnly) return
     if (onEditTransaction) {
       onEditTransaction(transactionId)
-    }
-  }
-
-  const handleConfirmTransaction = async (id: string) => {
-    try {
-      const response = await fetch(`/api/transactions/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          isConfirmed: true,
-          lastConfirmedDate: new Date().toISOString()
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Fehler beim Bestätigen der Transaktion')
-      }
-
-      await onTransactionChange()
-    } catch (err) {
-      console.error('Error confirming transaction:', err)
-      setError('Fehler beim Bestätigen der Transaktion')
-    }
-  }
-
-  const handleDeleteTransaction = (transaction: Transaction) => {
-    setDeleteTarget({
-      id: transaction.id,
-      label:
-        resolveTransactionMerchantName(transaction) ||
-        transaction.description ||
-        'diese Transaktion',
-    })
-  }
-
-  const confirmDelete = async () => {
-    if (!deleteTarget) return
-
-    setIsDeleting(true)
-    try {
-      const response = await fetch(`/api/transactions/${deleteTarget.id}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        throw new Error('Fehler beim Löschen der Transaktion')
-      }
-
-      setDeleteTarget(null)
-      await onTransactionChange()
-      showToast('Transaktion gelöscht', 'success')
-    } catch (err) {
-      console.error('Error deleting transaction:', err)
-      setError('Fehler beim Löschen der Transaktion')
-      showToast('Fehler beim Löschen der Transaktion', 'error')
-    } finally {
-      setIsDeleting(false)
     }
   }
 
@@ -649,19 +542,6 @@ export default function TransactionList({
           </ul>
         )}
       </div>
-
-      <ConfirmDialog
-        isOpen={deleteTarget !== null}
-        onClose={() => !isDeleting && setDeleteTarget(null)}
-        onConfirm={confirmDelete}
-        title="Transaktion löschen"
-        message={`Möchten Sie „${deleteTarget?.label}“ wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`}
-        confirmText="Löschen"
-        confirmLoadingText="Wird gelöscht…"
-        cancelText="Abbrechen"
-        type="danger"
-        loading={isDeleting}
-      />
     </div>
   )
 } 

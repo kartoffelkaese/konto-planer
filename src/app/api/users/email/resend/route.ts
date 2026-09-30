@@ -11,6 +11,7 @@ import {
   createVerificationToken,
   sendEmailChangeVerificationEmail,
 } from '@/lib/emailVerification'
+import { logger } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   const authResult = await getUserBySession()
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
     )
     await sendEmailChangeVerificationEmail(user.pendingEmail, rawToken)
   } catch (error) {
-    console.error('Email change resend failed:', error)
+    logger.error('Email change resend failed', error, { endpoint: '/api/users/email/resend' })
     return NextResponse.json(
       { error: 'E-Mail konnte nicht gesendet werden.' },
       { status: 500 }

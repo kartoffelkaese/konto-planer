@@ -3,22 +3,16 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getTransaction, updateTransaction, deleteTransaction } from '@/lib/api'
+import { useMerchants, useTransferTargets } from '@/hooks/useLookups'
 import { formatDateForInput } from '@/lib/dateUtils'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
 import { RECURRING_INTERVALS } from '@/lib/recurringIntervals'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import ConfirmDialog from '@/components/ConfirmDialog'
-import TransferAccountFields, { type TransferTarget } from '@/components/TransferAccountFields'
+import TransferAccountFields from '@/components/TransferAccountFields'
 import CategorySelect from '@/components/CategorySelect'
 import { resolveMerchantCategories, resolveTransactionCategory, resolveTransactionMerchantName } from '@/lib/merchantCategories'
-
-interface Merchant {
-  id: string
-  name: string
-  categoryIds?: string[]
-  categories?: Array<{ id: string; name: string }>
-}
 
 interface EditTransactionFormProps {
   id: string
@@ -41,12 +35,10 @@ export default function EditTransactionForm({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isRecurringTemplate, setIsRecurringTemplate] = useState(false)
-  const [transferTargets, setTransferTargets] = useState<TransferTarget[]>([])
   const [isTransfer, setIsTransfer] = useState(false)
   const [transferTargetAccountId, setTransferTargetAccountId] = useState('')
   const [linkedTargetName, setLinkedTargetName] = useState<string | null>(null)
   const [hasActivePair, setHasActivePair] = useState(false)
-  const [merchants, setMerchants] = useState<Merchant[]>([])
   const [categoryId, setCategoryId] = useState('')
   const [categoryTouched, setCategoryTouched] = useState(false)
   const [resolvedSuggestion, setResolvedSuggestion] = useState<string | null>(null)
@@ -64,32 +56,19 @@ export default function EditTransactionForm({
     isConfirmed: false
   })
 
+  // Händler und Zielkonten wie bisher bei jeder neuen Transaktions-ID neu laden
+  const { merchants } = useMerchants({
+    reloadKey: id,
+    onError: (err) => console.error('Error loading merchants:', err),
+  })
+  const { transferTargets } = useTransferTargets({
+    reloadKey: id,
+    onError: (err) => console.error('Error loading transfer targets:', err),
+  })
+
   useEffect(() => {
     loadTransaction()
-    loadTransferTargets()
-    loadMerchants()
   }, [id])
-
-  const loadMerchants = async () => {
-    try {
-      const response = await fetch('/api/merchants')
-      if (!response.ok) return
-      setMerchants(await response.json())
-    } catch (err) {
-      console.error('Error loading merchants:', err)
-    }
-  }
-
-  const loadTransferTargets = async () => {
-    try {
-      const response = await fetch('/api/accounts/transfer-targets')
-      if (!response.ok) return
-      const data = await response.json()
-      setTransferTargets(data)
-    } catch (err) {
-      console.error('Error loading transfer targets:', err)
-    }
-  }
 
   const loadTransaction = async () => {
     try {

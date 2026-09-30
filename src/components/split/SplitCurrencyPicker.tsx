@@ -5,7 +5,6 @@ import { XMarkIcon } from '@heroicons/react/24/outline'
 import { Button } from '@/components/Button'
 import { getSplitAvailableCurrencies } from '@/lib/api'
 import {
-  getSplitCurrencyLabel,
   SPLIT_MAX_CURRENCIES_PER_LIST,
   type SplitCurrencyOption,
 } from '@/lib/splitCurrencies'

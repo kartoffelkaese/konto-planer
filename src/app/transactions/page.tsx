@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { PlusIcon } from '@heroicons/react/24/outline'
 import { Transaction } from '@/types'
-import { getTransactions, getTransactionTotals, updateTransaction, createRecurringInstance, createPendingInstances } from '@/lib/api'
+import { getTransactions, getTransactionTotals, updateTransaction, createPendingInstances } from '@/lib/api'
 import { isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
 import {
   getDefaultCustomPeriodRange,

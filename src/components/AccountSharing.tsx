@@ -5,6 +5,14 @@ import { useSession } from 'next-auth/react'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
 import { inviteRoleLabel, roleLabel } from '@/lib/accountPermissions'
+import {
+  getAccountMembers,
+  getUserSettings,
+  inviteAccountMember,
+  removeAccountMember,
+  updateAccountMemberRole,
+  withApiErrorFallback,
+} from '@/lib/api'
 
 type Member = {
   id: string
@@ -34,17 +42,20 @@ export default function AccountSharing() {
   const [updatingMemberId, setUpdatingMemberId] = useState<string | null>(null)
 
   const loadSettings = useCallback(async () => {
-    const res = await fetch('/api/users/settings')
-    if (!res.ok) return
-    const data = await res.json()
+    // Fehler still übergehen (wie bisher)
+    const data = await getUserSettings().catch(() => null)
+    if (!data) return
     setAccountId(data.activeAccountId ?? null)
   }, [])
 
   const loadMembers = useCallback(async () => {
     if (!accountId) return
-    const res = await fetch(`/api/accounts/${accountId}/members`)
-    if (!res.ok) return
-    const data = await res.json()
+    // Fehler still übergehen (wie bisher)
+    const data = await getAccountMembers<{
+      members?: Member[]
+      pendingInvites?: PendingInvite[]
+    }>(accountId).catch(() => null)
+    if (!data) return
     setMembers(data.members ?? [])
     setPendingInvites(data.pendingInvites ?? [])
     const me = (data.members as Member[]).find(
@@ -74,13 +85,10 @@ export default function AccountSharing() {
     if (!accountId || !email.trim()) return
     setLoading(true)
     try {
-      const res = await fetch(`/api/accounts/${accountId}/members`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), role: inviteRole }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Einladung fehlgeschlagen')
+      const data = await withApiErrorFallback(
+        inviteAccountMember(accountId, email.trim(), inviteRole),
+        'Einladung fehlgeschlagen'
+      )
       showToast(data.message, 'success')
       setEmail('')
       setInviteRole('MEMBER')
@@ -98,12 +106,7 @@ export default function AccountSharing() {
   const revokeInvite = async (inviteId: string) => {
     if (!accountId) return
     try {
-      const res = await fetch(`/api/accounts/${accountId}/members`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inviteId }),
-      })
-      if (!res.ok) throw new Error()
+      await removeAccountMember(accountId, { inviteId })
       showToast('Einladung widerrufen', 'success')
       await loadMembers()
     } catch {
@@ -115,12 +118,7 @@ export default function AccountSharing() {
     if (!accountId) return
     if (!window.confirm('Zugriff für diese Person wirklich entfernen?')) return
     try {
-      const res = await fetch(`/api/accounts/${accountId}/members`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ memberId }),
-      })
-      if (!res.ok) throw new Error()
+      await removeAccountMember(accountId, { memberId })
       showToast('Zugriff entfernt', 'success')
       await loadMembers()
     } catch {
@@ -132,13 +130,10 @@ export default function AccountSharing() {
     if (!accountId) return
     setUpdatingMemberId(memberId)
     try {
-      const res = await fetch(`/api/accounts/${accountId}/members`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ memberId, role: nextRole }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Rolle konnte nicht geändert werden')
+      await withApiErrorFallback(
+        updateAccountMemberRole(accountId, memberId, nextRole),
+        'Rolle konnte nicht geändert werden'
+      )
       showToast('Rolle aktualisiert', 'success')
       await loadMembers()
     } catch (err) {

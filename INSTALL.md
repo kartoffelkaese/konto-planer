@@ -192,6 +192,7 @@ Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber o
 
 - Die App lauscht nur auf `127.0.0.1:3001` (nicht öffentlich).
 - Datenbank idealerweise auf `localhost`; bei Remote-DB TLS mit verifizierter CA nutzen, nicht nur `ssl=true` ohne Zertifikatsprüfung.
+- Rate-Limits (Login, Registrierung, Import, …) liegen im Arbeitsspeicher des Prozesses ([`src/lib/rate-limit.ts`](src/lib/rate-limit.ts)). Sie gelten daher nur zuverlässig mit **einer** Instanz (`instances: 1` in `ecosystem.config.js`) und werden bei jedem Neustart zurückgesetzt.
 
 ## Fehlersuche
 

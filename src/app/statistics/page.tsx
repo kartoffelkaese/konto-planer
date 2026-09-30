@@ -23,6 +23,7 @@ import KpiCard from '@/components/KpiCard'
 import { ChevronDownIcon } from '@heroicons/react/24/outline'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { useActiveAccountReload } from '@/hooks/useActiveAccountReload'
+import { getCategories, getMerchants, getStatistics } from '@/lib/api'
 
 interface Category {
   id: string
@@ -91,8 +92,7 @@ export default function StatisticsPage() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await fetch('/api/categories')
-      const data = await response.json()
+      const data = await getCategories<Category>()
       const sortedCategories = data.sort((a: Category, b: Category) =>
         a.name.localeCompare(b.name, 'de')
       )
@@ -107,8 +107,7 @@ export default function StatisticsPage() {
 
   const fetchMerchants = useCallback(async () => {
     try {
-      const response = await fetch('/api/merchants')
-      const data = await response.json()
+      const data = await getMerchants()
       const sortedMerchants = data.sort((a: Merchant, b: Merchant) =>
         a.name.localeCompare(b.name, 'de')
       )
@@ -128,18 +127,14 @@ export default function StatisticsPage() {
     setIsLoading(true)
     setLoadError(null)
     try {
-      let url = `/api/statistics?timeRange=${timeRange}`
-      if (selectedCategory) {
-        url += `&category=${selectedCategory}`
-      }
-      if (selectedMerchant) {
-        url += `&merchant=${selectedMerchant}`
-      }
-      if (timeRange === 'custom' && customStartDate && customEndDate) {
-        url += `&startDate=${customStartDate}&endDate=${customEndDate}`
-      }
-      const response = await fetch(url)
-      const data = await response.json()
+      const isCustomRange = timeRange === 'custom' && customStartDate && customEndDate
+      const data = await getStatistics<StatisticsData[]>({
+        timeRange,
+        category: selectedCategory || undefined,
+        merchant: selectedMerchant || undefined,
+        startDate: isCustomRange ? customStartDate : undefined,
+        endDate: isCustomRange ? customEndDate : undefined,
+      })
       setStatisticsData(data)
     } catch (error) {
       console.error('Fehler beim Laden der Statistiken:', error)

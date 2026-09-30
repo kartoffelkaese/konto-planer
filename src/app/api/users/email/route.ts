@@ -3,7 +3,11 @@ import type { NextRequest } from 'next/server'
 import { EmailVerificationPurpose } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
+import {
+  getUserBySession,
+  isErrorResponse,
+  readJsonBody,
+} from '@/lib/api-auth'
 import { normalizeEmail } from '@/lib/accounts'
 import {
   checkRateLimit,
@@ -15,6 +19,7 @@ import {
   isEmailTaken,
   sendEmailChangeVerificationEmail,
 } from '@/lib/emailVerification'
+import { logger } from '@/lib/logger'
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -35,7 +40,9 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const { newEmail: rawNewEmail, password } = await request.json()
+    const body = await readJsonBody<{ newEmail?: unknown; password?: unknown }>(request)
+    if (isErrorResponse(body)) return body
+    const { newEmail: rawNewEmail, password } = body
     const newEmail = normalizeEmail(String(rawNewEmail || ''))
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -92,7 +99,7 @@ export async function PATCH(request: NextRequest) {
         where: { id: user.id },
         data: { pendingEmail: null },
       })
-      console.error('Email change verification send failed:', error)
+      logger.error('Email change verification send failed', error, { endpoint: '/api/users/email' })
       return NextResponse.json(
         { error: 'Bestätigungs-E-Mail konnte nicht gesendet werden.' },
         { status: 500 }
@@ -104,7 +111,7 @@ export async function PATCH(request: NextRequest) {
       pendingEmail: newEmail,
     })
   } catch (error) {
-    console.error('Error updating email:', error)
+    logger.error('Error updating email', error, { endpoint: '/api/users/email' })
     return NextResponse.json(
       { error: 'Ein Fehler ist aufgetreten' },
       { status: 500 }

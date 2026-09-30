@@ -45,7 +45,6 @@
   --color-danger-foreground: #ffffff;
   --color-danger-subtle: #fee4e2;
   --color-chart-default: #4f46e5;
-  --shadow-color: rgba(16, 24, 40, 0.08);
   --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 16px rgb(16 24 40 / 0.06);
   --shadow-raised: 0 4px 12px rgb(16 24 40 / 0.06), 0 24px 48px rgb(16 24 40 / 0.14);
   --card-edge: transparent;
@@ -79,7 +78,6 @@ html.dark {
   --color-danger-foreground: #0b0d12;
   --color-danger-subtle: #3a1614;
   --color-chart-default: #8b87ff;
-  --shadow-color: rgba(0, 0, 0, 0.5);
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
   --shadow-raised: 0 24px 48px rgb(0 0 0 / 0.5);
   --card-edge: var(--color-hairline);
@@ -88,8 +86,6 @@ html.dark {
 /* Element-Basis im Layer, damit Tailwind-Utilities (z. B. text-*, rounded-*) Vorrang haben */
 @layer base {
   html {
-    --card-bg: var(--color-surface);
-    --border-color: var(--color-border);
     --text-color: var(--color-text-primary);
   }
 
@@ -189,19 +185,6 @@ html.dark {
     color: var(--color-text-secondary);
     opacity: 0.8;
   }
-}
-
-.text-gray-500 {
-  color: var(--color-text-secondary);
-}
-
-.text-gray-600 {
-  color: var(--color-text-primary);
-}
-
-.kpi-card--accent {
-  background-color: var(--color-accent-subtle);
-  border-color: var(--color-accent);
 }
 
 .btn-primary,
@@ -397,11 +380,6 @@ a[href].landing-cta-outline:hover {
   color: var(--color-text-primary);
 }
 
-.page-subtitle {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-}
-
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -468,12 +446,6 @@ a[href].landing-cta-outline:hover {
 
 .mobile-nav-item-in {
   animation: mobile-nav-item-in 220ms var(--motion-easing) both;
-}
-
-.mobile-menu-icon {
-  transition:
-    opacity var(--motion-duration-feedback) var(--motion-easing),
-    transform var(--motion-duration-feedback) var(--motion-easing);
 }
 
 /* Kontowechsel – Microanimation */

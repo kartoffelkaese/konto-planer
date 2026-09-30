@@ -9,6 +9,10 @@ import {
   validateAccountName,
   validateBankId,
   isErrorResponse,
+  readJsonBody,
+  validateAmount,
+  validateDateInput,
+  MAX_ABS_AMOUNT,
 } from './api-auth'
 
 describe('validateSalaryDay', () => {
@@ -58,5 +62,79 @@ describe('validateBankId', () => {
 
   it('lehnt ungültige Typen ab', () => {
     expect(isErrorResponse(validateBankId(42))).toBe(true)
+  })
+})
+
+function jsonRequest(body: string) {
+  return new Request('http://localhost/api/test', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+  })
+}
+
+describe('readJsonBody', () => {
+  it('liefert gültige Objekte unverändert', async () => {
+    expect(await readJsonBody(jsonRequest('{"a":1}'))).toEqual({ a: 1 })
+  })
+
+  it('lehnt ungültiges JSON mit 400 ab', async () => {
+    const result = await readJsonBody(jsonRequest('{kaputt'))
+    expect(isErrorResponse(result)).toBe(true)
+    if (result instanceof NextResponse) {
+      expect(result.status).toBe(400)
+      expect(await result.json()).toEqual({ error: 'Ungültige Anfrage' })
+    }
+  })
+
+  it('lehnt Nicht-Objekte ab', async () => {
+    for (const body of ['null', '[1,2]', '"text"', '42']) {
+      expect(isErrorResponse(await readJsonBody(jsonRequest(body)))).toBe(true)
+    }
+  })
+})
+
+describe('validateAmount', () => {
+  it('akzeptiert Zahlen und numerische Strings', () => {
+    expect(validateAmount(12.5)).toBe(12.5)
+    expect(validateAmount(-3)).toBe(-3)
+    expect(validateAmount(0)).toBe(0)
+    expect(validateAmount('42.10')).toBe(42.1)
+    expect(validateAmount(MAX_ABS_AMOUNT)).toBe(MAX_ABS_AMOUNT)
+  })
+
+  it('lässt undefined durch (optional bei PATCH)', () => {
+    expect(validateAmount(undefined)).toBeUndefined()
+  })
+
+  it('lehnt ungültige Beträge mit 400 ab', () => {
+    for (const value of [NaN, Infinity, 'abc', '', '12,5', null, {}, MAX_ABS_AMOUNT + 1]) {
+      const result = validateAmount(value)
+      expect(isErrorResponse(result)).toBe(true)
+      if (result instanceof NextResponse) expect(result.status).toBe(400)
+    }
+  })
+})
+
+describe('validateDateInput', () => {
+  it('akzeptiert ISO-Strings, Zeitstempel und Date', () => {
+    expect(validateDateInput('2026-09-28T00:00:00.000Z')).toEqual(
+      new Date('2026-09-28T00:00:00.000Z')
+    )
+    expect(validateDateInput(0)).toEqual(new Date(0))
+    const d = new Date()
+    expect(validateDateInput(d)).toEqual(d)
+  })
+
+  it('lässt undefined durch', () => {
+    expect(validateDateInput(undefined)).toBeUndefined()
+  })
+
+  it('lehnt ungültige Daten mit 400 ab', () => {
+    for (const value of ['kein Datum', null, {}, true]) {
+      const result = validateDateInput(value)
+      expect(isErrorResponse(result)).toBe(true)
+      if (result instanceof NextResponse) expect(result.status).toBe(400)
+    }
   })
 })

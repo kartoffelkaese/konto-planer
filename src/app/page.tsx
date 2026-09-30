@@ -23,6 +23,7 @@ import { resolveTransactionMerchantName } from '@/lib/merchantCategories'
 import { formatCurrency } from '@/lib/formatters'
 import { formatDate } from '@/lib/dateUtils'
 import { ACCOUNT_CHANGED_EVENT } from '@/lib/accountSwitchEvents'
+import { getDashboard } from '@/lib/api'
 
 interface DashboardData {
   monthlyIncome: number
@@ -80,9 +81,7 @@ export default function DashboardPage() {
     setIsLoading(true)
     setLoadError(null)
     try {
-      const response = await fetch('/api/dashboard')
-      if (!response.ok) throw new Error('Fehler beim Laden der Daten')
-      const dashboardData = await response.json()
+      const dashboardData = await getDashboard<DashboardData>()
       setData(dashboardData)
     } catch (error) {
       console.error('Fehler:', error)

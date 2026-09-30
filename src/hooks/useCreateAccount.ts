@@ -9,6 +9,12 @@ import {
   dispatchAccountSwitching,
   ACCOUNT_SWITCH_EXIT_MS,
 } from '@/lib/accountSwitchEvents'
+import {
+  ApiError,
+  createAccount as createAccountRequest,
+  setActiveAccount,
+  withApiErrorFallback,
+} from '@/lib/api'
 
 export function useCreateAccount() {
   const router = useRouter()
@@ -29,31 +35,27 @@ export function useCreateAccount() {
 
       setLoading(true)
       try {
-        const res = await fetch('/api/accounts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const data = await withApiErrorFallback(
+          createAccountRequest({
             name: trimmed,
             ...(options?.bankId ? { bankId: options.bankId } : {}),
             ...(options?.isSimpleAccount ? { isSimpleAccount: true } : {}),
           }),
-        })
-        const data = await res.json()
-        if (!res.ok) {
-          throw new Error(
-            typeof data.error === 'string' ? data.error : 'Anlegen fehlgeschlagen'
-          )
-        }
+          'Anlegen fehlgeschlagen'
+        )
 
         if (options?.switchToNew !== false) {
           dispatchAccountSwitching()
           await new Promise((resolve) => setTimeout(resolve, ACCOUNT_SWITCH_EXIT_MS))
-          const switchRes = await fetch('/api/accounts/active', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ accountId: data.id }),
-          })
-          if (switchRes.ok) {
+          // Fehlerantwort still übergehen (wie bisher), Netzwerkfehler weiterreichen
+          const switched = await setActiveAccount(data.id).then(
+            () => true,
+            (err) => {
+              if (err instanceof ApiError) return false
+              throw err
+            }
+          )
+          if (switched) {
             await update({ activeAccountId: data.id })
           }
         }

@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { assertPlanningAccount } from '@/lib/simpleAccount'
 import { getSalaryMonthRange, isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
 import { transactionCategoryInclude } from '@/lib/merchantCategories'
+import { logger } from '@/lib/logger'
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const ctx = await getAccountContext()
     if (isErrorResponse(ctx)) return ctx
@@ -72,7 +72,7 @@ export async function GET(_request: NextRequest) {
 
     return NextResponse.json(enriched)
   } catch (error) {
-    console.error('Error fetching recurring transactions:', error)
+    logger.error('Error fetching recurring transactions', error, { endpoint: '/api/transactions/recurring' })
     return NextResponse.json(
       { error: 'Fehler beim Laden der wiederkehrenden Transaktionen' },
       { status: 500 }

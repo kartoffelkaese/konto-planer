@@ -7,7 +7,6 @@ import {
 
 import { prisma } from '@/lib/prisma'
 import type { Transaction } from '@prisma/client'
-import { userHasAccountAccess } from '@/lib/accounts'
 import { assertCanWriteAccount } from '@/lib/accountPermissions'
 
 export { getUserBySession } from '@/lib/account-context'
@@ -221,6 +220,63 @@ export function validateRecurringInterval(
     )
   }
   return interval
+}
+
+/**
+ * Liest den JSON-Body. Ungültiges JSON oder ein Nicht-Objekt → 400 (statt 500).
+ * Gleiche Meldung wie die bisherigen try/catch-Blöcke der Split-Routen.
+ */
+export async function readJsonBody<T extends object = Record<string, unknown>>(
+  request: Request
+): Promise<T | NextResponse> {
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Ungültige Anfrage' }, { status: 400 })
+  }
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return NextResponse.json({ error: 'Ungültige Anfrage' }, { status: 400 })
+  }
+  return body as T
+}
+
+/** Größter Betrag für Decimal(10, 2) */
+export const MAX_ABS_AMOUNT = 99_999_999.99
+
+/**
+ * Betrag als Zahl oder numerischer String (Punkt als Dezimaltrenner).
+ * `undefined` bleibt `undefined` (optional bei PATCH).
+ */
+export function validateAmount(
+  value: unknown
+): number | undefined | NextResponse {
+  if (value === undefined) return undefined
+  const amount =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim() !== ''
+        ? Number(value)
+        : NaN
+  if (!Number.isFinite(amount) || Math.abs(amount) > MAX_ABS_AMOUNT) {
+    return NextResponse.json({ error: 'Ungültiger Betrag' }, { status: 400 })
+  }
+  return amount
+}
+
+/**
+ * Datum als ISO-String, Zeitstempel oder Date. `undefined` bleibt `undefined`.
+ */
+export function validateDateInput(value: unknown): Date | undefined | NextResponse {
+  if (value === undefined) return undefined
+  const date =
+    typeof value === 'string' || typeof value === 'number' || value instanceof Date
+      ? new Date(value)
+      : new Date(NaN)
+  if (Number.isNaN(date.getTime())) {
+    return NextResponse.json({ error: 'Ungültiges Datum' }, { status: 400 })
+  }
+  return date
 }
 
 /** @deprecated use validateAccountDisplayName */

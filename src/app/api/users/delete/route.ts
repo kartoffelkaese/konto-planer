@@ -8,6 +8,7 @@ import {
   getClientIp,
   RATE_LIMITS,
 } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
 
 export async function DELETE(request: Request) {
   try {
@@ -92,7 +93,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ message: 'Benutzerkonto erfolgreich gelöscht' })
   } catch (error) {
-    console.error('Fehler beim Löschen der Anmeldung:', error)
+    logger.error('Fehler beim Löschen der Anmeldung', error, { endpoint: '/api/users/delete' })
     return NextResponse.json({ error: 'Interner Server-Fehler' }, { status: 500 })
   }
 }

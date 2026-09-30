@@ -9,6 +9,7 @@ import {
   validateSalaryDay,
   validateAccountDisplayName,
   validateBankId,
+  readJsonBody,
 } from '@/lib/api-auth'
 
 export async function GET() {
@@ -55,7 +56,8 @@ export async function POST(request: NextRequest) {
   if (isErrorResponse(authResult)) return authResult
 
   const { user } = authResult
-  const body = await request.json()
+  const body = await readJsonBody<Record<string, unknown>>(request)
+  if (isErrorResponse(body)) return body
 
   const nameResult = validateAccountDisplayName(body.name ?? 'Neues Konto')
   if (isErrorResponse(nameResult)) return nameResult

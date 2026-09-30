@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import type { AccountMemberRole } from '@prisma/client'
 import { isAccountWritable } from '@/lib/accountPermissions'
+import { ApiError, getUserSettings } from '@/lib/api'
 
 export type UserSettings = {
   id: string
@@ -17,6 +18,7 @@ export type UserSettings = {
   createdAt: string
   activeAccountId?: string
   role?: AccountMemberRole
+  pendingEmail?: string | null
 }
 
 export function useUserSettings() {
@@ -40,15 +42,16 @@ export function useUserSettings() {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch('/api/users/settings')
-      if (response.status === 401) {
-        setSettings(null)
-        return
+      let data: UserSettings
+      try {
+        data = await getUserSettings()
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 401) {
+          setSettings(null)
+          return
+        }
+        throw err
       }
-      if (!response.ok) {
-        throw new Error('Einstellungen konnten nicht geladen werden')
-      }
-      const data = (await response.json()) as UserSettings
       setSettings(data)
     } catch (err) {
       console.error('Error loading user settings:', err)

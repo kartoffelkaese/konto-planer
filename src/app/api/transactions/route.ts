@@ -4,7 +4,13 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { resolveSalaryDay } from '@/lib/salaryDay'
 import { getAccountContext, requireWritableContext } from '@/lib/account-context'
-import { isErrorResponse, validateRecurringInterval } from '@/lib/api-auth'
+import {
+  isErrorResponse,
+  readJsonBody,
+  validateAmount,
+  validateDateInput,
+  validateRecurringInterval,
+} from '@/lib/api-auth'
 import { resolveMerchantForTransaction } from '@/lib/resolveMerchantForTransaction'
 import {
   resolvePeriodFromRequest,
@@ -21,6 +27,7 @@ import {
   validateTransactionCategoryId,
 } from '@/lib/transactionCategory'
 import { assertRecurringNotAllowed } from '@/lib/simpleAccount'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: Request) {
   const ctx = await getAccountContext()
@@ -91,12 +98,27 @@ export async function GET(request: Request) {
       hasMore: skip + transactions.length < total,
     })
   } catch (error) {
-    console.error('Error fetching transactions:', error)
+    logger.error('Error fetching transactions', error, { endpoint: '/api/transactions' })
     return NextResponse.json(
       { error: 'Fehler beim Laden der Transaktionen' },
       { status: 500 }
     )
   }
+}
+
+/** Body von POST /api/transactions (Werte werden unten validiert) */
+type TransactionPostBody = {
+  merchant?: string
+  merchantId?: string | null
+  createNewMerchant?: boolean
+  description?: string | null
+  amount?: unknown
+  date?: unknown
+  categoryId?: unknown
+  isRecurring?: boolean
+  recurringInterval?: unknown
+  isTransfer?: boolean
+  transferTargetAccountId?: string
 }
 
 export async function POST(request: Request) {
@@ -109,7 +131,8 @@ export async function POST(request: Request) {
   const { account, user } = ctx
 
   try {
-    const body = await request.json()
+    const body = await readJsonBody<TransactionPostBody>(request)
+    if (isErrorResponse(body)) return body
     const {
       merchant,
       merchantId,
@@ -123,6 +146,17 @@ export async function POST(request: Request) {
       isTransfer,
       transferTargetAccountId,
     } = body
+
+    const parsedAmount = validateAmount(amount)
+    if (parsedAmount instanceof NextResponse) return parsedAmount
+    const parsedDate = validateDateInput(date)
+    if (parsedDate instanceof NextResponse) return parsedDate
+    if (parsedAmount === undefined || parsedDate === undefined) {
+      return NextResponse.json(
+        { error: 'Betrag und Datum sind erforderlich' },
+        { status: 400 }
+      )
+    }
 
     const categoryValidation = await validateTransactionCategoryId(
       rawCategoryId,
@@ -167,8 +201,8 @@ export async function POST(request: Request) {
       }
 
       const targetIncomingMerchant = resolveTransferSenderName(sourceAccount)
-      const transferAmount = -Math.abs(Number(amount))
-      const transactionDate = new Date(date)
+      const transferAmount = -Math.abs(parsedAmount)
+      const transactionDate = parsedDate
       const normalizedDescription =
         typeof description === 'string'
           ? description.trim() || null
@@ -247,8 +281,8 @@ export async function POST(request: Request) {
           merchant: resolvedMerchant.merchant,
           merchantId: resolvedMerchant.merchantId,
           description,
-          amount,
-          date: new Date(date),
+          amount: parsedAmount,
+          date: parsedDate,
           categoryId,
           isRecurring: isRecurring || false,
           recurringInterval: isRecurring ? validatedRecurringInterval : null,
@@ -268,7 +302,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(transaction)
   } catch (error) {
-    console.error('Error creating transaction:', error)
+    logger.error('Error creating transaction', error, { endpoint: '/api/transactions' })
     return NextResponse.json(
       { error: 'Fehler beim Erstellen der Transaktion' },
       { status: 500 }

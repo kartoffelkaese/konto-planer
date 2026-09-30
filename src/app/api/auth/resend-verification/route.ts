@@ -8,6 +8,7 @@ import {
   sendSignupVerificationEmail,
 } from '@/lib/emailVerification'
 import { EmailVerificationPurpose } from '@prisma/client'
+import { logger } from '@/lib/logger'
 
 const GENERIC_MESSAGE =
   'Falls ein unbestätigtes Konto mit dieser E-Mail existiert, wurde eine Bestätigungs-E-Mail gesendet.'
@@ -44,13 +45,13 @@ export async function POST(request: Request) {
         )
         await sendSignupVerificationEmail(email, rawToken)
       } catch (error) {
-        console.error('Resend verification email failed:', error)
+        logger.error('Resend verification email failed', error, { endpoint: '/api/auth/resend-verification' })
       }
     }
 
     return NextResponse.json({ message: GENERIC_MESSAGE })
   } catch (error) {
-    console.error('Resend verification error:', error)
+    logger.error('Resend verification error', error, { endpoint: '/api/auth/resend-verification' })
     return NextResponse.json(
       { message: GENERIC_MESSAGE },
       { status: 200 }

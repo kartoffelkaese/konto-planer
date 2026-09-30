@@ -10,6 +10,7 @@ import {
   isErrorResponse,
   validateSalaryDay,
   validateAccountDisplayName,
+  readJsonBody,
 } from '@/lib/api-auth'
 import { prisma } from '@/lib/prisma'
 import { userHasAccountAccess } from '@/lib/accounts'
@@ -31,7 +32,8 @@ export async function PATCH(request: NextRequest) {
   const authResult = await getUserBySession()
   if (isErrorResponse(authResult)) return authResult
 
-  const body = await request.json()
+  const body = await readJsonBody<Record<string, unknown>>(request)
+  if (isErrorResponse(body)) return body
 
   if (body.accountId !== undefined) {
     const { user } = authResult

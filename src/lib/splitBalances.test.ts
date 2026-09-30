@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   computeParticipantBalances,
-  simplifyDebts,
   computeBalancesWithSuggestions,
 } from '@/lib/splitBalances'
 

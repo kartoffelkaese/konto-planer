@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import type { Category } from '@/types'
+import { useMemo } from 'react'
+import { useCategories } from '@/hooks/useLookups'
 
 interface CategorySelectProps {
   id?: string
@@ -20,27 +20,9 @@ export default function CategorySelect({
   disabled = false,
   isSuggestion = false,
 }: CategorySelectProps) {
-  const [categories, setCategories] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const response = await fetch('/api/categories')
-        if (!response.ok) return
-        const data = (await response.json()) as Category[]
-        if (!cancelled) setCategories(data)
-      } catch (err) {
-        console.error('Error loading categories:', err)
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  const { categories, loading } = useCategories({
+    onError: (err) => console.error('Error loading categories:', err),
+  })
 
   const sortedCategories = useMemo(
     () => [...categories].sort((a, b) => a.name.localeCompare(b.name)),

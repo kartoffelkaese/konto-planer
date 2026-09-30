@@ -10,6 +10,7 @@ import {
 } from '@/lib/splitAccess'
 import { deleteSplitListCascade } from '@/lib/splitListDelete'
 import { serializeListDetail } from '@/lib/splitSerialize'
+import { logger } from '@/lib/logger'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -156,7 +157,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     await deleteSplitListCascade(id)
     return NextResponse.json({ message: 'Liste gelöscht', name: list.name })
   } catch (error) {
-    console.error('Error deleting split list:', error)
+    logger.error('Error deleting split list', error, { endpoint: '/api/split/lists/:id' })
     return NextResponse.json(
       {
         error:

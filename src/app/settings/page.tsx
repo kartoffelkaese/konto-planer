@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
 import { TagIcon, BuildingStorefrontIcon, ChevronRightIcon, UserGroupIcon } from '@heroicons/react/24/outline'
 import BackupManager from '@/components/BackupManager'
 import DeleteFinancialAccount from '@/components/DeleteFinancialAccount'
 import DeleteUserAccount from '@/components/DeleteUserAccount'
 import { useToast } from '@/hooks/useToast'
 import ColorSchemeSwitcher from '@/components/ColorSchemeSwitcher'
+import EmailSettingsSection from '@/components/settings/EmailSettingsSection'
 import AccountSharing from '@/components/AccountSharing'
 import AccountInvitations from '@/components/AccountInvitations'
 import CreateAdditionalAccount from '@/components/CreateAdditionalAccount'
@@ -19,6 +19,13 @@ import { useUserSettings } from '@/hooks/useUserSettings'
 import { isCsvImportAvailableForBank } from '@/lib/csvImport/bankFormats'
 import { Button } from '@/components/Button'
 import { dispatchAccountChanged } from '@/lib/accountSwitchEvents'
+import {
+  ApiError,
+  getApiErrorMessage,
+  getUserSettings,
+  updateUserSettings,
+  withApiErrorFallback,
+} from '@/lib/api'
 
 export default function SettingsPage() {
   const { showToast } = useToast()
@@ -27,7 +34,6 @@ export default function SettingsPage() {
     role,
     accountName: activeAccountName,
   } = useUserSettings()
-  const { data: session } = useSession()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [salaryDay, setSalaryDay] = useState(1)
@@ -39,13 +45,7 @@ export default function SettingsPage() {
   const [isSimpleAccount, setIsSimpleAccount] = useState(false)
   const [simpleAccountError, setSimpleAccountError] = useState<string | null>(null)
   // Neue States für E-Mail-Änderung
-  const [showEmailForm, setShowEmailForm] = useState(false)
-  const [newEmail, setNewEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [emailError, setEmailError] = useState<string | null>(null)
-  const [emailLoading, setEmailLoading] = useState(false)
   const [pendingEmail, setPendingEmail] = useState<string | null>(null)
-  const [pendingResendLoading, setPendingResendLoading] = useState(false)
   const [initialLoadDone, setInitialLoadDone] = useState(false)
 
   useEffect(() => {
@@ -60,14 +60,14 @@ export default function SettingsPage() {
 
   const loadSettings = async () => {
     try {
-      const response = await fetch('/api/users/settings')
-      if (!response.ok) {
-        if (response.status !== 404) {
-          throw new Error('Fehler beim Laden der Einstellungen')
-        }
-        return // 404 ist OK, bedeutet nur dass noch keine Einstellungen existieren
+      let data: Awaited<ReturnType<typeof getUserSettings>>
+      try {
+        data = await getUserSettings()
+      } catch (err) {
+        // 404 ist OK, bedeutet nur dass noch keine Einstellungen existieren
+        if (err instanceof ApiError && err.status === 404) return
+        throw new Error('Fehler beim Laden der Einstellungen')
       }
-      const data = await response.json()
       setSalaryDay(data.salaryDay)
       setAccountName(data.accountName || "Mein Konto")
       setTransferSenderName(data.transferSenderName || '')
@@ -89,17 +89,10 @@ export default function SettingsPage() {
     setSplitProfileLoading(true)
     setError(null)
     try {
-      const response = await fetch('/api/users/settings', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ splitDisplayName }),
-      })
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        throw new Error(
-          typeof data.error === 'string' ? data.error : 'Fehler beim Speichern'
-        )
-      }
+      await withApiErrorFallback(
+        updateUserSettings({ splitDisplayName }),
+        'Fehler beim Speichern'
+      )
       showToast('Split-Anzeigename gespeichert', 'success')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler beim Speichern'
@@ -117,27 +110,22 @@ export default function SettingsPage() {
     setError(null)
     setSimpleAccountError(null)
     try {
-      const response = await fetch('/api/users/settings', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      try {
+        await updateUserSettings({
           salaryDay,
           accountName,
           transferSenderName,
           bankId,
           ...(role === 'OWNER' ? { isSimpleAccount } : {}),
-        }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        const message =
-          typeof data.error === 'string'
-            ? data.error
-            : 'Fehler beim Speichern der Einstellungen'
-        if (response.status === 400 && role === 'OWNER' && isSimpleAccount) {
+        })
+      } catch (err) {
+        const message = getApiErrorMessage(err, 'Fehler beim Speichern der Einstellungen')
+        if (
+          err instanceof ApiError &&
+          err.status === 400 &&
+          role === 'OWNER' &&
+          isSimpleAccount
+        ) {
           setSimpleAccountError(message)
           setIsSimpleAccount(false)
         }
@@ -152,91 +140,6 @@ export default function SettingsPage() {
       showToast('Fehler beim Speichern der Einstellungen', 'error')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleEmailChange = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setEmailLoading(true)
-    setEmailError(null)
-    try {
-      const response = await fetch('/api/users/email', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          newEmail,
-          password,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Ein Fehler ist aufgetreten')
-      }
-
-      showToast(
-        `Bestätigungs-E-Mail an ${data.pendingEmail} gesendet`,
-        'success'
-      )
-      setPendingEmail(data.pendingEmail ?? null)
-      setShowEmailForm(false)
-      setNewEmail('')
-      setPassword('')
-    } catch (err) {
-      console.error('Error updating email:', err)
-      const message = err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten'
-      setEmailError(message)
-      showToast(message, 'error')
-    } finally {
-      setEmailLoading(false)
-    }
-  }
-
-  const handleCancelPendingEmail = async () => {
-    setEmailLoading(true)
-    setEmailError(null)
-    try {
-      const response = await fetch('/api/users/email/pending', {
-        method: 'DELETE',
-      })
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Abbrechen fehlgeschlagen')
-      }
-      setPendingEmail(null)
-      showToast('Ausstehende E-Mail-Änderung abgebrochen', 'success')
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten'
-      setEmailError(message)
-      showToast(message, 'error')
-    } finally {
-      setEmailLoading(false)
-    }
-  }
-
-  const handleResendPendingEmail = async () => {
-    setPendingResendLoading(true)
-    setEmailError(null)
-    try {
-      const response = await fetch('/api/users/email/resend', {
-        method: 'POST',
-      })
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Senden fehlgeschlagen')
-      }
-      showToast('Bestätigungs-E-Mail erneut gesendet', 'success')
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten'
-      setEmailError(message)
-      showToast(message, 'error')
-    } finally {
-      setPendingResendLoading(false)
     }
   }
 
@@ -494,109 +397,10 @@ export default function SettingsPage() {
               </div>
             </form>
 
-            <div id="email-settings" className="card p-4 md:p-5">
-              <h2 className="text-lg font-medium text-primary mb-1">Benutzerkonto</h2>
-              <p className="text-sm text-secondary mb-4">Anmeldung und E-Mail-Adresse</p>
-              
-              {emailError && (
-                <div className="mb-4 p-4 bg-danger-subtle text-danger rounded-lg">
-                  {emailError}
-                </div>
-              )}
-
-              {pendingEmail && (
-                <div className="mb-4 p-4 bg-accent-subtle rounded-lg border border-border">
-                  <p className="text-sm text-primary">
-                    Ausstehende Änderung auf{' '}
-                    <span className="font-medium">{pendingEmail}</span>. Bitte
-                    bestätigen Sie den Link in Ihrem Postfach.
-                  </p>
-                  <p className="text-xs text-secondary mt-1">
-                    Sie sind weiterhin mit {session?.user?.email} angemeldet, bis
-                    die neue Adresse bestätigt ist.
-                  </p>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      loading={pendingResendLoading}
-                      loadingText="Wird gesendet…"
-                      onClick={handleResendPendingEmail}
-                    >
-                      Link erneut senden
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleCancelPendingEmail}
-                      disabled={emailLoading}
-                    >
-                      Abbrechen
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {!showEmailForm ? (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-secondary">Aktuelle E-Mail-Adresse</p>
-                    <p className="font-medium text-primary">{session?.user?.email}</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setShowEmailForm(true)}
-                    disabled={!!pendingEmail}
-                  >
-                    Ändern
-                  </Button>
-                </div>
-              ) : (
-                <form onSubmit={handleEmailChange} className="space-y-4">
-                  <div>
-                    <label htmlFor="newEmail" className="block text-sm font-medium text-primary">
-                      Neue E-Mail-Adresse
-                    </label>
-                    <input
-                      type="email"
-                      id="newEmail"
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
-                      required
-                      disabled={emailLoading}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-primary">
-                      Passwort
-                    </label>
-                    <input
-                      type="password"
-                      id="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
-                      required
-                      disabled={emailLoading}
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-3">
-                    <Button type="button" variant="secondary" onClick={() => setShowEmailForm(false)}>
-                      Abbrechen
-                    </Button>
-                    <Button type="submit" loading={emailLoading} loadingText="Wird gesendet…">
-                      Bestätigung anfordern
-                    </Button>
-                  </div>
-                </form>
-              )}
-            </div>
+            <EmailSettingsSection
+              pendingEmail={pendingEmail}
+              onPendingEmailChange={setPendingEmail}
+            />
 
             <div id="appearance-settings" className="card p-4 md:p-5">
               <h2 className="text-lg font-medium text-primary mb-1">Darstellung</h2>

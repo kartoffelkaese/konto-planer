@@ -14,6 +14,7 @@ import {
 } from '@/lib/transfers'
 import { buildRecurringInstanceData } from '@/lib/recurringInstances'
 import { assertPlanningAccount } from '@/lib/simpleAccount'
+import { logger } from '@/lib/logger'
 
 export async function POST(
   _request: NextRequest,
@@ -109,9 +110,9 @@ export async function POST(
 
     return NextResponse.json(newTransaction)
   } catch (error) {
-    console.error('Error creating transaction instance:', error)
+    logger.error('Error creating transaction instance', error, { endpoint: '/api/transactions/:id/create-instance' })
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Fehler beim Erstellen der Zahlung' },
       { status: 500 }
     )
   }

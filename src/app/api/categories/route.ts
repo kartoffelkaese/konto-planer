@@ -3,7 +3,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAccountContext, requireWritableContext } from '@/lib/account-context'
-import { isErrorResponse } from '@/lib/api-auth'
+import {
+  isErrorResponse,
+  readJsonBody,
+} from '@/lib/api-auth'
 
 export async function GET() {
   const ctx = await getAccountContext()
@@ -34,7 +37,9 @@ export async function POST(request: Request) {
 
   const { account } = ctx
 
-  const { name, color } = await request.json()
+  const body = await readJsonBody<{ name?: string; color?: string }>(request)
+  if (isErrorResponse(body)) return body
+  const { name, color } = body
 
   if (!name || !color) {
     return NextResponse.json(

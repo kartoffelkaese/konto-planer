@@ -7,6 +7,9 @@ import {
   getTransactionForAccount,
   assertMerchantOwned,
   isErrorResponse,
+  readJsonBody,
+  validateAmount,
+  validateDateInput,
   validateRecurringInterval,
 } from '@/lib/api-auth'
 import { resolveMerchantForTransaction } from '@/lib/resolveMerchantForTransaction'
@@ -27,6 +30,7 @@ import {
   validateTransactionCategoryId,
 } from '@/lib/transactionCategory'
 import { assertRecurringNotAllowed } from '@/lib/simpleAccount'
+import { logger } from '@/lib/logger'
 
 export async function GET(
   _request: NextRequest,
@@ -49,12 +53,30 @@ export async function GET(
 
     return NextResponse.json(full ?? transaction)
   } catch (error) {
-    console.error('Error fetching transaction:', error)
+    logger.error('Error fetching transaction', error, { endpoint: '/api/transactions/:id' })
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Fehler beim Laden der Transaktion' },
       { status: 500 }
     )
   }
+}
+
+/** Body von PATCH /api/transactions/[id] (Felder optional, Werte werden validiert) */
+type TransactionPatchBody = {
+  description?: string | null
+  amount?: unknown
+  date?: string | number | null
+  lastConfirmedDate?: string | number | null
+  isConfirmed?: boolean
+  isRecurring?: boolean
+  isRecurringPaused?: boolean
+  recurringInterval?: unknown
+  isTransfer?: boolean
+  transferTargetAccountId?: string | null
+  merchant?: string
+  merchantId?: string | null
+  createNewMerchant?: boolean
+  categoryId?: unknown
 }
 
 export async function PATCH(
@@ -74,7 +96,21 @@ export async function PATCH(
     const existingTransaction = await getTransactionForAccount(id, account.id)
     if (isErrorResponse(existingTransaction)) return existingTransaction
 
-    const updateData = await request.json()
+    const updateData = await readJsonBody<TransactionPatchBody>(request)
+    if (isErrorResponse(updateData)) return updateData
+
+    // Vor allen Seiteneffekten (z. B. unlinkTransfer) validieren
+    if (updateData.amount !== undefined) {
+      const parsedAmount = validateAmount(updateData.amount)
+      if (parsedAmount instanceof NextResponse) return parsedAmount
+      updateData.amount = parsedAmount
+    }
+    for (const value of [updateData.date, updateData.lastConfirmedDate]) {
+      if (value) {
+        const parsedDate = validateDateInput(value)
+        if (parsedDate instanceof NextResponse) return parsedDate
+      }
+    }
 
     if (account.isSimpleAccount) {
       if (updateData.isRecurring === true) {
@@ -290,7 +326,7 @@ export async function PATCH(
     } = {}
 
     if (updateData.amount !== undefined) syncFields.amount = Number(updateData.amount)
-    if (updateData.date !== undefined) syncFields.date = new Date(updateData.date)
+    if (updateData.date) syncFields.date = new Date(updateData.date)
     if (updateData.isConfirmed !== undefined) syncFields.isConfirmed = updateData.isConfirmed
 
     if (
@@ -328,7 +364,7 @@ export async function PATCH(
 
     return NextResponse.json(finalTransaction ?? updatedTransaction)
   } catch (error) {
-    console.error('Fehler beim Aktualisieren der Transaktion:', error)
+    logger.error('Fehler beim Aktualisieren der Transaktion', error, { endpoint: '/api/transactions/:id' })
     return NextResponse.json(
       { error: 'Fehler beim Aktualisieren der Transaktion' },
       { status: 500 }
@@ -361,9 +397,9 @@ export async function DELETE(
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {
-    console.error('Error deleting transaction:', error)
+    logger.error('Error deleting transaction', error, { endpoint: '/api/transactions/:id' })
     return NextResponse.json(
-      { error: 'Internal Server Error' },
+      { error: 'Fehler beim Löschen der Transaktion' },
       { status: 500 }
     )
   }

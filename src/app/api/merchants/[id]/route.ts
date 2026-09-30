@@ -6,6 +6,7 @@ import { getAccountContext, requireWritableContext } from '@/lib/account-context
 import {
   assertCategoryOwned,
   isErrorResponse,
+  readJsonBody,
 } from '@/lib/api-auth'
 import {
   merchantCategoriesInclude,
@@ -13,6 +14,7 @@ import {
   serializeMerchant,
   setMerchantCategories,
 } from '@/lib/merchantCategories'
+import { logger } from '@/lib/logger'
 
 export async function GET(
   _request: Request,
@@ -40,7 +42,7 @@ export async function GET(
 
     return NextResponse.json(serializeMerchant(merchant))
   } catch (error) {
-    console.error('Error fetching merchant:', error)
+    logger.error('Error fetching merchant', error, { endpoint: '/api/merchants/:id' })
     return NextResponse.json(
       { error: 'Fehler beim Laden des Händlers' },
       { status: 500 }
@@ -62,7 +64,8 @@ export async function PATCH(
 
   const { account } = ctx
 
-  const body = await request.json()
+  const body = await readJsonBody<{ name?: string; categoryId?: string | null; categoryIds?: string[] | null }>(request)
+  if (isErrorResponse(body)) return body
   const { name, categoryId, categoryIds: rawCategoryIds } = body
   const categoryIds =
     rawCategoryIds !== undefined || categoryId !== undefined

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
 import { Button, getButtonClassName } from '@/components/Button'
+import { exportBackup, restoreBackup } from '@/lib/api'
 
 export default function BackupManager({ allowRestore = true }: { allowRestore?: boolean }) {
   const { showToast } = useToast()
@@ -19,10 +20,7 @@ export default function BackupManager({ allowRestore = true }: { allowRestore?: 
       setError(null)
       setSuccess(null)
 
-      const response = await fetch('/api/backup')
-      if (!response.ok) throw new Error('Fehler beim Erstellen des Backups')
-
-      const backup = await response.json()
+      const backup = await exportBackup()
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -57,13 +55,7 @@ export default function BackupManager({ allowRestore = true }: { allowRestore?: 
       reader.onload = async (e) => {
         try {
           const backup = JSON.parse(e.target?.result as string)
-          const response = await fetch('/api/backup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(backup)
-          })
-
-          if (!response.ok) throw new Error('Fehler beim Wiederherstellen des Backups')
+          await restoreBackup(backup)
 
           setSuccess('Backup erfolgreich wiederhergestellt')
           showToast('Backup erfolgreich wiederhergestellt', 'success')

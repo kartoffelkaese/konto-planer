@@ -1,4 +1,11 @@
-import { Transaction, CreateTransactionData } from '@/types'
+/**
+ * Zentraler API-Client für alle Aufrufe aus dem Frontend (`credentials` = same-origin, JSON, Zeitlimit).
+ * Bewusste Ausnahmen mit direktem fetch: Auth-Seiten (/api/auth/*, Antwortformat `{ message }`)
+ * und das Fehler-Logging aus den Error-Boundaries (/api/error-log, fire-and-forget).
+ */
+import { Transaction, CreateTransactionData, type Category, type Merchant } from '@/types'
+import type { UserSettings } from '@/hooks/useUserSettings'
+import type { TransferTarget } from '@/lib/transfers'
 import type { RecurringWithStatus } from '@/lib/recurringStatus'
 import { toISOString } from '@/lib/dateUtils'
 import type {
@@ -48,17 +55,45 @@ export type TransactionPeriodQuery = {
 const API_BASE = '/api'
 const TIMEOUT_MS = 10000
 
-async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+/** Fehlerantwort der API – `message` wie bisher (Server-Meldung oder `HTTP <status>`). */
+export class ApiError extends Error {
+  readonly status: number
+  readonly data: unknown
+  /** `error`-Text aus der Antwort, falls vorhanden */
+  readonly serverMessage: string | null
+
+  constructor(status: number, data: unknown, serverMessage: string | null) {
+    super(serverMessage ?? `HTTP ${status}`)
+    this.name = 'ApiError'
+    this.status = status
+    this.data = data
+    this.serverMessage = serverMessage
+  }
+}
+
+/** Server-Meldung (`{ error }`) oder fester Ersatztext – entspricht `data.error || 'Text'`. */
+export function getApiErrorMessage(err: unknown, fallback: string): string {
+  return err instanceof ApiError && err.serverMessage ? err.serverMessage : fallback
+}
+
+type ApiFetchInit = RequestInit & {
+  /** Zeitlimit in ms; `null` = kein Limit (z. B. Mailversand, Backup). Standard 10 s. */
+  timeoutMs?: number | null
+}
+
+async function apiFetch<T>(path: string, init: ApiFetchInit = {}): Promise<T> {
+  const { timeoutMs = TIMEOUT_MS, ...fetchInit } = init
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  const timeoutId =
+    timeoutMs === null ? null : setTimeout(() => controller.abort(), timeoutMs)
 
   try {
     const response = await fetch(`${API_BASE}${path}`, {
-      ...init,
+      ...fetchInit,
       signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
-        ...init.headers
+        ...fetchInit.headers
       }
     })
 
@@ -74,14 +109,14 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 
     if (!response.ok) {
       console.error('API Error:', response.status, data)
-      const errMsg =
+      const serverMessage =
         typeof data === 'object' &&
         data !== null &&
         'error' in data &&
         typeof (data as { error: unknown }).error === 'string'
           ? (data as { error: string }).error
-          : `HTTP ${response.status}`
-      throw new Error(errMsg)
+          : null
+      throw new ApiError(response.status, data, serverMessage)
     }
 
     return data as T
@@ -92,7 +127,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     }
     throw err
   } finally {
-    clearTimeout(timeoutId)
+    if (timeoutId !== null) clearTimeout(timeoutId)
   }
 }
 
@@ -331,6 +366,153 @@ export const commitCsvImport = async (
 }
 
 // --- Split-Budget ---
+
+/** Wandelt API-Fehler in `Error(serverMeldung || fallback)` um – wie `data.error || 'Text'`. */
+export async function withApiErrorFallback<T>(promise: Promise<T>, fallback: string): Promise<T> {
+  try {
+    return await promise
+  } catch (err) {
+    throw new Error(getApiErrorMessage(err, fallback))
+  }
+}
+
+// --- Einstellungen & Benutzer -------------------------------------------------
+
+export const getUserSettings = () => apiFetch<UserSettings>('/users/settings')
+
+export const updateUserSettings = <T = UserSettings>(data: Record<string, unknown>) =>
+  apiFetch<T>('/users/settings', { method: 'PATCH', body: JSON.stringify(data) })
+
+/** Sendet eine Bestätigungs-E-Mail – ohne Zeitlimit (SMTP). */
+export const requestEmailChange = (newEmail: string, password: string) =>
+  apiFetch<{ pendingEmail?: string | null }>('/users/email', {
+    method: 'PATCH',
+    body: JSON.stringify({ newEmail, password }),
+    timeoutMs: null,
+  })
+
+export const cancelPendingEmailChange = () =>
+  apiFetch<unknown>('/users/email/pending', { method: 'DELETE' })
+
+export const resendEmailChange = () =>
+  apiFetch<unknown>('/users/email/resend', { method: 'POST', timeoutMs: null })
+
+export const deleteUserLogin = (password: string) =>
+  apiFetch<unknown>('/users/delete', {
+    method: 'DELETE',
+    body: JSON.stringify({ password }),
+    timeoutMs: null,
+  })
+
+// --- Buchführungs-Konten, Mitglieder & Einladungen ----------------------------
+
+export const getAccounts = <T = unknown[]>() => apiFetch<T>('/accounts')
+
+export const createAccount = (data: {
+  name: string
+  bankId?: string
+  isSimpleAccount?: boolean
+}) =>
+  apiFetch<{ id: string }>('/accounts', { method: 'POST', body: JSON.stringify(data) })
+
+export const deleteAccount = (accountId: string) =>
+  apiFetch<{ nextAccountId?: string | null }>(
+    `/accounts/${encodeURIComponent(accountId)}`,
+    { method: 'DELETE', timeoutMs: null }
+  )
+
+export const setActiveAccount = (accountId: string) =>
+  apiFetch<unknown>('/accounts/active', {
+    method: 'PATCH',
+    body: JSON.stringify({ accountId }),
+  })
+
+export const getTransferTargets = () =>
+  apiFetch<TransferTarget[]>('/accounts/transfer-targets')
+
+export const getAccountMembers = <T>(accountId: string) =>
+  apiFetch<T>(`/accounts/${encodeURIComponent(accountId)}/members`)
+
+/** Einladung per E-Mail – ohne Zeitlimit (SMTP). */
+export const inviteAccountMember = (accountId: string, email: string, role: string) =>
+  apiFetch<{ message: string }>(`/accounts/${encodeURIComponent(accountId)}/members`, {
+    method: 'POST',
+    body: JSON.stringify({ email, role }),
+    timeoutMs: null,
+  })
+
+export const updateAccountMemberRole = (accountId: string, memberId: string, role: string) =>
+  apiFetch<unknown>(`/accounts/${encodeURIComponent(accountId)}/members`, {
+    method: 'PATCH',
+    body: JSON.stringify({ memberId, role }),
+  })
+
+export const removeAccountMember = (
+  accountId: string,
+  target: { memberId: string } | { inviteId: string }
+) =>
+  apiFetch<unknown>(`/accounts/${encodeURIComponent(accountId)}/members`, {
+    method: 'DELETE',
+    body: JSON.stringify(target),
+  })
+
+export const getReceivedInvites = <T = unknown[]>() => apiFetch<T>('/invites/received')
+
+export const respondToInvite = <T>(inviteId: string, action: 'accept' | 'decline') =>
+  apiFetch<T>(`/invites/${encodeURIComponent(inviteId)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ action }),
+  })
+
+export const getNavBadges = <T>() => apiFetch<T>('/nav-badges')
+
+// --- Kategorien & Händler -----------------------------------------------------
+
+/** Kategorien des aktiven Kontos (inkl. `_count.merchants`) */
+export const getCategories = <T = Category>() => apiFetch<T[]>('/categories')
+
+export const createCategory = (data: { name: string; color: string }) =>
+  apiFetch<Category>('/categories', { method: 'POST', body: JSON.stringify(data) })
+
+export const updateCategory = (id: string, data: { name: string; color: string }) =>
+  apiFetch<Category>(`/categories/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+
+export const deleteCategory = (id: string) =>
+  apiFetch<unknown>(`/categories/${encodeURIComponent(id)}`, { method: 'DELETE' })
+
+export const getMerchants = () => apiFetch<Merchant[]>('/merchants')
+
+export const createMerchant = (data: Record<string, unknown>) =>
+  apiFetch<Merchant>('/merchants', { method: 'POST', body: JSON.stringify(data) })
+
+export const updateMerchant = (id: string, data: Record<string, unknown>) =>
+  apiFetch<Merchant>(`/merchants/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  })
+
+export const deleteMerchant = (id: string) =>
+  apiFetch<unknown>(`/merchants/${encodeURIComponent(id)}`, { method: 'DELETE' })
+
+// --- Dashboard, Statistiken & Backup ------------------------------------------
+
+export const getDashboard = <T>() => apiFetch<T>('/dashboard')
+
+export const getStatistics = <T>(params: Record<string, string | undefined>) =>
+  apiFetch<T>(`/statistics${encodeQuery(params)}`)
+
+/** Backups können groß sein – ohne Zeitlimit. */
+export const exportBackup = () => apiFetch<unknown>('/backup', { timeoutMs: null })
+
+export const restoreBackup = (backup: unknown) =>
+  apiFetch<unknown>('/backup', {
+    method: 'POST',
+    body: JSON.stringify(backup),
+    timeoutMs: null,
+  })
 
 export const getSplitLists = () => apiFetch<SplitListSummary[]>('/split/lists')
 

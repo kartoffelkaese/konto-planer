@@ -15,6 +15,7 @@ import {
   dispatchAccountChanged,
   dispatchAccountSwitching,
 } from '@/lib/accountSwitchEvents'
+import { getAccounts, setActiveAccount } from '@/lib/api'
 
 type AccountItem = {
   id: string
@@ -44,9 +45,7 @@ export default function AccountSwitcher({
 
   const loadAccounts = useCallback(async () => {
     try {
-      const res = await fetch('/api/accounts')
-      if (!res.ok) return
-      const data = await res.json()
+      const data = await getAccounts<typeof accounts>()
       setAccounts(data)
     } catch {
       // optional
@@ -85,12 +84,7 @@ export default function AccountSwitcher({
     dispatchAccountSwitching()
     await new Promise((resolve) => setTimeout(resolve, ACCOUNT_SWITCH_EXIT_MS))
     try {
-      const res = await fetch('/api/accounts/active', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accountId }),
-      })
-      if (!res.ok) throw new Error('Wechsel fehlgeschlagen')
+      await setActiveAccount(accountId)
       await update({ activeAccountId: accountId })
       setModalOpen(false)
       setAvatarAnimating(true)

@@ -6,7 +6,10 @@ import {
 } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getAccountContextForAccountId } from '@/lib/account-context'
-import { isErrorResponse } from '@/lib/api-auth'
+import {
+  isErrorResponse,
+  readJsonBody,
+} from '@/lib/api-auth'
 import { normalizeEmail } from '@/lib/accounts'
 import {
   isInvitableMemberRole,
@@ -91,7 +94,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     )
   }
 
-  const body = await request.json()
+  const body = await readJsonBody<{ email?: unknown; role?: unknown }>(request)
+  if (isErrorResponse(body)) return body
   const rawEmail = body.email
   if (!rawEmail || typeof rawEmail !== 'string') {
     return NextResponse.json({ error: 'E-Mail erforderlich' }, { status: 400 })
@@ -173,7 +177,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const ownerError = assertOwner(ctx)
   if (ownerError) return ownerError
 
-  const body = await request.json()
+  const body = await readJsonBody<{ memberId?: unknown; role?: unknown }>(request)
+  if (isErrorResponse(body)) return body
   const { memberId } = body
 
   if (!memberId || typeof memberId !== 'string') {
@@ -233,7 +238,8 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   const ownerError = assertOwner(ctx)
   if (ownerError) return ownerError
 
-  const body = await request.json()
+  const body = await readJsonBody<{ memberId?: string; inviteId?: string }>(request)
+  if (isErrorResponse(body)) return body
   const { memberId, inviteId } = body
 
   if (inviteId) {

@@ -1,5 +1,5 @@
 import type { CsvImportFormat, ParsedCsvRow } from '../types'
-import { getCell, normalizeHeader, requiresColumns } from '../columnMap'
+import { getCell, requiresColumns } from '../columnMap'
 import { parseGermanAmount } from '../parseAmount'
 import { parseGermanDate } from '../parseDate'
 import { parseZeitraumFromCsv } from '../dateRange'

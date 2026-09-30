@@ -5,6 +5,7 @@ import { getAccountContext } from '@/lib/account-context'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 import { normalizeEmail } from '@/lib/accounts'
 import { getSalaryMonthRange, isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
   const authResult = await getUserBySession()
@@ -101,7 +102,7 @@ export async function GET() {
       pendingSplitInvitations,
     })
   } catch (error) {
-    console.error('Error fetching nav badges:', error)
+    logger.error('Error fetching nav badges', error, { endpoint: '/api/nav-badges' })
     return NextResponse.json(
       { error: 'Fehler beim Laden der Navigationshinweise' },
       { status: 500 }

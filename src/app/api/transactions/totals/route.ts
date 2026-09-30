@@ -7,6 +7,7 @@ import {
   resolvePeriodFromRequest,
   resolveTransactionPeriodRangeForTotals,
 } from '@/lib/transactionPeriodRange'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: Request) {
   const ctx = await getAccountContext()
@@ -92,7 +93,7 @@ export async function GET(request: Request) {
       periodLabel: periodRange.label,
     })
   } catch (error) {
-    console.error('Error calculating transaction totals:', error)
+    logger.error('Error calculating transaction totals', error, { endpoint: '/api/transactions/totals' })
     return NextResponse.json(
       { error: 'Fehler bei der Berechnung der Summen' },
       { status: 500 }

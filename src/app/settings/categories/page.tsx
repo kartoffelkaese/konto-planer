@@ -9,6 +9,13 @@ import PageLoader from '@/components/PageLoader'
 import SettingsBreadcrumb from '@/components/SettingsBreadcrumb'
 import ColorPicker, { DEFAULT_CATEGORY_COLOR } from '@/components/ColorPicker'
 import { useUserSettings } from '@/hooks/useUserSettings'
+import {
+  createCategory,
+  deleteCategory,
+  getCategories,
+  updateCategory,
+  withApiErrorFallback,
+} from '@/lib/api'
 
 interface Category {
   id: string
@@ -45,11 +52,7 @@ export default function CategoriesPage() {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('/api/categories')
-      if (!response.ok) {
-        throw new Error('Fehler beim Laden der Kategorien')
-      }
-      const data = await response.json()
+      const data = await getCategories<Category>()
       setCategories(data)
     } catch (err) {
       console.error('Error loading categories:', err)
@@ -65,18 +68,7 @@ export default function CategoriesPage() {
     setIsSaving(true)
 
     try {
-      const response = await fetch('/api/categories', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Fehler beim Erstellen der Kategorie')
-      }
+      await withApiErrorFallback(createCategory(formData), 'Fehler beim Erstellen der Kategorie')
 
       await loadCategories()
       setShowAddModal(false)
@@ -99,18 +91,7 @@ export default function CategoriesPage() {
     setIsSaving(true)
 
     try {
-      const response = await fetch(`/api/categories/${selectedCategory.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Fehler beim Aktualisieren der Kategorie')
-      }
+      await withApiErrorFallback(updateCategory(selectedCategory.id, formData), 'Fehler beim Aktualisieren der Kategorie')
 
       await loadCategories()
       setShowEditModal(false)
@@ -133,14 +114,7 @@ export default function CategoriesPage() {
     setIsSaving(true)
 
     try {
-      const response = await fetch(`/api/categories/${selectedCategory.id}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Fehler beim Löschen der Kategorie')
-      }
+      await withApiErrorFallback(deleteCategory(selectedCategory.id), 'Fehler beim Löschen der Kategorie')
 
       await loadCategories()
       setShowDeleteModal(false)

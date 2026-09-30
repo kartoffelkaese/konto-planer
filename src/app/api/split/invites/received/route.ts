@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { SplitInviteStatus, SplitListRole } from '@prisma/client'
+import { SplitInviteStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 import { normalizeEmail } from '@/lib/accounts'

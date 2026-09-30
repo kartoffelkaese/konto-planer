@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createTransaction } from '@/lib/api'
+import { useMerchants, useTransferTargets } from '@/hooks/useLookups'
 import { formatDateForInput } from '@/lib/dateUtils'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
 import { RECURRING_INTERVALS } from '@/lib/recurringIntervals'
-import TransferAccountFields, { type TransferTarget } from '@/components/TransferAccountFields'
+import TransferAccountFields from '@/components/TransferAccountFields'
 import CategorySelect from '@/components/CategorySelect'
 import { suggestCategoryIdForMerchant } from '@/lib/suggestCategoryId'
 import {
@@ -18,7 +19,6 @@ import {
 interface Merchant {
   id: string
   name: string
-  description?: string | null
   categoryIds?: string[]
   categories?: Array<{ id: string; name: string; color?: string }>
   category?: {
@@ -44,7 +44,6 @@ export default function TransactionForm({
   const { showToast } = useToast()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [merchants, setMerchants] = useState<Merchant[]>([])
   const [formData, setFormData] = useState({
     merchant: '',
     merchantId: '',
@@ -57,39 +56,18 @@ export default function TransactionForm({
     recurringInterval: 'monthly'
   })
   const [forceNewMerchant, setForceNewMerchant] = useState(false)
-  const [transferTargets, setTransferTargets] = useState<TransferTarget[]>([])
   const [isTransfer, setIsTransfer] = useState(false)
   const [transferTargetAccountId, setTransferTargetAccountId] = useState('')
 
-  useEffect(() => {
-    loadMerchants()
-    loadTransferTargets()
-  }, [])
-
-  const loadMerchants = async () => {
-    try {
-      const response = await fetch('/api/merchants')
-      if (!response.ok) {
-        throw new Error('Fehler beim Laden der Händler')
-      }
-      const data = await response.json()
-      setMerchants(data)
-    } catch (err) {
+  const { merchants } = useMerchants({
+    onError: (err) => {
       console.error('Error loading merchants:', err)
       setError('Fehler beim Laden der Händler')
-    }
-  }
-
-  const loadTransferTargets = async () => {
-    try {
-      const response = await fetch('/api/accounts/transfer-targets')
-      if (!response.ok) return
-      const data = await response.json()
-      setTransferTargets(data)
-    } catch (err) {
-      console.error('Error loading transfer targets:', err)
-    }
-  }
+    },
+  })
+  const { transferTargets } = useTransferTargets({
+    onError: (err) => console.error('Error loading transfer targets:', err),
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -178,7 +156,7 @@ export default function TransactionForm({
         ...prev,
         merchantId: match.id,
         merchant: match.name,
-        description: prev.description || match.description || '',
+        description: prev.description || '',
       }))
       applyMerchantCategorySuggestion(match)
     } else {
@@ -197,7 +175,7 @@ export default function TransactionForm({
       ...prev,
       merchantId: merchant.id,
       merchant: merchant.name,
-      description: prev.description || merchant.description || '',
+      description: prev.description || '',
     }))
     applyMerchantCategorySuggestion(merchant)
   }

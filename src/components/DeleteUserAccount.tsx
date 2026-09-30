@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { signOut } from 'next-auth/react'
 import { TrashIcon } from '@heroicons/react/24/outline'
 import { Button } from '@/components/Button'
+import { deleteUserLogin, withApiErrorFallback } from '@/lib/api'
 
 export default function DeleteUserAccount() {
   const [isLoading, setIsLoading] = useState(false)
@@ -26,18 +27,7 @@ export default function DeleteUserAccount() {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch('/api/users/delete', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      })
-
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok) {
-        throw new Error(
-          typeof data.error === 'string' ? data.error : 'Fehler beim Löschen der Anmeldung'
-        )
-      }
+      await withApiErrorFallback(deleteUserLogin(password), 'Fehler beim Löschen der Anmeldung')
 
       await signOut({ redirect: false })
       window.location.href = '/'

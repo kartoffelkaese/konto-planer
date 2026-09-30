@@ -14,6 +14,7 @@ import {
   createVerificationToken,
   sendSignupVerificationEmail,
 } from '@/lib/emailVerification'
+import { logger } from '@/lib/logger'
 
 async function rollbackUnverifiedUser(userId: string) {
   const memberships = await prisma.accountMember.findMany({
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
       )
       await sendSignupVerificationEmail(email, rawToken)
     } catch (mailError) {
-      console.error('Registrierungs-Mail fehlgeschlagen:', mailError)
+      logger.error('Registrierungs-Mail fehlgeschlagen', mailError, { endpoint: '/api/auth/register' })
       await rollbackUnverifiedUser(user.id)
       return NextResponse.json(
         {
@@ -132,7 +133,7 @@ export async function POST(request: Request) {
       { status: 201 }
     )
   } catch (error) {
-    console.error('Registrierungsfehler:', error)
+    logger.error('Registrierungsfehler', error, { endpoint: '/api/auth/register' })
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       switch (error.code) {

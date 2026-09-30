@@ -23,6 +23,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import AccountSwitcher from '@/components/AccountSwitcher'
 import { useToast } from '@/hooks/useToast'
 import { useUserSettings } from '@/hooks/useUserSettings'
+import { getNavBadges } from '@/lib/api'
 
 const labelTransition =
   'overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-in-out'
@@ -67,9 +68,12 @@ export default function Navigation() {
 
     const loadBadges = async () => {
       try {
-        const response = await fetch('/api/nav-badges')
-        if (!response.ok) return
-        const data = await response.json()
+        const data = await getNavBadges<{
+          unconfirmedTransactions?: number
+          recurringAttention?: number
+          pendingInvitations?: number
+          pendingSplitInvitations?: number
+        }>()
         setBadges({
           unconfirmedTransactions: data.unconfirmedTransactions ?? 0,
           recurringAttention: data.recurringAttention ?? 0,

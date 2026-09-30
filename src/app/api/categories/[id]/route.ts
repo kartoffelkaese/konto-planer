@@ -3,7 +3,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAccountContext, requireWritableContext } from '@/lib/account-context'
-import { isErrorResponse } from '@/lib/api-auth'
+import {
+  isErrorResponse,
+  readJsonBody,
+} from '@/lib/api-auth'
+import { logger } from '@/lib/logger'
 
 export async function GET(
   _request: Request,
@@ -34,7 +38,7 @@ export async function GET(
 
     return NextResponse.json(category)
   } catch (error) {
-    console.error('Fehler beim Laden der Kategorie:', error)
+    logger.error('Fehler beim Laden der Kategorie', error, { endpoint: '/api/categories/:id' })
     return NextResponse.json(
       { error: 'Fehler beim Laden der Kategorie' },
       { status: 500 }
@@ -57,7 +61,9 @@ export async function PATCH(
   const { account } = ctx
 
   try {
-    const { name, color } = await request.json()
+    const body = await readJsonBody<{ name?: string; color?: string }>(request)
+    if (isErrorResponse(body)) return body
+    const { name, color } = body
 
     const existingCategory = await prisma.category.findFirst({
       where: {
@@ -89,7 +95,7 @@ export async function PATCH(
 
     return NextResponse.json(category)
   } catch (error) {
-    console.error('Error updating category:', error)
+    logger.error('Error updating category', error, { endpoint: '/api/categories/:id' })
     return NextResponse.json(
       { error: 'Fehler beim Aktualisieren der Kategorie' },
       { status: 500 }
@@ -136,7 +142,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Fehler beim Löschen der Kategorie:', error)
+    logger.error('Fehler beim Löschen der Kategorie', error, { endpoint: '/api/categories/:id' })
     return NextResponse.json(
       { error: 'Fehler beim Löschen der Kategorie' },
       { status: 500 }

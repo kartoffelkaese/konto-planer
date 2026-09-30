@@ -13,6 +13,7 @@ import {
 } from '@/lib/accountSwitchEvents'
 
 import { inviteRoleLabel } from '@/lib/accountPermissions'
+import { ApiError, getReceivedInvites, respondToInvite, setActiveAccount, withApiErrorFallback } from '@/lib/api'
 
 type ReceivedInvite = {
   id: string
@@ -34,9 +35,7 @@ export default function AccountInvitations() {
 
   const loadInvites = useCallback(async () => {
     try {
-      const res = await fetch('/api/invites/received')
-      if (!res.ok) return
-      const data = await res.json()
+      const data = await getReceivedInvites<unknown>()
       setInvites(Array.isArray(data) ? data : [])
     } catch {
       // optional
@@ -62,15 +61,13 @@ export default function AccountInvitations() {
   const respond = async (inviteId: string, action: 'accept' | 'decline') => {
     setActingId(inviteId)
     try {
-      const res = await fetch(`/api/invites/${inviteId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || 'Aktion fehlgeschlagen')
-      }
+      const data = await withApiErrorFallback(
+        respondToInvite<{ message: string; accountName?: string; accountId?: string }>(
+          inviteId,
+          action
+        ),
+        'Aktion fehlgeschlagen'
+      )
 
       if (action === 'accept') {
         showToast(
@@ -82,10 +79,9 @@ export default function AccountInvitations() {
         if (data.accountId) {
           dispatchAccountSwitching()
           await new Promise((resolve) => setTimeout(resolve, ACCOUNT_SWITCH_EXIT_MS))
-          await fetch('/api/accounts/active', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ accountId: data.accountId }),
+          // Fehlerantwort still übergehen (wie bisher), Netzwerkfehler weiterreichen
+          await setActiveAccount(data.accountId).catch((err) => {
+            if (!(err instanceof ApiError)) throw err
           })
           await update({ activeAccountId: data.accountId })
           router.refresh()

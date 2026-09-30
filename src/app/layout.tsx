@@ -5,6 +5,7 @@ import Navigation from '@/components/Navigation'
 import AccountSwitchTransition from '@/components/AccountSwitchTransition'
 import { Providers } from './providers'
 import { THEME_INIT_SCRIPT } from '@/lib/colorSchemes'
+import { SIDEBAR_INIT_SCRIPT } from '@/lib/sidebarLayout'
 import {
   SITE_DESCRIPTION,
   SITE_NAME,
@@ -66,7 +67,7 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: THEME_INIT_SCRIPT,
+            __html: THEME_INIT_SCRIPT + SIDEBAR_INIT_SCRIPT,
           }}
         />
       </head>

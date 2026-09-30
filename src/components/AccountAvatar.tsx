@@ -59,7 +59,7 @@ export default function AccountAvatar({
         aria-hidden
       >
         <span
-          className={`flex items-center justify-center rounded-lg border border-border bg-surface p-1 ${sizeClass} ${
+          className={`flex items-center justify-center rounded-[0.7rem] bg-surface p-1 ring-1 ring-hairline ${sizeClass} ${
             animating ? 'account-switch-avatar' : ''
           }`}
         >
@@ -73,7 +73,7 @@ export default function AccountAvatar({
         </span>
         {showInitialBadge && (
           <span
-            className={`absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full border border-border bg-accent font-bold leading-none text-accent-foreground ${badgeClasses[size]}`}
+            className={`absolute -bottom-0.5 -right-0.5 flex items-center justify-center rounded-full ring-2 ring-surface bg-accent font-bold leading-none text-accent-foreground ${badgeClasses[size]}`}
           >
             {initials}
           </span>

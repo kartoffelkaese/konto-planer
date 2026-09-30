@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { CheckIcon, WalletIcon } from '@heroicons/react/24/outline'
+import { CheckIcon, ChevronUpDownIcon, WalletIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
 import Modal from '@/components/Modal'
 import LoadingSpinner from '@/components/LoadingSpinner'
@@ -26,14 +26,15 @@ type AccountItem = {
 }
 
 interface AccountSwitcherProps {
-  showExpanded: boolean
-  iconOnlyMode: boolean
+  /**
+   * rail    – schmale Desktop-Leiste: nur Avatar, Wechsel per Dialog
+   * sidebar – ausgeklappte Desktop-Leiste: Konto-Karte, Wechsel per Dialog
+   * sheet   – mobiles Bottom-Sheet: Konten direkt als Liste
+   */
+  variant: 'rail' | 'sidebar' | 'sheet'
 }
 
-export default function AccountSwitcher({
-  showExpanded,
-  iconOnlyMode,
-}: AccountSwitcherProps) {
+export default function AccountSwitcher({ variant }: AccountSwitcherProps) {
   const router = useRouter()
   const { data: session, update } = useSession()
   const { showToast } = useToast()
@@ -63,7 +64,7 @@ export default function AccountSwitcher({
   }, [loadAccounts])
 
   const active = accounts.find((a) => a.isActive) ?? accounts[0]
-  const listMode = showExpanded && !iconOnlyMode
+  const iconOnlyMode = variant === 'rail'
   const showSwitcher = accounts.length > 1
 
   const duplicateBankIds = useMemo(
@@ -160,33 +161,26 @@ export default function AccountSwitcher({
 
   if (!session || !showSwitcher) return null
 
-  const borderWrapper = (children: ReactNode) => (
-    <div className="border-t border-hairline">{children}</div>
-  )
-
-  if (listMode) {
-    return borderWrapper(
-      <div className="px-2 py-2">
-        <p className="eyebrow px-2 pt-1 pb-2">
-          Konto wechseln
-        </p>
-        <div className="space-y-0.5" role="list" aria-label="Konten">
-          {accounts.map((acc) => renderAccountButton(acc))}
-        </div>
+  if (variant === 'sheet') {
+    return (
+      <div className="space-y-0.5" role="list" aria-label="Konten">
+        {accounts.map((acc) => renderAccountButton(acc, true))}
       </div>
     )
   }
 
-  return borderWrapper(
+  const activeBank = getBankById(active?.bankId)
+
+  return (
     <>
-      <div className="px-2 py-2 flex justify-center md:justify-center">
+      {variant === 'rail' ? (
         <button
           type="button"
           disabled={loading}
           onClick={() => setModalOpen(true)}
-          title={`Aktives Konto: ${active?.name ?? 'Konto'}. Tippen zum Wechseln.`}
-          className="flex flex-col items-center gap-1 rounded-control p-2 text-accent hover:bg-accent-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent max-md:flex-row max-md:gap-2 max-md:px-3 max-md:w-full max-md:justify-start"
+          aria-label={`Aktives Konto: ${active?.name ?? 'Konto'}. Konto wechseln`}
           aria-haspopup="dialog"
+          className="nav-tooltip-anchor group relative mx-auto flex h-12 w-12 items-center justify-center rounded-control transition-colors duration-feedback hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           {active ? (
             <AccountAvatar
@@ -202,11 +196,42 @@ export default function AccountSwitcher({
               <WalletIcon className="h-5 w-5" aria-hidden />
             </span>
           )}
-          <span className="md:sr-only text-sm font-medium text-primary truncate max-w-[10rem]">
+          <span className="nav-tooltip" aria-hidden="true">
             {active?.name ?? 'Konto'}
           </span>
         </button>
-      </div>
+      ) : (
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => setModalOpen(true)}
+          aria-haspopup="dialog"
+          className="flex w-full items-center gap-3 rounded-control bg-surface-muted/70 p-2 text-left transition-colors duration-feedback hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          {active ? (
+            <AccountAvatar
+              name={active.name}
+              bankId={active.bankId}
+              active
+              animating={avatarAnimating}
+            />
+          ) : (
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-foreground">
+              <WalletIcon className="h-5 w-5" aria-hidden />
+            </span>
+          )}
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold text-primary">
+              {active?.name ?? 'Konto'}
+            </span>
+            <span className="block truncate text-xs text-secondary">
+              {activeBank?.name ?? 'Konto wechseln'}
+            </span>
+          </span>
+          <ChevronUpDownIcon className="h-5 w-5 shrink-0 text-secondary" aria-hidden />
+          <span className="sr-only">Konto wechseln</span>
+        </button>
+      )}
 
       <Modal
         isOpen={modalOpen}

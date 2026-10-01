@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Release in einem Schritt: `npm run release -- 9.4.5`
+ * Release in einem Schritt: `npm run release 9.4.5`
  *
  * 1. Typecheck, Lint und Tests – bei einem Fehler Abbruch, ohne etwas zu ändern
  * 2. Version in package.json und package-lock.json setzen
@@ -11,7 +11,7 @@ import { spawnSync } from 'node:child_process'
 const version = process.argv[2]
 
 if (!version || !/^\d+\.\d+\.\d+$/.test(version)) {
-  console.error('Aufruf: npm run release -- <Version>, z. B. npm run release -- 9.4.5')
+  console.error('Aufruf: npm run release <Version>, z. B. npm run release 9.4.5')
   process.exit(1)
 }
 

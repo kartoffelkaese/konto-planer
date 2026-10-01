@@ -6,6 +6,8 @@
   --motion-duration-expand: 220ms;
   --motion-easing: cubic-bezier(0.2, 0.8, 0.2, 1);
   --sidebar-width: 0px;
+  --sidebar-duration: 240ms;
+  --sidebar-easing: cubic-bezier(0.4, 0, 0.2, 1);
   --radius-card: 1.25rem;
   --radius-control: 0.75rem;
   --radius-pill: 9999px;
@@ -411,8 +413,36 @@ a[href].landing-cta-outline:hover {
 }
 
 /* Navigation: Desktop-Seitenleiste */
+/* Leiste und Inhalt bewegen sich mit derselben Dauer und Kurve */
 .desktop-sidebar {
-  transition: width 260ms var(--motion-easing);
+  transition: width var(--sidebar-duration) var(--sidebar-easing);
+}
+
+.main-beside-sidebar {
+  transition: margin-left var(--sidebar-duration) var(--sidebar-easing);
+}
+
+/* Beschriftungen: beim Einklappen zügig ausblenden, beim Ausklappen leicht verzögert einblenden */
+.sidebar-label {
+  transition:
+    opacity 180ms ease-out 90ms,
+    visibility 0s linear 0s;
+}
+
+.desktop-sidebar[data-collapsed="true"] .sidebar-label {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 100ms ease-in,
+    visibility 0s linear 100ms;
+}
+
+.sidebar-toggle-icon {
+  transition: transform var(--sidebar-duration) var(--sidebar-easing);
+}
+
+.desktop-sidebar[data-collapsed="true"] .sidebar-toggle-icon {
+  transform: rotate(180deg);
 }
 
 /* Tooltip der eingeklappten Leiste (rechts neben dem Eintrag) */
@@ -440,6 +470,8 @@ a[href].landing-cta-outline:hover {
 .nav-tooltip-anchor:focus-visible .nav-tooltip {
   opacity: 1;
   translate: 0 -50%;
+  /* Erst nach kurzem Verweilen zeigen – sonst blitzt der Tooltip direkt nach dem Einklappen auf */
+  transition-delay: 350ms;
 }
 
 /* Navigation: mobiles „Mehr“-Sheet */
@@ -456,6 +488,56 @@ a[href].landing-cta-outline:hover {
 
 .mobile-sheet-backdrop {
   transition: opacity 220ms var(--motion-easing);
+}
+
+/* Einträge gleiten beim Öffnen leicht versetzt nach (--sheet-item-index) */
+@keyframes mobile-sheet-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+}
+
+.mobile-sheet[data-open="true"] .mobile-sheet-item {
+  animation: mobile-sheet-item-in 360ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation-delay: calc(90ms + var(--sheet-item-index, 0) * 40ms);
+}
+
+/* „Mehr“-Tab: Punkte drehen sich zum Schließen-Kreuz, die Pille gibt beim Tippen nach */
+.more-pill {
+  transition:
+    background-color var(--motion-duration-feedback) var(--motion-easing),
+    transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+button:active > .more-pill {
+  transform: scale(0.88);
+  transition-duration: 80ms;
+}
+
+.more-icon-dots,
+.more-icon-close {
+  transition:
+    opacity 180ms var(--motion-easing),
+    transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.more-icon-close,
+.more-pill[data-open="true"] .more-icon-dots {
+  opacity: 0;
+}
+
+.more-icon-close {
+  transform: rotate(-90deg) scale(0.5);
+}
+
+.more-pill[data-open="true"] .more-icon-dots {
+  transform: rotate(90deg) scale(0.5);
+}
+
+.more-pill[data-open="true"] .more-icon-close {
+  opacity: 1;
+  transform: none;
 }
 
 /* Kontowechsel – Microanimation */
@@ -515,5 +597,9 @@ a[href].landing-cta-outline:hover {
 
   button:active:not(:disabled) {
     transform: none;
+  }
+
+  .mobile-sheet[data-open="true"] .mobile-sheet-item {
+    animation: none;
   }
 }

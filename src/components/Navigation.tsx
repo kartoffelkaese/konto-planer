@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -14,7 +14,6 @@ import {
   XMarkIcon,
   ChevronRightIcon,
   ChevronDoubleLeftIcon,
-  ChevronDoubleRightIcon,
   ArrowLeftStartOnRectangleIcon,
   EllipsisHorizontalIcon,
 } from '@heroicons/react/24/outline'
@@ -38,6 +37,11 @@ const badgeClass =
 function formatBadgeCount(count: number): string {
   if (count > 99) return '99+'
   return String(count)
+}
+
+/** Position im „Mehr“-Sheet für das versetzte Einblenden (siehe .mobile-sheet-item) */
+function sheetItemStyle(index: number): CSSProperties {
+  return { '--sheet-item-index': index } as CSSProperties
 }
 
 export default function Navigation() {
@@ -238,22 +242,20 @@ export default function Navigation() {
 
       {/* ---------- Desktop: Seitenleiste ---------- */}
       <aside
-        className={`desktop-sidebar hidden md:flex fixed inset-y-0 left-0 z-40 w-[var(--sidebar-width)] flex-col border-r border-hairline bg-surface ${
-          // Ausgeklappt: Beschriftungen während der Breitenanimation abschneiden.
-          // Eingeklappt: sichtbar lassen, damit die Tooltips über den Rand ragen dürfen.
-          isCollapsed ? '' : 'overflow-hidden'
-        }`}
+        // Icons behalten in beiden Zuständen ihre Position; nur die Beschriftungen (.sidebar-label) blenden ein/aus.
+        // Kein overflow-hidden: die Tooltips der eingeklappten Leiste ragen über den Rand.
+        className="desktop-sidebar hidden md:flex fixed inset-y-0 left-0 z-40 w-[var(--sidebar-width)] flex-col border-r border-hairline bg-surface"
         aria-label="Hauptnavigation"
         data-collapsed={isCollapsed}
       >
-        <div className={`flex h-16 shrink-0 items-center ${isCollapsed ? 'justify-center' : 'px-5'}`}>
+        <div className="flex h-16 shrink-0 items-center overflow-hidden px-5">
           <Link
             href="/"
             className="flex min-h-11 items-center gap-2.5 text-lg font-semibold tracking-tight text-primary whitespace-nowrap"
             aria-label="KontoPlaner – Übersicht"
           >
             <LogoMark />
-            <span className={isCollapsed ? 'sr-only' : ''}>KontoPlaner</span>
+            <span className="sidebar-label">KontoPlaner</span>
           </Link>
         </div>
 
@@ -266,9 +268,7 @@ export default function Navigation() {
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 aria-label={badgeAriaLabel(item)}
-                className={`nav-tooltip-anchor group relative flex min-h-11 items-center gap-3 rounded-control text-sm font-medium transition-colors duration-feedback ${
-                  isCollapsed ? 'justify-center' : 'px-3'
-                } ${
+                className={`nav-tooltip-anchor group relative flex min-h-11 items-center gap-3 rounded-control px-3.5 text-sm font-medium transition-colors duration-feedback ${
                   active
                     ? 'bg-accent-subtle text-accent font-semibold'
                     : 'text-secondary hover:bg-surface-muted hover:text-primary'
@@ -282,11 +282,9 @@ export default function Navigation() {
                     </span>
                   )}
                 </span>
-                <span className={isCollapsed ? 'sr-only' : 'min-w-0 flex-1 truncate'}>
-                  {item.name}
-                </span>
-                {item.badge > 0 && !isCollapsed && (
-                  <span className={badgeClass} aria-hidden="true">
+                <span className="sidebar-label min-w-0 flex-1 truncate">{item.name}</span>
+                {item.badge > 0 && (
+                  <span className={`sidebar-label ${badgeClass}`} aria-hidden="true">
                     {formatBadgeCount(item.badge)}
                   </span>
                 )}
@@ -307,12 +305,10 @@ export default function Navigation() {
             type="button"
             onClick={() => setShowLogoutConfirm(true)}
             aria-label="Abmelden"
-            className={`nav-tooltip-anchor group relative flex min-h-11 w-full items-center gap-3 rounded-control text-sm font-medium text-secondary transition-colors duration-feedback hover:bg-danger-subtle hover:text-danger ${
-              isCollapsed ? 'justify-center' : 'px-3'
-            }`}
+            className="nav-tooltip-anchor group relative flex min-h-11 w-full items-center gap-3 rounded-control px-3.5 text-sm font-medium text-secondary transition-colors duration-feedback hover:bg-danger-subtle hover:text-danger"
           >
             <ArrowLeftStartOnRectangleIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-            <span className={isCollapsed ? 'sr-only' : ''}>Abmelden</span>
+            <span className="sidebar-label min-w-0 flex-1 truncate text-left">Abmelden</span>
             {isCollapsed && (
               <span className="nav-tooltip" aria-hidden="true">
                 Abmelden
@@ -325,31 +321,24 @@ export default function Navigation() {
             onClick={toggleCollapsed}
             aria-label={isCollapsed ? 'Seitenleiste ausklappen' : 'Seitenleiste einklappen'}
             aria-expanded={!isCollapsed}
-            className={`nav-tooltip-anchor group relative flex min-h-11 w-full items-center gap-3 rounded-control text-sm font-medium text-secondary transition-colors duration-feedback hover:bg-surface-muted hover:text-primary ${
-              isCollapsed ? 'justify-center' : 'px-3'
-            }`}
+            className="nav-tooltip-anchor group relative flex min-h-11 w-full items-center gap-3 rounded-control px-3.5 text-sm font-medium text-secondary transition-colors duration-feedback hover:bg-surface-muted hover:text-primary"
           >
-            {isCollapsed ? (
-              <ChevronDoubleRightIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-            ) : (
-              <ChevronDoubleLeftIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-            )}
-            {isCollapsed ? (
+            <ChevronDoubleLeftIcon className="sidebar-toggle-icon h-5 w-5 shrink-0" aria-hidden="true" />
+            <span className="sidebar-label flex min-w-0 flex-1 items-center justify-between gap-2 overflow-hidden whitespace-nowrap">
+              Einklappen
+              <a
+                href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs font-normal text-secondary/80 hover:text-primary"
+              >
+                v{APP_VERSION}
+              </a>
+            </span>
+            {isCollapsed && (
               <span className="nav-tooltip" aria-hidden="true">
                 Ausklappen
-              </span>
-            ) : (
-              <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
-                Einklappen
-                <a
-                  href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-xs font-normal text-secondary/80 hover:text-primary"
-                >
-                  v{APP_VERSION}
-                </a>
               </span>
             )}
           </button>
@@ -406,15 +395,13 @@ export default function Navigation() {
               }`}
             >
               <span
-                className={`relative flex h-8 w-14 items-center justify-center rounded-pill transition-colors duration-feedback ${
+                data-open={isOpen}
+                className={`more-pill relative flex h-8 w-14 items-center justify-center rounded-pill ${
                   moreActive ? 'bg-accent-subtle' : ''
                 }`}
               >
-                {isOpen ? (
-                  <XMarkIcon className="h-6 w-6" aria-hidden="true" />
-                ) : (
-                  <EllipsisHorizontalIcon className="h-6 w-6" aria-hidden="true" />
-                )}
+                <EllipsisHorizontalIcon className="more-icon-dots h-6 w-6" aria-hidden="true" />
+                <XMarkIcon className="more-icon-close absolute h-6 w-6" aria-hidden="true" />
                 {moreBadge > 0 && !isOpen && (
                   <span className={`absolute top-0 right-2 ${badgeClass}`} aria-hidden="true">
                     {formatBadgeCount(moreBadge)}
@@ -448,10 +435,10 @@ export default function Navigation() {
         <div className="mx-auto mt-2.5 mb-2 h-1 w-10 rounded-full bg-border/60" aria-hidden="true" />
 
         <ul className="space-y-0.5">
-          {moreItems.map((item) => {
+          {moreItems.map((item, index) => {
             const active = isActive(item.href)
             return (
-              <li key={item.href}>
+              <li key={item.href} className="mobile-sheet-item" style={sheetItemStyle(index)}>
                 <Link
                   href={item.href}
                   onClick={() => setIsOpen(false)}
@@ -481,9 +468,14 @@ export default function Navigation() {
           })}
         </ul>
 
-        <SheetAccountSection />
+        <div className="mobile-sheet-item" style={sheetItemStyle(moreItems.length)}>
+          <SheetAccountSection />
+        </div>
 
-        <div className="mt-2 flex items-center justify-between gap-2 border-t border-hairline px-1 pt-2">
+        <div
+          className="mobile-sheet-item mt-2 flex items-center justify-between gap-2 border-t border-hairline px-1 pt-2"
+          style={sheetItemStyle(moreItems.length + 1)}
+        >
           <button
             type="button"
             onClick={() => {

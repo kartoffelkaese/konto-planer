@@ -83,7 +83,7 @@ export default function RootLayout({
           <main
             id="main-content"
             tabIndex={-1}
-            className="md:ml-[var(--sidebar-width)] max-md:pb-[var(--mobile-tabbar-space,0px)] transition-[margin-left] duration-300 ease-in-out outline-none"
+            className="md:ml-[var(--sidebar-width)] main-beside-sidebar max-md:pb-[var(--mobile-tabbar-space,0px)] outline-none"
           >
             <AccountSwitchTransition>{children}</AccountSwitchTransition>
           </main>

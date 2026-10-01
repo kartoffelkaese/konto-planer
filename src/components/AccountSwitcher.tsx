@@ -173,65 +173,45 @@ export default function AccountSwitcher({ variant }: AccountSwitcherProps) {
 
   return (
     <>
-      {variant === 'rail' ? (
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() => setModalOpen(true)}
-          aria-label={`Aktives Konto: ${active?.name ?? 'Konto'}. Konto wechseln`}
-          aria-haspopup="dialog"
-          className="nav-tooltip-anchor group relative mx-auto flex h-12 w-12 items-center justify-center rounded-control transition-colors duration-feedback hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          {active ? (
-            <AccountAvatar
-              name={active.name}
-              bankId={active.bankId}
-              size="md"
-              active
-              animating={avatarAnimating}
-              showInitialBadge={showInitialBadge(active.bankId)}
-            />
-          ) : (
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-accent-foreground">
-              <WalletIcon className="h-5 w-5" aria-hidden />
-            </span>
-          )}
+      {/* Ein Button für beide Zustände: der Avatar bleibt beim Ein-/Ausklappen an derselben Stelle */}
+      <button
+        type="button"
+        disabled={loading}
+        onClick={() => setModalOpen(true)}
+        aria-label={`Aktives Konto: ${active?.name ?? 'Konto'}. Konto wechseln`}
+        aria-haspopup="dialog"
+        className={`nav-tooltip-anchor group relative flex w-full items-center gap-3 rounded-control p-1.5 text-left transition-colors duration-feedback hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+          variant === 'rail' ? '' : 'bg-surface-muted/70'
+        }`}
+      >
+        {active ? (
+          <AccountAvatar
+            name={active.name}
+            bankId={active.bankId}
+            active
+            animating={avatarAnimating}
+            showInitialBadge={showInitialBadge(active.bankId)}
+          />
+        ) : (
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
+            <WalletIcon className="h-5 w-5" aria-hidden />
+          </span>
+        )}
+        <span className="sidebar-label min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold text-primary">
+            {active?.name ?? 'Konto'}
+          </span>
+          <span className="block truncate text-xs text-secondary">
+            {activeBank?.name ?? 'Konto wechseln'}
+          </span>
+        </span>
+        <ChevronUpDownIcon className="sidebar-label h-5 w-5 shrink-0 text-secondary" aria-hidden />
+        {variant === 'rail' && (
           <span className="nav-tooltip" aria-hidden="true">
             {active?.name ?? 'Konto'}
           </span>
-        </button>
-      ) : (
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() => setModalOpen(true)}
-          aria-haspopup="dialog"
-          className="flex w-full items-center gap-3 rounded-control bg-surface-muted/70 p-2 text-left transition-colors duration-feedback hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-        >
-          {active ? (
-            <AccountAvatar
-              name={active.name}
-              bankId={active.bankId}
-              active
-              animating={avatarAnimating}
-            />
-          ) : (
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-accent-foreground">
-              <WalletIcon className="h-5 w-5" aria-hidden />
-            </span>
-          )}
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-semibold text-primary">
-              {active?.name ?? 'Konto'}
-            </span>
-            <span className="block truncate text-xs text-secondary">
-              {activeBank?.name ?? 'Konto wechseln'}
-            </span>
-          </span>
-          <ChevronUpDownIcon className="h-5 w-5 shrink-0 text-secondary" aria-hidden />
-          <span className="sr-only">Konto wechseln</span>
-        </button>
-      )}
+        )}
+      </button>
 
       <Modal
         isOpen={modalOpen}

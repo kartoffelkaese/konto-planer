@@ -6,12 +6,19 @@ import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation'
 
 export type ToastType = 'success' | 'error' | 'warning'
 
+/** Optionale Aktion in der Meldung, z. B. „Rückgängig“ */
+export type ToastAction = {
+  label: string
+  onClick: () => void
+}
+
 interface ToastProps {
   message: string
   type: ToastType
   onClose: () => void
   duration?: number
   stackIndex?: number
+  action?: ToastAction
 }
 
 const EXIT_DURATION_MS = 200
@@ -22,6 +29,7 @@ export default function Toast({
   onClose,
   duration = 3000,
   stackIndex = 0,
+  action,
 }: ToastProps) {
   const [isExiting, setIsExiting] = useState(false)
 
@@ -84,6 +92,18 @@ export default function Toast({
         <p className="text-xs text-secondary mt-1 opacity-80">
           Drücke ESC zum Schließen
         </p>
+        {action && (
+          <button
+            type="button"
+            onClick={() => {
+              action.onClick()
+              requestClose()
+            }}
+            className="mt-2 inline-flex min-h-9 items-center rounded-control bg-surface px-3 text-sm font-semibold text-primary ring-1 ring-hairline hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            {action.label}
+          </button>
+        )}
       </div>
       <button
         type="button"

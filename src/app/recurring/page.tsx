@@ -40,10 +40,13 @@ import { useActiveAccountReload } from '@/hooks/useActiveAccountReload'
 import PageContextHeader from '@/components/PageContextHeader'
 import { resolveTransactionMerchantName } from '@/lib/merchantCategories'
 import { Button } from '@/components/Button'
+import PendingUndoButton from '@/components/PendingUndoButton'
+import { usePendingUndo } from '@/contexts/PendingUndoContext'
 
 export default function RecurringTransactionsPage() {
   const router = useRouter()
   const { showToast } = useToast()
+  const { registerCreated } = usePendingUndo()
   const { salaryDay, canWrite, isSimpleAccount, loading: settingsLoading, accountName } = useUserSettings()
   const [transactions, setTransactions] = useState<RecurringWithStatus[]>([])
   const [loading, setLoading] = useState(true)
@@ -97,9 +100,9 @@ export default function RecurringTransactionsPage() {
   const handleCreateAllPending = async () => {
     setIsCreatingPending(true)
     try {
-      await createPendingInstances()
+      const created = await createPendingInstances()
       await loadTransactions()
-      showToast('Ausstehende Zahlungen erstellt', 'success')
+      registerCreated(created)
     } catch (err) {
       console.error('Fehler beim Erstellen der ausstehenden Transaktionen:', err)
       showToast('Fehler beim Erstellen der ausstehenden Zahlungen', 'error')
@@ -226,6 +229,7 @@ export default function RecurringTransactionsPage() {
                   Ausstehende erstellen
                 </Button>
               )}
+              {canWrite && <PendingUndoButton onUndone={loadTransactions} />}
               {canWrite && (
                 <Button
                   type="button"

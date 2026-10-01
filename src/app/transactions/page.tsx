@@ -21,6 +21,8 @@ import TransactionForm from '@/components/TransactionForm'
 import EditTransactionForm from '@/components/EditTransactionForm'
 import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
+import PendingUndoButton from '@/components/PendingUndoButton'
+import { usePendingUndo } from '@/contexts/PendingUndoContext'
 import TransactionCsvImport from '@/components/TransactionCsvImport'
 import PageLoader from '@/components/PageLoader'
 import PageError from '@/components/PageError'
@@ -76,6 +78,7 @@ function TransactionsPageContent() {
   const loadingRef = useRef<HTMLDivElement>(null)
   const [togglingTransactionIds, setTogglingTransactionIds] = useState<string[]>([])
   const { showToast } = useToast()
+  const { registerCreated } = usePendingUndo()
 
   const [showNewTransactionModal, setShowNewTransactionModal] = useState(false)
   const [isCreatingPending, setIsCreatingPending] = useState(false)
@@ -336,9 +339,9 @@ function TransactionsPageContent() {
   const handleCreatePending = async () => {
     setIsCreatingPending(true)
     try {
-      await createPendingInstances()
+      const created = await createPendingInstances()
       await handleTransactionChange()
-      showToast('Ausstehende Zahlungen erstellt', 'success')
+      registerCreated(created)
     } catch (err) {
       console.error('Error creating pending instances:', err)
       setError('Fehler beim Erstellen der ausstehenden Zahlungen')
@@ -438,6 +441,7 @@ function TransactionsPageContent() {
                   Ausstehende erstellen
                 </Button>
               )}
+              {canWrite && <PendingUndoButton onUndone={handleTransactionChange} />}
               {canWrite && (
                 <>
                   <TransactionCsvImport

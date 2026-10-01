@@ -78,6 +78,7 @@ Wenn das aktive Konto als **einfaches Konto** markiert ist:
 | `GET` | `/api/transactions/recurring` | Wiederkehrende Vorlagen inkl. Intervall und Fälligkeit (Planungskonto) |
 | `GET` | `/api/transactions/totals` | Summen fürs Konto/Gehaltsmonat |
 | `POST` | `/api/transactions/create-pending` | Fällige ausstehende Instanzen erzeugen |
+| `POST` | `/api/transactions/create-pending/undo` | Zuletzt erzeugte Instanzen wieder entfernen. Body: `items` (Stand je Buchung direkt nach dem Erstellen: `id`, `merchant`, `description`, `amount`, `date`, `categoryId`; max. 500), `mode`: `ask` (Standard; bei bearbeiteten/bestätigten Buchungen wird nichts gelöscht, Antwort `status: "needs-confirmation"` mit `changed`, `unchangedCount`), `unchanged` (geänderte behalten) oder `all`. Sonst `status: "done"` mit `deleted`, `kept`. Gegenbuchungen von Umbuchungen werden mit entfernt |
 | `POST` | `/api/transactions/:id/create-instance` | Instanz einer wiederkehrenden Buchung |
 
 **`GET /api/transactions` – Query**

@@ -7,27 +7,31 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import Toast, { type ToastType } from '@/components/Toast'
+import Toast, { type ToastAction, type ToastType } from '@/components/Toast'
 
 const MAX_VISIBLE_TOASTS = 3
 const SUCCESS_DURATION_MS = 3000
 const ERROR_DURATION_MS = 5500
 const WARNING_DURATION_MS = 4000
+/** Meldungen mit Aktion bleiben länger stehen, damit man sie erreichen kann */
+const ACTION_DURATION_MS = 8000
 
 interface QueuedToast {
   id: string
   message: string
   type: ToastType
+  action?: ToastAction
 }
 
 interface ToastContextValue {
-  showToast: (message: string, type?: ToastType) => void
+  showToast: (message: string, type?: ToastType, action?: ToastAction) => void
   hideToast: (id: string) => void
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null)
 
-function toastDuration(type: ToastType): number {
+function toastDuration(type: ToastType, hasAction: boolean): number {
+  if (hasAction) return ACTION_DURATION_MS
   if (type === 'error') return ERROR_DURATION_MS
   if (type === 'warning') return WARNING_DURATION_MS
   return SUCCESS_DURATION_MS
@@ -40,12 +44,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setQueue((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
-  const showToast = useCallback((message: string, type: ToastType = 'success') => {
+  const showToast = useCallback((message: string, type: ToastType = 'success', action?: ToastAction) => {
     const id =
       typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random()}`
-    setQueue((prev) => [...prev, { id, message, type }].slice(-MAX_VISIBLE_TOASTS))
+    setQueue((prev) => [...prev, { id, message, type, action }].slice(-MAX_VISIBLE_TOASTS))
   }, [])
 
   return (
@@ -61,7 +65,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <Toast
               message={toast.message}
               type={toast.type}
-              duration={toastDuration(toast.type)}
+              duration={toastDuration(toast.type, Boolean(toast.action))}
+              action={toast.action}
               stackIndex={index}
               onClose={() => hideToast(toast.id)}
             />

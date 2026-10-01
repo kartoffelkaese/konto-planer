@@ -8,6 +8,7 @@ import type { UserSettings } from '@/hooks/useUserSettings'
 import type { TransferTarget } from '@/lib/transfers'
 import type { RecurringWithStatus } from '@/lib/recurringStatus'
 import { toISOString } from '@/lib/dateUtils'
+import type { PendingUndoItem, PendingUndoMode, PendingUndoResult } from '@/lib/pendingUndo'
 import type {
   CreateSplitExpenseData,
   CreateSplitListData,
@@ -254,6 +255,16 @@ export const createRecurringInstance = async (transactionId: string): Promise<Tr
 
 export const createPendingInstances = async (): Promise<Transaction[]> => {
   return apiFetch<Transaction[]>('/transactions/create-pending', { method: 'POST' })
+}
+
+export const undoPendingInstances = async (
+  items: PendingUndoItem[],
+  mode: PendingUndoMode
+): Promise<PendingUndoResult> => {
+  return apiFetch<PendingUndoResult>('/transactions/create-pending/undo', {
+    method: 'POST',
+    body: JSON.stringify({ items, mode }),
+  })
 }
 
 export const getRecurringTransactions = async (): Promise<RecurringWithStatus[]> => {

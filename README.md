@@ -38,6 +38,7 @@ App: [http://localhost:3000](http://localhost:3000) (Standard-Port von `next dev
 | `npm run audit:check` | npm audit (nur High/Critical) |
 | `npm run db:migrate` | Migrationen (Produktion) |
 | `npm run db:migrate:dev` | Migrationen (Entwicklung) |
+| `npm run release -- 9.4.5` | Typecheck, Lint, Tests; dann Version setzen, alles committen (Nachricht = Version) und pushen |
 
 `postinstall` führt `prisma generate` aus. Der Ordner `prisma/node_modules/` gehört **nicht** ins Repository (veralteter Prisma-Client).
 

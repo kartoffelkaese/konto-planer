@@ -15,7 +15,8 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: '128M',
+      // Next.js + Prisma belegen im Normalbetrieb rund 230–260 MB; die Grenze fängt nur echte Speicherlecks ab
+      max_memory_restart: '512M',
       error_file: './logs/pm2-error.log',
       out_file: './logs/pm2-out.log',
       log_file: './logs/pm2-combined.log',

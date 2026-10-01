@@ -83,6 +83,8 @@ pm2 start ecosystem.config.js --env production
 
 Weitere Befehle: `pm2 restart konto-planer`, `pm2 logs konto-planer`, `pm2 stop konto-planer`.
 
+**Speichergrenze:** `max_memory_restart` steht in `ecosystem.config.js` auf `512M`. PM2 startet die App neu, sobald sie mehr belegt. Im Normalbetrieb braucht sie rund 230–260 MB (Next.js + Prisma); die Grenze soll nur echte Speicherlecks abfangen. Auf sehr kleinen Servern ggf. auf `384M` senken — nicht unter den Normalverbrauch, sonst startet PM2 die App im Dauerlauf neu. Eine geänderte Grenze greift erst nach dem Neu-Registrieren des Prozesses (`pm2 delete` / `pm2 start` / `pm2 save`, siehe unten), nicht nach `pm2 restart`.
+
 Nach einem **Node-/NVM-Upgrade** PM2-Prozess neu registrieren (alter `node`-Pfad wird sonst gecacht):
 
 ```bash
@@ -201,6 +203,7 @@ Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber o
 | PM2: `Cannot find module '.../v24.../bin/npm'` oder alter Node-Pfad | Node-Version gewechselt; `pm2 delete konto-planer && pm2 start ecosystem.config.js --env production && pm2 save` |
 | `npm audit fix --force` bricht Abhängigkeiten | **Nicht ausführen** — downgraded Prisma/Next/ESLint. Stattdessen gezielte `overrides` in `package.json` oder `npm audit fix` ohne `--force` |
 | Audit meldet `mariadb`/`mysql2` | `overrides` in `package.json` prüfen; `npm install` und `npm run audit:check` |
+| App startet häufig neu (↺ in `pm2 list` steigt) | `grep -i memory ~/.pm2/pm2.log \| tail` — bei „exceeds --max-memory-restart“ ist `max_memory_restart` in `ecosystem.config.js` zu niedrig (Standard `512M`); danach Prozess neu registrieren. Sonst `pm2 logs konto-planer --err` auf Abstürze prüfen |
 | Start bricht sofort ab | Pflicht-Env in Produktion prüfen (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `TRUST_PROXY`, SMTP-Variablen) |
 | Keine Bestätigungs-E-Mail | SMTP-Zugangsdaten und `AUTH_URL` prüfen; Spam-Ordner |
 | Login-Redirect falsch | `AUTH_URL` muss die öffentliche HTTPS-URL sein |

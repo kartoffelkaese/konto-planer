@@ -13,6 +13,13 @@ export function isRecurringTemplateActive(t: {
   return t.isRecurring && !t.isRecurringPaused
 }
 
+/** Mindestens eine aktive Vorlage ist im Gehaltsmonat fällig und hat noch keine Buchung – „Ausstehende erstellen“ hätte etwas zu tun */
+export function hasDueRecurringWithoutInstance(templates: RecurringWithStatus[]): boolean {
+  return templates.some(
+    (t) => !t.isRecurringPaused && t.dueInSalaryMonth && !t.hasInstanceInSalaryMonth
+  )
+}
+
 export function getRecurringSalaryMonthStatus(transaction: RecurringWithStatus): {
   label: string
   className: string
@@ -37,7 +44,7 @@ export function getRecurringSalaryMonthStatus(transaction: RecurringWithStatus):
   }
   if (transaction.dueInSalaryMonth) {
     return {
-      label: 'Fällig – unter Transaktionen „Ausstehende erstellen“',
+      label: 'Fällig – oben „Ausstehende erstellen“',
       className: 'bg-accent-subtle text-accent',
     }
   }

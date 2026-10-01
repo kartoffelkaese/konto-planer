@@ -16,6 +16,7 @@ import {
 } from '@/lib/recurringIntervals'
 import {
   getRecurringSalaryMonthStatus,
+  hasDueRecurringWithoutInstance,
   type RecurringWithStatus,
 } from '@/lib/recurringStatus'
 import { formatCurrency } from '@/lib/formatters'
@@ -163,12 +164,7 @@ export default function RecurringTransactionsPage() {
     )
   }
 
-  const hasDueWithoutInstance = transactions.some(
-    (t) =>
-      !t.isRecurringPaused &&
-      t.dueInSalaryMonth &&
-      !t.hasInstanceInSalaryMonth
-  )
+  const hasDueWithoutInstance = hasDueRecurringWithoutInstance(transactions)
 
   if (settingsLoading || isSimpleAccount) {
     return <PageLoader message="Wird weitergeleitet…" />

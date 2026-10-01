@@ -4,8 +4,9 @@ import { Suspense, useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { PlusIcon } from '@heroicons/react/24/outline'
 import { Transaction } from '@/types'
-import { getTransactions, getTransactionTotals, updateTransaction, createPendingInstances } from '@/lib/api'
-import { isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
+import { getTransactions, getTransactionTotals, updateTransaction, createPendingInstances, getRecurringTransactions } from '@/lib/api'
+import { useApiQuery } from '@/hooks/useApiQuery'
+import { hasDueRecurringWithoutInstance } from '@/lib/recurringStatus'
 import {
   getDefaultCustomPeriodRange,
   isCustomPeriodBlocked,
@@ -79,6 +80,14 @@ function TransactionsPageContent() {
   const [togglingTransactionIds, setTogglingTransactionIds] = useState<string[]>([])
   const { showToast } = useToast()
   const { registerCreated } = usePendingUndo()
+
+  // „Ausstehende erstellen“ nur anbieten, wenn eine wiederkehrende Zahlung fällig ist und noch keine Buchung hat
+  const canCreatePending = !settingsLoading && !isSimpleAccount && canWrite
+  const { data: recurringTemplates, reload: reloadRecurringTemplates } = useApiQuery(
+    'recurring-templates',
+    getRecurringTransactions,
+    { enabled: canCreatePending }
+  )
 
   const [showNewTransactionModal, setShowNewTransactionModal] = useState(false)
   const [isCreatingPending, setIsCreatingPending] = useState(false)
@@ -163,6 +172,7 @@ function TransactionsPageContent() {
   }, [salaryDay, debouncedSearch, period, customStartDate, customEndDate, customPeriodBlocked])
 
   useActiveAccountReload(() => {
+    reloadRecurringTemplates()
     if (salaryDay !== null && !customPeriodBlocked) {
       loadTransactions(1, false)
       loadTotals()
@@ -317,9 +327,10 @@ function TransactionsPageContent() {
   }
 
   const handleTransactionChange = useCallback(async () => {
+    reloadRecurringTemplates()
     await loadTotals()
     await loadTransactions(page, false)
-  }, [page, salaryDay, period, customStartDate, customEndDate, debouncedSearch, customPeriodBlocked])
+  }, [reloadRecurringTemplates, page, salaryDay, period, customStartDate, customEndDate, debouncedSearch, customPeriodBlocked])
 
   const handleSort = useCallback(
     (field: SortField) => {
@@ -367,27 +378,7 @@ function TransactionsPageContent() {
     await handleTransactionChange()
   }
 
-  const isTransactionPending = (transaction: Transaction) => {
-    if (salaryDay === null) return false
-    return (
-      transaction.isRecurring &&
-      isTransactionDueInSalaryMonth(
-        {
-          date: new Date(transaction.date),
-          isRecurring: transaction.isRecurring,
-          recurringInterval: transaction.recurringInterval,
-          lastConfirmedDate: transaction.lastConfirmedDate
-            ? new Date(transaction.lastConfirmedDate)
-            : undefined,
-        },
-        salaryDay
-      ) &&
-      !transaction.isConfirmed
-    )
-  }
-
-  const hasPendingInList = transactions.some(isTransactionPending)
-  const showPendingAction = !isSimpleAccount && canWrite && (totals.totalPendingExpenses > 0 || hasPendingInList)
+  const showPendingAction = canCreatePending && hasDueRecurringWithoutInstance(recurringTemplates ?? [])
 
   if ((loading || settingsLoading) && transactions.length === 0 && !error) {
     return <PageLoader message="Transaktionen werden geladen…" />

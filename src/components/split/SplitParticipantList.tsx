@@ -23,7 +23,7 @@ import {
 function formatParticipantRemoveError(message: string, displayName?: string): string {
   if (message.includes('Ausgaben verknüpft')) {
     const who = displayName ? `„${displayName}"` : 'Dieser Teilnehmer'
-    return `${who} kann nicht entfernt werden, weil noch Ausgaben damit verknüpft sind. Bearbeiten oder löschen Sie zuerst die betroffenen Posten im Tab „Ausgaben“.`
+    return `${who} kann nicht entfernt werden, weil noch Ausgaben damit verknüpft sind. Bearbeite oder lösche zuerst die betroffenen Posten im Tab „Ausgaben“.`
   }
   return message
 }

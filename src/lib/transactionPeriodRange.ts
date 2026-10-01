@@ -187,19 +187,19 @@ export function getCustomPeriodValidation(
   if (!startDate && !endDate) {
     return {
       status: 'incomplete',
-      message: 'Bitte wählen Sie einen Datumszeitraum.',
+      message: 'Bitte wähle einen Datumszeitraum.',
     }
   }
   if (!startDate) {
     return {
       status: 'incomplete',
-      message: 'Bitte wählen Sie noch ein Startdatum.',
+      message: 'Bitte wähle noch ein Startdatum.',
     }
   }
   if (!endDate) {
     return {
       status: 'incomplete',
-      message: 'Bitte wählen Sie noch ein Enddatum.',
+      message: 'Bitte wähle noch ein Enddatum.',
     }
   }
 

@@ -25,7 +25,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(
       {
         error:
-          'Es kann nur das aktuell gewählte Buchführungs-Konto gelöscht werden. Bitte wechseln Sie zuerst in der Navigation.',
+          'Es kann nur das aktuell gewählte Buchführungs-Konto gelöscht werden. Bitte wechsle zuerst in der Navigation.',
       },
       { status: 400 }
     )
@@ -58,7 +58,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(
       {
         error:
-          'Ihr letztes verfügbares Buchführungs-Konto kann hier nicht gelöscht werden. Nutzen Sie unten „Anmeldung löschen“, wenn Sie den Zugang vollständig entfernen möchten.',
+          'Dein letztes verfügbares Buchführungs-Konto kann hier nicht gelöscht werden. Nutze unten „Anmeldung löschen“, wenn du den Zugang vollständig entfernen möchtest.',
       },
       { status: 400 }
     )

@@ -3,6 +3,7 @@
 import { CalendarDaysIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { Button } from '@/components/Button'
 import DateRangePicker from '@/components/DateRangePicker'
+import SegmentedControl from '@/components/SegmentedControl'
 import {
   getCustomPeriodValidation,
   getTransactionPeriodOptions,
@@ -83,41 +84,19 @@ export default function TransactionPeriodFilter({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <div
-          className="grid w-full grid-cols-3 gap-1 rounded-pill bg-surface-muted p-1 sm:w-auto"
-          role="radiogroup"
-          aria-label="Zeitraum auswählen"
-        >
-          {options.map((option) => {
-            const selected = period === option.value
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                aria-label={option.label}
-                onClick={() => {
-                  if (isValidTransactionPeriod(option.value)) {
-                    onPeriodChange(option.value)
-                  }
-                }}
-                className={`min-h-10 min-w-0 whitespace-nowrap rounded-pill px-3 text-sm font-medium transition-colors duration-feedback ${
-                  selected
-                    ? 'bg-surface text-primary shadow-card'
-                    : 'text-secondary hover:text-primary'
-                }`}
-              >
-                <span className="truncate sm:hidden" aria-hidden="true">
-                  {SHORT_LABELS[option.value] ?? option.label.replace(/^Nur /, '')}
-                </span>
-                <span className="max-sm:hidden" aria-hidden="true">
-                  {option.label}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+        <SegmentedControl
+          ariaLabel="Zeitraum auswählen"
+          className="grid w-full grid-cols-3 sm:w-auto"
+          value={period}
+          onChange={(next) => {
+            if (isValidTransactionPeriod(next)) onPeriodChange(next)
+          }}
+          options={options.map((option) => ({
+            value: option.value,
+            label: option.label,
+            shortLabel: SHORT_LABELS[option.value] ?? option.label.replace(/^Nur /, ''),
+          }))}
+        />
 
         <div className="flex min-w-0 items-center gap-2">
           {activeRange && (

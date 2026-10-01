@@ -29,25 +29,25 @@ function verificationEmailContent(
       subject: 'Neue E-Mail-Adresse bestätigen – KontoPlaner',
       html: `
         <p>Hallo,</p>
-        <p>bitte bestätigen Sie Ihre neue E-Mail-Adresse für KontoPlaner:</p>
+        <p>bitte bestätige deine neue E-Mail-Adresse für KontoPlaner:</p>
         <p><a href="${verifyUrl}">E-Mail-Adresse bestätigen</a></p>
         <p>${expiresHint}</p>
-        <p>Falls Sie diese Änderung nicht angefordert haben, ignorieren Sie diese E-Mail.</p>
+        <p>Falls du diese Änderung nicht angefordert hast, ignoriere diese E-Mail.</p>
       `,
-      text: `Bitte bestätigen Sie Ihre neue E-Mail-Adresse für KontoPlaner:\n${verifyUrl}\n\n${expiresHint}`,
+      text: `Bitte bestätige deine neue E-Mail-Adresse für KontoPlaner:\n${verifyUrl}\n\n${expiresHint}`,
     }
   }
 
   return {
-    subject: 'Bitte bestätigen Sie Ihre E-Mail-Adresse – KontoPlaner',
+    subject: 'Bitte bestätige deine E-Mail-Adresse – KontoPlaner',
     html: `
       <p>Hallo,</p>
-      <p>vielen Dank für Ihre Registrierung bei KontoPlaner.</p>
-      <p>Bitte bestätigen Sie Ihre E-Mail-Adresse:</p>
+      <p>vielen Dank für deine Registrierung bei KontoPlaner.</p>
+      <p>Bitte bestätige deine E-Mail-Adresse:</p>
       <p><a href="${verifyUrl}">E-Mail-Adresse bestätigen</a></p>
       <p>${expiresHint}</p>
     `,
-    text: `Vielen Dank für Ihre Registrierung bei KontoPlaner.\n\nBitte bestätigen Sie Ihre E-Mail-Adresse:\n${verifyUrl}\n\n${expiresHint}`,
+    text: `Vielen Dank für deine Registrierung bei KontoPlaner.\n\nBitte bestätige deine E-Mail-Adresse:\n${verifyUrl}\n\n${expiresHint}`,
   }
 }
 

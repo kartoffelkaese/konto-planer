@@ -19,6 +19,7 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import PageError from '@/components/PageError'
 import EmptyState from '@/components/EmptyState'
 import PageContextHeader from '@/components/PageContextHeader'
+import SegmentedControl from '@/components/SegmentedControl'
 import KpiCard from '@/components/KpiCard'
 import { ChevronDownIcon } from '@heroicons/react/24/outline'
 import { useUserSettings } from '@/hooks/useUserSettings'
@@ -183,9 +184,9 @@ export default function StatisticsPage() {
     return (
       <div className="flex items-center justify-center min-h-[50vh] px-4">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold text-primary">Bitte melden Sie sich an</h1>
+          <h1 className="text-2xl font-semibold text-primary">Bitte melde dich an</h1>
           <p className="mt-2 text-secondary">
-            Um die Statistiken zu sehen, müssen Sie angemeldet sein.
+            Um die Statistiken zu sehen, musst du angemeldet sein.
           </p>
         </div>
       </div>
@@ -235,30 +236,15 @@ export default function StatisticsPage() {
       />
 
       <section className="card p-4 md:p-5 mb-4 md:mb-6 space-y-4">
-        <div
-          className="-mx-1 flex gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          role="radiogroup"
-          aria-label="Zeitraum"
-        >
-          {timeRanges.map((range) => {
-            const selected = timeRange === range.value
-            return (
-              <button
-                key={range.value}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => setTimeRange(range.value)}
-                className={`shrink-0 whitespace-nowrap rounded-pill px-3.5 min-h-10 text-sm font-medium transition-colors duration-feedback ${
-                  selected
-                    ? 'bg-accent text-accent-foreground'
-                    : 'bg-surface-muted text-secondary hover:text-primary'
-                }`}
-              >
-                {range.label}
-              </button>
-            )
-          })}
+        <div className="-mx-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <SegmentedControl
+            ariaLabel="Zeitraum"
+            className="flex min-w-min sm:inline-flex"
+            buttonClassName="shrink-0 px-3.5"
+            value={timeRange}
+            onChange={setTimeRange}
+            options={timeRanges}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -399,7 +385,7 @@ export default function StatisticsPage() {
           ) : !showChart ? (
             <EmptyState
               title="Keine Daten für die Auswahl"
-              description="Wählen Sie eine andere Kategorie, einen anderen Händler oder einen anderen Zeitraum."
+              description="Wähle eine andere Kategorie, einen anderen Händler oder einen anderen Zeitraum."
             />
           ) : (
             <ChartContainer height={340}>

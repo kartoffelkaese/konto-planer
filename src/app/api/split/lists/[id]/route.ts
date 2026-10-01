@@ -161,7 +161,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(
       {
         error:
-          'Die Split-Liste konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.',
+          'Die Split-Liste konnte nicht gelöscht werden. Bitte versuche es erneut.',
         code: 'SPLIT_LIST_DELETE_FAILED',
       },
       { status: 500 }

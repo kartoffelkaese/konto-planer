@@ -41,7 +41,7 @@ App: [http://localhost:3000](http://localhost:3000) (Standard-Port von `next dev
 
 `postinstall` führt `prisma generate` aus. Der Ordner `prisma/node_modules/` gehört **nicht** ins Repository (veralteter Prisma-Client).
 
-Weitere Details: [INSTALL.md](INSTALL.md) (Server) · [API.md](API.md) · [LOGGING.md](LOGGING.md)
+Weitere Details: [INSTALL.md](INSTALL.md) (Server) · [API.md](API.md) · [LOGGING.md](LOGGING.md) · [DESIGN.md](DESIGN.md) (Gestaltungsregeln)
 
 ## Lizenz
 

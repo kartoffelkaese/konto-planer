@@ -107,7 +107,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({
-      message: 'Bestätigungs-E-Mail gesendet. Bitte prüfen Sie Ihr Postfach.',
+      message: 'Bestätigungs-E-Mail gesendet. Bitte prüfe dein Postfach.',
       pendingEmail: newEmail,
     })
   } catch (error) {

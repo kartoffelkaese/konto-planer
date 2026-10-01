@@ -3,7 +3,7 @@ import { AccountMemberRole } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 
 export const SIMPLE_ACCOUNT_RECURRING_BLOCK_MESSAGE =
-  'Bitte löschen Sie zuerst alle wiederkehrenden Zahlungen unter „Wiederkehrend“.'
+  'Bitte lösche zuerst alle wiederkehrenden Zahlungen unter „Wiederkehrend“.'
 
 export const SIMPLE_ACCOUNT_PLANNING_FORBIDDEN_MESSAGE =
   'Diese Funktion steht für einfache Konten nicht zur Verfügung.'

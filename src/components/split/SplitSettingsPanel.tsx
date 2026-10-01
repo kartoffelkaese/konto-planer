@@ -187,7 +187,7 @@ export default function SplitSettingsPanel({
             </div>
           )}
           <div>
-            <dt className="text-xs text-secondary">Ihre Rolle</dt>
+            <dt className="text-xs text-secondary">Deine Rolle</dt>
             <dd className="font-medium text-primary">
               {list.role === 'OWNER' ? 'Ersteller' : 'Mitglied'}
             </dd>

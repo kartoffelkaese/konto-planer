@@ -73,8 +73,8 @@ export default function CategorySelect({
       </select>
       {isSuggestion && value && (
         <p className="mt-1 text-xs text-secondary">
-          Vorgeschlagene Kategorie – wird erst beim Speichern übernommen, wenn Sie sie
-          auswählen oder ändern.
+          Vorgeschlagene Kategorie – wird erst beim Speichern übernommen, wenn du sie
+          auswählst oder änderst.
         </p>
       )}
     </div>

@@ -146,10 +146,10 @@ export default function TransactionList({
       }
       description={
         isSearchActive
-          ? 'Passen Sie die Suche an oder ändern Sie den Zeitraum.'
+          ? 'Passe die Suche an oder ändere den Zeitraum.'
           : isPeriodFilterActive
-            ? 'Wählen Sie einen anderen Zeitraum oder setzen Sie den Filter zurück.'
-            : 'Erfassen Sie Ihre erste Einnahme oder Ausgabe.'
+            ? 'Wähle einen anderen Zeitraum oder setze den Filter zurück.'
+            : 'Erfasse deine erste Einnahme oder Ausgabe.'
       }
       actionLabel={
         isSearchActive || isPeriodFilterActive

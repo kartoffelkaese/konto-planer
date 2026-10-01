@@ -213,7 +213,7 @@ export default function SplitExpenseList({
       <div className="card overflow-hidden">
         <EmptyState
           title="Noch keine Ausgaben erfasst"
-          description="Erfassen Sie gemeinsame Kosten — die App rechnet automatisch aus, wer wem was schuldet."
+          description="Erfasse gemeinsame Kosten — die App rechnet automatisch aus, wer wem was schuldet."
           actionLabel={!readOnly && onAdd ? 'Erste Ausgabe hinzufügen' : undefined}
           onAction={onAdd}
         />

@@ -32,7 +32,7 @@ type Feature = {
 const features: Feature[] = [
   {
     icon: ChartBarIcon,
-    title: 'Dashboard auf einen Blick',
+    title: 'Alles auf einen Blick',
     description:
       'Verfügbar, Einnahmen, Ausgaben und letzte Buchungen – die wichtigsten Zahlen sofort, ohne Tabellen-Chaos.',
   },
@@ -40,7 +40,7 @@ const features: Feature[] = [
     icon: BanknotesIcon,
     title: 'Transaktionen & Gehaltsmonat',
     description:
-      'Buchen, filtern, bestätigen. Der Gehaltsmonat folgt Ihrem Einkommen – nicht dem Kalender.',
+      'Buchen, filtern, bestätigen. Der Gehaltsmonat folgt deinem Einkommen – nicht dem Kalender.',
   },
   {
     icon: ArrowDownTrayIcon,
@@ -95,14 +95,14 @@ const features: Feature[] = [
     icon: ShieldCheckIcon,
     title: 'Backup & Datenschutz',
     description:
-      'JSON-Backup exportieren und wiederherstellen. Ihre Daten, Ihr Server – keine Werbung, kein Datenverkauf.',
+      'JSON-Backup exportieren und wiederherstellen. Deine Daten, dein Server – keine Werbung, kein Datenverkauf.',
   },
 ]
 
 const steps = [
   {
     title: 'Registrieren',
-    description: 'In wenigen Sekunden starten und optional Ihre Bank zuordnen.',
+    description: 'In wenigen Sekunden starten und optional deine Bank zuordnen.',
   },
   {
     title: 'Finanzen strukturieren',
@@ -112,7 +112,7 @@ const steps = [
   {
     title: 'Planen & teilen',
     description:
-      'Dashboard und Statistiken nutzen, Konten gemeinsam führen oder Ausgaben per Split aufteilen.',
+      'Übersicht und Statistiken nutzen, Konten gemeinsam führen oder Ausgaben per Split aufteilen.',
   },
 ]
 
@@ -121,11 +121,11 @@ const trustPoints = ['Kostenlos', 'Ohne Werbung', 'DKB & ING Import', 'Mehrere K
 const highlights = [
   {
     title: 'Gehaltsmonat statt Kalender',
-    description: 'Auswertungen passen sich Ihrem Gehaltseingang an – nicht dem 1. des Monats.',
+    description: 'Auswertungen passen sich deinem Gehaltseingang an – nicht dem 1. des Monats.',
   },
   {
     title: 'Verfügbar auf einen Blick',
-    description: 'Kontostand minus ausstehende Ausgaben – so sehen Sie, was wirklich frei ist.',
+    description: 'Kontostand minus ausstehende Ausgaben – so siehst du, was wirklich frei ist.',
   },
   {
     title: 'Schnell startklar',
@@ -427,7 +427,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <SectionIntro
             eyebrow="Funktionen"
-            title="Alles für Ihren Finanzüberblick"
+            title="Alles für deinen Finanzüberblick"
             text="Von der ersten Buchung bis zum gemeinsamen Haushalt – ohne unnötige Komplexität."
           />
 
@@ -458,7 +458,7 @@ export default function LandingPage() {
 
       <section id="steps" className="scroll-mt-16 py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <SectionIntro eyebrow="In drei Schritten" title="So starten Sie mit KontoPlaner" />
+          <SectionIntro eyebrow="In drei Schritten" title="So startest du mit KontoPlaner" />
 
           <ol className="mt-12 grid gap-4 md:grid-cols-3">
             {steps.map((step, index) => (

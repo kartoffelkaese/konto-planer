@@ -166,7 +166,7 @@ export default function SplitSharePanel({ listId, isOwner }: SplitSharePanelProp
               ) : (
                 <p className="text-sm text-secondary">
                   Der aktuelle Link ist aktiv, wurde aber nach dem letzten Laden erzeugt.
-                  Generieren Sie den Link neu, um ihn zu kopieren.
+                  Generiere den Link neu, um ihn zu kopieren.
                 </p>
               )}
               <div className="flex flex-wrap gap-2">

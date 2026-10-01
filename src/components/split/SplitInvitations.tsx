@@ -50,7 +50,7 @@ export default function SplitInvitations({ onResponded }: SplitInvitationsProps)
     <div className="mb-6 rounded-card bg-accent-subtle p-4">
       <h2 className="text-lg font-medium text-primary mb-1">Einladungen zu Split-Listen</h2>
       <p className="text-sm text-secondary mb-4">
-        Sie wurden eingeladen, Ausgaben in einer Split-Liste mitzuerfassen. Dies ist
+        Du wurdest eingeladen, Ausgaben in einer Split-Liste mitzuerfassen. Dies ist
         unabhängig von geteilten Haushaltskonten.
       </p>
       <ul className="space-y-3">

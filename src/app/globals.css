@@ -540,6 +540,33 @@ button:active > .more-pill {
   transform: none;
 }
 
+/* Segmentierte Auswahl: die Markierung gleitet zur gewählten Option und federt leicht nach */
+.segmented-indicator {
+  position: absolute;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  left: 0;
+  border-radius: var(--radius-pill, 9999px);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 320ms cubic-bezier(0.34, 1.25, 0.64, 1),
+    width 320ms cubic-bezier(0.34, 1.25, 0.64, 1),
+    opacity var(--motion-duration-feedback) var(--motion-easing);
+}
+
+.segmented-option {
+  transition:
+    color 200ms var(--motion-easing),
+    transform var(--motion-duration-feedback) var(--motion-easing);
+}
+
+.segmented-option:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
 /* Kontowechsel – Microanimation */
 @keyframes account-switch-exit {
   from {

@@ -59,7 +59,7 @@ function resolveFormat(options?: ParseCsvOptions): CsvImportFormat {
   const bankId = options?.bankId
   if (!bankId) {
     throw new CsvParseError(
-      'Bitte wählen Sie Ihre Bank in den Einstellungen, um CSV-Dateien importieren zu können.'
+      'Bitte wähle deine Bank in den Einstellungen, um CSV-Dateien importieren zu können.'
     )
   }
 

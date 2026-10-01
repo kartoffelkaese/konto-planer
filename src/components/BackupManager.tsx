@@ -80,7 +80,7 @@ export default function BackupManager({ allowRestore = true }: { allowRestore?: 
     <div className="space-y-4">
       <h3 className="text-lg font-medium text-primary">Backup & Wiederherstellung</h3>
       <p className="text-sm text-secondary">
-        Erstellen Sie ein Backup Ihrer Daten oder stellen Sie ein vorheriges Backup wieder her.
+        Erstelle ein Backup deiner Daten oder stelle ein vorheriges Backup wieder her.
       </p>
 
       {error && (

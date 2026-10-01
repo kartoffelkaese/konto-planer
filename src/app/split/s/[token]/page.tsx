@@ -119,7 +119,7 @@ export default function SplitSharePage() {
 
       <div className="mb-4 rounded-lg border border-accent-border bg-accent-subtle p-4 text-sm text-primary">
         <p>
-          Nur Ansicht — Sie können diese Liste ansehen, aber keine Ausgaben erfassen oder
+          Nur Ansicht — du kannst diese Liste ansehen, aber keine Ausgaben erfassen oder
           bearbeiten.
         </p>
         <p className="mt-2 text-secondary">

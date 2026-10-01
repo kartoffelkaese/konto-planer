@@ -154,7 +154,7 @@ export default function SplitCategoryManager({
 
       {categories.length === 0 ? (
         <p className="px-4 py-6 text-center text-sm text-secondary">
-          Noch keine Kategorien — legen Sie welche an, um Ausgaben zu gruppieren.
+          Noch keine Kategorien — lege welche an, um Ausgaben zu gruppieren.
         </p>
       ) : (
         <ul className="divide-y divide-hairline px-2 md:px-3">

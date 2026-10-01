@@ -38,7 +38,7 @@ type Tab = 'expenses' | 'balances' | 'history' | 'settings'
 function formatSplitListDeleteError(message: string, listName?: string): string {
   if (message.includes('HTTP 500') || message.includes('nicht gelöscht')) {
     const label = listName ? `„${listName}"` : 'Die Split-Liste'
-    return `${label} konnte gerade nicht gelöscht werden. Bitte versuchen Sie es in ein paar Sekunden erneut.`
+    return `${label} konnte gerade nicht gelöscht werden. Bitte versuche es in ein paar Sekunden erneut.`
   }
   if (message.includes('Nur der Ersteller')) {
     return 'Nur der Ersteller der Liste darf sie löschen.'
@@ -288,23 +288,23 @@ function SplitDetailPageContent() {
         actions={
           <div className="flex flex-wrap gap-2">
             {canAddExpense && (
-              <Button size="sm" className="max-md:hidden" onClick={openNewExpenseModal}>
-                <PlusIcon className="h-4 w-4" aria-hidden="true" />
+              <Button className="max-md:hidden" onClick={openNewExpenseModal}>
+                <PlusIcon className="h-5 w-5" aria-hidden="true" />
                 Ausgabe
               </Button>
             )}
             {isOwner && !readOnly && (
-              <Button variant="secondary" size="sm" className="max-md:hidden" onClick={handleArchive}>
+              <Button variant="secondary" className="max-md:hidden" onClick={handleArchive}>
                 Archivieren
               </Button>
             )}
             {isOwner && readOnly && (
-              <Button variant="secondary" size="sm" className="max-md:hidden" onClick={handleUnarchive}>
+              <Button variant="secondary" className="max-md:hidden" onClick={handleUnarchive}>
                 Reaktivieren
               </Button>
             )}
             {isOwner && (
-              <Button variant="danger-outline" size="sm" className="max-md:hidden" onClick={handleDelete}>
+              <Button variant="danger-outline" className="max-md:hidden" onClick={handleDelete}>
                 Löschen
               </Button>
             )}
@@ -318,7 +318,7 @@ function SplitDetailPageContent() {
           {isOwner && (
             <span>
               {' '}
-              Als Ersteller können Sie sie jederzeit über „Reaktivieren“ wieder bearbeitbar machen.
+              Als Ersteller kannst du sie jederzeit über „Reaktivieren“ wieder bearbeitbar machen.
             </span>
           )}
         </div>

@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { message: 'Bitte geben Sie eine gültige E-Mail-Adresse ein' },
+        { message: 'Bitte gib eine gültige E-Mail-Adresse ein' },
         { status: 400 }
       )
     }
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message:
-          'Konto erstellt. Bitte bestätigen Sie Ihre E-Mail-Adresse über den Link in der E-Mail.',
+          'Konto erstellt. Bitte bestätige deine E-Mail-Adresse über den Link in der E-Mail.',
       },
       { status: 201 }
     )

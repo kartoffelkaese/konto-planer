@@ -85,7 +85,7 @@ export default function DashboardPage() {
       setData(dashboardData)
     } catch (error) {
       console.error('Fehler:', error)
-      setLoadError('Dashboard konnte nicht geladen werden.')
+      setLoadError('Übersicht konnte nicht geladen werden.')
     } finally {
       setIsLoading(false)
     }
@@ -114,7 +114,7 @@ export default function DashboardPage() {
   }
 
   if (isLoading) {
-    return <PageLoader message="Dashboard wird geladen…" />
+    return <PageLoader message="Übersicht wird geladen…" />
   }
 
   if (loadError) {
@@ -136,7 +136,7 @@ export default function DashboardPage() {
     <div className="px-4 py-6 sm:px-6 md:py-8 max-w-6xl mx-auto">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="page-title">{isSimpleAccount ? accountName : 'Dashboard'}</h1>
+          <h1 className="page-title">{isSimpleAccount ? accountName : 'Übersicht'}</h1>
           {isSimpleAccount ? (
             <p className="mt-1 text-sm text-secondary">
               Einfaches Konto · Übersicht nach Kalendermonat
@@ -414,7 +414,7 @@ export default function DashboardPage() {
             {data.categoryDistribution.length === 0 ? (
               <EmptyState
                 title="Keine Ausgaben im Gehaltsmonat"
-                description="Sobald Sie Ausgaben erfassen, erscheint hier die Verteilung nach Kategorien."
+                description="Sobald du Ausgaben erfasst, erscheint hier die Verteilung nach Kategorien."
                 actionLabel="Transaktion erfassen"
                 actionHref="/transactions?new=1"
               />

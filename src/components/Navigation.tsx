@@ -512,7 +512,7 @@ export default function Navigation() {
           }
         }}
         title="Abmelden?"
-        message="Möchten Sie sich wirklich abmelden?"
+        message="Möchtest du dich wirklich abmelden?"
         confirmText="Abmelden"
         cancelText="Abbrechen"
         type="warning"

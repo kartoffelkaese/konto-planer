@@ -55,8 +55,8 @@ export default function RecurringAnchorHint() {
       {expanded && (
         <p className="px-3 pb-3 text-secondary border-t border-border pt-2">
           Das <strong className="font-medium text-primary">Anker-Datum</strong> (Tag der
-          Anlage) legt fest, wann die nächste Zahlung fällig ist — unabhängig davon, wann Sie
-          zuletzt bestätigt haben. Die{' '}
+          Anlage) legt fest, wann die nächste Zahlung fällig ist — unabhängig davon, wann du
+          zuletzt bestätigt hast. Die{' '}
           <strong className="font-medium text-primary">letzte Bestätigung</strong> betrifft nur
           den Verlauf, nicht den nächsten Fälligkeitstermin.
         </p>

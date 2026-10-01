@@ -76,7 +76,7 @@ export default function TransactionForm({
 
     try {
       if (isTransfer && !transferTargetAccountId) {
-        setError('Bitte wählen Sie ein Zielkonto für die Umbuchung.')
+        setError('Bitte wähle ein Zielkonto für die Umbuchung.')
         setLoading(false)
         return
       }
@@ -87,7 +87,7 @@ export default function TransactionForm({
         similarMerchantSuggestion &&
         !forceNewMerchant
       ) {
-        setError('Bitte bestätigen Sie, ob der vorgeschlagene Händler gemeint ist.')
+        setError('Bitte bestätige, ob der vorgeschlagene Händler gemeint ist.')
         setLoading(false)
         return
       }

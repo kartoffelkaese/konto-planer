@@ -15,11 +15,11 @@ export default function DeleteUserAccount() {
 
   const handleDelete = async () => {
     if (confirmText !== 'LÖSCHEN') {
-      setError('Bitte geben Sie „LÖSCHEN" ein, um fortzufahren')
+      setError('Bitte gib „LÖSCHEN" ein, um fortzufahren')
       return
     }
     if (!password) {
-      setError('Bitte geben Sie Ihr Passwort ein')
+      setError('Bitte gib dein Passwort ein')
       return
     }
 
@@ -45,8 +45,8 @@ export default function DeleteUserAccount() {
     <div className="space-y-4">
       <h2 className="text-lg font-medium text-primary">Anmeldung löschen</h2>
       <p className="text-sm text-secondary">
-        Entfernt Ihren Zugang zu KontoPlaner (E-Mail und Passwort). Buchführungs-Konten,
-        die nur Ihnen gehören, werden dabei mit allen Daten gelöscht. Geteilte Konten
+        Entfernt deinen Zugang zu KontoPlaner (E-Mail und Passwort). Buchführungs-Konten,
+        die nur dir gehören, werden dabei mit allen Daten gelöscht. Geteilte Konten
         bleiben für andere Nutzer erhalten. Diese Aktion kann nicht rückgängig gemacht
         werden.
       </p>

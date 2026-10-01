@@ -10,8 +10,8 @@ export default fixupConfigRules([
     ignores: ["ecosystem.config.js"],
   },
   {
-    // CommonJS-Skripte (z. B. PM2-Einstieg scripts/start-server.cjs) dürfen require() nutzen
-    files: ["**/*.cjs"],
+    // CommonJS-Dateien (PM2-Einstieg scripts/start-server.cjs, next.config.js) dürfen require() nutzen
+    files: ["**/*.cjs", "next.config.js"],
     rules: {
       "@typescript-eslint/no-require-imports": "off",
     },

@@ -221,7 +221,7 @@ export default function AccountSwitcher({ variant }: AccountSwitcherProps) {
         preventClose={loading}
       >
         <p className="text-sm text-secondary mb-1">
-          Wählen Sie das Konto, dessen Buchungen Sie anzeigen und bearbeiten möchten.
+          Wähle das Konto, dessen Buchungen du anzeigen und bearbeiten möchtest.
         </p>
         <p className="text-xs text-secondary mb-4">
           {accounts.length} Konten verfügbar

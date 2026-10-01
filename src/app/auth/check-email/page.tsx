@@ -46,12 +46,12 @@ function CheckEmailContent() {
         </h2>
         <div className="section-card-accent p-8 space-y-4 text-left">
           <p className="text-sm text-primary">
-            Wir haben Ihnen eine E-Mail{email ? ` an ${email}` : ''} mit einem
-            Bestätigungslink gesendet. Bitte klicken Sie auf den Link, um Ihr
+            Wir haben dir eine E-Mail{email ? ` an ${email}` : ''} mit einem
+            Bestätigungslink gesendet. Bitte klicke auf den Link, um dein
             Konto zu aktivieren.
           </p>
           <p className="text-xs text-secondary">
-            Der Link ist 24 Stunden gültig. Prüfen Sie auch Ihren Spam-Ordner.
+            Der Link ist 24 Stunden gültig. Prüfe auch deinen Spam-Ordner.
           </p>
           {message && (
             <div className="rounded-lg bg-income-bg p-3 text-sm text-income border border-border">

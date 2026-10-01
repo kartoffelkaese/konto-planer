@@ -157,7 +157,7 @@ export default function EditTransactionForm({
 
     try {
       if (isTransfer && !transferTargetAccountId) {
-        setSubmitError('Bitte wählen Sie ein Zielkonto für die Umbuchung.')
+        setSubmitError('Bitte wähle ein Zielkonto für die Umbuchung.')
         setIsSubmitting(false)
         return
       }
@@ -220,7 +220,7 @@ export default function EditTransactionForm({
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
         title="Transaktion löschen"
-        message="Möchten Sie diese Transaktion wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        message="Möchtest du diese Transaktion wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
         confirmText="Löschen"
         confirmLoadingText="Wird gelöscht…"
         cancelText="Abbrechen"

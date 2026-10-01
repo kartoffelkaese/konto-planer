@@ -37,17 +37,17 @@ function LoginForm() {
   const getErrorMessage = (errorCode: string) => {
     switch (errorCode) {
       case 'CredentialsSignin':
-        return 'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.'
+        return 'Anmeldung fehlgeschlagen. Bitte überprüfe deine E-Mail und dein Passwort.'
       case 'EMAIL_NOT_VERIFIED':
-        return 'Ihre E-Mail-Adresse wurde noch nicht bestätigt. Bitte prüfen Sie Ihr Postfach.'
+        return 'Deine E-Mail-Adresse wurde noch nicht bestätigt. Bitte prüfe dein Postfach.'
       case 'Configuration':
-        return 'Es ist ein Konfigurationsfehler aufgetreten. Bitte kontaktieren Sie den Administrator.'
+        return 'Es ist ein Konfigurationsfehler aufgetreten. Bitte kontaktiere den Administrator.'
       case 'AccessDenied':
-        return 'Zugriff verweigert. Sie haben keine Berechtigung für diese Aktion.'
+        return 'Zugriff verweigert. Du hast keine Berechtigung für diese Aktion.'
       case 'Verification':
         return 'Der Verifizierungslink ist ungültig oder abgelaufen.'
       default:
-        return 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.'
+        return 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.'
     }
   }
 
@@ -126,7 +126,7 @@ function LoginForm() {
     <AuthPageLayout alternateHref="/auth/register" alternateLabel="Registrieren">
       <AuthCard
         title="Willkommen zurück"
-        subtitle="Melden Sie sich an, um Ihre Finanzen fortzusetzen."
+        subtitle="Melde dich an, um deine Finanzen fortzusetzen."
         footer={
           <AuthAlternateLink
             prompt="Noch kein Konto?"
@@ -138,13 +138,13 @@ function LoginForm() {
         <div className="space-y-5">
           {isVerified && (
             <AuthAlert variant="success" title="E-Mail bestätigt">
-              Sie können sich jetzt anmelden.
+              Du kannst dich jetzt anmelden.
             </AuthAlert>
           )}
 
           {isEmailChanged && (
             <AuthAlert variant="success" title="Neue E-Mail bestätigt">
-              Bitte melden Sie sich mit Ihrer neuen Adresse an.
+              Bitte melde dich mit deiner neuen Adresse an.
             </AuthAlert>
           )}
 
@@ -198,7 +198,7 @@ function LoginForm() {
                 autoComplete="email"
                 required
                 autoFocus
-                placeholder="ihre@email.de"
+                placeholder="name@beispiel.de"
               />
               <AuthFormField
                 id="password"

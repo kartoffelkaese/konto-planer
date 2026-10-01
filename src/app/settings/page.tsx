@@ -171,7 +171,7 @@ export default function SettingsPage() {
 
             {!canWrite && (
               <div className="rounded-lg border border-accent-border bg-accent-subtle p-4 text-sm text-primary">
-                Sie haben für dieses Konto nur Lesezugriff. Einstellungen und
+                Du hast für dieses Konto nur Lesezugriff. Einstellungen und
                 Buchungen können nicht geändert werden.
               </div>
             )}
@@ -264,8 +264,8 @@ export default function SettingsPage() {
                         </label>
                         <p className="mt-1 text-sm text-secondary">
                           Für Sparkonten, Depots oder andere Konten ohne Haushaltsplanung:
-                          kein Gehaltsmonat, keine wiederkehrenden Zahlungen, vereinfachtes
-                          Dashboard. Bestehende Buchungen bleiben erhalten.
+                          kein Gehaltsmonat, keine wiederkehrenden Zahlungen, vereinfachte
+                          Übersicht. Bestehende Buchungen bleiben erhalten.
                         </p>
                         {simpleAccountError && (
                           <p className="mt-2 text-sm text-danger">
@@ -341,7 +341,7 @@ export default function SettingsPage() {
             <div className="card p-4 md:p-5">
               <h2 className="text-lg font-medium text-primary mb-4">Konto teilen</h2>
               <p className="text-sm text-secondary mb-4">
-                Laden Sie andere Nutzer per E-Mail ein. Sie können vollen Zugriff
+                Lade andere Nutzer per E-Mail ein. Du kannst vollen Zugriff
                 oder Nur-Lese-Zugriff auf das aktuell gewählte Konto vergeben.
               </p>
               <AccountSharing />

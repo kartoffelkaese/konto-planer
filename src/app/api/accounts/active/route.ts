@@ -59,7 +59,7 @@ export async function PATCH(request: NextRequest) {
   const { account, membership } = ctx
 
   if (!isAccountWritable(membership.role)) {
-    return NextResponse.json({ error: 'Für dieses Konto haben Sie nur Lesezugriff' }, { status: 403 })
+    return NextResponse.json({ error: 'Für dieses Konto hast du nur Lesezugriff' }, { status: 403 })
   }
 
   const data: { name?: string; salaryDay?: number } = {}

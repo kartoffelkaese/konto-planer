@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { AccountMember, AccountMemberRole } from '@prisma/client'
 
 export const READ_ONLY_ACCOUNT_MESSAGE =
-  'Für dieses Konto haben Sie nur Lesezugriff'
+  'Für dieses Konto hast du nur Lesezugriff'
 
 export function isAccountWritable(role: AccountMemberRole): boolean {
   return role === 'OWNER' || role === 'MEMBER'

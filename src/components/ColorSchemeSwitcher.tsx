@@ -10,6 +10,7 @@ import {
   THEME_MODES,
   type ThemeMode,
 } from '@/lib/colorSchemes'
+import SegmentedControl from '@/components/SegmentedControl'
 
 const icons: Record<ThemeMode, typeof SunIcon> = {
   light: SunIcon,
@@ -31,33 +32,18 @@ export default function ColorSchemeSwitcher() {
   }
 
   return (
-    <div
-      className="grid w-full max-w-md grid-cols-3 gap-1 rounded-pill bg-surface-muted p-1"
-      role="radiogroup"
-      aria-label="Darstellung"
-    >
-      {THEME_MODES.map((id) => {
-        const Icon = icons[id]
-        const selected = mode === id
-        return (
-          <button
-            key={id}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            disabled={mode === null}
-            onClick={() => handleChange(id)}
-            className={`flex min-w-0 min-h-10 items-center justify-center gap-1.5 rounded-pill px-2 text-sm font-medium transition-colors duration-feedback ${
-              selected
-                ? 'bg-surface text-primary shadow-card'
-                : 'text-secondary hover:text-primary'
-            }`}
-          >
-            <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="truncate">{THEME_MODE_LABELS[id]}</span>
-          </button>
-        )
-      })}
-    </div>
+    <SegmentedControl
+      ariaLabel="Darstellung"
+      className="grid w-full max-w-md grid-cols-3"
+      buttonClassName="px-2"
+      value={mode}
+      onChange={handleChange}
+      disabled={mode === null}
+      options={THEME_MODES.map((id) => ({
+        value: id,
+        label: THEME_MODE_LABELS[id],
+        icon: icons[id],
+      }))}
+    />
   )
 }

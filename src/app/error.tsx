@@ -39,7 +39,7 @@ export default function Error({
           Etwas ist schiefgelaufen
         </h2>
         <p className="text-primary mb-4">
-          Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.
+          Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.
         </p>
         {process.env.NODE_ENV === 'development' && (
           <details className="mb-4">

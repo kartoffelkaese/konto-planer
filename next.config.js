@@ -54,6 +54,10 @@ const securityHeaders = isProduction
 
 const nextConfig = {
   reactStrictMode: true,
+  // Einzige Quelle der Versionsnummer ist package.json; nur dieser eine Wert landet im Client-Bundle
+  env: {
+    NEXT_PUBLIC_APP_VERSION: require('./package.json').version,
+  },
   experimental: {
     serverActions: {
       allowedOrigins: [

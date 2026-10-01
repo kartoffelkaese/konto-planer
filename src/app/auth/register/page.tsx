@@ -56,7 +56,7 @@ export default function RegisterPage() {
     }
 
     if (salaryDay < 1 || salaryDay > 31) {
-      setError('Bitte geben Sie einen gültigen Tag des Monats an (1–31).')
+      setError('Bitte gib einen gültigen Tag des Monats an (1–31).')
       setLoading(false)
       return
     }
@@ -121,7 +121,7 @@ export default function RegisterPage() {
               autoComplete="email"
               required
               autoFocus
-              placeholder="ihre@email.de"
+              placeholder="name@beispiel.de"
             />
 
             <div>
@@ -174,13 +174,13 @@ export default function RegisterPage() {
               defaultValue={15}
               required
               placeholder="z.B. 15"
-              hint="Legt den Start Ihres Gehaltsmonats fest – z. B. der 15., wenn Sie Mitte des Monats Gehalt erhalten."
+              hint="Legt den Start deines Gehaltsmonats fest – z. B. der 15., wenn du Mitte des Monats Gehalt erhältst."
             />
           </div>
 
           <AuthAlert variant="info">
-            Nach der Registrierung erhalten Sie eine E-Mail mit einem Bestätigungslink. Erst danach
-            können Sie sich anmelden.
+            Nach der Registrierung erhältst du eine E-Mail mit einem Bestätigungslink. Erst danach
+            kannst du dich anmelden.
           </AuthAlert>
 
           <Button

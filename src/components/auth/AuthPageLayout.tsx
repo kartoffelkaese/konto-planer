@@ -22,19 +22,19 @@ export default function AuthPageLayout({
       />
 
       <header className="relative z-10 border-b border-border/80 bg-surface/85 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 sm:gap-4 px-4 sm:px-6 lg:px-8">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-sm font-medium text-secondary transition-colors duration-feedback hover:text-accent"
+            className="inline-flex min-h-11 min-w-11 items-center gap-2 text-sm font-medium text-secondary transition-colors duration-feedback hover:text-accent"
           >
             <ArrowLeftIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="hidden sm:inline">Zur Startseite</span>
-            <span className="sm:hidden">Startseite</span>
+            {/* Schmal nur der Pfeil – der Text würde sonst unter das mittige Logo laufen */}
+            <span className="max-sm:sr-only">Zur Startseite</span>
           </Link>
 
           <Link
             href="/"
-            className="absolute left-1/2 -translate-x-1/2 text-lg font-semibold tracking-tight text-accent"
+            className="text-lg font-semibold tracking-tight text-accent max-sm:flex-1 max-sm:text-center sm:absolute sm:left-1/2 sm:-translate-x-1/2"
           >
             KontoPlaner
           </Link>

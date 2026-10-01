@@ -61,7 +61,7 @@ export default function DeleteFinancialAccount() {
   const handleDelete = async () => {
     if (!accountId) return
     if (confirmName.trim() !== accountName.trim()) {
-      setError(`Bitte geben Sie exakt „${accountName}" ein`)
+      setError(`Bitte gib exakt „${accountName}" ein`)
       return
     }
 
@@ -95,7 +95,7 @@ export default function DeleteFinancialAccount() {
     return (
       <p className="text-sm text-secondary border-t border-border pt-4 mt-4">
         Nur der <span className="font-medium text-primary">Inhaber</span> kann das
-        aktuelle Buchführungs-Konto löschen. Sie sind als Mitglied eingeladen.
+        aktuelle Buchführungs-Konto löschen. Du bist als Mitglied eingeladen.
       </p>
     )
   }
@@ -103,8 +103,8 @@ export default function DeleteFinancialAccount() {
   if (accountCount <= 1) {
     return (
       <p className="text-sm text-secondary border-t border-border pt-4 mt-4">
-        Dies ist Ihr einziges Buchführungs-Konto. Um den Zugang vollständig zu
-        entfernen, nutzen Sie unten{' '}
+        Dies ist dein einziges Buchführungs-Konto. Um den Zugang vollständig zu
+        entfernen, nutze unten{' '}
         <span className="font-medium text-primary">Anmeldung löschen</span>.
       </p>
     )
@@ -116,8 +116,8 @@ export default function DeleteFinancialAccount() {
       <p className="text-sm text-secondary">
         Löscht nur das Buchführungs-Konto{' '}
         <span className="font-medium text-primary">„{accountName}"</span> mit allen
-        Transaktionen, Kategorien und Händlern. Ihre Anmeldung und andere Konten
-        bleiben erhalten. Danach wechseln Sie automatisch zu einem anderen Konto.
+        Transaktionen, Kategorien und Händlern. Deine Anmeldung und andere Konten
+        bleiben erhalten. Danach wechselst du automatisch zu einem anderen Konto.
       </p>
 
       {error && (

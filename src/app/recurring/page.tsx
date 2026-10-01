@@ -217,7 +217,6 @@ export default function RecurringTransactionsPage() {
                 <Button
                   type="button"
                   variant="secondary"
-                  size="sm"
                   onClick={handleCreateAllPending}
                   loading={isCreatingPending}
                   loadingText="Wird erstellt…"
@@ -229,10 +228,9 @@ export default function RecurringTransactionsPage() {
               {canWrite && (
                 <Button
                   type="button"
-                  size="sm"
                   onClick={() => setShowNewTransactionModal(true)}
                 >
-                  <PlusIcon className="h-4 w-4" aria-hidden />
+                  <PlusIcon className="h-5 w-5" aria-hidden />
                   Neue Zahlung
                 </Button>
               )}

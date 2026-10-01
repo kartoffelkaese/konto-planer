@@ -658,7 +658,7 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
         loadingText="Wird gelesen…"
         onClick={() => fileInputRef.current?.click()}
       >
-        <ArrowUpTrayIcon className="h-4 w-4 shrink-0" aria-hidden />
+        <ArrowUpTrayIcon className="h-5 w-5 shrink-0" aria-hidden />
         CSV importieren
       </Button>
 
@@ -698,8 +698,8 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
               {formatMeta.headerMismatch && (
                 <p className="flex items-start gap-1.5 text-pending text-xs">
                   <ExclamationTriangleIcon className="h-4 w-4 shrink-0" aria-hidden />
-                  Die CSV-Spalten passen nicht zum erwarteten Format. Prüfen Sie die
-                  Bank in den Einstellungen oder wählen Sie ein anderes Format.
+                  Die CSV-Spalten passen nicht zum erwarteten Format. Prüfe die
+                  Bank in den Einstellungen oder wähle ein anderes Format.
                 </p>
               )}
               {formatMeta.availableFormats.length > 1 && (

@@ -124,7 +124,7 @@ async function apiFetch<T>(path: string, init: ApiFetchInit = {}): Promise<T> {
   } catch (err) {
     if (err instanceof Error && err.name === 'AbortError') {
       console.error('API Error: timeout')
-      throw new Error('Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es erneut.')
+      throw new Error('Die Anfrage hat zu lange gedauert. Bitte versuche es erneut.')
     }
     throw err
   } finally {

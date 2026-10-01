@@ -72,7 +72,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       data: { status: AccountInviteStatus.ACCEPTED },
     })
     return NextResponse.json({
-      message: 'Sie haben bereits Zugriff auf dieses Konto',
+      message: 'Du hast bereits Zugriff auf dieses Konto',
       accountId: invite.accountId,
       accountName: invite.account.name,
     })

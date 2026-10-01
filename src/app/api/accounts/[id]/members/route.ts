@@ -109,14 +109,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email)) {
     return NextResponse.json(
-      { error: 'Bitte geben Sie eine gültige E-Mail-Adresse ein' },
+      { error: 'Bitte gib eine gültige E-Mail-Adresse ein' },
       { status: 400 }
     )
   }
 
   if (email === normalizeEmail(ctx.user.email)) {
     return NextResponse.json(
-      { error: 'Sie können sich nicht selbst einladen' },
+      { error: 'Du kannst dich nicht selbst einladen' },
       { status: 400 }
     )
   }
@@ -209,7 +209,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
   if (target.userId === ctx.user.id) {
     return NextResponse.json(
-      { error: 'Sie können Ihre eigene Rolle nicht ändern' },
+      { error: 'Du kannst deine eigene Rolle nicht ändern' },
       { status: 400 }
     )
   }
@@ -271,7 +271,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
   if (target.userId === ctx.user.id) {
     return NextResponse.json(
-      { error: 'Sie können sich nicht selbst entfernen' },
+      { error: 'Du kannst dich nicht selbst entfernen' },
       { status: 400 }
     )
   }

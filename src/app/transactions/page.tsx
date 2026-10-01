@@ -422,7 +422,6 @@ function TransactionsPageContent() {
                 <Button
                   type="button"
                   variant="secondary"
-                  size="sm"
                   onClick={handleCreatePending}
                   loading={isCreatingPending}
                   loadingText="Wird erstellt…"
@@ -443,6 +442,7 @@ function TransactionsPageContent() {
                     className="max-md:hidden shrink-0"
                     onClick={() => setShowNewTransactionModal(true)}
                   >
+                    <PlusIcon className="h-5 w-5" aria-hidden />
                     Neue Transaktion
                   </Button>
                 </>

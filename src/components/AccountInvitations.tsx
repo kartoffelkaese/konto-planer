@@ -123,7 +123,7 @@ export default function AccountInvitations() {
           Einladungen zu geteilten Konten
         </h2>
         <p className="text-sm text-secondary mb-4">
-          Sie wurden eingeladen, ein Buchführungs-Konto mitzunutzen. Nach der
+          Du wurdest eingeladen, ein Buchführungs-Konto mitzunutzen. Nach der
           Annahme erscheint es im Kontowechsel in der Navigation.
         </p>
         <ul className="space-y-3">
@@ -179,7 +179,7 @@ export default function AccountInvitations() {
         title="Einladung ablehnen?"
         message={
           declineTarget
-            ? `Möchten Sie die Einladung zum Konto „${declineTarget.accountName}" ablehnen? Sie können später erneut eingeladen werden.`
+            ? `Möchtest du die Einladung zum Konto „${declineTarget.accountName}" ablehnen? Du kannst später erneut eingeladen werden.`
             : ''
         }
         confirmText="Ablehnen"

@@ -18,7 +18,7 @@ export default function NotFound() {
             <HomeIcon className="h-5 w-5 mr-2" />
             Zur Startseite
           </Link>
-          <p className="mt-4 text-sm text-secondary">KontoPlaner – Ihre Finanzen im Griff</p>
+          <p className="mt-4 text-sm text-secondary">KontoPlaner – deine Finanzen im Griff</p>
         </div>
       </div>
     </div>

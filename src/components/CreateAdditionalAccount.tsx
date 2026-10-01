@@ -32,8 +32,8 @@ export default function CreateAdditionalAccount() {
     return (
       <div>
         <p className="text-sm text-secondary mb-4">
-          Legen Sie ein weiteres Konto an, z. B. für einen Haushalt oder getrennte
-          Buchführung. Danach können Sie in der Navigation zwischen den Konten wechseln.
+          Lege ein weiteres Konto an, z. B. für einen Haushalt oder getrennte
+          Buchführung. Danach kannst du in der Navigation zwischen den Konten wechseln.
         </p>
         <Button type="button" variant="secondary" onClick={() => setExpanded(true)}>
           Zusätzliches Konto anlegen

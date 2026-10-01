@@ -11,15 +11,15 @@ function ErrorContent() {
   const getErrorMessage = (error: string | null) => {
     switch (error) {
       case 'Configuration':
-        return 'Es ist ein Konfigurationsfehler aufgetreten. Bitte kontaktieren Sie den Administrator.'
+        return 'Es ist ein Konfigurationsfehler aufgetreten. Bitte kontaktiere den Administrator.'
       case 'AccessDenied':
-        return 'Zugriff verweigert. Sie haben keine Berechtigung für diese Aktion.'
+        return 'Zugriff verweigert. Du hast keine Berechtigung für diese Aktion.'
       case 'Verification':
         return 'Der Verifizierungslink ist ungültig oder abgelaufen.'
       case 'CredentialsSignin':
-        return 'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.'
+        return 'Anmeldung fehlgeschlagen. Bitte überprüfe deine E-Mail und dein Passwort.'
       default:
-        return 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.'
+        return 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es später erneut.'
     }
   }
 

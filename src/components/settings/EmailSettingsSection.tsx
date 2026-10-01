@@ -108,10 +108,10 @@ export default function EmailSettingsSection({
           <p className="text-sm text-primary">
             Ausstehende Änderung auf{' '}
             <span className="font-medium">{pendingEmail}</span>. Bitte
-            bestätigen Sie den Link in Ihrem Postfach.
+            bestätige den Link in deinem Postfach.
           </p>
           <p className="text-xs text-secondary mt-1">
-            Sie sind weiterhin mit {session?.user?.email} angemeldet, bis
+            Du bist weiterhin mit {session?.user?.email} angemeldet, bis
             die neue Adresse bestätigt ist.
           </p>
           <div className="flex flex-wrap gap-2 mt-3">

@@ -85,7 +85,7 @@ function SplitOverviewPageContent() {
         subtitle="Gemeinsame Ausgaben aufteilen und ausgleichen"
         actions={
           <Button onClick={openNewListModal}>
-            <PlusIcon className="h-4 w-4" aria-hidden="true" />
+            <PlusIcon className="h-5 w-5" aria-hidden="true" />
             Neue Liste
           </Button>
         }
@@ -106,7 +106,7 @@ function SplitOverviewPageContent() {
         <div className="card overflow-hidden">
           <EmptyState
             title="Noch keine Split-Listen"
-            description="Legen Sie eine Liste für Urlaub, WG oder jedes gemeinsame Event an."
+            description="Lege eine Liste für Urlaub, WG oder jedes gemeinsame Event an."
             actionLabel="Erste Liste anlegen"
             onAction={openNewListModal}
           />

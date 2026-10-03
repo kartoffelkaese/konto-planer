@@ -20,11 +20,11 @@ export default fixupConfigRules([
     // Gleicher Geltungsbereich wie eslint-config-next – nur dort sind die Plugins registriert (nicht für .cjs)
     files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
     rules: {
-      // Strenge React-19-Hooks-Regeln: bestehende Fetch-in-Effect-Patterns schrittweise bereinigen
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/immutability": "warn",
-      "react-hooks/refs": "warn",
-      "react/no-unescaped-entities": "warn",
+      // Strenge React-19-Hooks-Regeln – Altbestand ist bereinigt, neue Verstöße brechen den Lint
+      "react-hooks/set-state-in-effect": "error",
+      "react-hooks/immutability": "error",
+      "react-hooks/refs": "error",
+      "react/no-unescaped-entities": "error",
     },
   },
 ]);

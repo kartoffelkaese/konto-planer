@@ -1,19 +1,11 @@
 'use client'
 
-import { Suspense, useState, useEffect, useRef, useCallback } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useState, useCallback } from 'react'
 import { PlusIcon } from '@heroicons/react/24/outline'
-import { Transaction } from '@/types'
-import { getTransactions, getTransactionTotals, updateTransaction, createPendingInstances, getRecurringTransactions } from '@/lib/api'
+import { createPendingInstances, getRecurringTransactions } from '@/lib/api'
 import { useApiQuery } from '@/hooks/useApiQuery'
 import { hasDueRecurringWithoutInstance } from '@/lib/recurringStatus'
-import {
-  getDefaultCustomPeriodRange,
-  isCustomPeriodBlocked,
-  isPeriodFilterActive,
-  parsePeriodFromUrl,
-  type TransactionPeriod,
-} from '@/lib/transactionPeriodRange'
+import { isPeriodFilterActive } from '@/lib/transactionPeriodRange'
 import TransactionList from '@/components/TransactionList'
 import TransactionPeriodFilter from '@/components/TransactionPeriodFilter'
 import MonthlyOverview from '@/components/MonthlyOverview'
@@ -32,56 +24,65 @@ import SalaryMonthHint from '@/components/SalaryMonthHint'
 import PageContextHeader from '@/components/PageContextHeader'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { useActiveAccountReload } from '@/hooks/useActiveAccountReload'
-
-type SortField = 'date' | 'merchant' | 'category' | 'description' | 'amount' | 'status'
-type SortDirection = 'asc' | 'desc'
-
-const SORT_FIELDS: SortField[] = ['date', 'merchant', 'category', 'description', 'amount', 'status']
-
-function buildTransactionsUrl(params: URLSearchParams): string {
-  const q = params.toString()
-  return q ? `/transactions?${q}` : '/transactions'
-}
+import { useTransactionFilters } from './useTransactionFilters'
+import { useTransactionList } from './useTransactionList'
+import { useTransactionDialogs } from './useTransactionDialogs'
 
 function TransactionsPageContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [loadingState, setLoading] = useState(true)
-  /** Filter, für die die Liste zuletzt geladen wurde (siehe filterKey) */
-  const [loadedFilterKey, setLoadedFilterKey] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const { salaryDay, accountName, loading: settingsLoading, canWrite, isSimpleAccount } = useUserSettings()
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-  const [sortField, setSortField] = useState<SortField>(() => {
-    const s = searchParams.get('sort')
-    return SORT_FIELDS.includes(s as SortField) ? (s as SortField) : 'date'
-  })
-  const [sortDirection, setSortDirection] = useState<SortDirection>(() =>
-    searchParams.get('dir') === 'asc' ? 'asc' : 'desc'
-  )
-  const initialPeriod = parsePeriodFromUrl(searchParams)
-  const [period, setPeriod] = useState<TransactionPeriod>(initialPeriod.period)
-  const [customStartDate, setCustomStartDate] = useState(initialPeriod.startDate)
-  const [customEndDate, setCustomEndDate] = useState(initialPeriod.endDate)
-  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '')
-  const [debouncedSearch, setDebouncedSearch] = useState(() => searchParams.get('q') ?? '')
-  const [periodLabel, setPeriodLabel] = useState<string | null>(null)
-  const [totals, setTotals] = useState({
-    currentIncome: 0,
-    currentExpenses: 0,
-    totalIncome: 0,
-    totalExpenses: 0,
-    clearedBalance: 0,
-    totalPendingExpenses: 0,
-    available: 0,
-  })
-  const observer = useRef<IntersectionObserver | null>(null)
-  const loadingRef = useRef<HTMLDivElement>(null)
-  const [togglingTransactionIds, setTogglingTransactionIds] = useState<string[]>([])
   const { showToast } = useToast()
   const { registerCreated } = usePendingUndo()
+
+  const {
+    period,
+    customStartDate,
+    customEndDate,
+    customPeriodBlocked,
+    searchQuery,
+    setSearchQuery,
+    debouncedSearch,
+    sortField,
+    sortDirection,
+    handleSort,
+    changePeriod,
+    changeCustomRange,
+    resetFilters,
+  } = useTransactionFilters()
+
+  const {
+    transactions,
+    loading,
+    error,
+    setError,
+    page,
+    hasMore,
+    totals,
+    periodLabel,
+    loadingRef,
+    lastElementRef,
+    togglingTransactionIds,
+    loadTotals,
+    loadTransactions,
+    handleToggleConfirmation,
+  } = useTransactionList({
+    salaryDay,
+    period,
+    customStartDate,
+    customEndDate,
+    debouncedSearch,
+    customPeriodBlocked,
+  })
+
+  const {
+    showNewTransactionModal,
+    showEditTransactionModal,
+    selectedTransactionId,
+    openNewTransaction,
+    closeNewTransaction,
+    openEditTransaction,
+    closeEditTransaction,
+    finishEditTransaction,
+  } = useTransactionDialogs()
 
   // „Ausstehende erstellen“ nur anbieten, wenn eine wiederkehrende Zahlung fällig ist und noch keine Buchung hat
   const canCreatePending = !settingsLoading && !isSimpleAccount && canWrite
@@ -91,158 +92,7 @@ function TransactionsPageContent() {
     { enabled: canCreatePending }
   )
 
-  const [showNewTransactionModal, setShowNewTransactionModal] = useState(false)
   const [isCreatingPending, setIsCreatingPending] = useState(false)
-  const [showEditTransactionModal, setShowEditTransactionModal] = useState(false)
-  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
-
-  const customPeriodBlocked = isCustomPeriodBlocked(
-    period,
-    customStartDate,
-    customEndDate
-  )
-
-  const periodQuery = useCallback(
-    () => ({
-      period,
-      startDate: period === 'custom' ? customStartDate : undefined,
-      endDate: period === 'custom' ? customEndDate : undefined,
-      salaryDay,
-      search: debouncedSearch,
-    }),
-    [period, customStartDate, customEndDate, salaryDay, debouncedSearch]
-  )
-
-  const syncUrl = useCallback(
-    (overrides?: {
-      period?: TransactionPeriod
-      customStartDate?: string
-      customEndDate?: string
-      search?: string
-      sort?: SortField
-      dir?: SortDirection
-    }) => {
-      const params = new URLSearchParams()
-      const nextPeriod = overrides?.period ?? period
-      const nextStart = overrides?.customStartDate ?? customStartDate
-      const nextEnd = overrides?.customEndDate ?? customEndDate
-      const search = overrides?.search ?? debouncedSearch
-      const sort = overrides?.sort ?? sortField
-      const dir = overrides?.dir ?? sortDirection
-
-      if (nextPeriod !== 'all') params.set('period', nextPeriod)
-      if (nextPeriod === 'custom' && nextStart) params.set('from', nextStart)
-      if (nextPeriod === 'custom' && nextEnd) params.set('to', nextEnd)
-      if (search.trim()) params.set('q', search.trim())
-      if (sort !== 'date') params.set('sort', sort)
-      if (dir !== 'desc') params.set('dir', dir)
-
-      router.replace(buildTransactionsUrl(params), { scroll: false })
-    },
-    [
-      router,
-      period,
-      customStartDate,
-      customEndDate,
-      debouncedSearch,
-      sortField,
-      sortDirection,
-    ]
-  )
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(searchQuery), 300)
-    return () => clearTimeout(t)
-  }, [searchQuery])
-
-  useEffect(() => {
-    const currentQ = searchParams.get('q') ?? ''
-    if (debouncedSearch === currentQ) return
-    syncUrl({ search: debouncedSearch })
-  }, [debouncedSearch, searchParams, syncUrl])
-
-  // Kennzeichnet die aktuelle Filterkombination; solange sie noch nicht geladen ist, gilt die Liste als ladend
-  const filterKey = JSON.stringify([salaryDay, debouncedSearch, period, customStartDate, customEndDate])
-  const loading =
-    loadingState || (salaryDay !== null && !customPeriodBlocked && loadedFilterKey !== filterKey)
-
-  // Unvollständiger eigener Zeitraum: Liste leeren statt laden (Abgleich beim Rendern statt im Effekt)
-  const [prevPeriodBlocked, setPrevPeriodBlocked] = useState(false)
-  if (prevPeriodBlocked !== customPeriodBlocked) {
-    setPrevPeriodBlocked(customPeriodBlocked)
-    if (customPeriodBlocked) {
-      setLoading(false)
-      setTransactions([])
-      setHasMore(false)
-      setPage(1)
-    }
-  }
-
-  const loadTotals = useCallback(() => {
-    if (salaryDay === null) return Promise.resolve()
-    return getTransactionTotals({
-      period,
-      startDate: period === 'custom' ? customStartDate : undefined,
-      endDate: period === 'custom' ? customEndDate : undefined,
-      salaryDay,
-    }).then(
-      (data) => {
-        setTotals(data)
-        setPeriodLabel(data.periodLabel ?? null)
-      },
-      (err: unknown) => console.error('Error loading totals:', err)
-    )
-  }, [salaryDay, period, customStartDate, customEndDate])
-
-  /** Lädt eine Seite, ohne vorher den Ladezustand zu setzen (für den Filter-Effekt) */
-  const fetchTransactionPage = useCallback(
-    (pageNum: number, append: boolean) =>
-      getTransactions(pageNum, 20, periodQuery())
-        .then(
-          (response) => {
-            const data = response.transactions.map((t) => ({
-              ...t,
-              amount: Number(t.amount),
-            }))
-
-            setTransactions((prev) => {
-              if (!append) return data
-              const existingIds = new Set(prev.map((t) => t.id))
-              const newTransactions = data.filter((t) => !existingIds.has(t.id))
-              return [...prev, ...newTransactions]
-            })
-            setHasMore(response.hasMore)
-            setError(null)
-            setPage(pageNum)
-          },
-          (err: unknown) => {
-            setError('Fehler beim Laden der Transaktionen')
-            showToast('Fehler beim Laden der Transaktionen', 'error')
-            console.error(err)
-          }
-        )
-        .finally(() => {
-          setLoading(false)
-          setLoadedFilterKey(filterKey)
-        }),
-    [periodQuery, showToast, filterKey]
-  )
-
-  /** Lädt eine Seite mit Ladeanzeige (Nachladen, Neuladen nach Änderungen) */
-  const loadTransactions = useCallback(
-    (pageNum: number, append = false) => {
-      if (customPeriodBlocked) return Promise.resolve()
-      setLoading(true)
-      return fetchTransactionPage(pageNum, append)
-    },
-    [customPeriodBlocked, fetchTransactionPage]
-  )
-
-  // Filter geändert (Suche, Zeitraum, Gehaltstag): erste Seite laden
-  useEffect(() => {
-    if (salaryDay === null || customPeriodBlocked) return
-    void fetchTransactionPage(1, false)
-  }, [salaryDay, customPeriodBlocked, fetchTransactionPage])
 
   useActiveAccountReload(() => {
     reloadRecurringTemplates()
@@ -252,133 +102,11 @@ function TransactionsPageContent() {
     }
   })
 
-  // „?new=1“ / „?edit=<id>“: Dialog öffnen, dann die URL bereinigen
-  const newParam = searchParams.get('new') === '1'
-  const editParam = searchParams.get('edit')
-  const urlActionKey = `${newParam}:${editParam ?? ''}`
-  const [handledUrlAction, setHandledUrlAction] = useState('')
-  if (urlActionKey !== handledUrlAction) {
-    setHandledUrlAction(urlActionKey)
-    if (newParam) setShowNewTransactionModal(true)
-    if (editParam) {
-      setSelectedTransactionId(editParam)
-      setShowEditTransactionModal(true)
-    }
-  }
-
-  useEffect(() => {
-    if (!newParam && !editParam) return
-    const params = new URLSearchParams(searchParams.toString())
-    params.delete('new')
-    params.delete('edit')
-    router.replace(buildTransactionsUrl(params), { scroll: false })
-  }, [newParam, editParam, searchParams, router])
-
-  useEffect(() => {
-    if (salaryDay === null) return
-    void loadTotals()
-  }, [salaryDay, loadTotals])
-
-  useEffect(() => {
-    if (!loadingRef.current) return
-
-    const options = {
-      root: null,
-      rootMargin: '20px',
-      threshold: 0.1,
-    }
-
-    observer.current = new IntersectionObserver((entries) => {
-      const [entry] = entries
-      if (entry.isIntersecting && hasMore && !loading) {
-        loadTransactions(page + 1, true)
-      }
-    }, options)
-
-    observer.current.observe(loadingRef.current)
-
-    return () => {
-      observer.current?.disconnect()
-    }
-  }, [hasMore, loading, page, loadTransactions])
-
-  const lastElementRef = useCallback(() => {}, [])
-
-  const handleToggleConfirmation = async (transaction: Transaction) => {
-    const previous = transaction
-    const newConfirmed = !transaction.isConfirmed
-    const currentDate = new Date().toISOString()
-
-    setTransactions((prev) =>
-      prev.map((t) =>
-        t.id === transaction.id
-          ? {
-              ...t,
-              isConfirmed: newConfirmed,
-              lastConfirmedDate: newConfirmed ? currentDate : null,
-            }
-          : t
-      )
-    )
-    setTogglingTransactionIds((prev) => [...prev, transaction.id])
-
-    try {
-      const updatedTransaction = await updateTransaction(transaction.id, {
-        isConfirmed: newConfirmed,
-        lastConfirmedDate: newConfirmed ? currentDate : null,
-      })
-
-      if (transaction.parentTransactionId) {
-        await updateTransaction(transaction.parentTransactionId, {
-          lastConfirmedDate: currentDate,
-        }).catch(() => {
-          console.error('Fehler beim Aktualisieren der Eltern-Transaktion')
-        })
-      }
-
-      setTransactions((prev) =>
-        prev.map((t) =>
-          t.id === updatedTransaction.id
-            ? { ...updatedTransaction, amount: Number(updatedTransaction.amount) }
-            : t
-        )
-      )
-      showToast(
-        newConfirmed ? 'Als bestätigt markiert' : 'Bestätigung aufgehoben',
-        'success'
-      )
-      await loadTotals()
-    } catch (err) {
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === previous.id ? previous : t))
-      )
-      showToast('Status konnte nicht geändert werden', 'error')
-      console.error('Fehler beim Aktualisieren der Transaktion:', err)
-    } finally {
-      setTogglingTransactionIds((prev) => prev.filter((id) => id !== transaction.id))
-    }
-  }
-
   const handleTransactionChange = useCallback(async () => {
     reloadRecurringTemplates()
     await loadTotals()
     await loadTransactions(page, false)
   }, [reloadRecurringTemplates, loadTotals, loadTransactions, page])
-
-  const handleSort = useCallback(
-    (field: SortField) => {
-      if (sortField === field) {
-        const nextDir = sortDirection === 'asc' ? 'desc' : 'asc'
-        setSortDirection(nextDir)
-        syncUrl({ sort: field, dir: nextDir })
-      } else {
-        setSortField(field)
-        setSortDirection('desc')
-        syncUrl({ sort: field, dir: 'desc' })
-      }
-    },
-    [sortField, sortDirection, syncUrl]
-  )
 
   const handleCreatePending = async () => {
     setIsCreatingPending(true)
@@ -395,19 +123,13 @@ function TransactionsPageContent() {
     }
   }
 
-  const handleEditTransaction = (id: string) => {
-    setSelectedTransactionId(id)
-    setShowEditTransactionModal(true)
-  }
-
   const handleEditTransactionSuccess = async () => {
-    setShowEditTransactionModal(false)
-    setSelectedTransactionId(null)
+    finishEditTransaction()
     await handleTransactionChange()
   }
 
   const handleNewTransactionSuccess = async () => {
-    setShowNewTransactionModal(false)
+    closeNewTransaction()
     await handleTransactionChange()
   }
 
@@ -473,7 +195,7 @@ function TransactionsPageContent() {
                   <Button
                     type="button"
                     className="max-md:hidden shrink-0"
-                    onClick={() => setShowNewTransactionModal(true)}
+                    onClick={openNewTransaction}
                   >
                     <PlusIcon className="h-5 w-5" aria-hidden />
                     Neue Transaktion
@@ -501,46 +223,9 @@ function TransactionsPageContent() {
             salaryDay={salaryDay}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            onPeriodChange={(nextPeriod) => {
-              setPeriod(nextPeriod)
-              if (
-                nextPeriod === 'custom' &&
-                !customStartDate &&
-                !customEndDate
-              ) {
-                const defaults = getDefaultCustomPeriodRange()
-                setCustomStartDate(defaults.startDate)
-                setCustomEndDate(defaults.endDate)
-                syncUrl({
-                  period: nextPeriod,
-                  customStartDate: defaults.startDate,
-                  customEndDate: defaults.endDate,
-                })
-                return
-              }
-              syncUrl({ period: nextPeriod })
-            }}
-            onCustomRangeChange={(startDate, endDate) => {
-              setCustomStartDate(startDate)
-              setCustomEndDate(endDate)
-              syncUrl({
-                period: 'custom',
-                customStartDate: startDate,
-                customEndDate: endDate,
-              })
-            }}
-            onReset={() => {
-              setPeriod('all')
-              setCustomStartDate('')
-              setCustomEndDate('')
-              setSearchQuery('')
-              syncUrl({
-                period: 'all',
-                customStartDate: '',
-                customEndDate: '',
-                search: '',
-              })
-            }}
+            onPeriodChange={changePeriod}
+            onCustomRangeChange={changeCustomRange}
+            onReset={resetFilters}
           />
         )}
 
@@ -574,8 +259,8 @@ function TransactionsPageContent() {
             sortDirection={sortDirection}
             onSort={handleSort}
             salaryDay={salaryDay}
-            onAddTransaction={canWrite ? () => setShowNewTransactionModal(true) : undefined}
-            onEditTransaction={canWrite ? handleEditTransaction : undefined}
+            onAddTransaction={canWrite ? openNewTransaction : undefined}
+            onEditTransaction={canWrite ? openEditTransaction : undefined}
             isSearchActive={debouncedSearch.trim().length > 0}
             isPeriodFilterActive={isPeriodFilterActive(period)}
             readOnly={!canWrite}
@@ -593,20 +278,20 @@ function TransactionsPageContent() {
 
       <Modal
         isOpen={showNewTransactionModal}
-        onClose={() => setShowNewTransactionModal(false)}
+        onClose={closeNewTransaction}
         title="Neue Transaktion"
         maxWidth="md"
       >
         <TransactionForm
           onSuccess={handleNewTransactionSuccess}
-          onCancel={() => setShowNewTransactionModal(false)}
+          onCancel={closeNewTransaction}
           hideRecurring={isSimpleAccount}
         />
       </Modal>
 
       <Modal
         isOpen={showEditTransactionModal}
-        onClose={() => setShowEditTransactionModal(false)}
+        onClose={closeEditTransaction}
         title="Transaktion bearbeiten"
         maxWidth="md"
       >
@@ -614,7 +299,7 @@ function TransactionsPageContent() {
           <EditTransactionForm
             id={selectedTransactionId}
             onSuccess={handleEditTransactionSuccess}
-            onCancel={() => setShowEditTransactionModal(false)}
+            onCancel={closeEditTransaction}
             hideRecurring={isSimpleAccount}
           />
         )}
@@ -624,7 +309,7 @@ function TransactionsPageContent() {
       <Button
         type="button"
         className="md:hidden fixed bottom-[calc(1rem+var(--mobile-tabbar-space,env(safe-area-inset-bottom,0px)))] right-[calc(1.5rem+env(safe-area-inset-right,0px))] z-30 h-14 w-14 min-w-14 rounded-full p-0 shadow-lg"
-        onClick={() => setShowNewTransactionModal(true)}
+        onClick={openNewTransaction}
         aria-label="Neue Transaktion"
       >
         <PlusIcon className="h-6 w-6" aria-hidden="true" />

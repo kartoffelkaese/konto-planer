@@ -10,7 +10,7 @@ import {
   isErrorResponse,
   readJsonBody,
 } from '@/lib/api-auth'
-import { normalizeEmail } from '@/lib/accounts'
+import { isValidEmail, normalizeEmail } from '@/lib/accounts'
 import {
   isInvitableMemberRole,
   parseInvitableMemberRole,
@@ -20,6 +20,7 @@ import {
   getClientIp,
   RATE_LIMITS,
 } from '@/lib/rate-limit'
+import { withErrorHandling } from '@/lib/route-handler'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -33,7 +34,7 @@ function assertOwner(ctx: { membership: { role: AccountMemberRole } }) {
   return null
 }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export const GET = withErrorHandling('/api/accounts/:id/members', async function GET(_request: NextRequest, { params }: RouteParams) {
   const { id: accountId } = await params
   const ctx = await getAccountContextForAccountId(accountId)
   if (isErrorResponse(ctx)) return ctx
@@ -72,9 +73,9 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       createdAt: i.createdAt,
     })),
   })
-}
+})
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
+export const POST = withErrorHandling('/api/accounts/:id/members', async function POST(request: NextRequest, { params }: RouteParams) {
   const { id: accountId } = await params
   const ctx = await getAccountContextForAccountId(accountId)
   if (isErrorResponse(ctx)) return ctx
@@ -106,8 +107,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     : parseInvitableMemberRole(body.role)
 
   const email = normalizeEmail(rawEmail)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email)) {
+  if (!isValidEmail(email)) {
     return NextResponse.json(
       { error: 'Bitte gib eine gültige E-Mail-Adresse ein' },
       { status: 400 }
@@ -167,9 +167,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     message:
       'Einladung gesendet. Die Person kann sie in den Einstellungen annehmen oder ablehnen.',
   })
-}
+})
 
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
+export const PATCH = withErrorHandling('/api/accounts/:id/members', async function PATCH(request: NextRequest, { params }: RouteParams) {
   const { id: accountId } = await params
   const ctx = await getAccountContextForAccountId(accountId)
   if (isErrorResponse(ctx)) return ctx
@@ -228,9 +228,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     email: updated.user.email,
     role: updated.role,
   })
-}
+})
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export const DELETE = withErrorHandling('/api/accounts/:id/members', async function DELETE(request: NextRequest, { params }: RouteParams) {
   const { id: accountId } = await params
   const ctx = await getAccountContextForAccountId(accountId)
   if (isErrorResponse(ctx)) return ctx
@@ -291,4 +291,4 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   await prisma.accountMember.delete({ where: { id: memberId } })
 
   return NextResponse.json({ message: 'Zugriff entfernt' })
-}
+})

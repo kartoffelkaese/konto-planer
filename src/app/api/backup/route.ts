@@ -177,30 +177,29 @@ export async function POST(request: Request) {
         merchantMap.set(merchant.id, newMerchant.id)
       }
 
-      for (const transaction of b.transactions) {
-        await tx.transaction.create({
-          data: {
-            amount: Number(transaction.amount),
-            date: new Date(transaction.date),
-            description: transaction.description,
-            isConfirmed: transaction.isConfirmed,
-            isRecurring: transaction.isRecurring,
-            isRecurringPaused: transaction.isRecurringPaused ?? false,
-            recurringInterval: transaction.recurringInterval,
-            lastConfirmedDate: transaction.lastConfirmedDate
-              ? new Date(transaction.lastConfirmedDate)
-              : null,
-            merchant: transaction.merchant,
-            merchantId: transaction.merchantId
-              ? merchantMap.get(transaction.merchantId) ?? null
-              : null,
-            categoryId: transaction.categoryId
-              ? categoryMap.get(transaction.categoryId) ?? null
-              : null,
-            accountId: account.id,
-          },
-        })
-      }
+      // Eine Sammel-Einfügung statt bis zu 10 000 einzelner Anfragen in der Transaktion
+      await tx.transaction.createMany({
+        data: b.transactions.map((transaction) => ({
+          amount: Number(transaction.amount),
+          date: new Date(transaction.date),
+          description: transaction.description,
+          isConfirmed: transaction.isConfirmed,
+          isRecurring: transaction.isRecurring,
+          isRecurringPaused: transaction.isRecurringPaused ?? false,
+          recurringInterval: transaction.recurringInterval,
+          lastConfirmedDate: transaction.lastConfirmedDate
+            ? new Date(transaction.lastConfirmedDate)
+            : null,
+          merchant: transaction.merchant,
+          merchantId: transaction.merchantId
+            ? merchantMap.get(transaction.merchantId) ?? null
+            : null,
+          categoryId: transaction.categoryId
+            ? categoryMap.get(transaction.categoryId) ?? null
+            : null,
+          accountId: account.id,
+        })),
+      })
     })
 
     return NextResponse.json({ message: 'Backup erfolgreich wiederhergestellt' })

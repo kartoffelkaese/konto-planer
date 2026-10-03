@@ -16,6 +16,8 @@ Geschützte Routen erwarten eine **gültige NextAuth-Session** (`credentials: 'i
 
 **Ohne Session erreichbar:** `/api/auth/*`, `POST /api/auth/register`, `/api/split/public/*`
 
+**Schreibende Anfragen** (`POST`/`PUT`/`PATCH`/`DELETE`) mit einem `Origin`-Header, der nicht zum eigenen Host passt, werden mit `403` abgelehnt (Schutz gegen Cross-Site-Requests).
+
 Öffentliche Split-Share-Seite im Browser: `/split/s/{token}` (nur Lesen, kein Login).
 
 Anmeldung: `/auth/login` (Credentials). Es gibt **keinen** Bearer-Token-Header.
@@ -218,6 +220,7 @@ Nur für Konten mit `isSimpleAccount: false` (Statistik-Seite leitet sonst um).
 | `PATCH` | `/api/users/email` | Neue E-Mail anfordern (Passwort); Bestätigungslink an neue Adresse |
 | `DELETE` | `/api/users/email/pending` | Ausstehende E-Mail-Änderung abbrechen |
 | `POST` | `/api/users/email/resend` | Bestätigungs-E-Mail für ausstehende Änderung erneut senden |
+| `PATCH` | `/api/users/password` | `{ "currentPassword", "newPassword" }` — Passwort ändern; beendet alle anderen Sitzungen (eigene Sitzung per `update({ refreshSessionVersion: true })` anheben) |
 | `DELETE` | `/api/users/delete` | Anmeldung löschen (mit Passwort) |
 
 **`GET/PATCH /api/users/settings` – Felder**
@@ -239,8 +242,10 @@ Nur für Konten mit `isSimpleAccount: false` (Statistik-Seite leitet sonst um).
 
 | Methode | Pfad | Beschreibung |
 |---------|------|----------------|
-| `POST` | `/api/auth/register` | `email`, `password`, `salaryDay` — sendet Bestätigungs-E-Mail |
-| `GET` | `/api/auth/verify-email?token=…` | E-Mail bestätigen (Redirect zur Anmeldung) |
+| `POST` | `/api/auth/register` | `email`, `password`, `salaryDay` — sendet Bestätigungs-E-Mail. Antwortet bei vergebener Adresse genauso (201); die Adresse erhält dann einen Hinweis bzw. einen neuen Bestätigungslink |
+| `POST` | `/api/auth/verify-email` | `{ "token" }` — E-Mail bestätigen; Antwort `{ ok, purpose }` oder `{ ok: false, error }` mit `error` ∈ `missing`, `invalid`, `expired`, `taken`. `GET ?token=…` leitet nur zur Bestätigungsseite weiter |
+| `POST` | `/api/auth/forgot-password` | `{ "email" }` — Link zum Zurücksetzen (1 h gültig); Antwort immer gleich |
+| `POST` | `/api/auth/reset-password` | `{ "token", "password" }` — neues Passwort; beendet alle Sitzungen |
 | `POST` | `/api/auth/resend-verification` | `{ "email" }` — Bestätigungs-E-Mail erneut (Registrierung) |
 | `POST` | `/api/error-log` | Client-Fehler ans Server-Log (Session, Rate-Limit) |
 

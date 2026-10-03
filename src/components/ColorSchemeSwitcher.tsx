@@ -35,7 +35,7 @@ export default function ColorSchemeSwitcher() {
     <SegmentedControl
       ariaLabel="Darstellung"
       className="grid w-full max-w-md grid-cols-3"
-      buttonClassName="px-2"
+      buttonClassName="px-1.5"
       value={mode}
       onChange={handleChange}
       disabled={mode === null}

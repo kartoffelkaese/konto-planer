@@ -12,10 +12,11 @@ import {
   RATE_LIMITS,
 } from '@/lib/rate-limit'
 import { unlinkTransfersTargetingAccount } from '@/lib/transfers'
+import { withErrorHandling } from '@/lib/route-handler'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export const DELETE = withErrorHandling('/api/accounts/:id', async function DELETE(request: NextRequest, { params }: RouteParams) {
   const { id: accountId } = await params
   const ctx = await getAccountContextForAccountId(accountId)
   if (isErrorResponse(ctx)) return ctx
@@ -93,4 +94,4 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     message: 'Buchführungs-Konto gelöscht',
     nextAccountId,
   })
-}
+})

@@ -1,5 +1,3 @@
-'use server'
-
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAccountContext, requireWritableContext } from '@/lib/account-context'
@@ -7,8 +5,9 @@ import {
   isErrorResponse,
   readJsonBody,
 } from '@/lib/api-auth'
+import { withErrorHandling } from '@/lib/route-handler'
 
-export async function GET() {
+export const GET = withErrorHandling('/api/categories', async function GET() {
   const ctx = await getAccountContext()
   if (isErrorResponse(ctx)) return ctx
 
@@ -26,9 +25,9 @@ export async function GET() {
   })
 
   return NextResponse.json(categories)
-}
+})
 
-export async function POST(request: Request) {
+export const POST = withErrorHandling('/api/categories', async function POST(request: Request) {
   const ctx = await getAccountContext()
   if (isErrorResponse(ctx)) return ctx
 
@@ -71,4 +70,4 @@ export async function POST(request: Request) {
   })
 
   return NextResponse.json(category)
-}
+})

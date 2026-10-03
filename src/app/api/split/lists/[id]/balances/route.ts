@@ -7,10 +7,11 @@ import {
   decimalToNumber,
   requireSplitListAccess,
 } from '@/lib/splitAccess'
+import { withErrorHandling } from '@/lib/route-handler'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export const GET = withErrorHandling('/api/split/lists/:id/balances', async function GET(_request: NextRequest, { params }: RouteParams) {
   const { id } = await params
   const authResult = await getUserBySession()
   if (isErrorResponse(authResult)) return authResult
@@ -61,4 +62,4 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     suggestions,
     totalExpenses: Math.round(totalExpenses * 100) / 100,
   })
-}
+})

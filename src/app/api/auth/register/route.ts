@@ -1,20 +1,56 @@
 import { NextResponse } from 'next/server'
 import { EmailVerificationPurpose } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
 import { Prisma } from '@prisma/client'
 import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
+import { hashPassword } from '@/lib/password-hash'
 import { validatePassword } from '@/lib/password-policy'
 import {
   createDefaultAccountForUser,
+  isValidEmail,
   normalizeEmail,
 } from '@/lib/accounts'
+import { isErrorResponse, validateSalaryDay } from '@/lib/api-auth'
 import { cleanupUnverifiedUsers } from '@/lib/cleanupUnverifiedUsers'
 import {
   createVerificationToken,
+  sendAlreadyRegisteredEmail,
   sendSignupVerificationEmail,
 } from '@/lib/emailVerification'
 import { logger } from '@/lib/logger'
+
+function signupResponse() {
+  return NextResponse.json(
+    {
+      message:
+        'Konto erstellt. Bitte bestätige deine E-Mail-Adresse über den Link in der E-Mail.',
+    },
+    { status: 201 }
+  )
+}
+
+/** Registrierung mit vergebener Adresse: unbestätigt → neuer Bestätigungslink, sonst Hinweis-Mail */
+async function notifyExistingRegistration(
+  existingUser: { id: string; email: string; emailVerified: Date | null },
+  email: string
+) {
+  // Adresse ist nur als ausstehende Änderung eines anderen Kontos vorgemerkt: nichts senden
+  if (existingUser.email !== email) return
+
+  try {
+    if (existingUser.emailVerified) {
+      await sendAlreadyRegisteredEmail(email)
+    } else {
+      const rawToken = await createVerificationToken(
+        existingUser.id,
+        EmailVerificationPurpose.SIGNUP
+      )
+      await sendSignupVerificationEmail(email, rawToken)
+    }
+  } catch (error) {
+    logger.error('Hinweis-Mail bei Registrierung fehlgeschlagen', error, { endpoint: '/api/auth/register' })
+  }
+}
 
 async function rollbackUnverifiedUser(userId: string) {
   const memberships = await prisma.accountMember.findMany({
@@ -48,9 +84,16 @@ export async function POST(request: Request) {
 
     await cleanupUnverifiedUsers()
 
-    const { email: rawEmail, password, salaryDay } = await request.json()
+    const { email: rawEmail, password, salaryDay: rawSalaryDay } = await request.json()
 
-    if (!rawEmail || !password || !salaryDay) {
+    if (!rawEmail || !password || !rawSalaryDay) {
+      return NextResponse.json(
+        { message: 'Alle Felder müssen ausgefüllt werden' },
+        { status: 400 }
+      )
+    }
+
+    if (typeof rawEmail !== 'string' || typeof password !== 'string') {
       return NextResponse.json(
         { message: 'Alle Felder müssen ausgefüllt werden' },
         { status: 400 }
@@ -59,23 +102,9 @@ export async function POST(request: Request) {
 
     const email = normalizeEmail(rawEmail)
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
+    if (!isValidEmail(email)) {
       return NextResponse.json(
         { message: 'Bitte gib eine gültige E-Mail-Adresse ein' },
-        { status: 400 }
-      )
-    }
-
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ email }, { pendingEmail: email }],
-      },
-    })
-
-    if (existingUser) {
-      return NextResponse.json(
-        { message: 'Diese E-Mail-Adresse ist bereits registriert' },
         { status: 400 }
       )
     }
@@ -85,15 +114,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: passwordError }, { status: 400 })
     }
 
-    if (salaryDay < 1 || salaryDay > 31) {
+    const salaryDay = validateSalaryDay(rawSalaryDay)
+    if (isErrorResponse(salaryDay)) {
       return NextResponse.json(
         { message: 'Der Gehaltszahlungstag muss zwischen 1 und 31 liegen' },
         { status: 400 }
       )
     }
 
-    const salt = await bcrypt.genSalt(10)
-    const passwordHash = await bcrypt.hash(password, salt)
+    // Hash immer berechnen, damit die Antwortzeit nicht verrät, ob die Adresse schon existiert
+    const passwordHash = await hashPassword(password)
+
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ email }, { pendingEmail: email }],
+      },
+    })
+
+    // Vergebene Adresse: dieselbe Antwort wie bei Erfolg, Hinweis geht per E-Mail an die Adresse
+    if (existingUser) {
+      await notifyExistingRegistration(existingUser, email)
+      return signupResponse()
+    }
 
     const user = await prisma.$transaction(async (tx) => {
       const created = await tx.user.create({
@@ -125,23 +167,15 @@ export async function POST(request: Request) {
       )
     }
 
-    return NextResponse.json(
-      {
-        message:
-          'Konto erstellt. Bitte bestätige deine E-Mail-Adresse über den Link in der E-Mail.',
-      },
-      { status: 201 }
-    )
+    return signupResponse()
   } catch (error) {
     logger.error('Registrierungsfehler', error, { endpoint: '/api/auth/register' })
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       switch (error.code) {
         case 'P2002':
-          return NextResponse.json(
-            { message: 'Diese E-Mail-Adresse ist bereits registriert' },
-            { status: 400 }
-          )
+          // Gleichzeitige Registrierung derselben Adresse – nach außen wie Erfolg
+          return signupResponse()
         default:
           break
       }

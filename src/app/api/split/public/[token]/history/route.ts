@@ -7,10 +7,11 @@ import {
   serializeExpenseForGuest,
   serializeSettlementForGuest,
 } from '@/lib/splitSerialize'
+import { withErrorHandling } from '@/lib/route-handler'
 
 type RouteParams = { params: Promise<{ token: string }> }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export const GET = withErrorHandling('/api/split/public/:token/history', async function GET(_request: NextRequest, { params }: RouteParams) {
   const { token } = await params
   const access = await requireSplitListShareAccess(token)
   if (access instanceof NextResponse) return access
@@ -63,4 +64,4 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     categoryTotals,
     totalExpenses: Math.round(totalExpenses * 100) / 100,
   })
-}
+})

@@ -129,6 +129,8 @@ server {
 
 `AUTH_URL` muss exakt der öffentlichen URL entsprechen (z. B. `https://ihre-domain.de`).
 
+**Client-IP für Rate-Limits** (`TRUST_PROXY=true`): Die App nimmt zuerst `X-Real-IP`, sonst den **letzten** Eintrag von `X-Forwarded-For` – frühere Einträge kann der Client selbst mitschicken. Der Proxy muss `X-Real-IP` deshalb selbst setzen (wie oben) und darf ihn nicht vom Client durchreichen. Caddy setzt `X-Forwarded-For` korrekt; dort zusätzlich `header_up X-Real-IP {remote_host}` eintragen.
+
 ## 6. Updates deployen
 
 ```bash

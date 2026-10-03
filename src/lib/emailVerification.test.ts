@@ -12,6 +12,7 @@ const mockPrisma = vi.hoisted(() => ({
   },
   user: {
     findFirst: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
     update: vi.fn(),
   },
   $transaction: vi.fn(),
@@ -27,6 +28,7 @@ vi.mock('@/lib/email', () => ({
 }))
 
 import {
+  resetPasswordWithToken,
   verifyEmailToken,
   isEmailTaken,
   EMAIL_VERIFICATION_TTL_MS,
@@ -53,7 +55,7 @@ describe('emailVerification', () => {
     const result = await verifyEmailToken('unknown')
     expect(result).toEqual({
       ok: false,
-      error: 'Ungültiger oder abgelaufener Link.',
+      error: 'invalid',
     })
   })
 
@@ -104,7 +106,7 @@ describe('emailVerification', () => {
     const result = await verifyEmailToken(raw)
     expect(result).toEqual({
       ok: false,
-      error: 'Diese E-Mail-Adresse wird bereits verwendet.',
+      error: 'taken',
     })
   })
 
@@ -112,5 +114,65 @@ describe('emailVerification', () => {
     mockPrisma.user.findFirst.mockResolvedValue({ id: 'u1' })
     expect(await isEmailTaken('test@example.de')).toBe(true)
     expect(mockPrisma.user.findFirst).toHaveBeenCalled()
+  })
+
+  it('verifyEmailToken akzeptiert keinen Passwort-Reset-Token als Bestätigung', async () => {
+    mockPrisma.emailVerificationToken.findUnique.mockResolvedValue({
+      id: 'r1',
+      userId: 'u1',
+      purpose: EmailVerificationPurpose.PASSWORD_RESET,
+      expiresAt: new Date(Date.now() + 60_000),
+      newEmail: null,
+    })
+    expect(await verifyEmailToken('raw')).toEqual({ ok: false, error: 'invalid' })
+    expect(mockPrisma.user.update).not.toHaveBeenCalled()
+  })
+
+  it('resetPasswordWithToken lehnt Bestätigungs-Tokens ab', async () => {
+    mockPrisma.emailVerificationToken.findUnique.mockResolvedValue({
+      id: 't1',
+      userId: 'u1',
+      purpose: EmailVerificationPurpose.SIGNUP,
+      expiresAt: new Date(Date.now() + 60_000),
+    })
+    expect(await resetPasswordWithToken('raw', 'hash')).toEqual({ ok: false, error: 'invalid' })
+    expect(mockPrisma.user.update).not.toHaveBeenCalled()
+  })
+
+  it('resetPasswordWithToken meldet abgelaufene Links', async () => {
+    mockPrisma.emailVerificationToken.findUnique.mockResolvedValue({
+      id: 'r1',
+      userId: 'u1',
+      purpose: EmailVerificationPurpose.PASSWORD_RESET,
+      expiresAt: new Date(Date.now() - 1000),
+    })
+    expect(await resetPasswordWithToken('raw', 'hash')).toEqual({ ok: false, error: 'expired' })
+    expect(mockPrisma.user.update).not.toHaveBeenCalled()
+  })
+
+  it('resetPasswordWithToken setzt das Passwort und beendet alle Sitzungen', async () => {
+    const raw = 'reset-raw'
+    mockPrisma.emailVerificationToken.findUnique.mockResolvedValue({
+      id: 'r1',
+      userId: 'u1',
+      purpose: EmailVerificationPurpose.PASSWORD_RESET,
+      expiresAt: new Date(Date.now() + 60_000),
+    })
+    mockPrisma.user.findUniqueOrThrow.mockResolvedValue({ emailVerified: new Date('2026-01-01') })
+
+    expect(await resetPasswordWithToken(raw, 'new-hash')).toEqual({ ok: true })
+    expect(mockPrisma.emailVerificationToken.findUnique).toHaveBeenCalledWith({
+      where: { tokenHash: hashToken(raw) },
+    })
+    expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      where: { id: 'u1' },
+      data: expect.objectContaining({
+        passwordHash: 'new-hash',
+        sessionVersion: { increment: 1 },
+      }),
+    })
+    expect(mockPrisma.emailVerificationToken.deleteMany).toHaveBeenCalledWith({
+      where: { userId: 'u1', purpose: EmailVerificationPurpose.PASSWORD_RESET },
+    })
   })
 })

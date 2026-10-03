@@ -4,7 +4,7 @@ import { getAccountContext, requireWritableContext } from '@/lib/account-context
 import { isErrorResponse } from '@/lib/api-auth'
 import { assertPlanningAccount } from '@/lib/simpleAccount'
 import { getRecurringDueDatesInRange, getSalaryMonthRange } from '@/lib/dateUtils'
-import { buildRecurringInstanceData } from '@/lib/recurringInstances'
+import { buildRecurringInstanceData, recurringInstanceKey as instanceKey } from '@/lib/recurringInstances'
 import {
   createTransferPair,
   resolveTransferSenderName,
@@ -35,68 +35,75 @@ export async function POST() {
     })
 
     const { startDate, endDate } = getSalaryMonthRange(account.salaryDay)
-    const newTransactions = []
 
-    for (const transaction of recurringTransactions) {
-      const interval = transaction.recurringInterval || 'monthly'
-      const dueDates = getRecurringDueDatesInRange(
+    const dueByTemplate = recurringTransactions.map((transaction) => ({
+      transaction,
+      dueDates: getRecurringDueDatesInRange(
         transaction.date,
-        interval,
+        transaction.recurringInterval || 'monthly',
         startDate,
         endDate
-      )
+      ),
+    }))
+    const allDueDates = dueByTemplate.flatMap(({ dueDates }) => dueDates)
 
-      for (const dueDate of dueDates) {
-        const dayStart = new Date(dueDate)
-        dayStart.setHours(0, 0, 0, 0)
-        const dayEnd = new Date(dueDate)
-        dayEnd.setHours(23, 59, 59, 999)
+    // Vorhandene Instanzen aller Vorlagen in einer Abfrage statt einer je Fälligkeit
+    const existingKeys = new Set<string>()
+    if (allDueDates.length > 0) {
+      const rangeStart = new Date(Math.min(...allDueDates.map((d) => d.getTime())))
+      rangeStart.setHours(0, 0, 0, 0)
+      const rangeEnd = new Date(Math.max(...allDueDates.map((d) => d.getTime())))
+      rangeEnd.setHours(23, 59, 59, 999)
 
-        const existingInstance = await prisma.transaction.findFirst({
-          where: {
-            accountId: account.id,
-            isRecurring: false,
-            parentTransactionId: transaction.id,
-            date: {
-              gte: dayStart,
-              lte: dayEnd,
-            },
-          },
-        })
-
-        if (!existingInstance) {
-          const newTransaction = await prisma.$transaction(async (tx) => {
-            const instance = await tx.transaction.create({
-              data: buildRecurringInstanceData(
-                transaction,
-                dueDate,
-                account.id,
-                transaction.id
-              ),
-            })
-
-            if (transaction.isTransfer && transaction.transferTargetAccountId) {
-              const sourceAccount = await tx.account.findUnique({
-                where: { id: account.id },
-                select: { name: true, transferSenderName: true },
-              })
-              if (sourceAccount) {
-                await createTransferPair(
-                  tx,
-                  instance,
-                  transaction.transferTargetAccountId,
-                  resolveTransferSenderName(sourceAccount)
-                )
-              }
-            }
-
-            return tx.transaction.findUniqueOrThrow({
-              where: { id: instance.id },
-              include: transactionTransferInclude,
-            })
-          })
-          newTransactions.push(newTransaction)
+      const existingInstances = await prisma.transaction.findMany({
+        where: {
+          accountId: account.id,
+          isRecurring: false,
+          parentTransactionId: { in: recurringTransactions.map((t) => t.id) },
+          date: { gte: rangeStart, lte: rangeEnd },
+        },
+        select: { parentTransactionId: true, date: true },
+      })
+      for (const instance of existingInstances) {
+        if (instance.parentTransactionId) {
+          existingKeys.add(instanceKey(instance.parentTransactionId, instance.date))
         }
+      }
+    }
+
+    const newTransactions = []
+
+    for (const { transaction, dueDates } of dueByTemplate) {
+      for (const dueDate of dueDates) {
+        const key = instanceKey(transaction.id, dueDate)
+        if (existingKeys.has(key)) continue
+
+        const newTransaction = await prisma.$transaction(async (tx) => {
+          const instance = await tx.transaction.create({
+            data: buildRecurringInstanceData(
+              transaction,
+              dueDate,
+              account.id,
+              transaction.id
+            ),
+          })
+
+          if (transaction.isTransfer && transaction.transferTargetAccountId) {
+            await createTransferPair(
+              tx,
+              instance,
+              transaction.transferTargetAccountId,
+              resolveTransferSenderName(account)
+            )
+          }
+
+          return tx.transaction.findUniqueOrThrow({
+            where: { id: instance.id },
+            include: transactionTransferInclude,
+          })
+        })
+        existingKeys.add(key)
+        newTransactions.push(newTransaction)
       }
     }
 
@@ -106,7 +113,6 @@ export async function POST() {
     return NextResponse.json(
       {
         error: 'Fehler beim Erstellen der ausstehenden Transaktionen',
-        details: error,
       },
       { status: 500 }
     )

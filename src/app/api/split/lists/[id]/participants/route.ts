@@ -83,31 +83,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     ? normalizeEmail(body.email.trim())
     : null
 
-  let linkedUserId: string | null = null
-  if (email) {
-    const linkedUser = await prisma.user.findUnique({ where: { email } })
-    if (linkedUser) {
-      linkedUserId = linkedUser.id
-      const existingMember = await prisma.splitListMember.findUnique({
-        where: {
-          splitListId_userId: { splitListId: id, userId: linkedUser.id },
-        },
-      })
-      if (!existingMember && linkedUser.id !== authResult.user.id) {
-        await prisma.splitListMember.create({
-          data: {
-            splitListId: id,
-            userId: linkedUser.id,
-            role: 'MEMBER',
-          },
-        })
-      }
-    }
-  }
+  // Nur die eigene Adresse wird direkt verknüpft. Alle anderen bekommen eine Einladung, die sie
+  // annehmen müssen – egal ob sie schon ein Konto haben (die Antwort verrät das nicht).
+  const isOwnEmail = email != null && email === normalizeEmail(authResult.user.email)
+  const linkedUserId: string | null = isOwnEmail ? authResult.user.id : null
 
   let displayName = manualDisplayName ?? ''
   if (linkedUserId) {
     displayName = await getSplitDisplayNameForUser(linkedUserId)
+  } else if (!displayName && email) {
+    // Platzhalter bis zur Annahme; danach übernimmt die Einladung den Split-Namen der Person
+    displayName = email.split('@')[0]
   }
   if (!displayName) {
     return NextResponse.json(
@@ -154,23 +140,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           participantId: created.id,
           status: SplitInviteStatus.PENDING,
           invitedByUserId: authResult.user.id,
-        },
-      })
-    } else if (email && linkedUserId) {
-      await tx.splitListInvite.upsert({
-        where: {
-          splitListId_email: { splitListId: id, email },
-        },
-        create: {
-          splitListId: id,
-          email,
-          participantId: created.id,
-          invitedByUserId: authResult.user.id,
-          status: SplitInviteStatus.ACCEPTED,
-        },
-        update: {
-          participantId: created.id,
-          status: SplitInviteStatus.ACCEPTED,
         },
       })
     }

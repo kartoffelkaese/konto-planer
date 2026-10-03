@@ -8,7 +8,7 @@ import {
   isErrorResponse,
   readJsonBody,
 } from '@/lib/api-auth'
-import { normalizeEmail } from '@/lib/accounts'
+import { isValidEmail, normalizeEmail } from '@/lib/accounts'
 import {
   checkRateLimit,
   getClientIp,
@@ -45,8 +45,7 @@ export async function PATCH(request: NextRequest) {
     const { newEmail: rawNewEmail, password } = body
     const newEmail = normalizeEmail(String(rawNewEmail || ''))
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(newEmail)) {
+    if (!isValidEmail(newEmail)) {
       return NextResponse.json(
         { error: 'Ungültige E-Mail-Adresse' },
         { status: 400 }

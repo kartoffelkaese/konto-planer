@@ -11,7 +11,12 @@ const baseSecurityHeaders = [
   },
 ]
 
-/** CSP nur in Produktion – in Dev blockiert sie RSC/HMR/Turbopack. */
+/**
+ * CSP nur in Produktion – in Dev blockiert sie RSC/HMR/Turbopack.
+ * script-src bleibt bei 'unsafe-inline': Next.js schreibt die Seitendaten als Inline-Skripte;
+ * ohne 'unsafe-inline' bräuchte es pro Anfrage einen Nonce, und alle Seiten würden dynamisch
+ * gerendert (bewusst nicht gewählt, siehe Sicherheitsbericht S10).
+ */
 function buildConnectSrc() {
   const sources = new Set(["'self'"])
   const authUrl = process.env.AUTH_URL || process.env.NEXTAUTH_URL
@@ -44,6 +49,9 @@ const productionSecurityHeaders = [
       "base-uri 'self'",
       "form-action 'self'",
       "object-src 'none'",
+      "manifest-src 'self'",
+      "worker-src 'self'",
+      'upgrade-insecure-requests',
     ].join('; '),
   },
 ]
@@ -57,18 +65,6 @@ const nextConfig = {
   // Einzige Quelle der Versionsnummer ist package.json; nur dieser eine Wert landet im Client-Bundle
   env: {
     NEXT_PUBLIC_APP_VERSION: require('./package.json').version,
-  },
-  experimental: {
-    serverActions: {
-      allowedOrigins: [
-        'localhost:3000',
-        'localhost:3001',
-        '127.0.0.1:3000',
-        '127.0.0.1:3001',
-        'https://konto-planer.de',
-        'http://konto-planer.de',
-      ],
-    },
   },
   typescript: {
     ignoreBuildErrors: false,

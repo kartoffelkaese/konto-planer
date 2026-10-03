@@ -402,6 +402,12 @@ export const requestEmailChange = (newEmail: string, password: string) =>
     timeoutMs: null,
   })
 
+export const changePassword = (currentPassword: string, newPassword: string) =>
+  apiFetch<{ message: string }>('/users/password', {
+    method: 'PATCH',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  })
+
 export const cancelPendingEmailChange = () =>
   apiFetch<unknown>('/users/email/pending', { method: 'DELETE' })
 

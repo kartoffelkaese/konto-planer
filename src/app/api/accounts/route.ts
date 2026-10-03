@@ -11,8 +11,9 @@ import {
   validateBankId,
   readJsonBody,
 } from '@/lib/api-auth'
+import { withErrorHandling } from '@/lib/route-handler'
 
-export async function GET() {
+export const GET = withErrorHandling('/api/accounts', async function GET() {
   const authResult = await getUserBySession()
   if (isErrorResponse(authResult)) return authResult
 
@@ -49,9 +50,9 @@ export async function GET() {
       createdAt: m.account.createdAt,
     }))
   )
-}
+})
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling('/api/accounts', async function POST(request: NextRequest) {
   const authResult = await getUserBySession()
   if (isErrorResponse(authResult)) return authResult
 
@@ -116,4 +117,4 @@ export async function POST(request: NextRequest) {
     },
     { status: 201 }
   )
-}
+})

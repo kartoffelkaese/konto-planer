@@ -22,6 +22,7 @@ type SegmentedControlProps<T extends string> = {
   role?: 'radiogroup' | 'tablist'
   /** Layout der Leiste, z. B. `grid w-full grid-cols-3` oder `flex min-w-min` */
   className?: string
+  /** Zusätzliche Klassen je Option; ersetzt den Standard-Innenabstand `px-3` */
   buttonClassName?: string
   disabled?: boolean
 }
@@ -37,7 +38,7 @@ export default function SegmentedControl<T extends string>({
   ariaLabel,
   role = 'radiogroup',
   className = 'grid w-full grid-cols-3',
-  buttonClassName = '',
+  buttonClassName = 'px-3',
   disabled = false,
 }: SegmentedControlProps<T>) {
   const trackRef = useRef<HTMLDivElement>(null)
@@ -100,7 +101,7 @@ export default function SegmentedControl<T extends string>({
             data-selected={selected}
             disabled={disabled}
             onClick={() => onChange(option.value)}
-            className={`segmented-option relative z-[1] flex min-h-10 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-pill px-3 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`segmented-option relative z-[1] flex min-h-10 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-pill text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
               selected ? 'text-primary' : 'text-secondary hover:text-primary'
             } ${buttonClassName}`}
           >

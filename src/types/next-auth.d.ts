@@ -9,11 +9,14 @@ declare module 'next-auth' {
       name?: string | null
     }
     activeAccountId?: string
+    /** Sitzungs-Version des Nutzers beim Login (siehe User.sessionVersion) */
+    sessionVersion?: number
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
     activeAccountId?: string
+    sessionVersion?: number
   }
 }

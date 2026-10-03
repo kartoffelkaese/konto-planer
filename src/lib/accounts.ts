@@ -5,6 +5,14 @@ export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase()
 }
 
+/** Längste zulässige E-Mail-Adresse (RFC 5321) */
+export const MAX_EMAIL_LENGTH = 254
+
+/** Grobe Formprüfung einer (bereits normalisierten) E-Mail-Adresse */
+export function isValidEmail(email: string): boolean {
+  return email.length <= MAX_EMAIL_LENGTH && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
 export async function createDefaultAccountForUser(
   userId: string,
   salaryDay: number,

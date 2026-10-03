@@ -3,10 +3,11 @@ import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSplitListShareAccess } from '@/lib/splitShareToken'
 import { serializeListForGuest } from '@/lib/splitSerialize'
+import { withErrorHandling } from '@/lib/route-handler'
 
 type RouteParams = { params: Promise<{ token: string }> }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export const GET = withErrorHandling('/api/split/public/:token', async function GET(_request: NextRequest, { params }: RouteParams) {
   const { token } = await params
   const access = await requireSplitListShareAccess(token)
   if (access instanceof NextResponse) return access
@@ -25,4 +26,4 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   }
 
   return NextResponse.json(serializeListForGuest(list))
-}
+})

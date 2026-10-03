@@ -3,8 +3,9 @@ import { AccountInviteStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 import { normalizeEmail } from '@/lib/accounts'
+import { withErrorHandling } from '@/lib/route-handler'
 
-export async function GET() {
+export const GET = withErrorHandling('/api/invites/received', async function GET() {
   const authResult = await getUserBySession()
   if (isErrorResponse(authResult)) return authResult
 
@@ -33,4 +34,4 @@ export async function GET() {
       createdAt: i.createdAt,
     }))
   )
-}
+})

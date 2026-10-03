@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { isPublicApiPath } from '@/lib/public-api'
+import { isCrossSiteRequest } from '@/lib/csrf'
 
 /** Statische Dateien aus public/ – ohne Login (OG-Bild, Icons, …). */
 const PUBLIC_STATIC_FILE = /\.(?:png|svg|ico|jpg|jpeg|webp|woff2?)$/i
@@ -25,6 +26,9 @@ export default auth((req) => {
   }
 
   if (pathname.startsWith('/api/')) {
+    if (isCrossSiteRequest(req.method, req.headers)) {
+      return NextResponse.json({ error: 'Anfrage nicht erlaubt' }, { status: 403 })
+    }
     if (isPublicApiPath(pathname)) {
       return NextResponse.next()
     }

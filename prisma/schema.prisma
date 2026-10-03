@@ -25,6 +25,7 @@ enum AccountInviteStatus {
 enum EmailVerificationPurpose {
   SIGNUP
   EMAIL_CHANGE
+  PASSWORD_RESET
 }
 
 enum SplitListStatus {
@@ -50,6 +51,8 @@ model User {
   emailVerified           DateTime?
   pendingEmail            String?
   splitDisplayName        String?
+  /// Wird bei Passwortwechsel erhöht – ältere Sitzungen (JWT mit kleinerer Version) werden ungültig
+  sessionVersion          Int                      @default(0)
   createdAt               DateTime                 @default(now())
   memberships             AccountMember[]
   invitesSent             AccountInvite[]          @relation("InvitedBy")

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/Button'
+import PasswordChangeForm from '@/components/settings/PasswordChangeForm'
 import { useToast } from '@/hooks/useToast'
 import {
   cancelPendingEmailChange,
@@ -95,7 +96,7 @@ export default function EmailSettingsSection({
   return (
     <div id="email-settings" className="card p-4 md:p-5">
       <h2 className="text-lg font-medium text-primary mb-1">Benutzerkonto</h2>
-      <p className="text-sm text-secondary mb-4">Anmeldung und E-Mail-Adresse</p>
+      <p className="text-sm text-secondary mb-4">Anmeldung, E-Mail-Adresse und Passwort</p>
       
       {emailError && (
         <div className="mb-4 p-4 bg-danger-subtle text-danger rounded-lg">
@@ -195,6 +196,10 @@ export default function EmailSettingsSection({
           </div>
         </form>
       )}
+
+      <div className="mt-4 border-t border-hairline pt-4">
+        <PasswordChangeForm />
+      </div>
     </div>
   )
 }

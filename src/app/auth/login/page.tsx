@@ -2,6 +2,7 @@
 
 import { useState, Suspense, useEffect } from 'react'
 import { getSession, signIn, useSession } from 'next-auth/react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/Button'
 import PageLoader from '@/components/PageLoader'
@@ -27,6 +28,7 @@ function LoginForm() {
   const authError = searchParams.get('error')
   const isVerified = searchParams.get('verified') === 'true'
   const isEmailChanged = searchParams.get('emailChanged') === 'true'
+  const isPasswordReset = searchParams.get('passwordReset') === 'true'
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -48,6 +50,20 @@ function LoginForm() {
         return 'Der Verifizierungslink ist ungültig oder abgelaufen.'
       default:
         return 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es erneut.'
+    }
+  }
+
+  // Feste Texte zu den Codes – der URL-Parameter selbst wird nie angezeigt
+  const getVerifyErrorMessage = (code: string) => {
+    switch (code) {
+      case 'missing':
+        return 'Der Bestätigungslink ist unvollständig.'
+      case 'expired':
+        return 'Der Bestätigungslink ist abgelaufen.'
+      case 'taken':
+        return 'Diese E-Mail-Adresse wird bereits verwendet.'
+      default:
+        return 'Ungültiger oder abgelaufener Link.'
     }
   }
 
@@ -148,9 +164,15 @@ function LoginForm() {
             </AuthAlert>
           )}
 
+          {isPasswordReset && (
+            <AuthAlert variant="success" title="Passwort geändert">
+              Melde dich mit deinem neuen Passwort an.
+            </AuthAlert>
+          )}
+
           {verifyError && (
             <AuthAlert variant="error" title="Bestätigung fehlgeschlagen">
-              {verifyError}
+              {getVerifyErrorMessage(verifyError)}
             </AuthAlert>
           )}
 
@@ -200,15 +222,25 @@ function LoginForm() {
                 autoFocus
                 placeholder="name@beispiel.de"
               />
-              <AuthFormField
-                id="password"
-                name="password"
-                label="Passwort"
-                type="password"
-                autoComplete="current-password"
-                required
-                placeholder="••••••••"
-              />
+              <div>
+                <AuthFormField
+                  id="password"
+                  name="password"
+                  label="Passwort"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  placeholder="••••••••"
+                />
+                <p className="mt-1.5 text-right text-xs">
+                  <Link
+                    href="/auth/forgot-password"
+                    className="font-medium text-accent transition-colors duration-feedback hover:text-accent-hover"
+                  >
+                    Passwort vergessen?
+                  </Link>
+                </p>
+              </div>
             </div>
 
             <Button

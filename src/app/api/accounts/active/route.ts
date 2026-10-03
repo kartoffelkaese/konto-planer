@@ -14,8 +14,9 @@ import {
 } from '@/lib/api-auth'
 import { prisma } from '@/lib/prisma'
 import { userHasAccountAccess } from '@/lib/accounts'
+import { withErrorHandling } from '@/lib/route-handler'
 
-export async function GET() {
+export const GET = withErrorHandling('/api/accounts/active', async function GET() {
   const ctx = await getAccountContext()
   if (isErrorResponse(ctx)) return ctx
 
@@ -26,9 +27,9 @@ export async function GET() {
     role: membership.role,
     accountName: account.name,
   })
-}
+})
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = withErrorHandling('/api/accounts/active', async function PATCH(request: NextRequest) {
   const authResult = await getUserBySession()
   if (isErrorResponse(authResult)) return authResult
 
@@ -91,4 +92,4 @@ export async function PATCH(request: NextRequest) {
     role: membership.role,
     accountName: updated.name,
   })
-}
+})

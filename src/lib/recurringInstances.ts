@@ -33,3 +33,8 @@ export function buildRecurringInstanceData(
     transferTargetAccountId: template.transferTargetAccountId,
   }
 }
+
+/** Vorlage + Kalendertag (Ortszeit): je Vorlage und Tag gibt es höchstens eine Instanz */
+export function recurringInstanceKey(templateId: string, date: Date): string {
+  return `${templateId}:${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+}

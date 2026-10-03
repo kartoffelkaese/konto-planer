@@ -5,21 +5,23 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { TrashIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
+import { useUserSettings } from '@/hooks/useUserSettings'
 import { Button } from '@/components/Button'
 import {
   ACCOUNT_SWITCH_EXIT_MS,
   dispatchAccountChanged,
   dispatchAccountSwitching,
 } from '@/lib/accountSwitchEvents'
-import { deleteAccount, getAccounts, getUserSettings, withApiErrorFallback } from '@/lib/api'
+import { deleteAccount, getAccounts, withApiErrorFallback } from '@/lib/api'
 
 export default function DeleteFinancialAccount() {
   const router = useRouter()
   const { update } = useSession()
   const { showToast } = useToast()
-  const [accountName, setAccountName] = useState('')
-  const [accountId, setAccountId] = useState<string | null>(null)
-  const [role, setRole] = useState<string | null>(null)
+  const { settings } = useUserSettings()
+  const accountName = settings?.accountName ?? 'Mein Konto'
+  const accountId = settings?.activeAccountId ?? null
+  const role = settings?.role ?? null
   const [accountCount, setAccountCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -28,21 +30,8 @@ export default function DeleteFinancialAccount() {
 
   const load = useCallback(async () => {
     try {
-      // Beide Anfragen unabhängig: eine Fehlerantwort blockiert die andere nicht
-      const [settingsResult, accountsResult] = await Promise.allSettled([
-        getUserSettings(),
-        getAccounts<unknown>(),
-      ])
-      if (settingsResult.status === 'fulfilled') {
-        const settings = settingsResult.value
-        setAccountName(settings.accountName ?? 'Mein Konto')
-        setAccountId(settings.activeAccountId ?? null)
-        setRole(settings.role ?? null)
-      }
-      if (accountsResult.status === 'fulfilled') {
-        const accounts = accountsResult.value
-        setAccountCount(Array.isArray(accounts) ? accounts.length : 0)
-      }
+      const accounts = await getAccounts<unknown>()
+      setAccountCount(Array.isArray(accounts) ? accounts.length : 0)
     } catch {
       // optional
     }

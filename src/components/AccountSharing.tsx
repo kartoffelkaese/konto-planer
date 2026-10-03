@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useToast } from '@/hooks/useToast'
+import { useUserSettings } from '@/hooks/useUserSettings'
 import { Button } from '@/components/Button'
 import { inviteRoleLabel, roleLabel } from '@/lib/accountPermissions'
 import {
   getAccountMembers,
-  getUserSettings,
   inviteAccountMember,
   removeAccountMember,
   updateAccountMemberRole,
@@ -32,7 +32,7 @@ type InviteRole = 'MEMBER' | 'READ_ONLY'
 export default function AccountSharing() {
   const { data: session } = useSession()
   const { showToast } = useToast()
-  const [accountId, setAccountId] = useState<string | null>(null)
+  const accountId = useUserSettings().settings?.activeAccountId ?? null
   const [role, setRole] = useState<string | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([])
@@ -40,13 +40,6 @@ export default function AccountSharing() {
   const [inviteRole, setInviteRole] = useState<InviteRole>('MEMBER')
   const [loading, setLoading] = useState(false)
   const [updatingMemberId, setUpdatingMemberId] = useState<string | null>(null)
-
-  const loadSettings = useCallback(async () => {
-    // Fehler still übergehen (wie bisher)
-    const data = await getUserSettings().catch(() => null)
-    if (!data) return
-    setAccountId(data.activeAccountId ?? null)
-  }, [])
 
   const loadMembers = useCallback(async () => {
     if (!accountId) return
@@ -65,20 +58,8 @@ export default function AccountSharing() {
   }, [accountId, session?.user?.email])
 
   useEffect(() => {
-    loadSettings()
-  }, [loadSettings])
-
-  useEffect(() => {
     loadMembers()
   }, [loadMembers])
-
-  useEffect(() => {
-    const onAccountChanged = () => {
-      loadSettings()
-    }
-    window.addEventListener('account-changed', onAccountChanged)
-    return () => window.removeEventListener('account-changed', onAccountChanged)
-  }, [loadSettings])
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault()

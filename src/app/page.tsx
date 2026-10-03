@@ -72,23 +72,25 @@ const emptyDashboard: DashboardData = {
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
-  const { isSimpleAccount, accountName, settings } = useUserSettings()
+  const { isSimpleAccount, accountName, settings, loading: settingsLoading } = useUserSettings()
   const [availableExpanded, setAvailableExpanded] = useState(false)
 
-  // Neu laden bei Anmeldung, Kontowechsel (Schlüssel) und „account-changed“
+  // Neu laden bei Anmeldung, Kontowechsel (Schlüssel) und „account-changed“.
+  // Erst laden, wenn die Einstellungen da sind – sonst ändert sich der Schlüssel und es wird doppelt abgefragt.
   const {
     data: dashboardData,
     error: dashboardError,
-    loading: isLoading,
+    loading: dashboardLoading,
     reload: fetchDashboardData,
   } = useApiQuery(
     `dashboard:${session?.user?.id ?? ''}:${isSimpleAccount}:${settings?.activeAccountId ?? ''}`,
     () => getDashboard<DashboardData>(),
     {
-      enabled: Boolean(session),
+      enabled: Boolean(session) && !settingsLoading,
       onError: (error) => console.error('Fehler:', error),
     }
   )
+  const isLoading = settingsLoading || dashboardLoading
   const data = dashboardData ?? emptyDashboard
   const loadError = !isLoading && dashboardError ? 'Übersicht konnte nicht geladen werden.' : null
 

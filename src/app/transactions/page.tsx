@@ -190,7 +190,10 @@ function TransactionsPageContent() {
               {canWrite && (
                 <>
                   <TransactionCsvImport
-                    onImported={() => loadTransactions(1, false)}
+                    onImported={() => {
+                      void loadTotals()
+                      void loadTransactions(1, false)
+                    }}
                   />
                   <Button
                     type="button"

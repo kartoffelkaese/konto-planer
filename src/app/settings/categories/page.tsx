@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
 import { useToast } from '@/hooks/useToast'
@@ -46,21 +46,23 @@ export default function CategoriesPage() {
   })
   const [isSaving, setIsSaving] = useState(false)
 
-  useEffect(() => {
-    loadCategories()
-  }, [])
+  const loadCategories = useCallback(
+    () =>
+      getCategories<Category>()
+        .then(
+          (data) => setCategories(data),
+          (err: unknown) => {
+            console.error('Error loading categories:', err)
+            setError('Fehler beim Laden der Kategorien')
+          }
+        )
+        .finally(() => setLoading(false)),
+    []
+  )
 
-  const loadCategories = async () => {
-    try {
-      const data = await getCategories<Category>()
-      setCategories(data)
-    } catch (err) {
-      console.error('Error loading categories:', err)
-      setError('Fehler beim Laden der Kategorien')
-    } finally {
-      setLoading(false)
-    }
-  }
+  useEffect(() => {
+    void loadCategories()
+  }, [loadCategories])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -87,19 +87,24 @@ export default function SplitExpenseForm({
     )
   }
 
-  useEffect(() => {
-    if (inputCurrency === 'EUR') {
-      setRatePreview(null)
-      setRateError(null)
-      return
-    }
+  // Ein Kurs wird nur für Fremdwährung mit gültigem Betrag gebraucht
+  const parsedRateAmount = Number.parseFloat(amount.replace(',', '.'))
+  const rateNeeded =
+    inputCurrency !== 'EUR' && !Number.isNaN(parsedRateAmount) && parsedRateAmount !== 0
 
-    const parsedAmount = Number.parseFloat(amount.replace(',', '.'))
-    if (Number.isNaN(parsedAmount) || parsedAmount === 0) {
+  // Vorschau und Fehler verwerfen, sobald kein Kurs mehr gebraucht wird (Abgleich beim Rendern)
+  const [prevRateNeeded, setPrevRateNeeded] = useState(rateNeeded)
+  if (prevRateNeeded !== rateNeeded) {
+    setPrevRateNeeded(rateNeeded)
+    if (!rateNeeded) {
       setRatePreview(null)
       setRateError(null)
-      return
     }
+  }
+
+  useEffect(() => {
+    if (!rateNeeded) return
+    const parsedAmount = parsedRateAmount
 
     const timer = window.setTimeout(async () => {
       setRateLoading(true)
@@ -128,7 +133,7 @@ export default function SplitExpenseForm({
     }, 400)
 
     return () => window.clearTimeout(timer)
-  }, [amount, date, inputCurrency, listId])
+  }, [rateNeeded, parsedRateAmount, date, inputCurrency, listId])
 
   const amountLabel =
     inputCurrency === 'EUR' ? 'Betrag (€)' : `Betrag (${inputCurrency})`

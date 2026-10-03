@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useToast } from '@/hooks/useToast'
+import { useApiQuery } from '@/hooks/useApiQuery'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { Button } from '@/components/Button'
 import { inviteRoleLabel, roleLabel } from '@/lib/accountPermissions'
@@ -33,33 +34,21 @@ export default function AccountSharing() {
   const { data: session } = useSession()
   const { showToast } = useToast()
   const accountId = useUserSettings().settings?.activeAccountId ?? null
-  const [role, setRole] = useState<string | null>(null)
-  const [members, setMembers] = useState<Member[]>([])
-  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([])
   const [email, setEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<InviteRole>('MEMBER')
   const [loading, setLoading] = useState(false)
   const [updatingMemberId, setUpdatingMemberId] = useState<string | null>(null)
 
-  const loadMembers = useCallback(async () => {
-    if (!accountId) return
-    // Fehler still übergehen (wie bisher)
-    const data = await getAccountMembers<{
-      members?: Member[]
-      pendingInvites?: PendingInvite[]
-    }>(accountId).catch(() => null)
-    if (!data) return
-    setMembers(data.members ?? [])
-    setPendingInvites(data.pendingInvites ?? [])
-    const me = (data.members as Member[]).find(
-      (m) => m.email === session?.user?.email
-    )
-    setRole(me?.role ?? null)
-  }, [accountId, session?.user?.email])
-
-  useEffect(() => {
-    loadMembers()
-  }, [loadMembers])
+  // Fehler still übergehen (wie bisher): die zuletzt geladene Liste bleibt stehen
+  const { data: membersData, reload: loadMembers } = useApiQuery(
+    `account-members:${accountId ?? ''}`,
+    () =>
+      getAccountMembers<{ members?: Member[]; pendingInvites?: PendingInvite[] }>(accountId ?? ''),
+    { enabled: Boolean(accountId) }
+  )
+  const members = membersData?.members ?? []
+  const pendingInvites = membersData?.pendingInvites ?? []
+  const role = members.find((m) => m.email === session?.user?.email)?.role ?? null
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -73,7 +62,7 @@ export default function AccountSharing() {
       showToast(data.message, 'success')
       setEmail('')
       setInviteRole('MEMBER')
-      await loadMembers()
+      loadMembers()
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : 'Einladung fehlgeschlagen',
@@ -89,7 +78,7 @@ export default function AccountSharing() {
     try {
       await removeAccountMember(accountId, { inviteId })
       showToast('Einladung widerrufen', 'success')
-      await loadMembers()
+      loadMembers()
     } catch {
       showToast('Widerruf fehlgeschlagen', 'error')
     }
@@ -101,7 +90,7 @@ export default function AccountSharing() {
     try {
       await removeAccountMember(accountId, { memberId })
       showToast('Zugriff entfernt', 'success')
-      await loadMembers()
+      loadMembers()
     } catch {
       showToast('Entfernen fehlgeschlagen', 'error')
     }
@@ -116,7 +105,7 @@ export default function AccountSharing() {
         'Rolle konnte nicht geändert werden'
       )
       showToast('Rolle aktualisiert', 'success')
-      await loadMembers()
+      loadMembers()
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : 'Rolle konnte nicht geändert werden',

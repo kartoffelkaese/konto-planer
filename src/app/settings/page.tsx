@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { TagIcon, BuildingStorefrontIcon, ChevronRightIcon, UserGroupIcon } from '@heroicons/react/24/outline'
 import BackupManager from '@/components/BackupManager'
@@ -48,41 +48,42 @@ export default function SettingsPage() {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null)
   const [initialLoadDone, setInitialLoadDone] = useState(false)
 
-  useEffect(() => {
-    loadSettings()
-  }, [])
+  // Das Formular lädt seine Werte selbst (nicht aus dem Provider), damit eine
+  // Hintergrund-Aktualisierung keine laufenden Eingaben überschreibt
+  const loadSettings = useCallback(
+    () =>
+      getUserSettings()
+        .then(
+          (data) => {
+            setSalaryDay(data.salaryDay)
+            setAccountName(data.accountName || 'Mein Konto')
+            setTransferSenderName(data.transferSenderName || '')
+            setSplitDisplayName(data.splitDisplayName || '')
+            setBankId(data.bankId ?? null)
+            setIsSimpleAccount(Boolean(data.isSimpleAccount))
+            setPendingEmail(data.pendingEmail ?? null)
+            setSimpleAccountError(null)
+          },
+          (err: unknown) => {
+            // 404 ist OK, bedeutet nur dass noch keine Einstellungen existieren
+            if (err instanceof ApiError && err.status === 404) return
+            console.error('Error loading settings:', new Error('Fehler beim Laden der Einstellungen'))
+            setError('Fehler beim Laden der Einstellungen')
+          }
+        )
+        .finally(() => setInitialLoadDone(true)),
+    []
+  )
 
   useEffect(() => {
-    const onAccountChanged = () => loadSettings()
+    void loadSettings()
+  }, [loadSettings])
+
+  useEffect(() => {
+    const onAccountChanged = () => void loadSettings()
     window.addEventListener('account-changed', onAccountChanged)
     return () => window.removeEventListener('account-changed', onAccountChanged)
-  }, [])
-
-  const loadSettings = async () => {
-    try {
-      let data: Awaited<ReturnType<typeof getUserSettings>>
-      try {
-        data = await getUserSettings()
-      } catch (err) {
-        // 404 ist OK, bedeutet nur dass noch keine Einstellungen existieren
-        if (err instanceof ApiError && err.status === 404) return
-        throw new Error('Fehler beim Laden der Einstellungen')
-      }
-      setSalaryDay(data.salaryDay)
-      setAccountName(data.accountName || "Mein Konto")
-      setTransferSenderName(data.transferSenderName || '')
-      setSplitDisplayName(data.splitDisplayName || '')
-      setBankId(data.bankId ?? null)
-      setIsSimpleAccount(Boolean(data.isSimpleAccount))
-      setPendingEmail(data.pendingEmail ?? null)
-      setSimpleAccountError(null)
-    } catch (err) {
-      console.error('Error loading settings:', err)
-      setError('Fehler beim Laden der Einstellungen')
-    } finally {
-      setInitialLoadDone(true)
-    }
-  }
+  }, [loadSettings])
 
   const handleSplitProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -14,14 +14,12 @@ import SplitListModal from '@/components/split/SplitListModal'
 import SplitPageShell from '@/components/split/SplitPageShell'
 import { formatCurrency } from '@/lib/formatters'
 import { getSplitLists } from '@/lib/api'
+import { useApiQuery } from '@/hooks/useApiQuery'
 import type { SplitListSummary } from '@/types/split'
 
 function SplitOverviewPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [lists, setLists] = useState<SplitListSummary[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [listModalOpen, setListModalOpen] = useState(false)
 
   const closeListModal = useCallback(() => {
@@ -32,28 +30,32 @@ function SplitOverviewPageContent() {
     setListModalOpen(true)
   }, [])
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const data = await getSplitLists()
-      setLists(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Laden')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const {
+    data: listsData,
+    error: loadError,
+    loading,
+    reload: load,
+  } = useApiQuery('split-lists', getSplitLists)
+  const lists: SplitListSummary[] = listsData ?? []
+  const error = loading
+    ? null
+    : loadError
+      ? loadError instanceof Error
+        ? loadError.message
+        : 'Fehler beim Laden'
+      : null
+
+  // „?new=1“ (z. B. aus der Übersicht): Dialog öffnen, sobald geladen ist, dann die URL bereinigen
+  const newRequested = searchParams.get('new') === '1' && !loading
+  const [prevNewRequested, setPrevNewRequested] = useState(false)
+  if (newRequested !== prevNewRequested) {
+    setPrevNewRequested(newRequested)
+    if (newRequested) setListModalOpen(true)
+  }
 
   useEffect(() => {
-    load()
-  }, [load])
-
-  useEffect(() => {
-    if (searchParams.get('new') !== '1' || loading) return
-    openNewListModal()
-    router.replace('/split', { scroll: false })
-  }, [searchParams, loading, openNewListModal, router])
+    if (newRequested) router.replace('/split', { scroll: false })
+  }, [newRequested, router])
 
   const handleListCreated = useCallback(
     async (list: SplitListSummary) => {

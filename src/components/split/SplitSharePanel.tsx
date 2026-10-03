@@ -1,9 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { LinkIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 import { Button } from '@/components/Button'
 import { useToast } from '@/hooks/useToast'
+import { useApiQuery } from '@/hooks/useApiQuery'
 import {
   getSplitShareStatus,
   regenerateSplitShare,
@@ -21,33 +22,25 @@ export default function SplitSharePanel({ listId, isOwner }: SplitSharePanelProp
   const [shareEnabled, setShareEnabled] = useState(false)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [shareEnabledAt, setShareEnabledAt] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
 
-  const loadStatus = useCallback(async () => {
-    setLoading(true)
-    try {
-      const status = await getSplitShareStatus(listId)
+  // Status nur für den Ersteller laden; die Felder bleiben lokal, weil Umschalten sie direkt ändert
+  const { loading } = useApiQuery(`split-share:${listId}`, () => getSplitShareStatus(listId), {
+    enabled: isOwner,
+    onSuccess: (status) => {
       setShareEnabled(status.shareEnabled)
       setShareEnabledAt(status.shareEnabledAt ?? null)
       if (status.shareUrl) {
         setShareUrl(status.shareUrl)
       }
-    } catch (err) {
+    },
+    onError: (err) => {
       showToast(
         err instanceof Error ? err.message : 'Freigabe-Status konnte nicht geladen werden',
         'error'
       )
-    } finally {
-      setLoading(false)
-    }
-  }, [listId, showToast])
-
-  useEffect(() => {
-    if (isOwner) {
-      loadStatus()
-    }
-  }, [isOwner, loadStatus])
+    },
+  })
 
   if (!isOwner) return null
 

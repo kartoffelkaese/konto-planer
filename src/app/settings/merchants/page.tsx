@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
 import { useToast } from '@/hooks/useToast'
@@ -71,32 +71,36 @@ export default function MerchantsPage() {
   })
   const [isSaving, setIsSaving] = useState(false)
 
+  const loadMerchants = useCallback(
+    () =>
+      getMerchants()
+        .then(
+          (data) => setMerchants(data),
+          (err: unknown) => {
+            console.error('Error loading merchants:', err)
+            setError('Fehler beim Laden der Händler')
+          }
+        )
+        .finally(() => setLoading(false)),
+    []
+  )
+
+  const loadCategories = useCallback(
+    () =>
+      getCategories().then(
+        (data) => setCategories(data),
+        (err: unknown) => {
+          console.error('Error loading categories:', err)
+          setError('Fehler beim Laden der Kategorien')
+        }
+      ),
+    []
+  )
+
   useEffect(() => {
-    loadMerchants()
-    loadCategories()
-  }, [])
-
-  const loadMerchants = async () => {
-    try {
-      const data = await getMerchants()
-      setMerchants(data)
-    } catch (err) {
-      console.error('Error loading merchants:', err)
-      setError('Fehler beim Laden der Händler')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadCategories = async () => {
-    try {
-      const data = await getCategories()
-      setCategories(data)
-    } catch (err) {
-      console.error('Error loading categories:', err)
-      setError('Fehler beim Laden der Kategorien')
-    }
-  }
+    void loadMerchants()
+    void loadCategories()
+  }, [loadMerchants, loadCategories])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

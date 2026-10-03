@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import {
@@ -23,6 +23,7 @@ import { resolveTransactionMerchantName } from '@/lib/merchantCategories'
 import { formatCurrency } from '@/lib/formatters'
 import { formatDate } from '@/lib/dateUtils'
 import { ACCOUNT_CHANGED_EVENT } from '@/lib/accountSwitchEvents'
+import { useApiQuery } from '@/hooks/useApiQuery'
 import { getDashboard } from '@/lib/api'
 
 interface DashboardData {
@@ -72,37 +73,29 @@ const emptyDashboard: DashboardData = {
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const { isSimpleAccount, accountName, settings } = useUserSettings()
-  const [data, setData] = useState<DashboardData>(emptyDashboard)
-  const [isLoading, setIsLoading] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
   const [availableExpanded, setAvailableExpanded] = useState(false)
 
-  const fetchDashboardData = useCallback(async () => {
-    setIsLoading(true)
-    setLoadError(null)
-    try {
-      const dashboardData = await getDashboard<DashboardData>()
-      setData(dashboardData)
-    } catch (error) {
-      console.error('Fehler:', error)
-      setLoadError('Übersicht konnte nicht geladen werden.')
-    } finally {
-      setIsLoading(false)
+  // Neu laden bei Anmeldung, Kontowechsel (Schlüssel) und „account-changed“
+  const {
+    data: dashboardData,
+    error: dashboardError,
+    loading: isLoading,
+    reload: fetchDashboardData,
+  } = useApiQuery(
+    `dashboard:${session?.user?.id ?? ''}:${isSimpleAccount}:${settings?.activeAccountId ?? ''}`,
+    () => getDashboard<DashboardData>(),
+    {
+      enabled: Boolean(session),
+      onError: (error) => console.error('Fehler:', error),
     }
-  }, [])
+  )
+  const data = dashboardData ?? emptyDashboard
+  const loadError = !isLoading && dashboardError ? 'Übersicht konnte nicht geladen werden.' : null
 
   useEffect(() => {
-    if (session) {
-      fetchDashboardData()
-    }
-  }, [session, isSimpleAccount, settings?.activeAccountId, fetchDashboardData])
-
-  useEffect(() => {
-    const onAccountChanged = () => {
-      if (session) fetchDashboardData()
-    }
-    window.addEventListener(ACCOUNT_CHANGED_EVENT, onAccountChanged)
-    return () => window.removeEventListener(ACCOUNT_CHANGED_EVENT, onAccountChanged)
+    if (!session) return
+    window.addEventListener(ACCOUNT_CHANGED_EVENT, fetchDashboardData)
+    return () => window.removeEventListener(ACCOUNT_CHANGED_EVENT, fetchDashboardData)
   }, [session, fetchDashboardData])
 
   if (status === 'loading') {

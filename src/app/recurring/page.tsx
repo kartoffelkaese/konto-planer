@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   getRecurringTransactions,
@@ -64,39 +64,43 @@ export default function RecurringTransactionsPage() {
     }
   }, [settingsLoading, isSimpleAccount, router])
 
+  const loadTransactions = useCallback(
+    () =>
+      getRecurringTransactions()
+        .then(
+          (transactions) => {
+            // Konvertiere die Beträge in Zahlen und stelle sicher, dass alle erforderlichen Felder vorhanden sind
+            const recurringTransactions = transactions.map((t) => ({
+              ...t,
+              amount: Number(t.amount),
+              version: t.version || 1,
+              accountId: t.accountId || '',
+              isRecurringPaused: Boolean(t.isRecurringPaused),
+            }))
+            setTransactions(recurringTransactions)
+            setError(null)
+          },
+          (err: unknown) => {
+            setError('Fehler beim Laden der Transaktionen')
+            console.error(err)
+          }
+        )
+        .finally(() => setLoading(false)),
+    []
+  )
+
   useEffect(() => {
     if (!isSimpleAccount) {
-      loadTransactions()
+      void loadTransactions()
     }
-  }, [isSimpleAccount])
+  }, [isSimpleAccount, loadTransactions])
 
   useActiveAccountReload(() => {
     if (!isSimpleAccount) {
       setLoading(true)
-      loadTransactions()
+      void loadTransactions()
     }
   })
-
-  const loadTransactions = async () => {
-    try {
-      const transactions = await getRecurringTransactions()
-      // Konvertiere die Beträge in Zahlen und stelle sicher, dass alle erforderlichen Felder vorhanden sind
-      const recurringTransactions = transactions.map((t) => ({
-        ...t,
-        amount: Number(t.amount),
-        version: t.version || 1,
-        accountId: t.accountId || '',
-        isRecurringPaused: Boolean(t.isRecurringPaused),
-      }))
-      setTransactions(recurringTransactions)
-      setError(null)
-    } catch (err) {
-      setError('Fehler beim Laden der Transaktionen')
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleCreateAllPending = async () => {
     setIsCreatingPending(true)

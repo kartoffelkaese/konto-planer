@@ -66,50 +66,55 @@ export default function EditTransactionForm({
     onError: (err) => console.error('Error loading transfer targets:', err),
   })
 
+  // Lädt die Transaktion bei jeder neuen ID und füllt das Formular
   useEffect(() => {
-    loadTransaction()
-  }, [id])
-
-  const loadTransaction = async () => {
-    try {
-      const transaction = await getTransaction(id)
-      const isTemplate =
-        transaction.isRecurring && !transaction.parentTransactionId
-      setIsRecurringTemplate(isTemplate)
-      setIsTransfer(Boolean(transaction.isTransfer))
-      setTransferTargetAccountId(transaction.transferTargetAccountId || '')
-      setLinkedTargetName(transaction.transferTargetAccount?.name ?? null)
-      setHasActivePair(Boolean(transaction.transferPairAsSource?.targetTransactionId))
-      const savedCategoryId = transaction.categoryId ?? null
-      setStoredCategoryId(savedCategoryId)
-      setCategoryId(savedCategoryId ?? '')
-      setCategoryTouched(false)
-      const resolved = savedCategoryId
-        ? null
-        : resolveTransactionCategory(transaction)?.id ?? null
-      setResolvedSuggestion(resolved)
-      setSuggestedCategoryIds(
-        resolveMerchantCategories(transaction.merchantRef).map((category) => category.id)
+    let active = true
+    getTransaction(id)
+      .then(
+        (transaction) => {
+          if (!active) return
+          const isTemplate =
+            transaction.isRecurring && !transaction.parentTransactionId
+          setIsRecurringTemplate(isTemplate)
+          setIsTransfer(Boolean(transaction.isTransfer))
+          setTransferTargetAccountId(transaction.transferTargetAccountId || '')
+          setLinkedTargetName(transaction.transferTargetAccount?.name ?? null)
+          setHasActivePair(Boolean(transaction.transferPairAsSource?.targetTransactionId))
+          const savedCategoryId = transaction.categoryId ?? null
+          setStoredCategoryId(savedCategoryId)
+          setCategoryId(savedCategoryId ?? '')
+          setCategoryTouched(false)
+          const resolved = savedCategoryId
+            ? null
+            : resolveTransactionCategory(transaction)?.id ?? null
+          setResolvedSuggestion(resolved)
+          setSuggestedCategoryIds(
+            resolveMerchantCategories(transaction.merchantRef).map((category) => category.id)
+          )
+          setFormData({
+            merchant: resolveTransactionMerchantName(transaction) || '',
+            description: transaction.description || '',
+            amount: Math.abs(transaction.amount).toString(),
+            type: transaction.amount >= 0 ? 'income' : 'expense',
+            date: formatDateForInput(transaction.date),
+            isRecurring: transaction.isRecurring,
+            isRecurringPaused: Boolean(transaction.isRecurringPaused),
+            recurringInterval: transaction.recurringInterval || 'monthly',
+            isConfirmed: transaction.isConfirmed
+          })
+          setLoadError(null)
+        },
+        (err: unknown) => {
+          if (!active) return
+          console.error('Error loading transaction:', err)
+          setLoadError('Fehler beim Laden der Transaktion')
+        }
       )
-      setFormData({
-        merchant: resolveTransactionMerchantName(transaction) || '',
-        description: transaction.description || '',
-        amount: Math.abs(transaction.amount).toString(),
-        type: transaction.amount >= 0 ? 'income' : 'expense',
-        date: formatDateForInput(transaction.date),
-        isRecurring: transaction.isRecurring,
-        isRecurringPaused: Boolean(transaction.isRecurringPaused),
-        recurringInterval: transaction.recurringInterval || 'monthly',
-        isConfirmed: transaction.isConfirmed
-      })
-      setLoadError(null)
-    } catch (err) {
-      console.error('Error loading transaction:', err)
-      setLoadError('Fehler beim Laden der Transaktion')
-    } finally {
-      setIsInitialLoading(false)
+      .finally(() => active && setIsInitialLoading(false))
+    return () => {
+      active = false
     }
-  }
+  }, [id])
 
   const handleDelete = async () => {
     setIsSubmitting(true)

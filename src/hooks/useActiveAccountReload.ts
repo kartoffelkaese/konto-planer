@@ -7,7 +7,10 @@ export function useActiveAccountReload(onReload: () => void) {
   const { settings } = useUserSettings()
   const activeAccountId = settings?.activeAccountId
   const onReloadRef = useRef(onReload)
-  onReloadRef.current = onReload
+  // Immer die aktuelle Funktion aufrufen, ohne sie zur Effekt-Abhängigkeit zu machen
+  useEffect(() => {
+    onReloadRef.current = onReload
+  })
 
   useEffect(() => {
     onReloadRef.current()

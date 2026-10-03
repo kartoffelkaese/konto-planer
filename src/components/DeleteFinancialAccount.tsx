@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { TrashIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
+import { useApiQuery } from '@/hooks/useApiQuery'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { Button } from '@/components/Button'
 import {
@@ -22,29 +23,18 @@ export default function DeleteFinancialAccount() {
   const accountName = settings?.accountName ?? 'Mein Konto'
   const accountId = settings?.activeAccountId ?? null
   const role = settings?.role ?? null
-  const [accountCount, setAccountCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showConfirm, setShowConfirm] = useState(false)
   const [confirmName, setConfirmName] = useState('')
 
-  const load = useCallback(async () => {
-    try {
-      const accounts = await getAccounts<unknown>()
-      setAccountCount(Array.isArray(accounts) ? accounts.length : 0)
-    } catch {
-      // optional
-    }
-  }, [])
+  // Anzahl der eigenen Konten (Fehler still übergehen, dann 0 wie bisher)
+  const { data: accounts, reload: load } = useApiQuery('accounts-count', () => getAccounts<unknown>())
+  const accountCount = Array.isArray(accounts) ? accounts.length : 0
 
   useEffect(() => {
-    load()
-  }, [load])
-
-  useEffect(() => {
-    const onAccountChanged = () => load()
-    window.addEventListener('account-changed', onAccountChanged)
-    return () => window.removeEventListener('account-changed', onAccountChanged)
+    window.addEventListener('account-changed', load)
+    return () => window.removeEventListener('account-changed', load)
   }, [load])
 
   const handleDelete = async () => {

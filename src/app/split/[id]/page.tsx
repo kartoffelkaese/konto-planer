@@ -60,7 +60,9 @@ function SplitDetailPageContent() {
   const [tab, setTab] = useState<Tab>('expenses')
   const [expenseModalOpen, setExpenseModalOpen] = useState(false)
   const [editingExpense, setEditingExpense] = useState<SplitExpense | null>(null)
-  const [loading, setLoading] = useState(true)
+  // Geladen ist die Seite, sobald der erste Abruf für diese Liste abgeschlossen ist
+  const [loadedListId, setLoadedListId] = useState<string | null>(null)
+  const loading = loadedListId !== listId
   const [error, setError] = useState<string | null>(null)
 
   const readOnly = list?.status === 'ARCHIVED'
@@ -112,24 +114,47 @@ function SplitDetailPageContent() {
     }
   }, [loadList, loadExpenses, loadBalances, loadHistory])
 
+  // Erster Abruf: wie reloadAll – jede Antwort wird einzeln übernommen, ein Fehler zeigt die Meldung
   useEffect(() => {
-    setLoading(true)
-    reloadAll().finally(() => setLoading(false))
-  }, [reloadAll])
+    let active = true
+    Promise.all([
+      getSplitList(listId).then((data) => active && setList(data)),
+      getSplitExpenses(listId).then((data) => active && setExpenses(data)),
+      getSplitBalances(listId).then((data) => active && setBalances(data)),
+      getSplitHistory(listId).then((data) => active && setHistory(data)),
+    ])
+      .then(
+        () => active && setError(null),
+        (err: unknown) =>
+          active && setError(err instanceof Error ? err.message : 'Fehler beim Laden')
+      )
+      .finally(() => active && setLoadedListId(listId))
+    return () => {
+      active = false
+    }
+  }, [listId])
+
+  // „?new=1“: Ausgabe-Dialog öffnen, sobald geladen ist (oder Hinweis zeigen), dann die URL bereinigen
+  const newRequested = searchParams.get('new') === '1' && !loading && list != null
+  const canOpenNew = newRequested && !readOnly && (list?.participants.length ?? 0) > 0
+  const [prevNewRequested, setPrevNewRequested] = useState(false)
+  if (newRequested !== prevNewRequested) {
+    setPrevNewRequested(newRequested)
+    if (canOpenNew) {
+      setEditingExpense(null)
+      setExpenseModalOpen(true)
+    }
+  }
 
   useEffect(() => {
-    if (searchParams.get('new') !== '1' || loading || !list) return
-
+    if (!newRequested) return
     if (readOnly) {
       showToast('Archivierte Listen können keine neuen Ausgaben erfassen', 'error')
-    } else if (list.participants.length === 0) {
+    } else if (!canOpenNew) {
       showToast('Bitte zuerst einen Teilnehmer in den Einstellungen anlegen', 'error')
-    } else {
-      openNewExpenseModal()
     }
-
     router.replace(`/split/${listId}`, { scroll: false })
-  }, [searchParams, loading, list, readOnly, listId, router, showToast, openNewExpenseModal])
+  }, [newRequested, canOpenNew, readOnly, listId, router, showToast])
 
   const handleArchive = async () => {
     if (!list) return

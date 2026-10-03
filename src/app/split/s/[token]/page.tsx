@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import PageContextHeader from '@/components/PageContextHeader'
@@ -43,32 +43,38 @@ export default function SplitSharePage() {
   const [balances, setBalances] = useState<SplitBalancesResponse | null>(null)
   const [history, setHistory] = useState<SplitHistoryGuestResponse | null>(null)
   const [tab, setTab] = useState<Tab>('expenses')
-  const [loading, setLoading] = useState(true)
+  const [loadedToken, setLoadedToken] = useState<string | null>(null)
+  const loading = loadedToken !== token
   const [error, setError] = useState<string | null>(null)
 
-  const reloadAll = useCallback(async () => {
-    setError(null)
-    try {
-      const [listData, expenseData, balanceData, historyData] = await Promise.all([
-        getPublicSplitList(token),
-        getPublicSplitExpenses(token),
-        getPublicSplitBalances(token),
-        getPublicSplitHistory(token),
-      ])
-      setList(listData)
-      setExpenses(expenseData)
-      setBalances(balanceData)
-      setHistory(historyData)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Laden')
-      setList(null)
+  useEffect(() => {
+    let active = true
+    Promise.all([
+      getPublicSplitList(token),
+      getPublicSplitExpenses(token),
+      getPublicSplitBalances(token),
+      getPublicSplitHistory(token),
+    ])
+      .then(
+        ([listData, expenseData, balanceData, historyData]) => {
+          if (!active) return
+          setError(null)
+          setList(listData)
+          setExpenses(expenseData)
+          setBalances(balanceData)
+          setHistory(historyData)
+        },
+        (err: unknown) => {
+          if (!active) return
+          setError(err instanceof Error ? err.message : 'Fehler beim Laden')
+          setList(null)
+        }
+      )
+      .finally(() => active && setLoadedToken(token))
+    return () => {
+      active = false
     }
   }, [token])
-
-  useEffect(() => {
-    setLoading(true)
-    reloadAll().finally(() => setLoading(false))
-  }, [reloadAll])
 
   const tabs = useMemo(
     () => [

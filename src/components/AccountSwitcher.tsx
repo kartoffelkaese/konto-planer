@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { CheckIcon, ChevronUpDownIcon, WalletIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
+import { useApiQuery } from '@/hooks/useApiQuery'
 import Modal from '@/components/Modal'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import AccountAvatar from '@/components/AccountAvatar'
@@ -38,29 +39,22 @@ export default function AccountSwitcher({ variant }: AccountSwitcherProps) {
   const router = useRouter()
   const { data: session, update } = useSession()
   const { showToast } = useToast()
-  const [accounts, setAccounts] = useState<AccountItem[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [switchingId, setSwitchingId] = useState<string | null>(null)
   const [avatarAnimating, setAvatarAnimating] = useState(false)
 
-  const loadAccounts = useCallback(async () => {
-    try {
-      const data = await getAccounts<typeof accounts>()
-      setAccounts(data)
-    } catch {
-      // optional
-    }
-  }, [])
+  // Neu laden bei Anmeldung, Kontowechsel (Schlüssel) und „account-changed“; Fehler still übergehen
+  const { data: accountsData, reload: loadAccounts } = useApiQuery(
+    `accounts:${session?.user?.id ?? ''}:${session?.activeAccountId ?? ''}`,
+    () => getAccounts<AccountItem[]>(),
+    { enabled: Boolean(session) }
+  )
+  const accounts = useMemo(() => accountsData ?? [], [accountsData])
 
   useEffect(() => {
-    if (session) loadAccounts()
-  }, [session, loadAccounts])
-
-  useEffect(() => {
-    const onAccountChanged = () => loadAccounts()
-    window.addEventListener('account-changed', onAccountChanged)
-    return () => window.removeEventListener('account-changed', onAccountChanged)
+    window.addEventListener('account-changed', loadAccounts)
+    return () => window.removeEventListener('account-changed', loadAccounts)
   }, [loadAccounts])
 
   const active = accounts.find((a) => a.isActive) ?? accounts[0]

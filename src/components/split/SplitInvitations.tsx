@@ -1,41 +1,30 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/Button'
 import type { SplitInviteReceived } from '@/types/split'
 import { getSplitInvitesReceived, respondToSplitInvite } from '@/lib/api'
+import { useApiQuery } from '@/hooks/useApiQuery'
 
 type SplitInvitationsProps = {
   onResponded?: () => void
 }
 
 export default function SplitInvitations({ onResponded }: SplitInvitationsProps) {
-  const [invites, setInvites] = useState<SplitInviteReceived[]>([])
-  const [loading, setLoading] = useState(true)
   const [actingId, setActingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
-    try {
-      const data = await getSplitInvitesReceived()
-      setInvites(data)
-    } catch {
-      // optional
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
+  // Fehler still übergehen (wie bisher): dann gibt es schlicht keine Einladungen
+  const { data, error: loadError, reload: load } = useApiQuery('split-invites', getSplitInvitesReceived)
+  const invites: SplitInviteReceived[] = data ?? []
+  const loading = data === undefined && !loadError
 
   const handleAction = async (id: string, action: 'accept' | 'decline') => {
     setActingId(id)
     setError(null)
     try {
       await respondToSplitInvite(id, action)
-      await load()
+      load()
       onResponded?.()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler')

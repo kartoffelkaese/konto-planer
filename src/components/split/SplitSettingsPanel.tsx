@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Cog6ToothIcon } from '@heroicons/react/24/outline'
 import { Button } from '@/components/Button'
 import { useToast } from '@/hooks/useToast'
@@ -37,10 +37,13 @@ function SplitListDetailsForm({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  // Formular zurücksetzen, wenn sich die Liste von außen ändert (Abgleich beim Rendern statt im Effekt)
+  const [syncedList, setSyncedList] = useState({ name: list.name, description: list.description })
+  if (syncedList.name !== list.name || syncedList.description !== list.description) {
+    setSyncedList({ name: list.name, description: list.description })
     setName(list.name)
     setDescription(list.description ?? '')
-  }, [list.name, list.description])
+  }
 
   const isDirty =
     name.trim() !== list.name || (description.trim() || null) !== (list.description ?? null)

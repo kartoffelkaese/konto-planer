@@ -2,7 +2,7 @@
 
 // Statistik: Charts ohne zusätzliche Mikrointeraktionen – stabile Darstellung hat Vorrang.
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import {
@@ -24,6 +24,7 @@ import KpiCard from '@/components/KpiCard'
 import { ChevronDownIcon } from '@heroicons/react/24/outline'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { useActiveAccountReload } from '@/hooks/useActiveAccountReload'
+import { useApiQuery } from '@/hooks/useApiQuery'
 import { getCategories, getMerchants, getStatistics } from '@/lib/api'
 
 interface Category {
@@ -72,10 +73,6 @@ export default function StatisticsPage() {
   const [timeRange, setTimeRange] = useState<string>('3months')
   const [customStartDate, setCustomStartDate] = useState<string>('')
   const [customEndDate, setCustomEndDate] = useState<string>('')
-  const [statisticsData, setStatisticsData] = useState<StatisticsData[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [loadError, setLoadError] = useState<string | null>(null)
-  const [metaLoading, setMetaLoading] = useState(true)
 
   const timeRanges = [
     { value: '1month', label: 'Letzter Monat' },
@@ -91,71 +88,40 @@ export default function StatisticsPage() {
     }
   }, [settingsLoading, isSimpleAccount, router])
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const data = await getCategories<Category>()
-      const sortedCategories = data.sort((a: Category, b: Category) =>
-        a.name.localeCompare(b.name, 'de')
-      )
-      setCategories(sortedCategories)
-      if (sortedCategories.length > 0) {
-        setSelectedCategory(sortedCategories[0].id)
-      }
-    } catch (error) {
-      console.error('Fehler beim Laden der Kategorien:', error)
+  // Kategorien und Händler für die Filter. Jede Liste wird einzeln übernommen – schlägt eine
+  // fehl, bleibt die andere nutzbar (wie bisher).
+  const { loading: metaQueryLoading, reload: loadMeta } = useApiQuery(
+    `statistics-meta:${session?.user?.id ?? ''}`,
+    () =>
+      Promise.all([
+        getCategories<Category>().catch((error: unknown) => {
+          console.error('Fehler beim Laden der Kategorien:', error)
+          return null
+        }),
+        getMerchants().catch((error: unknown) => {
+          console.error('Fehler beim Laden der Händler:', error)
+          return null
+        }),
+      ]),
+    {
+      enabled: Boolean(session),
+      onSuccess: ([categoryData, merchantData]) => {
+        if (categoryData) {
+          const sortedCategories = [...categoryData].sort((a, b) =>
+            a.name.localeCompare(b.name, 'de')
+          )
+          setCategories(sortedCategories)
+          if (sortedCategories.length > 0) {
+            setSelectedCategory(sortedCategories[0].id)
+          }
+        }
+        if (merchantData) {
+          setMerchants([...merchantData].sort((a, b) => a.name.localeCompare(b.name, 'de')))
+        }
+      },
     }
-  }, [])
-
-  const fetchMerchants = useCallback(async () => {
-    try {
-      const data = await getMerchants()
-      const sortedMerchants = data.sort((a: Merchant, b: Merchant) =>
-        a.name.localeCompare(b.name, 'de')
-      )
-      setMerchants(sortedMerchants)
-    } catch (error) {
-      console.error('Fehler beim Laden der Händler:', error)
-    }
-  }, [])
-
-  const loadMeta = useCallback(async () => {
-    setMetaLoading(true)
-    await Promise.all([fetchCategories(), fetchMerchants()])
-    setMetaLoading(false)
-  }, [fetchCategories, fetchMerchants])
-
-  const fetchStatistics = useCallback(async () => {
-    setIsLoading(true)
-    setLoadError(null)
-    try {
-      const isCustomRange = timeRange === 'custom' && customStartDate && customEndDate
-      const data = await getStatistics<StatisticsData[]>({
-        timeRange,
-        category: selectedCategory || undefined,
-        merchant: selectedMerchant || undefined,
-        startDate: isCustomRange ? customStartDate : undefined,
-        endDate: isCustomRange ? customEndDate : undefined,
-      })
-      setStatisticsData(data)
-    } catch (error) {
-      console.error('Fehler beim Laden der Statistiken:', error)
-      setLoadError('Statistiken konnten nicht geladen werden.')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [
-    timeRange,
-    selectedCategory,
-    selectedMerchant,
-    customStartDate,
-    customEndDate,
-  ])
-
-  useEffect(() => {
-    if (session) {
-      loadMeta()
-    }
-  }, [session, loadMeta])
+  )
+  const metaLoading = !session || metaQueryLoading
 
   useActiveAccountReload(() => {
     if (session) {
@@ -164,21 +130,33 @@ export default function StatisticsPage() {
     }
   })
 
-  useEffect(() => {
-    if (metaLoading) return
-    if (timeRange === 'custom' && (!customStartDate || !customEndDate)) {
-      return
+  // Statistiken laden, sobald die Filter bereit sind; ein unvollständiger eigener Zeitraum lädt nicht
+  const customRangeIncomplete = timeRange === 'custom' && (!customStartDate || !customEndDate)
+  const {
+    data: statisticsResult,
+    error: statisticsError,
+    loading: isLoading,
+    reload: fetchStatistics,
+  } = useApiQuery(
+    `statistics:${timeRange}:${selectedCategory}:${selectedMerchant}:${customStartDate}:${customEndDate}`,
+    () => {
+      const isCustomRange = timeRange === 'custom' && customStartDate && customEndDate
+      return getStatistics<StatisticsData[]>({
+        timeRange,
+        category: selectedCategory || undefined,
+        merchant: selectedMerchant || undefined,
+        startDate: isCustomRange ? customStartDate : undefined,
+        endDate: isCustomRange ? customEndDate : undefined,
+      })
+    },
+    {
+      enabled: !metaLoading && !customRangeIncomplete,
+      onError: (error) => console.error('Fehler beim Laden der Statistiken:', error),
     }
-    fetchStatistics()
-  }, [
-    metaLoading,
-    timeRange,
-    selectedCategory,
-    selectedMerchant,
-    customStartDate,
-    customEndDate,
-    fetchStatistics,
-  ])
+  )
+  const statisticsData = useMemo(() => statisticsResult ?? [], [statisticsResult])
+  const loadError =
+    !isLoading && statisticsError ? 'Statistiken konnten nicht geladen werden.' : null
 
   if (!session) {
     return (

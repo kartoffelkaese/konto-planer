@@ -47,7 +47,9 @@ function TransactionsPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loadingState, setLoading] = useState(true)
+  /** Filter, für die die Liste zuletzt geladen wurde (siehe filterKey) */
+  const [loadedFilterKey, setLoadedFilterKey] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { salaryDay, accountName, loading: settingsLoading, canWrite, isSimpleAccount } = useUserSettings()
   const [page, setPage] = useState(1)
@@ -159,92 +161,123 @@ function TransactionsPageContent() {
     syncUrl({ search: debouncedSearch })
   }, [debouncedSearch, searchParams, syncUrl])
 
-  useEffect(() => {
-    if (salaryDay === null) return
+  // Kennzeichnet die aktuelle Filterkombination; solange sie noch nicht geladen ist, gilt die Liste als ladend
+  const filterKey = JSON.stringify([salaryDay, debouncedSearch, period, customStartDate, customEndDate])
+  const loading =
+    loadingState || (salaryDay !== null && !customPeriodBlocked && loadedFilterKey !== filterKey)
+
+  // Unvollständiger eigener Zeitraum: Liste leeren statt laden (Abgleich beim Rendern statt im Effekt)
+  const [prevPeriodBlocked, setPrevPeriodBlocked] = useState(false)
+  if (prevPeriodBlocked !== customPeriodBlocked) {
+    setPrevPeriodBlocked(customPeriodBlocked)
     if (customPeriodBlocked) {
       setLoading(false)
       setTransactions([])
       setHasMore(false)
       setPage(1)
-      return
     }
-    loadTransactions(1, false)
-  }, [salaryDay, debouncedSearch, period, customStartDate, customEndDate, customPeriodBlocked])
+  }
+
+  const loadTotals = useCallback(() => {
+    if (salaryDay === null) return Promise.resolve()
+    return getTransactionTotals({
+      period,
+      startDate: period === 'custom' ? customStartDate : undefined,
+      endDate: period === 'custom' ? customEndDate : undefined,
+      salaryDay,
+    }).then(
+      (data) => {
+        setTotals(data)
+        setPeriodLabel(data.periodLabel ?? null)
+      },
+      (err: unknown) => console.error('Error loading totals:', err)
+    )
+  }, [salaryDay, period, customStartDate, customEndDate])
+
+  /** Lädt eine Seite, ohne vorher den Ladezustand zu setzen (für den Filter-Effekt) */
+  const fetchTransactionPage = useCallback(
+    (pageNum: number, append: boolean) =>
+      getTransactions(pageNum, 20, periodQuery())
+        .then(
+          (response) => {
+            const data = response.transactions.map((t) => ({
+              ...t,
+              amount: Number(t.amount),
+            }))
+
+            setTransactions((prev) => {
+              if (!append) return data
+              const existingIds = new Set(prev.map((t) => t.id))
+              const newTransactions = data.filter((t) => !existingIds.has(t.id))
+              return [...prev, ...newTransactions]
+            })
+            setHasMore(response.hasMore)
+            setError(null)
+            setPage(pageNum)
+          },
+          (err: unknown) => {
+            setError('Fehler beim Laden der Transaktionen')
+            showToast('Fehler beim Laden der Transaktionen', 'error')
+            console.error(err)
+          }
+        )
+        .finally(() => {
+          setLoading(false)
+          setLoadedFilterKey(filterKey)
+        }),
+    [periodQuery, showToast, filterKey]
+  )
+
+  /** Lädt eine Seite mit Ladeanzeige (Nachladen, Neuladen nach Änderungen) */
+  const loadTransactions = useCallback(
+    (pageNum: number, append = false) => {
+      if (customPeriodBlocked) return Promise.resolve()
+      setLoading(true)
+      return fetchTransactionPage(pageNum, append)
+    },
+    [customPeriodBlocked, fetchTransactionPage]
+  )
+
+  // Filter geändert (Suche, Zeitraum, Gehaltstag): erste Seite laden
+  useEffect(() => {
+    if (salaryDay === null || customPeriodBlocked) return
+    void fetchTransactionPage(1, false)
+  }, [salaryDay, customPeriodBlocked, fetchTransactionPage])
 
   useActiveAccountReload(() => {
     reloadRecurringTemplates()
     if (salaryDay !== null && !customPeriodBlocked) {
-      loadTransactions(1, false)
-      loadTotals()
+      void loadTransactions(1, false)
+      void loadTotals()
     }
   })
 
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString())
-
-    if (searchParams.get('new') === '1') {
-      setShowNewTransactionModal(true)
-      params.delete('new')
-      router.replace(buildTransactionsUrl(params), { scroll: false })
-    }
-
-    const editId = searchParams.get('edit')
-    if (editId) {
-      setSelectedTransactionId(editId)
+  // „?new=1“ / „?edit=<id>“: Dialog öffnen, dann die URL bereinigen
+  const newParam = searchParams.get('new') === '1'
+  const editParam = searchParams.get('edit')
+  const urlActionKey = `${newParam}:${editParam ?? ''}`
+  const [handledUrlAction, setHandledUrlAction] = useState('')
+  if (urlActionKey !== handledUrlAction) {
+    setHandledUrlAction(urlActionKey)
+    if (newParam) setShowNewTransactionModal(true)
+    if (editParam) {
+      setSelectedTransactionId(editParam)
       setShowEditTransactionModal(true)
-      params.delete('edit')
-      router.replace(buildTransactionsUrl(params), { scroll: false })
     }
-  }, [searchParams, router])
+  }
+
+  useEffect(() => {
+    if (!newParam && !editParam) return
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('new')
+    params.delete('edit')
+    router.replace(buildTransactionsUrl(params), { scroll: false })
+  }, [newParam, editParam, searchParams, router])
 
   useEffect(() => {
     if (salaryDay === null) return
-    loadTotals()
-  }, [salaryDay, period, customStartDate, customEndDate])
-
-  const loadTotals = async () => {
-    if (salaryDay === null) return
-    try {
-      const data = await getTransactionTotals({
-        period,
-        startDate: period === 'custom' ? customStartDate : undefined,
-        endDate: period === 'custom' ? customEndDate : undefined,
-        salaryDay,
-      })
-      setTotals(data)
-      setPeriodLabel(data.periodLabel ?? null)
-    } catch (err) {
-      console.error('Error loading totals:', err)
-    }
-  }
-
-  const loadTransactions = async (pageNum: number, append = false) => {
-    if (customPeriodBlocked) return
-    try {
-      setLoading(true)
-      const response = await getTransactions(pageNum, 20, periodQuery())
-      const data = response.transactions.map((t) => ({
-        ...t,
-        amount: Number(t.amount),
-      }))
-
-      setTransactions((prev) => {
-        if (!append) return data
-        const existingIds = new Set(prev.map((t) => t.id))
-        const newTransactions = data.filter((t) => !existingIds.has(t.id))
-        return [...prev, ...newTransactions]
-      })
-      setHasMore(response.hasMore)
-      setError(null)
-      setPage(pageNum)
-    } catch (err) {
-      setError('Fehler beim Laden der Transaktionen')
-      showToast('Fehler beim Laden der Transaktionen', 'error')
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
+    void loadTotals()
+  }, [salaryDay, loadTotals])
 
   useEffect(() => {
     if (!loadingRef.current) return
@@ -267,7 +300,7 @@ function TransactionsPageContent() {
     return () => {
       observer.current?.disconnect()
     }
-  }, [hasMore, loading, page, period, customStartDate, customEndDate, salaryDay, debouncedSearch, customPeriodBlocked])
+  }, [hasMore, loading, page, loadTransactions])
 
   const lastElementRef = useCallback(() => {}, [])
 
@@ -330,7 +363,7 @@ function TransactionsPageContent() {
     reloadRecurringTemplates()
     await loadTotals()
     await loadTransactions(page, false)
-  }, [reloadRecurringTemplates, page, salaryDay, period, customStartDate, customEndDate, debouncedSearch, customPeriodBlocked])
+  }, [reloadRecurringTemplates, loadTotals, loadTransactions, page])
 
   const handleSort = useCallback(
     (field: SortField) => {

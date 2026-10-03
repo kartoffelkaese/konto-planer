@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/useToast'
+import { useApiQuery } from '@/hooks/useApiQuery'
 import { Button } from '@/components/Button'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import {
@@ -28,33 +29,25 @@ export default function AccountInvitations() {
   const router = useRouter()
   const { update } = useSession()
   const { showToast } = useToast()
-  const [invites, setInvites] = useState<ReceivedInvite[]>([])
-  const [loading, setLoading] = useState(true)
   const [actingId, setActingId] = useState<string | null>(null)
   const [declineTarget, setDeclineTarget] = useState<ReceivedInvite | null>(null)
 
-  const loadInvites = useCallback(async () => {
-    try {
-      const data = await getReceivedInvites<unknown>()
-      setInvites(Array.isArray(data) ? data : [])
-    } catch {
-      // optional
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  // Fehler still übergehen (wie bisher): dann gibt es schlicht keine Einladungen
+  const {
+    data: invitesData,
+    error: invitesError,
+    reload: loadInvites,
+  } = useApiQuery('received-invites', () => getReceivedInvites<unknown>())
+  const invites: ReceivedInvite[] = Array.isArray(invitesData) ? invitesData : []
+  // Nur das erste Laden blendet die Karte aus – beim Aktualisieren bleibt sie stehen
+  const loading = invitesData === undefined && !invitesError
 
   useEffect(() => {
-    loadInvites()
-  }, [loadInvites])
-
-  useEffect(() => {
-    const onAccountChanged = () => loadInvites()
-    window.addEventListener('account-changed', onAccountChanged)
-    window.addEventListener('focus', onAccountChanged)
+    window.addEventListener('account-changed', loadInvites)
+    window.addEventListener('focus', loadInvites)
     return () => {
-      window.removeEventListener('account-changed', onAccountChanged)
-      window.removeEventListener('focus', onAccountChanged)
+      window.removeEventListener('account-changed', loadInvites)
+      window.removeEventListener('focus', loadInvites)
     }
   }, [loadInvites])
 

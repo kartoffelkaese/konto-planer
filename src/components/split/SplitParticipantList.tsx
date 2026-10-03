@@ -22,7 +22,7 @@ import {
 
 function formatParticipantRemoveError(message: string, displayName?: string): string {
   if (message.includes('Ausgaben verknüpft')) {
-    const who = displayName ? `„${displayName}"` : 'Dieser Teilnehmer'
+    const who = displayName ? `„${displayName}“` : 'Dieser Teilnehmer'
     return `${who} kann nicht entfernt werden, weil noch Ausgaben damit verknüpft sind. Bearbeite oder lösche zuerst die betroffenen Posten im Tab „Ausgaben“.`
   }
   return message
@@ -89,7 +89,7 @@ export default function SplitParticipantList({
       setEmail('')
       setShowAddForm(false)
       showToast(
-        mail ? `Einladung an ${mail} versendet` : `„${participant.displayName}" hinzugefügt`,
+        mail ? `Einladung an ${mail} versendet` : `„${participant.displayName}“ hinzugefügt`,
         'success'
       )
     } catch (err) {
@@ -103,7 +103,7 @@ export default function SplitParticipantList({
 
   const handleRemove = async (participantId: string) => {
     const participant = participants.find((p) => p.id === participantId)
-    if (!confirm(`Teilnehmer „${participant?.displayName ?? 'Unbekannt'}" wirklich entfernen?`)) {
+    if (!confirm(`Teilnehmer „${participant?.displayName ?? 'Unbekannt'}“ wirklich entfernen?`)) {
       return
     }
     setLoading(true)

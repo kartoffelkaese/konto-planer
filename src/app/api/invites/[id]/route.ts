@@ -25,7 +25,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const action = body.action
   if (action !== 'accept' && action !== 'decline') {
     return NextResponse.json(
-      { error: 'action muss „accept" oder „decline" sein' },
+      { error: 'action muss „accept“ oder „decline“ sein' },
       { status: 400 }
     )
   }

@@ -15,7 +15,7 @@ export default function DeleteUserAccount() {
 
   const handleDelete = async () => {
     if (confirmText !== 'LÖSCHEN') {
-      setError('Bitte gib „LÖSCHEN" ein, um fortzufahren')
+      setError('Bitte gib „LÖSCHEN“ ein, um fortzufahren')
       return
     }
     if (!password) {
@@ -30,7 +30,8 @@ export default function DeleteUserAccount() {
       await withApiErrorFallback(deleteUserLogin(password), 'Fehler beim Löschen der Anmeldung')
 
       await signOut({ redirect: false })
-      window.location.href = '/'
+      // Volles Neuladen: nach dem Löschen soll kein Zustand der alten Sitzung übrig bleiben
+      window.location.assign(window.location.origin)
     } catch (err) {
       console.error('Fehler beim Löschen der Anmeldung:', err)
       setError(
@@ -78,7 +79,7 @@ export default function DeleteUserAccount() {
           </div>
           <div>
             <label htmlFor="confirmText" className="block text-sm font-medium text-primary">
-              Zur Bestätigung „LÖSCHEN" eingeben
+              Zur Bestätigung „LÖSCHEN“ eingeben
             </label>
             <input
               type="text"

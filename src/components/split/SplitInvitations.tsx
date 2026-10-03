@@ -53,7 +53,7 @@ export default function SplitInvitations({ onResponded }: SplitInvitationsProps)
               <p className="text-sm text-secondary truncate">
                 Eingeladen von {invite.invitedByEmail}
                 {invite.participantDisplayName &&
-                  ` · als „${invite.participantDisplayName}"`}
+                  ` · als „${invite.participantDisplayName}“`}
               </p>
             </div>
             <div className="flex shrink-0 gap-2">

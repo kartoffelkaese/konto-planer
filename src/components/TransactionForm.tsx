@@ -248,7 +248,7 @@ export default function TransactionForm({
           {similarMerchantSuggestion && (
             <div className="mt-2 rounded-control border border-accent-border bg-accent-subtle p-3">
               <p className="text-sm text-primary">
-                Meinst du „{similarMerchantSuggestion.name}"?
+                Meinst du „{similarMerchantSuggestion.name}“?
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Button

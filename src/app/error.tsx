@@ -60,7 +60,8 @@ export default function Error({
             Erneut versuchen
           </button>
           <button
-            onClick={() => window.location.href = '/'}
+            // Bewusst mit vollem Neuladen (nicht per Router): der Fehlerzustand soll komplett verworfen werden
+            onClick={() => window.location.assign(window.location.origin)}
             className="flex-1 bg-surface-muted hover:bg-border/30 text-primary font-medium py-2 px-4 rounded-control border border-border transition-colors"
           >
             Zur Startseite

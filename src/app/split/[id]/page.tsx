@@ -37,7 +37,7 @@ type Tab = 'expenses' | 'balances' | 'history' | 'settings'
 
 function formatSplitListDeleteError(message: string, listName?: string): string {
   if (message.includes('HTTP 500') || message.includes('nicht gelöscht')) {
-    const label = listName ? `„${listName}"` : 'Die Split-Liste'
+    const label = listName ? `„${listName}“` : 'Die Split-Liste'
     return `${label} konnte gerade nicht gelöscht werden. Bitte versuche es in ein paar Sekunden erneut.`
   }
   if (message.includes('Nur der Ersteller')) {
@@ -160,7 +160,7 @@ function SplitDetailPageContent() {
     if (!list) return
     if (
       !confirm(
-        `Split-Liste „${list.name}" archivieren? Es können dann keine neuen Ausgaben mehr erfasst werden.`
+        `Split-Liste „${list.name}“ archivieren? Es können dann keine neuen Ausgaben mehr erfasst werden.`
       )
     ) {
       return
@@ -170,7 +170,7 @@ function SplitDetailPageContent() {
       const updated = await updateSplitList(listId, { status: 'ARCHIVED' })
       setList(updated)
       closeExpenseModal()
-      showToast(`„${list.name}" wurde archiviert`, 'success')
+      showToast(`„${list.name}“ wurde archiviert`, 'success')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler beim Archivieren'
       setError(message)
@@ -182,7 +182,7 @@ function SplitDetailPageContent() {
     if (!list) return
     if (
       !confirm(
-        `Split-Liste „${list.name}" wieder aktivieren? Ausgaben und Einstellungen können dann wieder bearbeitet werden.`
+        `Split-Liste „${list.name}“ wieder aktivieren? Ausgaben und Einstellungen können dann wieder bearbeitet werden.`
       )
     ) {
       return
@@ -191,7 +191,7 @@ function SplitDetailPageContent() {
     try {
       const updated = await updateSplitList(listId, { status: 'ACTIVE' })
       setList(updated)
-      showToast(`„${list.name}" ist wieder aktiv`, 'success')
+      showToast(`„${list.name}“ ist wieder aktiv`, 'success')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Fehler beim Reaktivieren'
       setError(message)
@@ -203,7 +203,7 @@ function SplitDetailPageContent() {
     if (!list) return
     if (
       !confirm(
-        `Split-Liste „${list.name}" endgültig löschen? Alle Ausgaben, Salden und Teilnehmer werden unwiderruflich entfernt.`
+        `Split-Liste „${list.name}“ endgültig löschen? Alle Ausgaben, Salden und Teilnehmer werden unwiderruflich entfernt.`
       )
     ) {
       return
@@ -211,7 +211,7 @@ function SplitDetailPageContent() {
     setError(null)
     try {
       await deleteSplitList(listId)
-      showToast(`„${list.name}" wurde gelöscht`, 'success')
+      showToast(`„${list.name}“ wurde gelöscht`, 'success')
       router.push('/split')
     } catch (err) {
       const raw =
@@ -224,7 +224,7 @@ function SplitDetailPageContent() {
 
   const handleDeleteExpense = async (expenseId: string) => {
     const expense = expenses.find((item) => item.id === expenseId)
-    if (!confirm(`Ausgabe „${expense?.description ?? 'Posten'}" löschen?`)) return
+    if (!confirm(`Ausgabe „${expense?.description ?? 'Posten'}“ löschen?`)) return
     setError(null)
     try {
       await deleteSplitExpense(listId, expenseId)

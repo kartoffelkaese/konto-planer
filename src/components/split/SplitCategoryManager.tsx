@@ -70,7 +70,7 @@ export default function SplitCategoryManager({
       setNewName('')
       setNewColor(pickDefaultCategoryColor([...categories, category].map((c) => c.color)))
       setShowAddForm(false)
-      showToast(`Kategorie „${category.name}" angelegt`, 'success')
+      showToast(`Kategorie „${category.name}“ angelegt`, 'success')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Kategorie konnte nicht angelegt werden'
       setError(message)
@@ -107,7 +107,7 @@ export default function SplitCategoryManager({
     const category = categories.find((c) => c.id === categoryId)
     if (
       !confirm(
-        `Kategorie „${category?.name ?? 'Unbekannt'}" wirklich löschen? Verknüpfte Ausgaben werden ohne Kategorie gespeichert.`
+        `Kategorie „${category?.name ?? 'Unbekannt'}“ wirklich löschen? Verknüpfte Ausgaben werden ohne Kategorie gespeichert.`
       )
     ) {
       return

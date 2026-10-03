@@ -40,7 +40,7 @@ export default function DeleteFinancialAccount() {
   const handleDelete = async () => {
     if (!accountId) return
     if (confirmName.trim() !== accountName.trim()) {
-      setError(`Bitte gib exakt „${accountName}" ein`)
+      setError(`Bitte gib exakt „${accountName}“ ein`)
       return
     }
 
@@ -94,7 +94,7 @@ export default function DeleteFinancialAccount() {
       <h3 className="text-sm font-medium text-primary">Aktuelles Konto löschen</h3>
       <p className="text-sm text-secondary">
         Löscht nur das Buchführungs-Konto{' '}
-        <span className="font-medium text-primary">„{accountName}"</span> mit allen
+        <span className="font-medium text-primary">„{accountName}“</span> mit allen
         Transaktionen, Kategorien und Händlern. Deine Anmeldung und andere Konten
         bleiben erhalten. Danach wechselst du automatisch zu einem anderen Konto.
       </p>
@@ -115,7 +115,7 @@ export default function DeleteFinancialAccount() {
           }}
         >
           <TrashIcon className="h-5 w-5" aria-hidden />
-          Buchführungs-Konto „{accountName}" löschen
+          Buchführungs-Konto „{accountName}“ löschen
         </Button>
       ) : (
         <div className="space-y-3">

@@ -161,7 +161,7 @@ export default function DateRangePicker({
           aria-haspopup="dialog"
           aria-expanded={open}
           aria-labelledby={`${id}-label`}
-          aria-invalid={invalid || undefined}
+          aria-describedby={statusMessage ? `${id}-status` : undefined}
           onClick={toggleOpen}
           className={`flex min-h-11 w-full items-center gap-3 rounded-control border bg-surface px-3.5 text-left text-sm transition-colors duration-feedback focus:outline-none focus-visible:ring-2 ${borderClass} ${
             open ? 'border-accent ring-2 ring-accent/30' : 'hover:border-accent-border'
@@ -285,6 +285,7 @@ export default function DateRangePicker({
 
       {statusMessage && (
         <p
+          id={`${id}-status`}
           className={`text-xs ${invalid ? 'text-danger' : 'text-secondary'}`}
           role="status"
           aria-live="polite"

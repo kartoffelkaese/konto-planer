@@ -142,7 +142,7 @@ export default function RecurringTransactionsPage() {
     try {
       await createRecurringInstance(transaction.id)
       showToast(`Neue Zahlung für „${resolveTransactionMerchantName(transaction)}“ erstellt`, 'success')
-      window.location.href = '/transactions'
+      router.push('/transactions')
     } catch (err) {
       console.error('Fehler beim Erstellen der nächsten Instanz:', err)
       setError('Fehler beim Erstellen der nächsten Zahlung')

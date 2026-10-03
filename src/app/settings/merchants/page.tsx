@@ -451,7 +451,7 @@ export default function MerchantsPage() {
       >
         <div className="space-y-4">
           <p className="text-sm text-secondary">
-            Möchtest du den Händler "{selectedMerchant?.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            Möchtest du den Händler „{selectedMerchant?.name}“ wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
           </p>
           <div className="flex justify-end gap-3">
             <Button type="button" variant="secondary" onClick={() => setShowDeleteModal(false)} disabled={isSaving}>

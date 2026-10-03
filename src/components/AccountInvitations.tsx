@@ -65,7 +65,7 @@ export default function AccountInvitations() {
       if (action === 'accept') {
         showToast(
           data.message === 'Einladung angenommen'
-            ? `Zugriff auf „${data.accountName}" freigeschaltet`
+            ? `Zugriff auf „${data.accountName}“ freigeschaltet`
             : data.message,
           'success'
         )
@@ -82,7 +82,7 @@ export default function AccountInvitations() {
       } else {
         showToast(
           data.accountName
-            ? `Einladung zu „${data.accountName}" abgelehnt`
+            ? `Einladung zu „${data.accountName}“ abgelehnt`
             : 'Einladung abgelehnt',
           'success'
         )
@@ -172,7 +172,7 @@ export default function AccountInvitations() {
         title="Einladung ablehnen?"
         message={
           declineTarget
-            ? `Möchtest du die Einladung zum Konto „${declineTarget.accountName}" ablehnen? Du kannst später erneut eingeladen werden.`
+            ? `Möchtest du die Einladung zum Konto „${declineTarget.accountName}“ ablehnen? Du kannst später erneut eingeladen werden.`
             : ''
         }
         confirmText="Ablehnen"

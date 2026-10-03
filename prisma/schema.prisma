@@ -158,6 +158,10 @@ model Transaction {
   createdAt               DateTime      @default(now())
   account                 Account       @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
+  /// Buchungslisten, Summen, Übersicht und Statistiken filtern nach Konto und Zeitraum und sortieren nach Datum
+  @@index([accountId, date])
+  /// Instanzen einer wiederkehrenden Zahlung je Tag („Ausstehende erstellen“, Wiederkehrend)
+  @@index([parentTransactionId, date])
   @@map("transactions")
 }
 

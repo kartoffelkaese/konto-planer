@@ -1,22 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { ChevronDownIcon, ChevronUpIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { useStoredFlag } from '@/hooks/useStoredFlag'
 
 const STORAGE_KEY = 'recurring-anchor-hint-dismissed'
 
 export default function RecurringAnchorHint() {
-  const [dismissed, setDismissed] = useState(true)
+  // Beim Server-Rendern ausgeblendet, damit der Hinweis nicht kurz aufblitzt
+  const [dismissed, dismiss] = useStoredFlag(STORAGE_KEY, true)
   const [expanded, setExpanded] = useState(false)
 
-  useEffect(() => {
-    setDismissed(localStorage.getItem(STORAGE_KEY) === '1')
-  }, [])
-
-  const handleDismiss = () => {
-    localStorage.setItem(STORAGE_KEY, '1')
-    setDismissed(true)
-  }
+  const handleDismiss = dismiss
 
   if (dismissed) {
     return null

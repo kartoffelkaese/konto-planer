@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, type ReactElement } from 'react'
+import type { ReactElement } from 'react'
 import { ResponsiveContainer } from 'recharts'
+import { useIsClient } from '@/hooks/useIsClient'
 
 type ChartContainerProps = {
   height: number
@@ -18,11 +19,7 @@ export default function ChartContainer({
   children,
   className = '',
 }: ChartContainerProps) {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useIsClient()
 
   return (
     <div

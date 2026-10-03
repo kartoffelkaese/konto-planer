@@ -91,63 +91,73 @@ export async function GET() {
     const { startDate, endDate } = getSalaryMonthRange(account.salaryDay)
     const categoryPeriod = getSalaryMonthPeriodInfo(account.salaryDay)
 
-    // Berechne monatliches Einkommen
-    const monthlyIncome = await prisma.transaction.aggregate({
-      where: {
-        accountId: account.id,
-        amount: {
-          gt: 0
-        },
-        date: {
-          gte: startDate,
-          lte: endDate
-        },
-        isConfirmed: true
-      },
-      _sum: {
-        amount: true
-      }
-    })
+    const monthWhere = {
+      accountId: account.id,
+      date: { gte: startDate, lte: endDate },
+      isConfirmed: true,
+    }
 
-    // Berechne monatliche Ausgaben
-    const monthlyExpenses = await prisma.transaction.aggregate({
-      where: {
-        accountId: account.id,
-        amount: {
-          lt: 0
+    // Alle Abfragen gleichzeitig statt nacheinander (gleiche Ergebnisse, eine Datenbank-Runde)
+    const [
+      monthlyIncome,
+      monthlyExpenses,
+      totalBalance,
+      recurringTransactions,
+      transactionsWithCategories,
+      confirmedSum,
+      pendingExpenseSum,
+      recentRaw,
+    ] = await Promise.all([
+      prisma.transaction.aggregate({
+        where: { ...monthWhere, amount: { gt: 0 } },
+        _sum: { amount: true },
+      }),
+      prisma.transaction.aggregate({
+        where: { ...monthWhere, amount: { lt: 0 } },
+        _sum: { amount: true },
+      }),
+      prisma.transaction.aggregate({
+        where: { accountId: account.id },
+        _sum: { amount: true },
+      }),
+      // Wiederkehrende Ausgaben mit Details
+      prisma.transaction.findMany({
+        where: { accountId: account.id, isRecurring: true, amount: { lt: 0 } },
+        include: transactionTransferInclude,
+      }),
+      // Für die Kategorieverteilung: bestätigte Ausgaben im Gehaltsmonat
+      prisma.transaction.findMany({
+        where: { ...monthWhere, amount: { lt: 0 } },
+        include: transactionTransferInclude,
+      }),
+      // Gebuchter Kontostand: Summe aller bestätigten Beträge (Einnahmen − Ausgaben)
+      prisma.transaction.aggregate({
+        where: { accountId: account.id, isConfirmed: true },
+        _sum: { amount: true },
+      }),
+      // Offene (unbestätigte) Ausgaben
+      prisma.transaction.aggregate({
+        where: { accountId: account.id, isConfirmed: false, amount: { lt: 0 } },
+        _sum: { amount: true },
+      }),
+      prisma.transaction.findMany({
+        where: {
+          accountId: account.id,
+          isRecurring: false,
+          isConfirmed: true,
         },
-        date: {
-          gte: startDate,
-          lte: endDate
+        orderBy: { date: 'desc' },
+        take: 6,
+        select: {
+          id: true,
+          merchant: true,
+          amount: true,
+          date: true,
+          description: true,
+          merchantRef: { select: { name: true } },
         },
-        isConfirmed: true
-      },
-      _sum: {
-        amount: true
-      }
-    })
-
-    // Berechne Gesamtbilanz
-    const totalBalance = await prisma.transaction.aggregate({
-      where: {
-        accountId: account.id
-      },
-      _sum: {
-        amount: true
-      }
-    })
-
-    // Hole wiederkehrende Zahlungen mit Details
-    const recurringTransactions = await prisma.transaction.findMany({
-      where: {
-        accountId: account.id,
-        isRecurring: true,
-        amount: {
-          lt: 0
-        }
-      },
-      include: transactionTransferInclude,
-    })
+      }),
+    ])
 
     // Berechne das nächste Zahlungsdatum für jede wiederkehrende Zahlung
     const recurringTransactionsWithNextDate = recurringTransactions
@@ -181,22 +191,6 @@ export async function GET() {
       return transactionDate >= new Date() && transactionDate <= thirtyDaysFromNow
     })
 
-    // Berechne Kategorieverteilung - Hole alle Transaktionen mit ihren Kategorien
-    const transactionsWithCategories = await prisma.transaction.findMany({
-      where: {
-        accountId: account.id,
-        amount: {
-          lt: 0
-        },
-        date: {
-          gte: startDate,
-          lte: endDate
-        },
-        isConfirmed: true
-      },
-      include: transactionTransferInclude,
-    })
-
     // Gruppiere nach Kategorie und summiere die Beträge
     const categoryMap = new Map<string, { name: string; value: number; color: string }>()
 
@@ -222,49 +216,8 @@ export async function GET() {
     const kumulatedCategoryData = Array.from(categoryMap.values())
       .sort((a, b) => b.value - a.value)
 
-    const [confirmedRows, pendingRows, recentRaw] = await Promise.all([
-      prisma.transaction.findMany({
-        where: { accountId: account.id, isConfirmed: true },
-        select: { amount: true },
-      }),
-      prisma.transaction.findMany({
-        where: { accountId: account.id, isConfirmed: false },
-        select: { amount: true },
-      }),
-      prisma.transaction.findMany({
-        where: {
-          accountId: account.id,
-          isRecurring: false,
-          isConfirmed: true,
-        },
-        orderBy: { date: 'desc' },
-        take: 6,
-        select: {
-          id: true,
-          merchant: true,
-          amount: true,
-          date: true,
-          description: true,
-          merchantRef: { select: { name: true } },
-        },
-      }),
-    ])
-
-    const totalIncomeConfirmed = confirmedRows.reduce(
-      (sum, t) => (t.amount.toNumber() > 0 ? sum + t.amount.toNumber() : sum),
-      0
-    )
-    const totalExpensesConfirmed = confirmedRows.reduce(
-      (sum, t) =>
-        t.amount.toNumber() < 0 ? sum + Math.abs(t.amount.toNumber()) : sum,
-      0
-    )
-    const clearedBalance = totalIncomeConfirmed - totalExpensesConfirmed
-    const totalPendingExpenses = pendingRows.reduce(
-      (sum, t) =>
-        t.amount.toNumber() < 0 ? sum + Math.abs(t.amount.toNumber()) : sum,
-      0
-    )
+    const clearedBalance = confirmedSum._sum.amount?.toNumber() || 0
+    const totalPendingExpenses = Math.abs(pendingExpenseSum._sum.amount?.toNumber() || 0)
     const available = clearedBalance - totalPendingExpenses
 
     const income = monthlyIncome._sum.amount?.toNumber() || 0

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { ComputerDesktopIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline'
 import {
   applyThemeMode,
@@ -18,15 +18,24 @@ const icons: Record<ThemeMode, typeof SunIcon> = {
   system: ComputerDesktopIcon,
 }
 
-export default function ColorSchemeSwitcher() {
-  const [mode, setMode] = useState<ThemeMode | null>(null)
+function subscribeThemeChange(onChange: () => void) {
+  window.addEventListener(THEME_CHANGE_EVENT, onChange)
+  window.addEventListener('storage', onChange)
+  return () => {
+    window.removeEventListener(THEME_CHANGE_EVENT, onChange)
+    window.removeEventListener('storage', onChange)
+  }
+}
 
-  useEffect(() => {
-    setMode(getStoredThemeMode())
-  }, [])
+export default function ColorSchemeSwitcher() {
+  // null beim Server-Rendern: der gespeicherte Modus ist erst im Browser bekannt
+  const mode = useSyncExternalStore<ThemeMode | null>(
+    subscribeThemeChange,
+    getStoredThemeMode,
+    () => null
+  )
 
   const handleChange = (next: ThemeMode) => {
-    setMode(next)
     applyThemeMode(next)
     window.dispatchEvent(new Event(THEME_CHANGE_EVENT))
   }

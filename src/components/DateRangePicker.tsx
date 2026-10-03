@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -86,27 +86,26 @@ export default function DateRangePicker({
   const [draftTo, setDraftTo] = useState<dayjs.Dayjs | null>(toProp)
   const [hoverDay, setHoverDay] = useState<dayjs.Dayjs | null>(null)
 
-  useEffect(() => {
-    if (open) return
+  // Monat, für den die Ansicht zuletzt an die Auswahl angepasst wurde (siehe toggleOpen)
+  const viewSyncedForRef = useRef<dayjs.Dayjs | null>(fromProp)
 
-    setDraftFrom((prev) =>
-      prev && fromProp && prev.isSame(fromProp, 'day')
-        ? prev
-        : fromProp
-    )
-    setDraftTo((prev) =>
-      prev && toProp && prev.isSame(toProp, 'day') ? prev : toProp
-    )
-    setHoverDay(null)
-  }, [open, fromProp, toProp])
-
-  useEffect(() => {
-    if (fromProp) {
-      setViewMonth((prev) =>
-        prev.isSame(fromProp, 'month') ? prev : fromProp.startOf('month')
-      )
+  /**
+   * Beim Öffnen den Entwurf aus der aktuellen Auswahl übernehmen (statt per Effekt bei jeder
+   * Änderung). Die Monatsansicht springt nur, wenn sich der Beginn seit dem letzten Mal geändert hat.
+   */
+  const toggleOpen = () => {
+    if (!open) {
+      setDraftFrom(fromProp)
+      setDraftTo(toProp)
+      setHoverDay(null)
+      const synced = viewSyncedForRef.current
+      if (fromProp && !(synced && synced.isSame(fromProp, 'month'))) {
+        setViewMonth(fromProp.startOf('month'))
+      }
+      viewSyncedForRef.current = fromProp
     }
-  }, [fromProp])
+    setOpen((value) => !value)
+  }
 
   const calendarDays = useMemo(() => {
     const monthStart = viewMonth.startOf('month')
@@ -163,7 +162,7 @@ export default function DateRangePicker({
           aria-expanded={open}
           aria-labelledby={`${id}-label`}
           aria-invalid={invalid || undefined}
-          onClick={() => setOpen((value) => !value)}
+          onClick={toggleOpen}
           className={`flex min-h-11 w-full items-center gap-3 rounded-control border bg-surface px-3.5 text-left text-sm transition-colors duration-feedback focus:outline-none focus-visible:ring-2 ${borderClass} ${
             open ? 'border-accent ring-2 ring-accent/30' : 'hover:border-accent-border'
           }`}

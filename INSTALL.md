@@ -189,7 +189,9 @@ Empfohlener Ablauf bei Dependency-Updates:
 6. Prisma-Pakete synchron halten: `prisma`, `@prisma/client`, `@prisma/adapter-mariadb` auf gleiche Minor
 7. `allowScripts` bei Prisma-Versionswechsel anpassen
 
-Lokal prüfen: `npm run audit:check` (High/Critical müssen 0 sein).
+Lokal prüfen: `npm run audit:check` (High/Critical müssen 0 sein). Geprüft wird, was auf dem Server läuft (`--omit=dev`); der CI bricht nur daran ab.
+
+`npm run audit:all` bezieht die Entwicklungswerkzeuge (ESLint, Tests) ein. Der CI führt das zusätzlich als reinen Hinweis aus. Dort kann eine Meldung offen bleiben, für die es noch keine bereinigte Version gibt – aktuell `braces` (über `eslint-config-next`, GHSA-vfj7-8cjw-p6xm): alle Versionen betroffen, kein Fix veröffentlicht, in der laufenden App nicht enthalten.
 
 **`npm audit fix --force` nie ausführen** — downgraded Prisma, Next oder ESLint und bricht den Stack.
 

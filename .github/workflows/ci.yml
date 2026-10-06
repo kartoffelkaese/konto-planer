@@ -20,7 +20,13 @@ jobs:
 
       - run: npm ci
 
-      - run: npm audit --audit-level=high
+      # Blockierend: alles, was auf dem Server läuft
+      - run: npm run audit:check
+
+      # Nur zur Information: Entwicklungswerkzeuge (ESLint, Tests) – bricht den Lauf nicht ab
+      - name: npm audit (inkl. Entwicklungswerkzeuge)
+        run: npm run audit:all
+        continue-on-error: true
 
       - run: npm run typecheck
 

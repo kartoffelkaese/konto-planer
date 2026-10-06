@@ -13,6 +13,7 @@ import AuthPageLayout, {
   AuthCard,
 } from '@/components/auth/AuthPageLayout'
 import { validatePassword } from '@/lib/password-policy'
+import { PLAN_LABELS, PLANS_ENABLED_PUBLIC, TRIAL_DAYS } from '@/lib/plans'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -96,7 +97,11 @@ export default function RegisterPage() {
     <AuthPageLayout alternateHref="/auth/login" alternateLabel="Anmelden">
       <AuthCard
         title="Konto erstellen"
-        subtitle="Kostenlos starten – in unter einer Minute eingerichtet."
+        subtitle={
+          PLANS_ENABLED_PUBLIC
+            ? `Kostenlos starten – mit ${TRIAL_DAYS} Tagen „${PLAN_LABELS.FULL}“ zum Testen, ohne Zahlungsmittel.`
+            : 'Kostenlos starten – in unter einer Minute eingerichtet.'
+        }
         footer={
           <AuthAlternateLink
             prompt="Bereits registriert?"

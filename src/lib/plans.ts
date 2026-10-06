@@ -135,3 +135,16 @@ export const PLAN_FEATURES: Record<PlanId, string[]> = {
     'Eigene Split-Listen mit Freigabe-Link und Fremdwährungen',
   ],
 }
+
+/** Preise des Levels „Komplett“ in Euro – für die Startseite; abgerechnet wird später über Stripe */
+export const PLAN_PRICE = {
+  monthly: 3,
+  yearly: 24,
+} as const
+
+/**
+ * Für Seiten ohne Anmeldung (Startseite, Registrierung): Sind Benutzerlevel aktiv?
+ * Der Wert wird beim Build aus `PLANS_ENABLED` eingesetzt (siehe next.config.js). Mit Anmeldung
+ * gilt stattdessen `plansEnabled` aus `/api/users/settings`.
+ */
+export const PLANS_ENABLED_PUBLIC = process.env.NEXT_PUBLIC_PLANS_ENABLED === 'true'

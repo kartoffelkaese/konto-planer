@@ -20,6 +20,14 @@ import {
 } from '@heroicons/react/24/outline'
 import { getButtonClassName } from '@/components/Button'
 import { APP_VERSION } from '@/lib/version'
+import { formatCurrency } from '@/lib/formatters'
+import {
+  PLAN_FEATURES,
+  PLAN_LABELS,
+  PLAN_PRICE,
+  PLANS_ENABLED_PUBLIC,
+  TRIAL_DAYS,
+} from '@/lib/plans'
 
 type Feature = {
   icon: typeof ChartBarIcon
@@ -27,6 +35,8 @@ type Feature = {
   description: string
   /** Breite Kachel im Bento-Raster (ab lg) */
   wide?: boolean
+  /** Gehört zum Level „Komplett“ (nur gekennzeichnet, wenn Level aktiv sind) */
+  full?: boolean
 }
 
 const features: Feature[] = [
@@ -47,6 +57,7 @@ const features: Feature[] = [
     title: 'CSV-Import von der Bank',
     description:
       'Umsätze von DKB und ING importieren – mit Vorschau, Duplikatprüfung und Händler-Zuordnung.',
+    full: true,
   },
   {
     icon: UsersIcon,
@@ -54,6 +65,7 @@ const features: Feature[] = [
     description:
       'Gemeinsame Ausgaben erfassen, fair aufteilen und mit wenigen Zahlungen ausgleichen – auch in Fremdwährung und per Lese-Link für Gäste.',
     wide: true,
+    full: true,
   },
   {
     icon: ArrowPathIcon,
@@ -66,6 +78,7 @@ const features: Feature[] = [
     title: 'Statistiken',
     description:
       'Trends nach Kategorie, Händler und Zeitraum – vom Monat bis zum Jahresüberblick.',
+    full: true,
   },
   {
     icon: TagIcon,
@@ -78,12 +91,14 @@ const features: Feature[] = [
     title: 'Mehrere Konten & Umbuchungen',
     description:
       'Giro, Sparkonto oder Haushalt parallel führen und Geld zwischen Konten umbuchen.',
+    full: true,
   },
   {
     icon: UserGroupIcon,
     title: 'Gemeinsam nutzen',
     description:
       'Konten per Einladung teilen – mit vollem Zugriff oder Nur-Lesen für Partner und Familie.',
+    full: true,
   },
   {
     icon: DevicePhoneMobileIcon,
@@ -116,7 +131,9 @@ const steps = [
   },
 ]
 
-const trustPoints = ['Kostenlos', 'Ohne Werbung', 'DKB & ING Import', 'Mehrere Konten']
+const trustPoints = PLANS_ENABLED_PUBLIC
+  ? ['Kostenlos starten', `${TRIAL_DAYS} Tage alles testen`, 'Ohne Zahlungsmittel', 'Ohne Werbung']
+  : ['Kostenlos', 'Ohne Werbung', 'DKB & ING Import', 'Mehrere Konten']
 
 const highlights = [
   {
@@ -262,6 +279,7 @@ function LandingHeader() {
           {[
             ['#highlights', 'Vorteile'],
             ['#features', 'Funktionen'],
+            ...(PLANS_ENABLED_PUBLIC ? [['#pricing', 'Preise']] : []),
             ['#steps', 'So starten'],
           ].map(([href, label]) => (
             <a
@@ -337,6 +355,87 @@ function SectionIntro({ eyebrow, title, text }: { eyebrow: string; title: string
       </h2>
       {text && <p className="mt-3 text-base leading-relaxed text-secondary sm:text-lg">{text}</p>}
     </div>
+  )
+}
+
+function PlanFeatureList({ items }: { items: string[] }) {
+  return (
+    <ul className="mt-5 space-y-2.5">
+      {items.map((item) => (
+        <li key={item} className="flex items-start gap-2.5 text-sm text-primary">
+          <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
+          {item}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Die beiden Level im Vergleich – Inhalte aus `@/lib/plans`, damit sie mit der App übereinstimmen */
+function LandingPricing() {
+  return (
+    <section id="pricing" className="scroll-mt-16 py-16 sm:py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <SectionIntro
+          eyebrow="Preise"
+          title="Kostenlos starten, bei Bedarf erweitern"
+          text={`Jede Registrierung beginnt mit ${TRIAL_DAYS} Tagen „${PLAN_LABELS.FULL}“ – ohne Zahlungsmittel. Danach nutzt du „${PLAN_LABELS.BASIC}“ kostenlos weiter, deine Daten bleiben erhalten.`}
+        />
+
+        <div className="mx-auto mt-12 grid max-w-4xl gap-4 md:grid-cols-2 md:gap-6">
+          <article className="card flex flex-col p-6 sm:p-8">
+            <h3 className="text-xl font-semibold text-primary">{PLAN_LABELS.BASIC}</h3>
+            <p className="mt-1 text-sm text-secondary">Für ein Konto – dauerhaft kostenlos.</p>
+            <p className="mt-5">
+              <span className="amount-lg text-primary">{formatCurrency(0)}</span>
+            </p>
+            <PlanFeatureList items={PLAN_FEATURES.BASIC} />
+            <div className="mt-auto pt-8">
+              <Link
+                href="/auth/register"
+                className={getButtonClassName({
+                  variant: 'secondary',
+                  size: 'lg',
+                  className: 'w-full rounded-pill',
+                })}
+              >
+                Kostenlos starten
+              </Link>
+            </div>
+          </article>
+
+          <article className="hero-card flex flex-col p-6 sm:p-8">
+            <h3 className="text-xl font-semibold text-primary">{PLAN_LABELS.FULL}</h3>
+            <p className="mt-1 text-sm text-secondary">
+              Alles aus „{PLAN_LABELS.BASIC}“ und zusätzlich:
+            </p>
+            <p className="mt-5">
+              <span className="amount-lg text-primary">{formatCurrency(PLAN_PRICE.yearly)}</span>
+              <span className="text-sm text-secondary"> im Jahr</span>
+            </p>
+            <p className="mt-1 text-sm text-secondary">
+              oder {formatCurrency(PLAN_PRICE.monthly)} im Monat
+            </p>
+            <PlanFeatureList items={PLAN_FEATURES.FULL} />
+            <div className="mt-auto pt-8">
+              <Link
+                href="/auth/register"
+                className={getButtonClassName({
+                  variant: 'primary',
+                  size: 'lg',
+                  className: 'w-full rounded-pill',
+                })}
+              >
+                {TRIAL_DAYS} Tage kostenlos testen
+              </Link>
+              <p className="mt-3 text-center text-xs text-secondary">
+                Die Buchung von „{PLAN_LABELS.FULL}“ ist in Kürze möglich.
+              </p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -432,7 +531,7 @@ export default function LandingPage() {
           />
 
           <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map(({ icon: Icon, title, description, wide }) => (
+            {features.map(({ icon: Icon, title, description, wide, full }) => (
               <article
                 key={title}
                 className={`group card p-6 transition-[box-shadow,transform] duration-feedback hover:-translate-y-0.5 hover:shadow-raised ${
@@ -445,6 +544,9 @@ export default function LandingPage() {
                 <h3 className={`mt-4 font-semibold text-primary ${wide ? 'text-xl' : 'text-lg'}`}>
                   {title}
                 </h3>
+                {PLANS_ENABLED_PUBLIC && full && (
+                  <p className="mt-1 text-xs font-medium text-accent">Im Level „{PLAN_LABELS.FULL}“</p>
+                )}
                 <p
                   className={`mt-2 leading-relaxed text-secondary ${wide ? 'max-w-lg text-base' : 'text-sm'}`}
                 >
@@ -455,6 +557,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {PLANS_ENABLED_PUBLIC && <LandingPricing />}
 
       <section id="steps" className="scroll-mt-16 py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">

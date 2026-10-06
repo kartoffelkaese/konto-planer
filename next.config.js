@@ -65,6 +65,9 @@ const nextConfig = {
   // Einzige Quelle der Versionsnummer ist package.json; nur dieser eine Wert landet im Client-Bundle
   env: {
     NEXT_PUBLIC_APP_VERSION: require('./package.json').version,
+    // Für Seiten ohne Anmeldung (Startseite, Registrierung): Sind Benutzerlevel aktiv?
+    // Wird beim Build eingesetzt – nach einer Änderung von PLANS_ENABLED neu bauen.
+    NEXT_PUBLIC_PLANS_ENABLED: process.env.PLANS_ENABLED === 'true' ? 'true' : '',
   },
   typescript: {
     ignoreBuildErrors: false,

@@ -44,7 +44,7 @@ NODE_ENV=production
 | `SMTP_USER` | ja (Prod.) | SMTP-Benutzername |
 | `SMTP_PASS` | ja (Prod.) | SMTP-Passwort |
 | `SMTP_FROM` | ja (Prod.) | Absender, z. B. `KontoPlaner <noreply@ihre-domain.de>` |
-| `PLANS_ENABLED` | nein | `true` aktiviert die Benutzerlevel „Start“ und „Komplett“ (siehe unten). Ohne den Wert haben alle Nutzer „Komplett“. |
+| `PLANS_ENABLED` | nein | `true` aktiviert die Benutzerlevel „Start“ und „Komplett“ (siehe unten). Ohne den Wert haben alle Nutzer „Komplett“. Startseite und Registrierung übernehmen den Wert beim Build – nach einer Änderung neu bauen. |
 | `SMTP_SECURE` | optional | `true` für Port 465 |
 
 Die App lauscht intern auf **127.0.0.1:3001** (siehe `npm start` in `package.json`).

@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/useToast'
 import ColorSchemeSwitcher from '@/components/ColorSchemeSwitcher'
 import EmailSettingsSection from '@/components/settings/EmailSettingsSection'
 import AccountSharing from '@/components/AccountSharing'
+import PlanSection from '@/components/settings/PlanSection'
 import AccountInvitations from '@/components/AccountInvitations'
 import CreateAdditionalAccount from '@/components/CreateAdditionalAccount'
 import BankSelect from '@/components/BankSelect'
@@ -176,6 +177,8 @@ export default function SettingsPage() {
                 Buchungen können nicht geändert werden.
               </div>
             )}
+
+            <PlanSection />
 
             <div id="data-management" className="card p-4 md:p-5">
               <h2 className="text-lg font-medium text-primary mb-1">Datenverwaltung</h2>

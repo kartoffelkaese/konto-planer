@@ -16,6 +16,22 @@ import {
   assertOwnerForSimpleAccountToggle,
 } from '@/lib/simpleAccount'
 import { logger } from '@/lib/logger'
+import { plansEnabled } from '@/lib/plans'
+import type { AccountContext } from '@/lib/account-context'
+
+/** Level-Angaben für die Oberfläche (eigenes Level, Level des Konto-Inhabers, Testphase) */
+function planFields({ user, plan, accountPlan, planLock }: AccountContext) {
+  return {
+    plan,
+    accountPlan,
+    planLock,
+    keptAccountId: user.keptAccountId,
+    planSource: user.planSource,
+    planExpiresAt: user.planExpiresAt,
+    plansEnabled: plansEnabled(),
+    isAdmin: user.isAdmin,
+  }
+}
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -127,6 +143,7 @@ export async function PATCH(request: NextRequest) {
       createdAt: updated.createdAt,
       activeAccountId: account.id,
       role: membership.role,
+      ...planFields(ctx),
     })
   } catch (error) {
     logger.error('Error updating user settings', error, { endpoint: '/api/users/settings' })
@@ -157,6 +174,7 @@ export async function GET() {
       createdAt: account.createdAt,
       activeAccountId: account.id,
       role: membership.role,
+      ...planFields(ctx),
     })
   } catch (error) {
     logger.error('Error fetching user settings', error, { endpoint: '/api/users/settings' })

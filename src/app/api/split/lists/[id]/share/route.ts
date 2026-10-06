@@ -6,6 +6,7 @@ import {
   requireSplitListAccess,
   requireSplitListOwner,
 } from '@/lib/splitAccess'
+import { PLAN_MESSAGES, planRequiredResponse } from '@/lib/planGuards'
 import {
   buildSplitShareUrl,
   generateShareToken,
@@ -76,6 +77,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   }
 
   if (body.shareEnabled) {
+    if (access.planLocked) return planRequiredResponse(PLAN_MESSAGES.splitListLocked)
     const { rawToken, tokenHash } = generateShareToken()
     const updated = await prisma.splitList.update({
       where: { id },
@@ -126,6 +128,8 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
 
   const ownerError = requireSplitListOwner(access)
   if (ownerError) return ownerError
+
+  if (access.planLocked) return planRequiredResponse(PLAN_MESSAGES.splitListLocked)
 
   const { rawToken, tokenHash } = generateShareToken()
   const updated = await prisma.splitList.update({

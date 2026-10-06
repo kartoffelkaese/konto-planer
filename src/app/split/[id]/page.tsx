@@ -1,5 +1,6 @@
 'use client'
 
+import { PLAN_MESSAGES } from '@/lib/planMessages'
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -65,7 +66,10 @@ function SplitDetailPageContent() {
   const loading = loadedListId !== listId
   const [error, setError] = useState<string | null>(null)
 
-  const readOnly = list?.status === 'ARCHIVED'
+  const isArchived = list?.status === 'ARCHIVED'
+  // Nur lesbar auch, wenn der Ersteller keine eigenen Listen (mehr) führen darf
+  const planLocked = Boolean(list?.planLocked)
+  const readOnly = isArchived || planLocked
   const isOwner = list?.role === 'OWNER'
   const canAddExpense = !readOnly && (list?.participants.length ?? 0) > 0
 
@@ -323,7 +327,7 @@ function SplitDetailPageContent() {
                 Archivieren
               </Button>
             )}
-            {isOwner && readOnly && (
+            {isOwner && isArchived && (
               <Button variant="secondary" className="max-md:hidden" onClick={handleUnarchive}>
                 Reaktivieren
               </Button>
@@ -337,7 +341,14 @@ function SplitDetailPageContent() {
         }
       />
 
-      {readOnly && (
+      {planLocked && !isArchived && (
+        <div className="mb-4 rounded-card bg-pending-bg p-4 text-sm text-primary">
+          {PLAN_MESSAGES.splitListLocked} Du kannst sie weiter ansehen
+          {isOwner ? ' und löschen.' : '.'}
+        </div>
+      )}
+
+      {isArchived && (
         <div className="mb-4 rounded-card bg-accent-subtle p-4 text-sm text-primary">
           Diese Liste ist archiviert. Ausgaben und Einstellungen können nicht mehr geändert werden.
           {isOwner && (

@@ -26,6 +26,8 @@ import { useUserSettings } from '@/hooks/useUserSettings'
 import { useActiveAccountReload } from '@/hooks/useActiveAccountReload'
 import { useApiQuery } from '@/hooks/useApiQuery'
 import { getCategories, getMerchants, getStatistics } from '@/lib/api'
+import PlanHint from '@/components/PlanHint'
+import { PLAN_MESSAGES } from '@/lib/planMessages'
 
 interface Category {
   id: string
@@ -65,7 +67,10 @@ export default function StatisticsPage() {
     accountName,
     isSimpleAccount,
     loading: settingsLoading,
+    accountEntitlements,
   } = useUserSettings()
+  // Statistiken gehören zum Level des Konto-Inhabers – ohne Recht wird gar nicht erst geladen
+  const statisticsAllowed = accountEntitlements.statistics
   const [categories, setCategories] = useState<Category[]>([])
   const [merchants, setMerchants] = useState<Merchant[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('')
@@ -150,7 +155,7 @@ export default function StatisticsPage() {
       })
     },
     {
-      enabled: !metaLoading && !customRangeIncomplete,
+      enabled: statisticsAllowed && !settingsLoading && !metaLoading && !customRangeIncomplete,
       onError: (error) => console.error('Fehler beim Laden der Statistiken:', error),
     }
   )
@@ -173,6 +178,21 @@ export default function StatisticsPage() {
 
   if (settingsLoading || isSimpleAccount) {
     return <PageLoader message="Statistiken werden geladen…" />
+  }
+
+  if (!statisticsAllowed) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 md:py-8">
+        <PageContextHeader
+          title="Statistiken"
+          subtitle={`${accountName} · Einnahmen und Ausgaben`}
+        />
+        <PlanHint
+          title={PLAN_MESSAGES.statistics}
+          description="Auswertungen nach Zeitraum, Kategorie und Händler für dieses Konto."
+        />
+      </div>
+    )
   }
 
   if ((isLoading || metaLoading) && statisticsData.length === 0 && !loadError) {

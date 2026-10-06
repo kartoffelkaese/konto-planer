@@ -12,6 +12,8 @@ import {
   readJsonBody,
 } from '@/lib/api-auth'
 import { withErrorHandling } from '@/lib/route-handler'
+import { getEffectivePlan, getEntitlements } from '@/lib/plans'
+import { PLAN_MESSAGES, planRequiredResponse } from '@/lib/planGuards'
 
 export const GET = withErrorHandling('/api/accounts', async function GET() {
   const authResult = await getUserBySession()
@@ -57,6 +59,16 @@ export const POST = withErrorHandling('/api/accounts', async function POST(reque
   if (isErrorResponse(authResult)) return authResult
 
   const { user } = authResult
+
+  // Level: Höchstzahl eigener Konten
+  const { maxOwnedAccounts } = getEntitlements(getEffectivePlan(user))
+  if (maxOwnedAccounts !== null) {
+    const owned = await prisma.accountMember.count({
+      where: { userId: user.id, role: AccountMemberRole.OWNER },
+    })
+    if (owned >= maxOwnedAccounts) return planRequiredResponse(PLAN_MESSAGES.accountLimit)
+  }
+
   const body = await readJsonBody<Record<string, unknown>>(request)
   if (isErrorResponse(body)) return body
 

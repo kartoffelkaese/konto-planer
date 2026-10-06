@@ -12,8 +12,12 @@ const mockPrisma = vi.hoisted(() => ({
   },
   user: {
     findFirst: vi.fn(),
+    findUnique: vi.fn(),
     findUniqueOrThrow: vi.fn(),
     update: vi.fn(),
+  },
+  planChange: {
+    create: vi.fn(),
   },
   $transaction: vi.fn(),
 }))
@@ -86,9 +90,40 @@ describe('emailVerification', () => {
       expiresAt: new Date(Date.now() + 60_000),
       user: { id: 'u1' },
     })
+    mockPrisma.user.findUnique.mockResolvedValue({ plan: 'BASIC', planSource: null })
+    const before = Date.now()
     const result = await verifyEmailToken(raw)
     expect(result).toEqual({ ok: true, purpose: EmailVerificationPurpose.SIGNUP })
-    expect(mockPrisma.user.update).toHaveBeenCalled()
+
+    // Testphase: 14 Tage „Komplett“ ab der Bestätigung, mit Protokolleintrag
+    const { data } = mockPrisma.user.update.mock.calls[0][0]
+    expect(data).toMatchObject({ plan: 'FULL', planSource: 'TRIAL' })
+    expect(data.emailVerified).toBeInstanceOf(Date)
+    const days = (data.planExpiresAt.getTime() - before) / (24 * 60 * 60 * 1000)
+    expect(days).toBeGreaterThanOrEqual(14)
+    expect(days).toBeLessThan(14.01)
+    expect(mockPrisma.planChange.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ userId: 'u1', fromPlan: 'BASIC', toPlan: 'FULL', source: 'TRIAL' }),
+    })
+  })
+
+  it('verifyEmailToken startet keine Testphase, wenn schon ein Level zugewiesen ist', async () => {
+    const raw = 'valid-signup-legacy'
+    mockPrisma.emailVerificationToken.findUnique.mockResolvedValue({
+      id: 't1',
+      userId: 'u1',
+      purpose: EmailVerificationPurpose.SIGNUP,
+      tokenHash: hashToken(raw),
+      newEmail: null,
+      expiresAt: new Date(Date.now() + 60_000),
+      user: { id: 'u1' },
+    })
+    mockPrisma.user.findUnique.mockResolvedValue({ plan: 'FULL', planSource: 'LEGACY' })
+    const result = await verifyEmailToken(raw)
+    expect(result).toEqual({ ok: true, purpose: EmailVerificationPurpose.SIGNUP })
+    const { data } = mockPrisma.user.update.mock.calls[0][0]
+    expect(data).toEqual({ emailVerified: expect.any(Date) })
+    expect(mockPrisma.planChange.create).not.toHaveBeenCalled()
   })
 
   it('verifyEmailToken prüft Eindeutigkeit bei EMAIL_CHANGE', async () => {

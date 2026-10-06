@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server'
 import { SplitListRole, SplitListStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { getEffectivePlan, getEntitlements } from '@/lib/plans'
+import { PLAN_MESSAGES, planRequiredResponse } from '@/lib/planGuards'
 
 export type SplitListAccess = {
   splitListId: string
   userId: string
   role: SplitListRole
   isArchived: boolean
+  /** Ersteller der Liste darf (nach Herabstufung) keine eigenen Listen mehr führen – Liste nur lesbar */
+  planLocked: boolean
 }
 
 export async function getSplitListAccess(
@@ -21,7 +25,12 @@ export async function getSplitListAccess(
       },
     },
     include: {
-      splitList: { select: { status: true } },
+      splitList: {
+        select: {
+          status: true,
+          createdBy: { select: { plan: true, planExpiresAt: true } },
+        },
+      },
     },
   })
 
@@ -32,6 +41,7 @@ export async function getSplitListAccess(
     userId,
     role: membership.role,
     isArchived: membership.splitList.status === SplitListStatus.ARCHIVED,
+    planLocked: !getEntitlements(getEffectivePlan(membership.splitList.createdBy)).splitOwnLists,
   }
 }
 
@@ -59,6 +69,7 @@ export function requireSplitListWrite(
       { status: 403 }
     )
   }
+  if (access.planLocked) return planRequiredResponse(PLAN_MESSAGES.splitListLocked)
   return null
 }
 

@@ -28,6 +28,20 @@ enum EmailVerificationPurpose {
   PASSWORD_RESET
 }
 
+/// Benutzerlevel: BASIC = „Start“ (kostenlos), FULL = „Komplett“ – Merkmale siehe src/lib/plans.ts
+enum UserPlan {
+  BASIC
+  FULL
+}
+
+/// Woher das Level stammt: Bestand, Testphase, von Hand (Verwaltung) oder Abo
+enum PlanSource {
+  LEGACY
+  TRIAL
+  MANUAL
+  STRIPE
+}
+
 enum SplitListStatus {
   ACTIVE
   ARCHIVED
@@ -53,6 +67,15 @@ model User {
   splitDisplayName        String?
   /// Wird bei Passwortwechsel erhöht – ältere Sitzungen (JWT mit kleinerer Version) werden ungültig
   sessionVersion          Int                      @default(0)
+  plan                    UserPlan                 @default(BASIC)
+  planSource              PlanSource?
+  /// Ende eines befristeten Levels (Testphase, Geschenk, Abo) – danach gilt BASIC
+  planExpiresAt           DateTime?
+  isAdmin                 Boolean                  @default(false)
+  /// Letzte Anmeldung mit Passwort (Sitzungen gelten bis zu 30 Tage)
+  lastLoginAt             DateTime?
+  /// Eigenes Konto, das auf BASIC beschreibbar bleibt, wenn mehr Konten vorhanden sind als erlaubt
+  keptAccountId           String?
   createdAt               DateTime                 @default(now())
   memberships             AccountMember[]
   invitesSent             AccountInvite[]          @relation("InvitedBy")
@@ -63,6 +86,8 @@ model User {
   splitExpensesCreated    SplitExpense[]
   splitSettlements        SplitSettlement[]
   splitInvitesSent        SplitListInvite[]        @relation("SplitInvitesSent")
+  planChanges             PlanChange[]             @relation("PlanChanges")
+  planChangesMade         PlanChange[]             @relation("PlanChangesMade")
 
   @@map("users")
 }
@@ -80,6 +105,24 @@ model EmailVerificationToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("email_verification_tokens")
+}
+
+/// Protokoll jeder Level-Änderung (wer, wann, von, nach, Quelle)
+model PlanChange {
+  id          String     @id @default(uuid())
+  userId      String
+  fromPlan    UserPlan
+  toPlan      UserPlan
+  source      PlanSource
+  expiresAt   DateTime?
+  changedById String?
+  note        String?    @db.VarChar(500)
+  createdAt   DateTime   @default(now())
+  user        User       @relation("PlanChanges", fields: [userId], references: [id], onDelete: Cascade)
+  changedBy   User?      @relation("PlanChangesMade", fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@map("plan_changes")
 }
 
 model Account {

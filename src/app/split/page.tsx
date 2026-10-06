@@ -16,11 +16,16 @@ import { formatCurrency } from '@/lib/formatters'
 import { getSplitLists } from '@/lib/api'
 import { useApiQuery } from '@/hooks/useApiQuery'
 import type { SplitListSummary } from '@/types/split'
+import { useUserSettings } from '@/hooks/useUserSettings'
+import PlanHint from '@/components/PlanHint'
+import { PLAN_MESSAGES } from '@/lib/planMessages'
 
 function SplitOverviewPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [listModalOpen, setListModalOpen] = useState(false)
+  // Eigene Listen gehören zum eigenen Level; eingeladen mitmachen geht immer
+  const canCreateLists = useUserSettings().entitlements.splitOwnLists
 
   const closeListModal = useCallback(() => {
     setListModalOpen(false)
@@ -50,7 +55,7 @@ function SplitOverviewPageContent() {
   const [prevNewRequested, setPrevNewRequested] = useState(false)
   if (newRequested !== prevNewRequested) {
     setPrevNewRequested(newRequested)
-    if (newRequested) setListModalOpen(true)
+    if (newRequested && canCreateLists) setListModalOpen(true)
   }
 
   useEffect(() => {
@@ -86,12 +91,18 @@ function SplitOverviewPageContent() {
         title="Split"
         subtitle="Gemeinsame Ausgaben aufteilen und ausgleichen"
         actions={
-          <Button onClick={openNewListModal}>
-            <PlusIcon className="h-5 w-5" aria-hidden="true" />
-            Neue Liste
-          </Button>
+          canCreateLists && (
+            <Button onClick={openNewListModal}>
+              <PlusIcon className="h-5 w-5" aria-hidden="true" />
+              Neue Liste
+            </Button>
+          )
         }
       />
+
+      {!canCreateLists && lists.length > 0 && (
+        <PlanHint compact title={PLAN_MESSAGES.splitOwnLists} className="mb-4" />
+      )}
 
       {error && (
         <div
@@ -104,7 +115,14 @@ function SplitOverviewPageContent() {
 
       <SplitInvitations onResponded={load} />
 
-      {lists.length === 0 && (
+      {lists.length === 0 && !canCreateLists && (
+        <PlanHint
+          title={PLAN_MESSAGES.splitOwnLists}
+          description="Du kannst trotzdem mitmachen, wenn dich jemand in eine Liste einlädt."
+        />
+      )}
+
+      {lists.length === 0 && canCreateLists && (
         <div className="card overflow-hidden">
           <EmptyState
             title="Noch keine Split-Listen"

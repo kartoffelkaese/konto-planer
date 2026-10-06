@@ -15,6 +15,7 @@ import type { AccountMemberRole } from '@prisma/client'
 import { isAccountWritable } from '@/lib/accountPermissions'
 import { ApiError, getUserSettings } from '@/lib/api'
 import { ACCOUNT_CHANGED_EVENT } from '@/lib/accountSwitchEvents'
+import { getEntitlements, type Entitlements, type PlanId, type PlanSourceId } from '@/lib/plans'
 
 export type UserSettings = {
   id: string
@@ -29,6 +30,17 @@ export type UserSettings = {
   activeAccountId?: string
   role?: AccountMemberRole
   pendingEmail?: string | null
+  /** Eigenes Level (bereits mit Ablaufdatum und PLANS_ENABLED verrechnet) */
+  plan?: PlanId
+  /** Level des Inhabers des aktiven Kontos */
+  accountPlan?: PlanId
+  /** Schreibschutz des aktiven Kontos durch das Level (`limit` / `shared`) */
+  planLock?: 'limit' | 'shared' | null
+  keptAccountId?: string | null
+  planSource?: PlanSourceId | null
+  planExpiresAt?: string | null
+  plansEnabled?: boolean
+  isAdmin?: boolean
 }
 
 type UserSettingsValue = {
@@ -38,6 +50,13 @@ type UserSettingsValue = {
   salaryDay: number | null
   accountName: string
   isSimpleAccount: boolean
+  /** Eigenes Level – bis die Einstellungen geladen sind „Komplett“, damit nichts kurz gesperrt aufblitzt */
+  plan: PlanId
+  /** Was der Nutzer selbst darf (Konten, Split-Listen anlegen) */
+  entitlements: Entitlements
+  /** Was im aktiven Konto möglich ist (Level des Inhabers: Statistiken, CSV-Import, Teilen) */
+  accountEntitlements: Entitlements
+  isAdmin: boolean
   loading: boolean
   error: string | null
   reload: () => void
@@ -117,19 +136,26 @@ export function UserSettingsProvider({ children }: { children: ReactNode }) {
   const error = userId ? (current?.error ?? null) : null
 
   const role = settings?.role
+  const plan: PlanId = settings?.plan ?? 'FULL'
+  const accountPlan: PlanId = settings?.accountPlan ?? 'FULL'
+  const isAdmin = settings?.isAdmin ?? false
   const value = useMemo<UserSettingsValue>(
     () => ({
       settings,
       role,
-      canWrite: role ? isAccountWritable(role) : true,
+      canWrite: (role ? isAccountWritable(role) : true) && !settings?.planLock,
       salaryDay: settings?.salaryDay ?? null,
       accountName: settings?.accountName ?? 'Mein Konto',
       isSimpleAccount: settings?.isSimpleAccount ?? false,
+      plan,
+      entitlements: getEntitlements(plan),
+      accountEntitlements: getEntitlements(accountPlan),
+      isAdmin,
       loading,
       error,
       reload,
     }),
-    [settings, role, loading, error, reload]
+    [settings, role, plan, accountPlan, isAdmin, loading, error, reload]
   )
 
   return <UserSettingsContext.Provider value={value}>{children}</UserSettingsContext.Provider>

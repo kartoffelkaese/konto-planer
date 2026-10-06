@@ -50,11 +50,36 @@ describe('Kontokontext', () => {
     loginAs()
     prismaMock.accountMember.findUnique
       .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce({ id: 'm2', accountId: 'account-2', userId: TEST_USER.id, role: 'MEMBER', account: { ...TEST_ACCOUNT, id: 'account-2' } })
+      .mockResolvedValueOnce({ id: 'm2', accountId: 'account-2', userId: TEST_USER.id, role: 'MEMBER', account: { ...TEST_ACCOUNT, id: 'account-2', members: [{ user: { plan: 'BASIC', planExpiresAt: null, keptAccountId: null, memberships: [{ accountId: 'account-2' }] } }] } })
     prismaMock.accountMember.findFirst.mockResolvedValue({ accountId: 'account-2' })
     const ctx = await getAccountContext()
     if (ctx instanceof Response) throw new Error('erwartet Kontext')
     expect(ctx.account.id).toBe('account-2')
+    expect(ctx.account).not.toHaveProperty('members')
+  })
+
+  it('liefert das eigene Level und das Level des Konto-Inhabers', async () => {
+    vi.stubEnv('PLANS_ENABLED', 'true')
+    loginAs({ role: 'MEMBER', user: { plan: 'BASIC', planSource: null }, ownerPlan: 'FULL' })
+    const ctx = await getAccountContext()
+    if (ctx instanceof Response) throw new Error('erwartet Kontext')
+    expect(ctx.plan).toBe('BASIC')
+    expect(ctx.accountPlan).toBe('FULL')
+    vi.unstubAllEnvs()
+  })
+
+  it('abgelaufenes Level zählt als „Start“; ohne PLANS_ENABLED haben alle „Komplett“', async () => {
+    const expired = { plan: 'FULL' as const, planSource: 'TRIAL' as const, planExpiresAt: new Date('2020-01-01') }
+    loginAs({ user: expired, ownerPlan: 'BASIC' })
+    let ctx = await getAccountContext()
+    if (ctx instanceof Response) throw new Error('erwartet Kontext')
+    expect([ctx.plan, ctx.accountPlan]).toEqual(['FULL', 'FULL'])
+
+    vi.stubEnv('PLANS_ENABLED', 'true')
+    ctx = await getAccountContext()
+    if (ctx instanceof Response) throw new Error('erwartet Kontext')
+    expect([ctx.plan, ctx.accountPlan]).toEqual(['BASIC', 'BASIC'])
+    vi.unstubAllEnvs()
   })
 
   it('ohne irgendein Konto: 403', async () => {

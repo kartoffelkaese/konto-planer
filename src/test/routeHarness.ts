@@ -64,6 +64,12 @@ export const TEST_USER = {
   pendingEmail: null,
   splitDisplayName: null,
   sessionVersion: 0,
+  plan: 'FULL' as 'BASIC' | 'FULL',
+  planSource: 'LEGACY' as 'LEGACY' | 'TRIAL' | 'MANUAL' | 'STRIPE' | null,
+  planExpiresAt: null as Date | null,
+  isAdmin: false,
+  lastLoginAt: null as Date | null,
+  keptAccountId: null as string | null,
   createdAt: new Date('2026-01-01'),
 }
 
@@ -81,10 +87,20 @@ type LoginOptions = {
   role?: 'OWNER' | 'MEMBER' | 'READ_ONLY'
   sessionVersion?: number
   user?: Partial<typeof TEST_USER>
+  /** Level des Konto-Inhabers (Vorgabe: Level des angemeldeten Nutzers) */
+  ownerPlan?: 'BASIC' | 'FULL'
+  /** Eigene Konten des Inhabers, ältestes zuerst (Vorgabe: nur das Testkonto) */
+  ownedAccountIds?: string[]
 }
 
 /** Meldet TEST_USER mit TEST_ACCOUNT als aktivem Konto an */
-export function loginAs({ role = 'OWNER', sessionVersion = 0, user = {} }: LoginOptions = {}) {
+export function loginAs({
+  role = 'OWNER',
+  sessionVersion = 0,
+  user = {},
+  ownerPlan,
+  ownedAccountIds = [TEST_ACCOUNT.id],
+}: LoginOptions = {}) {
   const dbUser = { ...TEST_USER, ...user }
   authMock.mockResolvedValue({
     user: { id: TEST_USER.id, email: TEST_USER.email },
@@ -99,8 +115,22 @@ export function loginAs({ role = 'OWNER', sessionVersion = 0, user = {} }: Login
     role,
     createdAt: new Date('2026-01-01'),
   }
-  prismaMock.accountMember.findUnique.mockResolvedValue({ ...membership, account: TEST_ACCOUNT })
-  prismaMock.account.findUnique.mockResolvedValue(TEST_ACCOUNT)
+  // Konto wird samt Inhabern geladen (deren Level bestimmt, was im Konto möglich ist)
+  const account = {
+    ...TEST_ACCOUNT,
+    members: [
+      {
+        user: {
+          plan: ownerPlan ?? dbUser.plan,
+          planExpiresAt: ownerPlan ? null : dbUser.planExpiresAt,
+          keptAccountId: null,
+          memberships: ownedAccountIds.map((accountId) => ({ accountId })),
+        },
+      },
+    ],
+  }
+  prismaMock.accountMember.findUnique.mockResolvedValue({ ...membership, account })
+  prismaMock.account.findUnique.mockResolvedValue(account)
   return { user: dbUser, membership }
 }
 

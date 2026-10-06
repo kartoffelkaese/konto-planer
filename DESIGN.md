@@ -179,7 +179,7 @@ Titel (`page-title`), eine Kontextzeile in `secondary`, Aktionen rechts. Jede Se
 - **Desktop (ab 768 px):** feste Seitenleiste, 240 px mit Beschriftung oder 72 px nur mit Icons; Zustand wird gespeichert. Aktiver Eintrag als Fläche in `accent-subtle`. Eingeklappt zeigen Tooltips die Namen.
 - **Mobil:** Tab-Leiste unten mit vier Einträgen; „Mehr“ öffnet ein Sheet mit allem, was nicht in der Leiste steht. Keine doppelten Einträge.
 - Inhalte halten mobil Abstand zur Tab-Leiste über `--mobile-tabbar-space`; schwebende Elemente ebenfalls.
-- Bereichsnamen sind überall gleich: **Übersicht, Buchungen, Wiederkehrend, Statistiken, Split, Einstellungen.**
+- Bereichsnamen sind überall gleich: **Übersicht, Buchungen, Wiederkehrend, Statistiken, Split, Einstellungen.** Admins sehen zusätzlich **Verwaltung**.
 
 ## 8. Responsiv
 

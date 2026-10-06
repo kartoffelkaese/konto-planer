@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getEffectivePlan, getEntitlements } from '@/lib/plans'
 import { hashShareToken } from '@/lib/splitShareTokenCrypto'
 
 export {
@@ -15,9 +16,12 @@ export async function getSplitListIdByShareToken(rawToken: string): Promise<stri
       shareEnabled: true,
       shareTokenHash: tokenHash,
     },
-    select: { id: true },
+    select: { id: true, createdBy: { select: { plan: true, planExpiresAt: true } } },
   })
-  return list?.id ?? null
+  if (!list) return null
+  // Freigabe-Link ruht, solange der Ersteller keine eigenen Listen führen darf
+  if (!getEntitlements(getEffectivePlan(list.createdBy)).splitOwnLists) return null
+  return list.id
 }
 
 export async function requireSplitListShareAccess(

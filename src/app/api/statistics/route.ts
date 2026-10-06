@@ -12,11 +12,17 @@ import {
   transactionCategoryInclude,
 } from '@/lib/merchantCategories'
 import { logger } from '@/lib/logger'
+import { getEntitlements } from '@/lib/plans'
+import { PLAN_MESSAGES, planRequiredResponse } from '@/lib/planGuards'
 
 export async function GET(request: Request) {
   try {
     const ctx = await getAccountContext()
     if (isErrorResponse(ctx)) return ctx
+
+    if (!getEntitlements(ctx.accountPlan).statistics) {
+      return planRequiredResponse(PLAN_MESSAGES.statistics)
+    }
 
     const { account } = ctx
 

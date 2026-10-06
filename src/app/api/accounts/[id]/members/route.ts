@@ -21,6 +21,8 @@ import {
   RATE_LIMITS,
 } from '@/lib/rate-limit'
 import { withErrorHandling } from '@/lib/route-handler'
+import { getEntitlements } from '@/lib/plans'
+import { PLAN_MESSAGES, planRequiredResponse } from '@/lib/planGuards'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -82,6 +84,10 @@ export const POST = withErrorHandling('/api/accounts/:id/members', async functio
 
   const ownerError = assertOwner(ctx)
   if (ownerError) return ownerError
+
+  if (!getEntitlements(ctx.accountPlan).shareAccounts) {
+    return planRequiredResponse(PLAN_MESSAGES.shareAccounts)
+  }
 
   const ip = getClientIp(request.headers)
   const { allowed } = checkRateLimit(

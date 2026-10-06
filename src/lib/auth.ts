@@ -134,6 +134,16 @@ export const authConfig: NextAuthConfig = {
             }
           }
 
+          // Zeitpunkt der Anmeldung für die Verwaltung – ein Fehler dabei verhindert den Login nicht
+          try {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { lastLoginAt: new Date() },
+            })
+          } catch (lastLoginError) {
+            logger.error('Letzte Anmeldung konnte nicht gespeichert werden', lastLoginError, { endpoint: '/api/auth' })
+          }
+
           const firstAccountId = await getFirstAccountIdForUser(user.id)
 
           return {

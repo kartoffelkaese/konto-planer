@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
+import { getEntitlements } from '@/lib/plans'
+import { PLAN_MESSAGES, planRequiredResponse } from '@/lib/planGuards'
 import { merchantCategoriesInclude } from '@/lib/merchantCategories'
 import {
   parseCsv,
@@ -33,6 +35,10 @@ export async function POST(request: Request) {
 
   const writeError = requireWritableContext(ctx)
   if (writeError) return writeError
+
+  if (!getEntitlements(ctx.accountPlan).csvImport) {
+    return planRequiredResponse(PLAN_MESSAGES.csvImport)
+  }
 
   const { account, user } = ctx
 

@@ -5,6 +5,8 @@ import { useSession } from 'next-auth/react'
 import { useToast } from '@/hooks/useToast'
 import { useApiQuery } from '@/hooks/useApiQuery'
 import { useUserSettings } from '@/hooks/useUserSettings'
+import PlanHint from '@/components/PlanHint'
+import { PLAN_MESSAGES } from '@/lib/planMessages'
 import { Button } from '@/components/Button'
 import { inviteRoleLabel, roleLabel } from '@/lib/accountPermissions'
 import {
@@ -33,7 +35,8 @@ type InviteRole = 'MEMBER' | 'READ_ONLY'
 export default function AccountSharing() {
   const { data: session } = useSession()
   const { showToast } = useToast()
-  const accountId = useUserSettings().settings?.activeAccountId ?? null
+  const { settings, accountEntitlements } = useUserSettings()
+  const accountId = settings?.activeAccountId ?? null
   const [email, setEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<InviteRole>('MEMBER')
   const [loading, setLoading] = useState(false)
@@ -122,6 +125,7 @@ export default function AccountSharing() {
 
   return (
     <div className="space-y-4">
+      {accountEntitlements.shareAccounts ? (
       <form onSubmit={handleInvite} className="space-y-3">
         <div className="flex flex-col sm:flex-row gap-2">
           <input
@@ -163,6 +167,9 @@ export default function AccountSharing() {
           </label>
         </fieldset>
       </form>
+      ) : (
+        <PlanHint compact title={PLAN_MESSAGES.shareAccounts} />
+      )}
       <p className="text-xs text-secondary">
         Die eingeladene Person sieht die Anfrage in den Einstellungen und kann
         annehmen oder ablehnen. Noch nicht registriert? Nach der Registrierung mit

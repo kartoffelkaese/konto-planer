@@ -221,11 +221,33 @@ Nur für Konten mit `isSimpleAccount: false` (Statistik-Seite leitet sonst um).
 | `DELETE` | `/api/users/email/pending` | Ausstehende E-Mail-Änderung abbrechen |
 | `POST` | `/api/users/email/resend` | Bestätigungs-E-Mail für ausstehende Änderung erneut senden |
 | `PATCH` | `/api/users/password` | `{ "currentPassword", "newPassword" }` — Passwort ändern; beendet alle anderen Sitzungen (eigene Sitzung per `update({ refreshSessionVersion: true })` anheben) |
+| `PATCH` | `/api/users/kept-account` | `{ "accountId" }` — eigenes Konto wählen, das auf dem Level „Start“ beschreibbar bleibt |
 | `DELETE` | `/api/users/delete` | Anmeldung löschen (mit Passwort) |
 
 **`GET/PATCH /api/users/settings` – Felder**
 
 `email`, `accountName`, `salaryDay`, `transferSenderName`, `splitDisplayName`, `bankId`, `isSimpleAccount`, `activeAccountId`, `role`, `createdAt`, `pendingEmail`
+
+Nur lesend, zum Benutzerlevel: `plan` (eigenes Level, `BASIC`/`FULL`), `accountPlan` (Level des Konto-Inhabers), `planLock` (`limit`/`shared`/`null` – Schreibschutz des aktiven Kontos), `keptAccountId`, `planSource`, `planExpiresAt`, `plansEnabled`, `isAdmin`
+
+### Benutzerlevel
+
+Aktiv nur mit `PLANS_ENABLED=true`; was welches Level darf, steht in `src/lib/plans.ts`. Scheitert eine Anfrage am Level, kommt **403** mit `{ "error": "…", "code": "PLAN_REQUIRED" }`.
+
+- **Eigenes Level** entscheidet über: weiteres Konto anlegen (`POST /api/accounts`), eigene Split-Liste anlegen (`POST /api/split/lists`).
+- **Level des Inhabers** entscheidet über: Statistiken, CSV-Import, Mitglieder einladen sowie Schreiben in Split-Listen und deren Freigabe-Link.
+- **Schreibschutz:** Hat der Inhaber mehr Konten als erlaubt, sind alle außer dem gewählten nur lesbar; Mitglieder eines Kontos, dessen Inhaber nicht teilen darf, haben nur Lesezugriff.
+
+### Verwaltung (nur Admins)
+
+Admin-Recht per `npm run set-admin <E-Mail>`. Ohne Admin-Recht oder ohne aktive Level antworten die Routen mit **404**.
+
+| Methode | Pfad | Beschreibung |
+|---------|------|--------------|
+| `GET` | `/api/admin/users?q=&page=` | Nutzer (E-Mail-Suche, 25 je Seite) mit Level, Quelle, Ablauf, letzter Anmeldung und Zählwerten – keine Finanzdaten |
+| `GET` | `/api/admin/users/:id/plan` | Verlauf der Level-Änderungen |
+| `DELETE` | `/api/admin/users/:id` | `{ "confirmEmail" }` — Nutzer samt eigener Konten, Buchungen und Split-Listen löschen; geteilte Konten bleiben den anderen Mitgliedern. Nicht für die eigene Anmeldung und nicht für Admins |
+| `PATCH` | `/api/admin/users/:id/plan` | `{ "plan": "BASIC" \| "FULL", "expiresAt"?, "note"? }` — Level von Hand setzen, mit Protokolleintrag |
 
 **`PATCH` – Body:** `accountName`, `salaryDay`, `transferSenderName`, `bankId`, `isSimpleAccount` (nur **OWNER**; Aktivierung nur ohne Recurring-Templates), `splitDisplayName` (nutzerweit, auch bei Nur-Lese-Konto speicherbar)
 

@@ -44,6 +44,7 @@ NODE_ENV=production
 | `SMTP_USER` | ja (Prod.) | SMTP-Benutzername |
 | `SMTP_PASS` | ja (Prod.) | SMTP-Passwort |
 | `SMTP_FROM` | ja (Prod.) | Absender, z. B. `KontoPlaner <noreply@ihre-domain.de>` |
+| `PLANS_ENABLED` | nein | `true` aktiviert die Benutzerlevel „Start“ und „Komplett“ (siehe unten). Ohne den Wert haben alle Nutzer „Komplett“. |
 | `SMTP_SECURE` | optional | `true` für Port 465 |
 
 Die App lauscht intern auf **127.0.0.1:3001** (siehe `npm start` in `package.json`).
@@ -102,6 +103,22 @@ Unbestätigte Registrierungen ohne gültigen Verifizierungs-Token werden gelösc
 ```
 
 Manuell: `npm run db:cleanup-unverified`
+
+### Benutzerlevel (optional)
+
+Mit `PLANS_ENABLED=true` gelten zwei Level; was welches Level darf, steht in `src/lib/plans.ts`.
+
+- **Start** (kostenlos): ein Konto mit Buchungen, wiederkehrenden Zahlungen, Übersicht und Backup.
+- **Komplett**: zusätzlich mehrere Konten, Konten teilen, Statistiken, CSV-Import und eigene Split-Listen.
+
+Neue Nutzer bekommen ab der bestätigten E-Mail-Adresse 14 Tage „Komplett“ zum Testen, danach gilt „Start“. Wer beim Einspielen der Migration schon registriert war, behält „Komplett“ dauerhaft.
+
+Admin-Recht für die Verwaltung der Level vergeben bzw. entziehen:
+
+```bash
+npm run set-admin nutzer@beispiel.de
+npm run set-admin nutzer@beispiel.de --remove
+```
 
 ## 5. Reverse-Proxy
 

@@ -6,6 +6,8 @@ import {
   readJsonBody,
 } from '@/lib/api-auth'
 import { resolveMerchantForTransaction } from '@/lib/resolveMerchantForTransaction'
+import { getEntitlements } from '@/lib/plans'
+import { PLAN_MESSAGES, planRequiredResponse } from '@/lib/planGuards'
 import {
   applyTransactionCategoryOnSave,
   validateTransactionCategoryId,
@@ -100,6 +102,10 @@ export async function POST(request: Request) {
 
   const writeError = requireWritableContext(ctx)
   if (writeError) return writeError
+
+  if (!getEntitlements(ctx.accountPlan).csvImport) {
+    return planRequiredResponse(PLAN_MESSAGES.csvImport)
+  }
 
   const { account, user } = ctx
 

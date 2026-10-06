@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "9.5.0",
+  "version": "9.6.0",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
@@ -14,6 +14,7 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:seed-demo": "node scripts/seed-demo.mjs",
     "db:cleanup-unverified": "node scripts/cleanup-unverified-users.mjs",
+    "set-admin": "node scripts/set-admin.mjs",
     "audit:check": "npm audit --audit-level=high",
     "update:check": "ncu && npm run audit:check",
     "release": "node scripts/release.mjs",

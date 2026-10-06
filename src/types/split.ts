@@ -98,6 +98,8 @@ export interface SplitListSummary {
 }
 
 export interface SplitListDetail extends SplitListSummary {
+  /** Nur lesbar, weil der Ersteller keine eigenen Listen (mehr) führen darf */
+  planLocked?: boolean
   participants: SplitParticipant[]
   categories: SplitCategory[]
   currencies: SplitListCurrency[]

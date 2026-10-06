@@ -20,6 +20,13 @@ export const changePassword = (currentPassword: string, newPassword: string) =>
     body: JSON.stringify({ currentPassword, newPassword }),
   })
 
+/** Wählt das eigene Konto, das auf dem Level „Start“ beschreibbar bleibt */
+export const setKeptAccount = (accountId: string) =>
+  apiFetch<{ keptAccountId: string }>('/users/kept-account', {
+    method: 'PATCH',
+    body: JSON.stringify({ accountId }),
+  })
+
 export const cancelPendingEmailChange = () =>
   apiFetch<unknown>('/users/email/pending', { method: 'DELETE' })
 

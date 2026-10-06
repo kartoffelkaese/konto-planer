@@ -12,6 +12,8 @@ import {
   getSplitDisplayNameForUser,
 } from '@/lib/splitUserDisplayName'
 import { serializeListSummary } from '@/lib/splitSerialize'
+import { getEffectivePlan, getEntitlements } from '@/lib/plans'
+import { PLAN_MESSAGES, planRequiredResponse } from '@/lib/planGuards'
 
 export async function GET() {
   const authResult = await getUserBySession()
@@ -44,6 +46,10 @@ export async function POST(request: Request) {
   if (isErrorResponse(authResult)) return authResult
 
   const { user } = authResult
+
+  if (!getEntitlements(getEffectivePlan(user)).splitOwnLists) {
+    return planRequiredResponse(PLAN_MESSAGES.splitOwnLists)
+  }
 
   let body: {
     name?: string

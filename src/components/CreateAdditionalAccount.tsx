@@ -5,10 +5,12 @@ import { useCreateAccount } from '@/hooks/useCreateAccount'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { Button } from '@/components/Button'
 import BankSelect from '@/components/BankSelect'
+import PlanHint from '@/components/PlanHint'
+import { PLAN_MESSAGES } from '@/lib/planMessages'
 
 export default function CreateAdditionalAccount() {
   const { createAccount, loading } = useCreateAccount()
-  const { role } = useUserSettings()
+  const { role, entitlements } = useUserSettings()
   const [name, setName] = useState('')
   const [bankId, setBankId] = useState<string | null>(null)
   const [isSimpleAccount, setIsSimpleAccount] = useState(false)
@@ -26,6 +28,11 @@ export default function CreateAdditionalAccount() {
       setIsSimpleAccount(false)
       setExpanded(false)
     }
+  }
+
+  // Level „Start“: ein Konto – das erste entsteht bei der Registrierung
+  if (entitlements.maxOwnedAccounts !== null) {
+    return <PlanHint compact title={PLAN_MESSAGES.accountLimit} className="mb-4" />
   }
 
   if (!expanded) {

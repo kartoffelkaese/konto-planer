@@ -55,9 +55,10 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     })
   }
 
-  return NextResponse.json(
-    serializeListDetail(list, access.role, participantMeta)
-  )
+  return NextResponse.json({
+    ...serializeListDetail(list, access.role, participantMeta),
+    planLocked: access.planLocked,
+  })
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {

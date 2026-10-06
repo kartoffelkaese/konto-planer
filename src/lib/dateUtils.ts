@@ -34,6 +34,11 @@ export function formatDate(date: Date | string): string {
   return dayjs(date).tz(DEFAULT_TIMEZONE).format('DD.MM.YYYY')
 }
 
+/** Datum mit Uhrzeit, z. B. „06.10.2026, 14:32“ */
+export function formatDateTime(date: Date | string): string {
+  return dayjs(date).tz(DEFAULT_TIMEZONE).format('DD.MM.YYYY, HH:mm')
+}
+
 /**
  * Formatiert ein Datum für Input-Felder
  */

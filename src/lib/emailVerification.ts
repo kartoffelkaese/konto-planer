@@ -3,6 +3,7 @@ import { EmailVerificationPurpose } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getAuthBaseUrl, sendEmail } from '@/lib/email'
 import { normalizeEmail } from '@/lib/accounts'
+import { trialEndsAt } from '@/lib/plans'
 
 export const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000
 /** Links zum Zurücksetzen des Passworts gelten kürzer */
@@ -237,10 +238,34 @@ export async function verifyEmailToken(rawToken: string): Promise<VerifyEmailRes
 
   if (record.purpose === EmailVerificationPurpose.SIGNUP) {
     await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: record.userId },
+        select: { plan: true, planSource: true },
+      })
+      // Testphase: neue Nutzer bekommen ab der bestätigten Adresse befristet „Komplett“.
+      // Wer schon ein zugewiesenes Level hat (Bestand, Verwaltung), behält es.
+      const startTrial = user != null && user.planSource === null
+      const trialEnd = trialEndsAt(now)
       await tx.user.update({
         where: { id: record.userId },
-        data: { emailVerified: now },
+        data: {
+          emailVerified: now,
+          ...(startTrial
+            ? { plan: 'FULL', planSource: 'TRIAL', planExpiresAt: trialEnd }
+            : {}),
+        },
       })
+      if (startTrial) {
+        await tx.planChange.create({
+          data: {
+            userId: record.userId,
+            fromPlan: user.plan,
+            toPlan: 'FULL',
+            source: 'TRIAL',
+            expiresAt: trialEnd,
+          },
+        })
+      }
       await tx.emailVerificationToken.deleteMany({
         where: { userId: record.userId },
       })

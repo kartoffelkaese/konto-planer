@@ -5,12 +5,89 @@ import { prisma } from '@/lib/prisma'
 import { getFirstAccountIdForUser } from '@/lib/accounts'
 import { isErrorResponse } from '@/lib/api-auth'
 import { assertCanWriteAccount } from '@/lib/accountPermissions'
+import {
+  getEffectivePlan,
+  getEntitlements,
+  highestPlan,
+  writableOwnedAccountIds,
+  type PlanId,
+} from '@/lib/plans'
+import { PLAN_MESSAGES, planRequiredResponse } from '@/lib/planGuards'
 
 export type AccountContext = {
   user: User
   account: Account
   membership: AccountMember
   email: string
+  /** Eigenes Level des Nutzers – für das, was er selbst anlegen darf (Konten, Split-Listen) */
+  plan: PlanId
+  /** Level des Konto-Inhabers – für das, was im aktiven Konto möglich ist (Statistiken, CSV-Import, Teilen) */
+  accountPlan: PlanId
+  /**
+   * Schreibschutz durch das Level: `limit` = Inhaber hat mehr Konten als erlaubt und dieses
+   * ist nicht das gewählte; `shared` = Mitglied eines Kontos, dessen Inhaber nicht teilen darf.
+   */
+  planLock: PlanLock
+}
+
+export type PlanLock = 'limit' | 'shared' | null
+
+/** Inhaber eines Kontos samt Level – wird mit dem Konto zusammen geladen */
+const ACCOUNT_WITH_OWNER_PLANS = {
+  include: {
+    members: {
+      where: { role: 'OWNER' },
+      select: {
+        user: {
+          select: {
+            plan: true,
+            planExpiresAt: true,
+            keptAccountId: true,
+            memberships: {
+              where: { role: 'OWNER' },
+              select: { accountId: true },
+              orderBy: { createdAt: 'asc' },
+            },
+          },
+        },
+      },
+    },
+  },
+} as const
+
+type OwnerPlanRow = {
+  user: {
+    plan: PlanId
+    planExpiresAt: Date | null
+    keptAccountId: string | null
+    memberships: { accountId: string }[]
+  }
+}
+
+function accountPlanOf(owners: OwnerPlanRow[]): PlanId {
+  return highestPlan(owners.map((owner) => getEffectivePlan(owner.user)))
+}
+
+function planLockOf(
+  accountId: string,
+  role: AccountMember['role'],
+  owners: OwnerPlanRow[]
+): PlanLock {
+  if (owners.length === 0) return null
+
+  const withinLimit = owners.some(({ user }) => {
+    const { maxOwnedAccounts } = getEntitlements(getEffectivePlan(user))
+    const writable = writableOwnedAccountIds(
+      user.memberships.map((m) => m.accountId),
+      user.keptAccountId,
+      maxOwnedAccounts
+    )
+    return writable === null || writable.includes(accountId)
+  })
+  if (!withinLimit) return 'limit'
+
+  if (role !== 'OWNER' && !getEntitlements(accountPlanOf(owners)).shareAccounts) return 'shared'
+  return null
 }
 
 type SessionUser = { user: User; email: string; activeAccountId?: string }
@@ -56,7 +133,7 @@ export async function getUserBySession(): Promise<
 function findMembershipWithAccount(accountId: string, userId: string) {
   return prisma.accountMember.findUnique({
     where: { accountId_userId: { accountId, userId } },
-    include: { account: true },
+    include: { account: ACCOUNT_WITH_OWNER_PLANS },
   })
 }
 
@@ -89,8 +166,17 @@ export async function getAccountContext(): Promise<AccountContext | NextResponse
     }
   }
 
-  const { account, ...memberFields } = membership
-  return { user, account, membership: memberFields, email }
+  const { account: accountWithOwners, ...memberFields } = membership
+  const { members: owners, ...account } = accountWithOwners
+  return {
+    user,
+    account,
+    membership: memberFields,
+    email,
+    plan: getEffectivePlan(user),
+    accountPlan: accountPlanOf(owners),
+    planLock: planLockOf(account.id, memberFields.role, owners),
+  }
 }
 
 export async function getAccountContextForAccountId(
@@ -110,19 +196,33 @@ export async function getAccountContextForAccountId(
     return NextResponse.json({ error: 'Kein Zugriff auf Konto' }, { status: 403 })
   }
 
-  const account = await prisma.account.findUnique({
+  const accountWithOwners = await prisma.account.findUnique({
     where: { id: accountId },
+    ...ACCOUNT_WITH_OWNER_PLANS,
   })
 
-  if (!account) {
+  if (!accountWithOwners) {
     return NextResponse.json({ error: 'Konto nicht gefunden' }, { status: 404 })
   }
 
-  return { user, account, membership, email }
+  const { members: owners, ...account } = accountWithOwners
+  return {
+    user,
+    account,
+    membership,
+    email,
+    plan: getEffectivePlan(user),
+    accountPlan: accountPlanOf(owners),
+    planLock: planLockOf(account.id, membership.role, owners),
+  }
 }
 
 export function requireWritableContext(
   ctx: AccountContext
 ): NextResponse | null {
-  return assertCanWriteAccount(ctx.membership)
+  const roleError = assertCanWriteAccount(ctx.membership)
+  if (roleError) return roleError
+  if (ctx.planLock === 'limit') return planRequiredResponse(PLAN_MESSAGES.accountLockedLimit)
+  if (ctx.planLock === 'shared') return planRequiredResponse(PLAN_MESSAGES.accountLockedShared)
+  return null
 }

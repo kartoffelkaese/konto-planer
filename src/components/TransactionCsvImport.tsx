@@ -15,7 +15,7 @@ type TransactionCsvImportProps = {
 }
 
 export default function TransactionCsvImport({ onImported }: TransactionCsvImportProps) {
-  const { settings, loading: settingsLoading } = useUserSettings()
+  const { settings, loading: settingsLoading, accountEntitlements } = useUserSettings()
   const csvImportAvailable = isCsvImportAvailableForBank(settings?.bankId)
   const {
     fileInputRef,
@@ -41,7 +41,7 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
     selectWithoutDuplicates,
   } = useCsvImport(onImported)
 
-  if (settingsLoading || !csvImportAvailable) {
+  if (settingsLoading || !csvImportAvailable || !accountEntitlements.csvImport) {
     return null
   }
 

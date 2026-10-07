@@ -61,6 +61,9 @@ export default function PlanSection() {
     status = 'Kostenlos.'
   }
 
+  // Wer „Komplett“ fest hat, braucht den Vergleich nicht; in der Testphase zeigt er, was danach wegfällt
+  const showComparison = plan === 'BASIC' || trialDays !== null
+
   // Mehr eigene Konten als erlaubt: Auswahl, welches beschreibbar bleibt
   const owned = (accounts ?? []).filter((a) => a.role === 'OWNER')
   const writable = writableOwnedAccountIds(
@@ -89,20 +92,22 @@ export default function PlanSection() {
   return (
     <div id="plan" className="card scroll-mt-6 p-4 md:p-5">
       <h2 className="text-lg font-medium text-primary mb-1">Dein Level</h2>
-      <p className="text-sm text-secondary mb-4">
+      <p className={`text-sm text-secondary ${showComparison || writable ? 'mb-4' : ''}`}>
         <span className="font-medium text-primary">{PLAN_LABELS[plan]}</span> · {status}
       </p>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="rounded-control bg-surface-muted p-4">
-          <p className="eyebrow mb-2">{PLAN_LABELS.BASIC} · kostenlos</p>
-          <FeatureList plan="BASIC" />
+      {showComparison && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-control bg-surface-muted p-4">
+            <p className="eyebrow mb-2">{PLAN_LABELS.BASIC} · kostenlos</p>
+            <FeatureList plan="BASIC" />
+          </div>
+          <div className="rounded-control bg-surface-muted p-4">
+            <p className="eyebrow mb-2">{PLAN_LABELS.FULL} · zusätzlich</p>
+            <FeatureList plan="FULL" />
+          </div>
         </div>
-        <div className="rounded-control bg-surface-muted p-4">
-          <p className="eyebrow mb-2">{PLAN_LABELS.FULL} · zusätzlich</p>
-          <FeatureList plan="FULL" />
-        </div>
-      </div>
+      )}
 
       {writable && (
         <div className="mt-5 space-y-3">

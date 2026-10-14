@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "9.6.4",
+  "version": "9.7.0",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
@@ -15,6 +15,7 @@
     "db:seed-demo": "node scripts/seed-demo.mjs",
     "db:cleanup-unverified": "node scripts/cleanup-unverified-users.mjs",
     "set-admin": "node scripts/set-admin.mjs",
+    "stripe:setup": "node scripts/stripe-setup.mjs",
     "audit:check": "npm audit --audit-level=high --omit=dev",
     "audit:all": "npm audit --audit-level=high",
     "update:check": "ncu && npm run audit:check",
@@ -49,7 +50,8 @@
     "prisma": "^7.10.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "recharts": "^3.10.1"
+    "recharts": "^3.10.1",
+    "stripe": "^23.0.0"
   },
   "devDependencies": {
     "@eslint/compat": "^2.1.1",

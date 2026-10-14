@@ -37,9 +37,10 @@ export default function PlanBanner() {
 
   if (loading || !settings?.plansEnabled) return null
 
+  const canBook = Boolean(settings.billing?.enabled) && !settings.billing?.running
   const linkToPlan = (
     <Link href="/settings#plan" className="font-medium text-accent underline">
-      Level ansehen
+      {canBook ? `${PLAN_LABELS.FULL} buchen` : 'Level ansehen'}
     </Link>
   )
   const frame = (tone: 'pending' | 'muted', content: React.ReactNode, onDismiss?: () => void) => (

@@ -331,15 +331,7 @@ export default function Navigation() {
             <ChevronDoubleLeftIcon className="sidebar-toggle-icon h-5 w-5 shrink-0" aria-hidden="true" />
             <span className="sidebar-label flex min-w-0 flex-1 items-center justify-between gap-2 overflow-hidden whitespace-nowrap">
               Einklappen
-              <a
-                href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="text-xs font-normal text-secondary/80 hover:text-primary"
-              >
-                v{APP_VERSION}
-              </a>
+              <span className="text-xs font-normal text-secondary/80">v{APP_VERSION}</span>
             </span>
             {isCollapsed && (
               <span className="nav-tooltip" aria-hidden="true">
@@ -492,14 +484,9 @@ export default function Navigation() {
             <ArrowLeftStartOnRectangleIcon className="h-5 w-5" aria-hidden="true" />
             Abmelden
           </button>
-          <a
-            href="https://github.com/kartoffelkaese/konto-planer/blob/main/CHANGELOG.md"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-11 items-center px-2 text-xs text-secondary hover:text-primary"
-          >
+          <span className="inline-flex min-h-11 items-center px-2 text-xs text-secondary">
             Version {APP_VERSION}
-          </a>
+          </span>
         </div>
       </div>
 

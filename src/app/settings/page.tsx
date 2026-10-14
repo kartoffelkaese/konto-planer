@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/useToast'
 import ColorSchemeSwitcher from '@/components/ColorSchemeSwitcher'
 import EmailSettingsSection from '@/components/settings/EmailSettingsSection'
 import AccountSharing from '@/components/AccountSharing'
+import LegalLinks from '@/components/LegalLinks'
 import PlanSection from '@/components/settings/PlanSection'
 import AccountInvitations from '@/components/AccountInvitations'
 import CreateAdditionalAccount from '@/components/CreateAdditionalAccount'
@@ -422,6 +423,8 @@ export default function SettingsPage() {
               <DeleteUserAccount />
             </div>
           </div>
+
+          <LegalLinks className="mt-6" />
         </div>
       </main>
     </div>

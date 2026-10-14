@@ -37,6 +37,8 @@ export const RATE_LIMITS = {
   passwordReset: { limit: 10, windowMs: 60 * 60 * 1000 },
   passwordChange: { limit: 5, windowMs: 60 * 60 * 1000 },
   verifyEmail: { limit: 20, windowMs: 60 * 60 * 1000 },
+  billing: { limit: 30, windowMs: 15 * 60 * 1000 },
+  cancelRequest: { limit: 3, windowMs: 60 * 60 * 1000 },
 } as const satisfies Record<string, RateLimitConfig>
 
 /**

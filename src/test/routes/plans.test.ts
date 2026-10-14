@@ -147,23 +147,70 @@ describe('Schreibschutz nach Herabstufung', () => {
 })
 
 describe('Beschreibbares Konto wählen', () => {
+  const DAY = 24 * 60 * 60 * 1000
+  const owns = (...ids: string[]) =>
+    prismaMock.accountMember.findMany.mockResolvedValue(ids.map((accountId) => ({ accountId })))
+  const choose = (accountId: string) => keptAccountRoute.PATCH(req('PATCH', { accountId }))
+
   it('nur eigene Konten', async () => {
     loginAs({ user: BASIC })
-    prismaMock.accountMember.findUnique.mockResolvedValue({ role: 'MEMBER' })
-    const response = await keptAccountRoute.PATCH(req('PATCH', { accountId: 'account-9' }))
-    expect(response.status).toBe(403)
+    owns(TEST_ACCOUNT.id)
+    expect((await choose('account-9')).status).toBe(403)
     expect(prismaMock.user.update).not.toHaveBeenCalled()
   })
 
-  it('speichert die Auswahl', async () => {
+  it('die erste Wahl ist frei und startet die Frist', async () => {
     loginAs({ user: BASIC })
-    prismaMock.accountMember.findUnique.mockResolvedValue({ role: 'OWNER' })
-    const response = await keptAccountRoute.PATCH(req('PATCH', { accountId: TEST_ACCOUNT.id }))
-    expect(response.status).toBe(200)
+    owns(TEST_ACCOUNT.id, 'account-2')
+    expect((await choose('account-2')).status).toBe(200)
     expect(prismaMock.user.update).toHaveBeenCalledWith({
       where: { id: TEST_USER.id },
-      data: { keptAccountId: TEST_ACCOUNT.id },
+      data: { keptAccountId: 'account-2', keptAccountChangedAt: expect.any(Date) },
     })
+  })
+
+  it('nach gewählter Auswahl: dasselbe Konto erneut zu wählen ändert nichts und kostet keine Frist', async () => {
+    loginAs({ user: { ...BASIC, keptAccountId: 'account-2', keptAccountChangedAt: new Date() } })
+    owns(TEST_ACCOUNT.id, 'account-2')
+    expect((await choose('account-2')).status).toBe(200)
+    expect(prismaMock.user.update).not.toHaveBeenCalled()
+  })
+
+  it('steht die Wahl aus, wird auch das Bestätigen des bisherigen Kontos vermerkt', async () => {
+    loginAs({ user: BASIC })
+    owns(TEST_ACCOUNT.id, 'account-2')
+    expect((await choose(TEST_ACCOUNT.id)).status).toBe(200)
+    expect(prismaMock.user.update).toHaveBeenCalledWith({
+      where: { id: TEST_USER.id },
+      data: { keptAccountId: TEST_ACCOUNT.id, keptAccountChangedAt: expect.any(Date) },
+    })
+  })
+
+  it('nach einer erneuten Herabstufung ist die Wahl frei, auch innerhalb der Frist', async () => {
+    loginAs({
+      user: { ...BASIC, keptAccountId: 'account-2', keptAccountChangedAt: new Date(Date.now() - 10 * DAY) },
+    })
+    owns(TEST_ACCOUNT.id, 'account-2')
+    prismaMock.planChange.findFirst.mockResolvedValue({ createdAt: new Date(Date.now() - DAY) })
+    expect((await choose(TEST_ACCOUNT.id)).status).toBe(200)
+    expect(prismaMock.user.update).toHaveBeenCalledTimes(1)
+  })
+
+  it('ein weiterer Wechsel ist erst nach 60 Tagen möglich', async () => {
+    const recently = new Date(Date.now() - 59 * DAY)
+    loginAs({ user: { ...BASIC, keptAccountId: 'account-2', keptAccountChangedAt: recently } })
+    owns(TEST_ACCOUNT.id, 'account-2')
+    const blocked = await choose(TEST_ACCOUNT.id)
+    expect(blocked.status).toBe(409)
+    expect((await blocked.json()).allowedAt).toBe(new Date(recently.getTime() + 60 * DAY).toISOString())
+    expect(prismaMock.user.update).not.toHaveBeenCalled()
+
+    loginAs({
+      user: { ...BASIC, keptAccountId: 'account-2', keptAccountChangedAt: new Date(Date.now() - 61 * DAY) },
+    })
+    owns(TEST_ACCOUNT.id, 'account-2')
+    expect((await choose(TEST_ACCOUNT.id)).status).toBe(200)
+    expect(prismaMock.user.update).toHaveBeenCalledTimes(1)
   })
 })
 

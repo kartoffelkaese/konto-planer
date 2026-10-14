@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest'
 import {
   TRIAL_DAYS,
   daysLeft,
+  downgradedAt,
   getEffectivePlan,
   getEntitlements,
   getStoredPlan,
   highestPlan,
+  keptAccountChangeAllowedAt,
+  keptAccountChoiceRequired,
   plansEnabled,
   trialEndsAt,
   writableOwnedAccountIds,
@@ -109,5 +112,46 @@ describe('writableOwnedAccountIds', () => {
     expect(writableOwnedAccountIds(['a', 'b', 'c'], 'c', 1)).toEqual(['c'])
     expect(writableOwnedAccountIds(['a', 'b', 'c'], 'c', 2)).toEqual(['c', 'a'])
     expect(writableOwnedAccountIds(['a', 'b'], 'fremd', 1)).toEqual(['a'])
+  })
+})
+
+describe('keptAccountChangeAllowedAt', () => {
+  it('ohne bisherigen Wechsel und nach Ablauf der Frist: sofort', () => {
+    expect(keptAccountChangeAllowedAt(null, NOW)).toBeNull()
+    expect(keptAccountChangeAllowedAt(new Date('2026-08-01T12:00:00Z'), NOW)).toBeNull()
+  })
+
+  it('innerhalb von 60 Tagen: erst ab dem Ende der Frist', () => {
+    expect(keptAccountChangeAllowedAt(new Date('2026-10-01T12:00:00Z'), NOW)).toEqual(
+      new Date('2026-11-30T12:00:00Z')
+    )
+  })
+})
+
+describe('downgradedAt', () => {
+  it('abgelaufenes „Komplett“: das Ablaufdatum', () => {
+    expect(downgradedAt({ plan: 'FULL', planExpiresAt: YESTERDAY }, null, NOW)).toEqual(YESTERDAY)
+  })
+
+  it('„Start“ von Hand: der letzte Wechsel im Verlauf; laufendes „Komplett“: keiner', () => {
+    expect(downgradedAt({ plan: 'BASIC' }, YESTERDAY, NOW)).toEqual(YESTERDAY)
+    expect(downgradedAt({ plan: 'BASIC' }, null, NOW)).toBeNull()
+    expect(downgradedAt({ plan: 'FULL', planExpiresAt: TOMORROW }, null, NOW)).toBeNull()
+  })
+})
+
+describe('keptAccountChoiceRequired', () => {
+  const base = { plan: 'BASIC' as const, ownedAccounts: 2, keptAccountChangedAt: null, downgradedAt: YESTERDAY }
+
+  it('nur auf „Start“ mit mehr Konten als erlaubt', () => {
+    expect(keptAccountChoiceRequired(base)).toBe(true)
+    expect(keptAccountChoiceRequired({ ...base, plan: 'FULL' })).toBe(false)
+    expect(keptAccountChoiceRequired({ ...base, ownedAccounts: 1 })).toBe(false)
+  })
+
+  it('erledigt, sobald nach der Herabstufung gewählt wurde', () => {
+    expect(keptAccountChoiceRequired({ ...base, keptAccountChangedAt: NOW })).toBe(false)
+    expect(keptAccountChoiceRequired({ ...base, keptAccountChangedAt: new Date('2026-09-01') })).toBe(true)
+    expect(keptAccountChoiceRequired({ ...base, keptAccountChangedAt: NOW, downgradedAt: null })).toBe(false)
   })
 })

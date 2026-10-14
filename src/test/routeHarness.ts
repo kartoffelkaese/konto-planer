@@ -69,7 +69,13 @@ export const TEST_USER = {
   planExpiresAt: null as Date | null,
   isAdmin: false,
   lastLoginAt: null as Date | null,
+  stripeCustomerId: null as string | null,
+  stripeSubscriptionId: null as string | null,
+  stripeSubscriptionStatus: null as string | null,
+  planInterval: null as 'MONTHLY' | 'YEARLY' | null,
+  planCancelAtPeriodEnd: false,
   keptAccountId: null as string | null,
+  keptAccountChangedAt: null as Date | null,
   createdAt: new Date('2026-01-01'),
 }
 

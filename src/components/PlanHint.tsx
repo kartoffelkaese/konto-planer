@@ -1,6 +1,10 @@
+'use client'
+
 import Link from 'next/link'
 import { LockClosedIcon } from '@heroicons/react/24/outline'
 import { getButtonClassName } from '@/components/Button'
+import { useUserSettings } from '@/hooks/useUserSettings'
+import { PLAN_LABELS } from '@/lib/plans'
 
 type PlanHintProps = {
   /** Was gesperrt ist, z. B. „Statistiken gehören zum Level „Komplett“.“ */
@@ -13,6 +17,11 @@ type PlanHintProps = {
 
 /** Hinweis an Stellen, an denen eine Funktion zum Level „Komplett“ gehört */
 export default function PlanHint({ title, description, compact = false, className = '' }: PlanHintProps) {
+  // Lässt sich „Komplett“ buchen und hat man es nicht, führt der Verweis direkt zum Kauf
+  const { settings, plan } = useUserSettings()
+  const linkLabel =
+    settings?.billing?.enabled && plan === 'BASIC' ? `${PLAN_LABELS.FULL} buchen` : 'Level ansehen'
+
   if (compact) {
     return (
       <p className={`flex items-start gap-2 text-sm text-secondary ${className}`}>
@@ -20,7 +29,7 @@ export default function PlanHint({ title, description, compact = false, classNam
         <span>
           {title}{' '}
           <Link href="/settings#plan" className="text-accent underline">
-            Level ansehen
+            {linkLabel}
           </Link>
         </span>
       </p>
@@ -35,7 +44,7 @@ export default function PlanHint({ title, description, compact = false, classNam
       <p className="text-sm font-medium text-primary">{title}</p>
       {description && <p className="max-w-sm text-sm text-secondary">{description}</p>}
       <Link href="/settings#plan" className={getButtonClassName({ variant: 'secondary', size: 'sm' })}>
-        Level ansehen
+        {linkLabel}
       </Link>
     </div>
   )

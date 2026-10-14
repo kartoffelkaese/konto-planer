@@ -57,3 +57,7 @@ Thumbs.db
 pm2-error.log
 pm2-out.log
 pm2-combined.log
+
+# Rechtstexte je Installation (siehe content/legal/README.md)
+/content/legal/*.md
+!/content/legal/README.md

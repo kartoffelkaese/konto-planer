@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google'
 import Navigation from '@/components/Navigation'
 import AccountSwitchTransition from '@/components/AccountSwitchTransition'
 import PlanBanner from '@/components/PlanBanner'
+import KeptAccountDialog from '@/components/KeptAccountDialog'
 import { Providers } from './providers'
 import { THEME_INIT_SCRIPT } from '@/lib/colorSchemes'
 import { SIDEBAR_INIT_SCRIPT } from '@/lib/sidebarLayout'
@@ -87,6 +88,7 @@ export default function RootLayout({
             className="md:ml-[var(--sidebar-width)] main-beside-sidebar max-md:pb-[var(--mobile-tabbar-space,0px)] outline-none"
           >
             <PlanBanner />
+            <KeptAccountDialog />
             <AccountSwitchTransition>{children}</AccountSwitchTransition>
           </main>
         </Providers>

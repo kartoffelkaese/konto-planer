@@ -118,6 +118,57 @@ export function writableOwnedAccountIds(
   return [...kept, ...others].slice(0, maxOwnedAccounts)
 }
 
+/** Das beschreibbare Konto lässt sich nur einmal in diesem Zeitraum wechseln */
+export const KEPT_ACCOUNT_CHANGE_DAYS = 60
+
+/**
+ * Ab wann das beschreibbare Konto wieder gewechselt werden darf; `null` = sofort.
+ * Die erste Wahl ist frei, danach gilt die Frist – sonst ließen sich auf „Start“ durch
+ * häufiges Umschalten doch mehrere Konten nebeneinander führen.
+ */
+export function keptAccountChangeAllowedAt(
+  lastChangedAt: Date | string | null | undefined,
+  now: Date = new Date()
+): Date | null {
+  if (lastChangedAt == null) return null
+  const allowedAt = new Date(new Date(lastChangedAt).getTime() + KEPT_ACCOUNT_CHANGE_DAYS * DAY_MS)
+  return allowedAt.getTime() > now.getTime() ? allowedAt : null
+}
+
+/**
+ * Zeitpunkt der letzten Herabstufung: das Ablaufdatum, wenn „Komplett“ abgelaufen ist
+ * (Testphase, Abo, befristete Vergabe), sonst der letzte Wechsel auf „Start“ im Verlauf.
+ */
+export function downgradedAt(
+  user: PlanFields,
+  lastChangeToBasicAt: Date | string | null | undefined,
+  now: Date = new Date()
+): Date | null {
+  if (user.plan === 'FULL' && user.planExpiresAt != null && getStoredPlan(user, now) === 'BASIC') {
+    return new Date(user.planExpiresAt)
+  }
+  return lastChangeToBasicAt == null ? null : new Date(lastChangeToBasicAt)
+}
+
+/**
+ * Muss der Nutzer nach einer Herabstufung wählen, welches eigene Konto beschreibbar bleibt?
+ * Ja, wenn er mehr eigene Konten hat als erlaubt und seit der Herabstufung nicht gewählt hat.
+ */
+export function keptAccountChoiceRequired(options: {
+  plan: PlanId
+  ownedAccounts: number
+  keptAccountChangedAt: Date | string | null | undefined
+  downgradedAt: Date | null
+}): boolean {
+  const { maxOwnedAccounts } = getEntitlements(options.plan)
+  if (maxOwnedAccounts === null || options.ownedAccounts <= maxOwnedAccounts) return false
+  if (options.keptAccountChangedAt == null) return true
+  return (
+    options.downgradedAt !== null &&
+    new Date(options.keptAccountChangedAt).getTime() < options.downgradedAt.getTime()
+  )
+}
+
 /** Was die Level enthalten – für Einstellungen, Hinweise und die Startseite */
 export const PLAN_FEATURES: Record<PlanId, string[]> = {
   BASIC: [
@@ -148,3 +199,6 @@ export const PLAN_PRICE = {
  * gilt stattdessen `plansEnabled` aus `/api/users/settings`.
  */
 export const PLANS_ENABLED_PUBLIC = process.env.NEXT_PUBLIC_PLANS_ENABLED === 'true'
+
+/** Für Seiten ohne Anmeldung: Lässt sich „Komplett“ buchen? (beim Build gesetzt, siehe next.config.js) */
+export const BILLING_ENABLED_PUBLIC = process.env.NEXT_PUBLIC_BILLING_ENABLED === 'true'

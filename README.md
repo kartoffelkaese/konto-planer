@@ -16,6 +16,8 @@ Webapp zur Verwaltung persönlicher Finanzen: mehrere Konten, Transaktionen, Kat
 - **Split-Ausgleich:** Teilzahlungen und freie Zahlungen zwischen beliebigen Teilnehmern (Betrag, Datum, Notiz); Ausgleichszahlungen in der Historie löschbar
 - **Split-Fremdwährungen:** optional bis zu 5 Währungen pro Liste (Frankfurter v2), Umrechnung in Euro, Originalbetrag unter dem Euro-Betrag; Währungen schon beim Anlegen der Liste wählbar
 - Backup/Restore, Hell-/Dunkel-/System-Modus, Registrierung per E-Mail
+- **Benutzerlevel (optional):** „Start“ (kostenlos, ein Konto) und „Komplett“ (alles), 14 Tage Testphase, Verwaltung für Admins, „Komplett“ als Abo über Stripe – ohne `PLANS_ENABLED` haben alle Nutzer den vollen Umfang
+- Eigene Rechtstexte (Impressum, Datenschutz, AGB, Widerruf) als Dateien unter `content/legal/`
 
 ## Lokale Entwicklung
 
@@ -35,14 +37,16 @@ App: [http://localhost:3000](http://localhost:3000) (Standard-Port von `next dev
 | `npm run typecheck` | TypeScript 7 (`typescript-7`-Alias) |
 | `npm test` | Unit-Tests (Vitest) |
 | `npm run lint` | ESLint |
-| `npm run audit:check` | npm audit (nur High/Critical) |
+| `npm run audit:check` | npm audit der Laufzeit-Pakete (nur High/Critical); `npm run audit:all` bezieht Entwicklungswerkzeuge ein |
 | `npm run db:migrate` | Migrationen (Produktion) |
 | `npm run db:migrate:dev` | Migrationen (Entwicklung) |
+| `npm run set-admin <E-Mail>` | Admin-Recht für die Verwaltung vergeben (`--remove` entzieht es) |
+| `npm run stripe:setup` | Stripe-Produkt, Preise und Kundenportal anlegen (siehe INSTALL.md) |
 | `npm run release 9.4.5` | Typecheck, Lint, Tests; dann Version setzen, alles committen (Nachricht = Version) und pushen |
 
 `postinstall` führt `prisma generate` aus. Der Ordner `prisma/node_modules/` gehört **nicht** ins Repository (veralteter Prisma-Client).
 
-Weitere Details: [INSTALL.md](INSTALL.md) (Server) · [API.md](API.md) · [LOGGING.md](LOGGING.md) · [DESIGN.md](DESIGN.md) (Gestaltungsregeln)
+Weitere Details: [INSTALL.md](INSTALL.md) (Server, Benutzerlevel, Stripe) · [API.md](API.md) · [LOGGING.md](LOGGING.md) · [DESIGN.md](DESIGN.md) (Gestaltungsregeln)
 
 ## Lizenz
 

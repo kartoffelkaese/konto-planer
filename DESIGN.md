@@ -173,6 +173,8 @@ Titel (`page-title`), eine Kontextzeile in `secondary`, Aktionen rechts. Jede Se
 | [`EmptyState`](src/components/EmptyState.tsx) | leere Listen: was fehlt und die nächste Aktion |
 | [`PageLoader`](src/components/PageLoader.tsx), [`PageError`](src/components/PageError.tsx) | Laden und Fehler ganzer Seiten |
 | [`AccountAvatar`](src/components/AccountAvatar.tsx) | Konto/Bank-Logo |
+| [`PlanHint`](src/components/PlanHint.tsx) | Hinweis an Stellen, an denen eine Funktion zum Level „Komplett“ gehört – statt eines gesperrten oder fehlenden Elements |
+| [`LegalLinks`](src/components/LegalLinks.tsx) | Verweise auf Rechtstexte und Kündigungsweg in Fußzeilen |
 
 ## 7. Navigation
 

@@ -67,6 +67,9 @@ function DeleteUserForm({ user, onBack, onSaved }: { user: AdminUser; onBack: ()
           alle Konten, die nur dieser Person gehören (mit Buchungen, Kategorien und Händlern), und
           ihre Split-Listen. Konten, die sie mit anderen teilt, bleiben für die anderen erhalten.
         </p>
+        {user.subscriptionRunning && (
+          <p className="mt-1">Das laufende Abo wird dabei sofort beendet, ohne Erstattung.</p>
+        )}
       </div>
 
       <div>
@@ -136,6 +139,13 @@ function PlanForm({ user, onClose, onSaved, onDelete }: FormProps & { onDelete: 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <p className="break-all text-sm text-secondary">{user.email}</p>
+
+      {user.subscriptionRunning && (
+        <p className="rounded-control bg-pending-bg p-3 text-sm text-primary">
+          Für diese Person läuft ein Abo über Stripe. Eine Änderung von Hand beendet das Abo nicht –
+          es wird weiter abgebucht, bis es gekündigt ist.
+        </p>
+      )}
 
       <SegmentedControl
         ariaLabel="Level"

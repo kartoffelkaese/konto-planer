@@ -20,8 +20,10 @@ import {
 } from '@heroicons/react/24/outline'
 import { getButtonClassName } from '@/components/Button'
 import { APP_VERSION } from '@/lib/version'
+import LegalLinks from '@/components/LegalLinks'
 import { formatCurrency } from '@/lib/formatters'
 import {
+  BILLING_ENABLED_PUBLIC,
   PLAN_FEATURES,
   PLAN_LABELS,
   PLAN_PRICE,
@@ -340,6 +342,7 @@ function LandingFooter() {
           <span className="px-3 text-secondary/80">Version {APP_VERSION}</span>
         </div>
       </div>
+      <LegalLinks className="mx-auto mt-4 max-w-6xl justify-center px-4 sm:justify-end sm:px-6" />
     </footer>
   )
 }
@@ -429,7 +432,9 @@ function LandingPricing() {
                 {TRIAL_DAYS} Tage kostenlos testen
               </Link>
               <p className="mt-3 text-center text-xs text-secondary">
-                Die Buchung von „{PLAN_LABELS.FULL}“ ist in Kürze möglich.
+                {BILLING_ENABLED_PUBLIC
+                  ? 'Danach als Abo buchbar, jederzeit kündbar.'
+                  : `Die Buchung von „${PLAN_LABELS.FULL}“ ist in Kürze möglich.`}
               </p>
             </div>
           </article>

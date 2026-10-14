@@ -16,20 +16,48 @@ import {
   assertOwnerForSimpleAccountToggle,
 } from '@/lib/simpleAccount'
 import { logger } from '@/lib/logger'
-import { plansEnabled } from '@/lib/plans'
+import { keptAccountChangeAllowedAt, plansEnabled } from '@/lib/plans'
+import { BILLING_GRACE_DAYS } from '@/lib/billing'
+import { hasRunningSubscription } from '@/lib/billingRoute'
+import { billingEnabled } from '@/lib/stripe'
+import { isKeptAccountChoiceRequired } from '@/lib/keptAccount'
 import type { AccountContext } from '@/lib/account-context'
 
 /** Level-Angaben für die Oberfläche (eigenes Level, Level des Konto-Inhabers, Testphase) */
-function planFields({ user, plan, accountPlan, planLock }: AccountContext) {
+async function planFields({ user, plan, accountPlan, planLock }: AccountContext) {
   return {
     plan,
     accountPlan,
     planLock,
     keptAccountId: user.keptAccountId,
+    keptAccountChangeAllowedAt: keptAccountChangeAllowedAt(user.keptAccountChangedAt),
+    keptAccountChoiceRequired: plansEnabled() && (await isKeptAccountChoiceRequired(user)),
     planSource: user.planSource,
     planExpiresAt: user.planExpiresAt,
     plansEnabled: plansEnabled(),
     isAdmin: user.isAdmin,
+    billing: billingFields(user),
+  }
+}
+
+/** Abo-Angaben für die Oberfläche – ohne Stripe-Kennungen */
+function billingFields(user: AccountContext['user']) {
+  const running = hasRunningSubscription(user.stripeSubscriptionStatus)
+  // Das gespeicherte Ablaufdatum enthält die Kulanz; angezeigt wird das Ende des bezahlten Zeitraums
+  const periodEnd =
+    running && user.planSource === 'STRIPE' && user.planExpiresAt
+      ? user.planCancelAtPeriodEnd
+        ? user.planExpiresAt
+        : new Date(user.planExpiresAt.getTime() - BILLING_GRACE_DAYS * 24 * 60 * 60 * 1000)
+      : null
+  return {
+    enabled: billingEnabled(),
+    hasCustomer: user.stripeCustomerId !== null,
+    running,
+    status: user.stripeSubscriptionStatus,
+    interval: user.planInterval,
+    cancelAtPeriodEnd: user.planCancelAtPeriodEnd,
+    periodEnd,
   }
 }
 
@@ -143,7 +171,7 @@ export async function PATCH(request: NextRequest) {
       createdAt: updated.createdAt,
       activeAccountId: account.id,
       role: membership.role,
-      ...planFields(ctx),
+      ...(await planFields(ctx)),
     })
   } catch (error) {
     logger.error('Error updating user settings', error, { endpoint: '/api/users/settings' })
@@ -174,7 +202,7 @@ export async function GET() {
       createdAt: account.createdAt,
       activeAccountId: account.id,
       role: membership.role,
-      ...planFields(ctx),
+      ...(await planFields(ctx)),
     })
   } catch (error) {
     logger.error('Error fetching user settings', error, { endpoint: '/api/users/settings' })

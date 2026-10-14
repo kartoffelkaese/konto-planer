@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { getAuthBaseUrl, sendEmail } from '@/lib/email'
 import { normalizeEmail } from '@/lib/accounts'
 import { trialEndsAt } from '@/lib/plans'
+import { updateStripeCustomerEmail } from '@/lib/billing'
+import { logger } from '@/lib/logger'
 
 export const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000
 /** Links zum Zurücksetzen des Passworts gelten kürzer */
@@ -290,19 +292,33 @@ export async function verifyEmailToken(rawToken: string): Promise<VerifyEmailRes
     return { ok: false, error: 'taken' }
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.user.update({
+  const customer = await prisma.$transaction(async (tx) => {
+    const updated = await tx.user.update({
       where: { id: record.userId },
       data: {
         email: newEmail,
         pendingEmail: null,
         emailVerified: now,
       },
+      select: { stripeCustomerId: true },
     })
     await tx.emailVerificationToken.deleteMany({
       where: { userId: record.userId },
     })
+    return updated?.stripeCustomerId ?? null
   })
+
+  // Rechnungen und Belege sollen an die neue Adresse gehen; ein Fehler hier ändert nichts
+  // daran, dass die Adresse in der App gewechselt ist
+  if (customer && process.env.STRIPE_SECRET_KEY) {
+    try {
+      await updateStripeCustomerEmail(customer, newEmail)
+    } catch (error) {
+      logger.error('E-Mail-Adresse konnte nicht an Stripe übergeben werden', error, {
+        endpoint: 'verifyEmailToken',
+      })
+    }
+  }
 
   return { ok: true, purpose: EmailVerificationPurpose.EMAIL_CHANGE }
 }

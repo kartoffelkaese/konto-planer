@@ -39,3 +39,33 @@ export const deleteUserLogin = (password: string) =>
     body: JSON.stringify({ password }),
     timeoutMs: null,
   })
+
+// --- Abo über Stripe ----------------------------------------------------------
+
+/** Startet den Kauf von „Komplett“ und liefert die Adresse der Bezahlseite */
+export const startCheckout = (interval: 'MONTHLY' | 'YEARLY') =>
+  apiFetch<{ url: string }>('/billing/checkout', {
+    method: 'POST',
+    body: JSON.stringify({ interval }),
+    timeoutMs: 30000,
+  })
+
+/** Adresse des Kundenportals (Zahlungsmittel, Rechnungen, kündigen) */
+export const openBillingPortal = () =>
+  apiFetch<{ url: string }>('/billing/portal', { method: 'POST', timeoutMs: 30000 })
+
+/** Gleicht das eigene Abo sofort mit Stripe ab */
+export const syncBilling = () =>
+  apiFetch<{ synced: boolean }>('/billing/sync', { method: 'POST', timeoutMs: 30000 })
+
+/** Kündigt das eigene Abo zum Ende des bezahlten Zeitraums */
+export const cancelSubscription = () =>
+  apiFetch<{ endsAt: string }>('/billing/cancel', { method: 'POST', timeoutMs: 30000 })
+
+/** Kündigung ohne Anmeldung – geht als Auftrag an den Betreiber */
+export const requestCancellation = (email: string, note?: string) =>
+  apiFetch<{ received: boolean }>('/billing/cancel-request', {
+    method: 'POST',
+    body: JSON.stringify({ email, note }),
+    timeoutMs: null,
+  })

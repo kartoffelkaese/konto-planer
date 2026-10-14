@@ -44,8 +44,9 @@ NODE_ENV=production
 | `SMTP_USER` | ja (Prod.) | SMTP-Benutzername |
 | `SMTP_PASS` | ja (Prod.) | SMTP-Passwort |
 | `SMTP_FROM` | ja (Prod.) | Absender, z. B. `KontoPlaner <noreply@ihre-domain.de>` |
-| `PLANS_ENABLED` | nein | `true` aktiviert die Benutzerlevel „Start“ und „Komplett“ (siehe unten). Ohne den Wert haben alle Nutzer „Komplett“. Startseite und Registrierung übernehmen den Wert beim Build – nach einer Änderung neu bauen. |
 | `SMTP_SECURE` | optional | `true` für Port 465 |
+| `PLANS_ENABLED` | optional | `true` aktiviert die Benutzerlevel „Start“ und „Komplett“, siehe [Benutzerlevel](#benutzerlevel-optional) |
+| `STRIPE_…`, `BILLING_CONTACT_EMAIL` | optional | „Komplett“ als Abo buchen, siehe [Stripe](#stripe-komplett-als-abo-optional) |
 
 Die App lauscht intern auf **127.0.0.1:3001** (siehe `npm start` in `package.json`).
 
@@ -106,19 +107,114 @@ Manuell: `npm run db:cleanup-unverified`
 
 ### Benutzerlevel (optional)
 
-Mit `PLANS_ENABLED=true` gelten zwei Level; was welches Level darf, steht in `src/lib/plans.ts`.
+Mit `PLANS_ENABLED=true` gelten zwei Level; was welches Level darf, steht an einer Stelle in [`src/lib/plans.ts`](src/lib/plans.ts). Ohne den Schalter haben alle Nutzer „Komplett“, und Level, Verwaltung und Kauf sind ausgeblendet.
 
-- **Start** (kostenlos): ein Konto mit Buchungen, wiederkehrenden Zahlungen, Übersicht und Backup.
-- **Komplett**: zusätzlich mehrere Konten, Konten teilen, Statistiken, CSV-Import und eigene Split-Listen.
+| | Start (kostenlos) | Komplett |
+|---|---|---|
+| Eigene Konten | 1 | unbegrenzt |
+| Buchungen, wiederkehrende Zahlungen, Übersicht, Backup | ja | ja |
+| CSV-Import, Statistiken, Konto teilen | – | ja |
+| Eigene Split-Listen (mit Freigabe-Link und Fremdwährungen) | – | ja |
+| Eingeladen mitmachen (geteiltes Konto, Split-Liste) | ja | ja |
 
-Neue Nutzer bekommen ab der bestätigten E-Mail-Adresse 14 Tage „Komplett“ zum Testen, danach gilt „Start“. Wer beim Einspielen der Migration schon registriert war, behält „Komplett“ dauerhaft.
+- **Wessen Level zählt:** Was jemand selbst anlegt (Konten, Split-Listen), richtet sich nach dem eigenen Level. Was in einem Konto oder einer Split-Liste möglich ist, richtet sich nach dem Level des Inhabers bzw. Erstellers – Eingeladene nutzen mit.
+- **Testphase:** Neue Nutzer bekommen ab der bestätigten E-Mail-Adresse 14 Tage „Komplett“, danach gilt „Start“. Die Frist läuft auch, solange `PLANS_ENABLED` aus ist.
+- **Bestand:** Wer beim Einspielen der Migration `20261005100000_user_plans` schon registriert war, hat „Komplett“ dauerhaft.
+- **Herabstufung:** Es wird nichts gelöscht. Überzählige eigene Konten und eigene Split-Listen sind nur lesbar, der Freigabe-Link ruht, Mitglieder geteilter Konten haben nur Lesezugriff. Ansehen, Backup-Export und Löschen bleiben möglich.
+- **Beschreibbares Konto:** Wer nach einer Herabstufung mehrere eigene Konten hat, wird beim nächsten Aufruf der App in einem Dialog gefragt, welches beschreibbar bleibt. „Später entscheiden“ verschiebt die Frage auf den nächsten Besuch; bis dahin bleibt das bisherige (zunächst das älteste) Konto beschreibbar. Die Wahl nach einer Herabstufung ist immer frei, danach ist ein Wechsel in den Einstellungen nur einmal in 60 Tagen möglich (`KEPT_ACCOUNT_CHANGE_DAYS`).
 
-Admin-Recht für die Verwaltung der Level vergeben bzw. entziehen:
+`PLANS_ENABLED` wird für Startseite und Registrierung beim Build übernommen, in der App zur Laufzeit. Nach einer Änderung deshalb neu bauen **und** neu starten – sonst passen Startseite und App kurz nicht zusammen.
+
+#### Verwaltung
+
+Admins sehen den Menüpunkt „Verwaltung“ (`/admin`): Nutzerliste mit E-Mail-Suche, Level, Quelle (Bestand, Testphase, von Hand, Abo), Ablauf, letzter Anmeldung und Anzahl der Konten und Split-Listen – ohne Finanzdaten. Dort lässt sich ein Level von Hand setzen (optional befristet, mit Notiz und Verlauf) und ein Nutzer samt eigener Daten löschen. Konten, die er mit anderen teilt, bleiben den anderen erhalten. Admins und die eigene Anmeldung lassen sich dort nicht löschen.
+
+„Letzte Anmeldung“ ist die letzte Anmeldung mit Passwort; eine Sitzung gilt bis zu 30 Tage.
+
+Admin-Recht vergeben bzw. entziehen:
 
 ```bash
 npm run set-admin nutzer@beispiel.de
 npm run set-admin nutzer@beispiel.de --remove
 ```
+
+### Rechtstexte (optional)
+
+Impressum, Datenschutz, AGB und Widerruf liegen als Textdateien unter `content/legal/` (siehe [`content/legal/README.md`](content/legal/README.md)): `impressum.md`, `datenschutz.md`, `agb.md`, `widerruf.md`. Eine Seite (`/impressum` usw., ohne Anmeldung erreichbar) und die Verweise darauf in Startseite, Anmeldeseiten und Einstellungen gibt es nur, wenn die Datei vorhanden ist. Nach dem Anlegen oder Ändern neu bauen. Die Dateien sind von der Versionsverwaltung ausgenommen, weil jede Installation eigene Texte hat.
+
+### Stripe: „Komplett“ als Abo (optional)
+
+Mit Stripe lässt sich „Komplett“ als Abo buchen (monatlich oder jährlich, kündbar zum Periodenende). Voraussetzung ist `PLANS_ENABLED=true`. Ohne Stripe-Angaben bleibt es bei der Vergabe von Hand in der Verwaltung.
+
+**So arbeitet die Anbindung**
+
+- Bezahlt wird auf der von Stripe gehosteten Bezahlseite; Zahlungsmittel, Rechnungen und Intervallwechsel liegen im Stripe-Kundenportal. Die App speichert keine Zahlungsdaten, nur Kunden- und Abo-Kennung.
+- Das Level setzt ein Abgleich mit Stripe (`syncCustomer` in [`src/lib/billing.ts`](src/lib/billing.ts)), ausgelöst durch den Webhook und bei der Rückkehr vom Kauf. „Komplett“ gilt bis zum Ende des bezahlten Zeitraums plus 3 Tage Kulanz; nach einer Kündigung genau bis zum Periodenende.
+- Von Hand oder als Bestand vergebenes „Komplett“ wird nie überschrieben; diese Nutzer bekommen kein Kaufangebot.
+- Wer in der Testphase bucht, zahlt erst ab deren Ende (bei weniger als rund zwei Tagen Rest sofort).
+- Wird ein Nutzer gelöscht (selbst oder über die Verwaltung), beendet die App vorher sein laufendes Abo. Ist Stripe nicht erreichbar, wird nicht gelöscht.
+- Eine geänderte E-Mail-Adresse wird an Stripe weitergegeben.
+
+**Umgebungsvariablen**
+
+| Variable | Beschreibung |
+|----------|--------------|
+| `STRIPE_SECRET_KEY` | Geheimer API-Schlüssel (`sk_test_…` bzw. `sk_live_…`) |
+| `STRIPE_WEBHOOK_SECRET` | Signatur-Schlüssel des Webhook-Endpunkts (`whsec_…`) |
+| `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY` | Preis-Kennungen des Abos (`price_…`) |
+| `STRIPE_PORTAL_CONFIGURATION` | optional: Einstellung des Kundenportals (`bpc_…`); ohne Angabe gilt die Standard-Einstellung des Stripe-Kontos |
+| `STRIPE_TOS_CONSENT` | optional: `true` verlangt auf der Bezahlseite die Zustimmung zu den AGB. Die AGB-Adresse muss dafür bei Stripe hinterlegt sein, sonst schlägt der Kauf fehl |
+| `BILLING_CONTACT_EMAIL` | optional: Empfänger für Kündigungen ohne Anmeldung (Vorgabe: Adresse aus `SMTP_FROM`) |
+
+Die ersten vier gehören zusammen: Nur wenn alle gesetzt sind, ist der Kauf aktiv. Ist nur ein Teil gesetzt, startet die App in Produktion nicht. Auch dieser Zustand wird für Startseite und Fußzeilen beim Build übernommen – nach einer Änderung neu bauen.
+
+#### Einrichten im Testmodus (lokal)
+
+Gebraucht werden ein Stripe-Konto mit Sandbox bzw. Testmodus und die [Stripe-CLI](https://docs.stripe.com/stripe-cli).
+
+1. **Schlüssel:** Im Stripe-Dashboard im Testmodus den geheimen Schlüssel kopieren und als `STRIPE_SECRET_KEY=sk_test_…` in die `.env` eintragen.
+2. **Produkt, Preise, Kundenportal anlegen:**
+
+   ```bash
+   npm run stripe:setup
+   ```
+
+   Das Skript ([`scripts/stripe-setup.mjs`](scripts/stripe-setup.mjs)) legt das Produkt „KontoPlaner Komplett“, die beiden Preise (3 € monatlich, 24 € jährlich) und eine Kundenportal-Einstellung an und gibt die Zeilen `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY` und `STRIPE_PORTAL_CONFIGURATION` für die `.env` aus. Es kann mehrfach laufen und legt nichts doppelt an. Einen Live-Schlüssel nimmt es nur mit `--live` an.
+3. **CLI anmelden und das richtige Konto wählen:**
+
+   ```bash
+   stripe login
+   stripe switch
+   ```
+
+   Die CLI muss auf **dasselbe** Stripe-Konto bzw. dieselbe Sandbox zeigen wie der Schlüssel in der `.env` – bei mehreren Sandboxes ist das nicht selbstverständlich. Lauscht sie auf ein anderes Konto, kommen keine Ereignisse an.
+4. **Webhook weiterleiten:**
+
+   ```bash
+   stripe listen --all-snapshot --forward-to localhost:3000/api/stripe/webhook
+   ```
+
+   Die CLI zeigt beim Start einen Signatur-Schlüssel (`whsec_…`). Als `STRIPE_WEBHOOK_SECRET` eintragen und die CLI laufen lassen.
+5. **Dev-Server neu starten** (`npm run dev`), damit die neuen Werte gelten.
+6. **Ausprobieren:** Mit einem Nutzer auf „Start“ unter Einstellungen → „Dein Level“ „Komplett buchen“. Auf der Stripe-Seite Stripes Testkarte `4242 4242 4242 4242` mit beliebigem künftigem Datum und beliebiger Prüfziffer verwenden. Nach der Rückkehr steht dort „Jahres-Abo – verlängert sich am …“; die CLI zeigt die zugestellten Ereignisse mit `[200]`.
+
+#### Einrichten für den Live-Betrieb
+
+1. **Rechtstexte** unter `content/legal/` anlegen (Impressum, Datenschutz, AGB, Widerruf).
+2. **Stripe-Dashboard (Live-Modus):** Firmenangaben, Zahlungsarten, E-Mail-Belege und Rechnungsvorlage einrichten (als Kleinunternehmer mit Hinweis nach § 19 UStG).
+3. **Schlüssel und Preise:** Live-Schlüssel als `STRIPE_SECRET_KEY` in die `.env` des Servers, dann `npm run stripe:setup -- --live` und die ausgegebenen Zeilen eintragen.
+4. **Webhook:** im Dashboard einen Endpunkt auf `https://<Domain>/api/stripe/webhook` anlegen mit den Ereignissen `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.paused`, `customer.subscription.resumed`, `invoice.paid`, `invoice.payment_failed`. Dessen Signatur-Schlüssel als `STRIPE_WEBHOOK_SECRET` eintragen.
+5. Optional `STRIPE_TOS_CONSENT=true`, wenn die AGB-Adresse bei Stripe hinterlegt ist.
+6. `PLANS_ENABLED=true`, neu bauen (`npm run build`), neu starten.
+7. **Abnahme:** ein echter Kauf, Kündigung unter `/kuendigen`, Kontrolle im Stripe-Dashboard.
+
+Die Preise auf der Startseite und in den Einstellungen stehen in `PLAN_PRICE` ([`src/lib/plans.ts`](src/lib/plans.ts)), die Beträge für Stripe in `scripts/stripe-setup.mjs`. Beide müssen zusammenpassen; ein bestehender Stripe-Preis wird vom Skript nicht verändert.
+
+#### Kündigen
+
+- **Angemeldet:** unter `/kuendigen` (Verweis „Abo kündigen“ in den Einstellungen) oder im Stripe-Kundenportal, jeweils zum Ende des bezahlten Zeitraums. Die App bestätigt die Kündigung per E-Mail.
+- **Ohne Anmeldung:** Das Formular unter `/kuendigen` schickt die Kündigung als Auftrag per E-Mail an `BILLING_CONTACT_EMAIL` und eine Eingangsbestätigung an die angegebene Adresse. Der Auftrag muss **von Hand** im Stripe-Dashboard umgesetzt werden.
+- Der Verweis „Verträge hier kündigen“ erscheint in den Fußzeilen, sobald der Kauf aktiv ist.
 
 ## 5. Reverse-Proxy
 
@@ -157,6 +253,8 @@ npm run db:migrate
 npm run build
 pm2 restart konto-planer
 ```
+
+Reihenfolge einhalten: Nach einer Migration muss die App neu gebaut **und** neu gestartet werden. Läuft der alte Prozess weiter, kennt er neue Spalten nicht (Fehler 500 in den betroffenen Bereichen). Auch `PLANS_ENABLED`, die Stripe-Angaben und die Rechtstexte wirken auf Startseite und Fußzeilen erst nach einem neuen Build.
 
 Bei hartnäckigen Build-Problemen:
 
@@ -201,13 +299,14 @@ Lokal prüfen: `npm run audit:check` (High/Critical müssen 0 sein). Geprüft wi
 |----------|-------|------------------|
 | `mariadb@^3.5.4` | SSL/Credential-CVEs im DB-Treiber | Runtime: `@prisma/adapter-mariadb` → App |
 | `mysql2@^3.24.3` | Auth-Plugin-Downgrade (Prisma-CLI) | Dev/Deploy: `prisma migrate` |
-| `nodemailer@^10.0.9` | SMTP-Client auf aktueller Major | Runtime: E-Mail-Versand |
-| `eslint@10.10.0` | Tooling-Peers auf ESLint 10 halten | Dev: Lint/CI |
+| `nodemailer@^10.0.15` | SMTP-Client auf aktueller Major | Runtime: E-Mail-Versand |
+| `eslint@10.12.0` | Tooling-Peers auf ESLint 10 halten | Dev: Lint/CI |
 | `sharp@^0.35.0` | libvips-CVEs | Next.js Build / Image-Opt |
 | `deepmerge-ts@^8.0.0` | Stack-Exhaustion | Prisma-CLI |
 | `nanoid@^3.3.18` | Generator-Loop | Next.js |
 | `find-my-way`, `valibot` | Prisma-Dev-CLI | Nur Entwicklung |
 | `brace-expansion@^5.0.8` | ReDoS | ESLint-Plugins |
+| `postcss@^8.5.29`, `@hono/node-server@^1.19.13` | gemeldete Lücken in transitiven Paketen | Build bzw. Prisma-Dev-CLI |
 
 Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber offiziell anhebt — dann Override ggf. entfernen.
 
@@ -225,12 +324,19 @@ Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber o
 | `npm audit fix --force` bricht Abhängigkeiten | **Nicht ausführen** — downgraded Prisma/Next/ESLint. Stattdessen gezielte `overrides` in `package.json` oder `npm audit fix` ohne `--force` |
 | Audit meldet `mariadb`/`mysql2` | `overrides` in `package.json` prüfen; `npm install` und `npm run audit:check` |
 | App startet häufig neu (↺ in `pm2 list` steigt) | `grep -i memory ~/.pm2/pm2.log \| tail` — bei „exceeds --max-memory-restart“ ist `max_memory_restart` in `ecosystem.config.js` zu niedrig (Standard `512M`); danach Prozess neu registrieren. Sonst `pm2 logs konto-planer --err` auf Abstürze prüfen |
-| Start bricht sofort ab | Pflicht-Env in Produktion prüfen (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `TRUST_PROXY`, SMTP-Variablen) |
+| Start bricht sofort ab | Pflicht-Env in Produktion prüfen (`DATABASE_URL`, `AUTH_SECRET`, `AUTH_URL`, `TRUST_PROXY`, SMTP-Variablen); Stripe-Angaben entweder vollständig oder gar nicht setzen |
 | Keine Bestätigungs-E-Mail | SMTP-Zugangsdaten und `AUTH_URL` prüfen; Spam-Ordner |
 | Login-Redirect falsch | `AUTH_URL` muss die öffentliche HTTPS-URL sein |
 | `splitListCurrency` / Prisma-Typecheck-Fehler | Veralteter Client in `prisma/node_modules`: `rm -rf prisma/node_modules node_modules/.prisma tsconfig.tsbuildinfo && npm install && npm run build` |
 | Verify-Script schlägt fehl | Schema und generierter Client passen nicht zusammen — siehe Zeile oben |
-| `Unknown field` / Prisma-Laufzeitfehler | `git pull`, dann `npm run db:migrate` und `npm run build` |
+| `Unknown field` / Prisma-Laufzeitfehler | `git pull`, dann `npm run db:migrate`, `npm run build` **und Neustart** – ein noch laufender Prozess kennt neue Spalten nicht |
+| Kaufangebot fehlt trotz Stripe-Angaben | Alle vier Pflicht-Angaben gesetzt? `PLANS_ENABLED=true`? Nach Änderungen neu gebaut und neu gestartet? Nutzer mit dauerhaftem „Komplett“ bekommen kein Angebot |
+| Kauf bezahlt, Level bleibt „Start“ | Webhook kommt nicht an: Endpunkt-Adresse und Ereignisse im Dashboard prüfen; lokal muss `stripe listen` laufen und auf dasselbe Konto zeigen wie der Schlüssel (`stripe switch`) |
+| Webhook antwortet mit 400 „Ungültige Signatur“ | `STRIPE_WEBHOOK_SECRET` passt nicht zum Endpunkt (Test/Live verwechselt, CLI-Schlüssel geändert) |
+| Webhook antwortet mit 503 | `STRIPE_SECRET_KEY` oder `STRIPE_WEBHOOK_SECRET` fehlt |
+| „Abo verwalten“ schlägt fehl | Kundenportal im Stripe-Konto nicht eingerichtet: `npm run stripe:setup` ausführen und `STRIPE_PORTAL_CONFIGURATION` eintragen |
+| Kauf schlägt mit `STRIPE_TOS_CONSENT=true` fehl | AGB-Adresse im Stripe-Dashboard hinterlegen oder die Variable entfernen |
+| Verwaltung nicht erreichbar (404) | `PLANS_ENABLED=true` und Admin-Recht (`npm run set-admin`) nötig |
 | Endlos-Ladebalken / Chunk-Fehler 500 | Unvollständiger Build: `rm -rf .next && npm run build && pm2 restart konto-planer` |
 | 502 vom Proxy | App läuft? `curl -I http://127.0.0.1:3001` |
 

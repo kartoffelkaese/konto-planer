@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { getButtonClassName } from '@/components/Button'
+import LegalLinks from '@/components/LegalLinks'
 
 type AuthPageLayoutProps = {
   children: ReactNode
@@ -51,6 +52,8 @@ export default function AuthPageLayout({
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-10 sm:px-6 sm:py-14">
         {children}
       </div>
+
+      <LegalLinks className="relative z-10 justify-center px-4 pb-6" />
     </div>
   )
 }

@@ -3,12 +3,14 @@
 import { useState } from 'react'
 import { CheckIcon } from '@heroicons/react/24/outline'
 import { Button } from '@/components/Button'
+import PlanBilling from '@/components/settings/PlanBilling'
 import { useApiQuery } from '@/hooks/useApiQuery'
 import { useToast } from '@/hooks/useToast'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { getAccounts, getApiErrorMessage, setKeptAccount } from '@/lib/api'
 import { formatDate } from '@/lib/dateUtils'
 import {
+  KEPT_ACCOUNT_CHANGE_DAYS,
   PLAN_FEATURES,
   PLAN_LABELS,
   daysLeft,
@@ -48,8 +50,19 @@ export default function PlanSection() {
   const trialDays = settings.planSource === 'TRIAL' && plan === 'FULL' ? daysLeft(settings.planExpiresAt) : null
   const trialEnded = settings.planSource === 'TRIAL' && plan === 'BASIC'
 
+  const billing = settings.billing
+  const subscribed = Boolean(billing?.running) && settings.planSource === 'STRIPE'
+
   let status: string
-  if (trialDays !== null) {
+  if (subscribed && billing?.periodEnd) {
+    const date = formatDate(billing.periodEnd)
+    const rhythm = billing.interval === 'YEARLY' ? 'Jahres-Abo' : 'Monats-Abo'
+    status = billing.cancelAtPeriodEnd
+      ? `${rhythm} – gekündigt zum ${date}. Danach gilt „${PLAN_LABELS.BASIC}“.`
+      : billing.status === 'trialing'
+        ? `${rhythm} – beginnt am ${date}, bis dahin läuft deine Testphase.`
+        : `${rhythm} – verlängert sich am ${date}.`
+  } else if (trialDays !== null) {
     status = `Testphase – noch ${trialDays === 1 ? '1 Tag' : `${trialDays} Tage`}, bis ${formatDate(settings.planExpiresAt!)}. Danach gilt „${PLAN_LABELS.BASIC}“.`
   } else if (trialEnded) {
     status = 'Deine Testphase ist beendet.'
@@ -62,7 +75,7 @@ export default function PlanSection() {
   }
 
   // Wer „Komplett“ fest hat, braucht den Vergleich nicht; in der Testphase zeigt er, was danach wegfällt
-  const showComparison = plan === 'BASIC' || trialDays !== null
+  const showComparison = plan === 'BASIC' || (trialDays !== null && !subscribed)
 
   // Mehr eigene Konten als erlaubt: Auswahl, welches beschreibbar bleibt
   const owned = (accounts ?? []).filter((a) => a.role === 'OWNER')
@@ -72,6 +85,8 @@ export default function PlanSection() {
     entitlements.maxOwnedAccounts
   )
   const keptId = writable?.[0] ?? null
+  // Nach einer Herabstufung ist die Wahl frei, auch wenn die Frist noch läuft
+  const changeAllowedAt = settings.keptAccountChoiceRequired ? null : (settings.keptAccountChangeAllowedAt ?? null)
   const choice = selectedId ?? keptId
 
   const handleSaveKept = async () => {
@@ -92,7 +107,7 @@ export default function PlanSection() {
   return (
     <div id="plan" className="card scroll-mt-6 p-4 md:p-5">
       <h2 className="text-lg font-medium text-primary mb-1">Dein Level</h2>
-      <p className={`text-sm text-secondary ${showComparison || writable ? 'mb-4' : ''}`}>
+      <p className={`text-sm text-secondary ${showComparison ? 'mb-4' : ''}`}>
         <span className="font-medium text-primary">{PLAN_LABELS[plan]}</span> · {status}
       </p>
 
@@ -109,6 +124,8 @@ export default function PlanSection() {
         </div>
       )}
 
+      <PlanBilling />
+
       {writable && (
         <div className="mt-5 space-y-3">
           <div>
@@ -116,6 +133,11 @@ export default function PlanSection() {
             <p className="mt-1 text-sm text-secondary">
               Das Level „{PLAN_LABELS.BASIC}“ umfasst ein Konto. Wähle, welches du weiter bearbeiten
               möchtest – die anderen bleiben sichtbar und lassen sich sichern oder löschen.
+            </p>
+            <p className="mt-1 text-sm text-secondary">
+              {changeAllowedAt
+                ? `Du hast das Konto vor Kurzem gewechselt. Ein weiterer Wechsel ist ab dem ${formatDate(changeAllowedAt)} möglich.`
+                : `Nach einem Wechsel ist der nächste erst in ${KEPT_ACCOUNT_CHANGE_DAYS} Tagen möglich.`}
             </p>
           </div>
           <div className="space-y-2" role="radiogroup" aria-label="Beschreibbares Konto">
@@ -126,6 +148,7 @@ export default function PlanSection() {
                   name="kept-account"
                   checked={choice === account.id}
                   onChange={() => setSelectedId(account.id)}
+                  disabled={Boolean(changeAllowedAt)}
                   className="h-4 w-4 border-border text-accent focus:ring-accent"
                 />
                 {account.name}
@@ -139,7 +162,7 @@ export default function PlanSection() {
             onClick={handleSaveKept}
             loading={saving}
             loadingText="Wird gespeichert…"
-            disabled={!choice || choice === keptId}
+            disabled={!choice || (choice === keptId && !settings.keptAccountChoiceRequired) || Boolean(changeAllowedAt)}
           >
             Auswahl speichern
           </Button>

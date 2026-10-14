@@ -1,3 +1,6 @@
+const fs = require('fs')
+const path = require('path')
+
 /** @type {import('next').NextConfig} */
 const isProduction = process.env.NODE_ENV === 'production'
 
@@ -68,6 +71,24 @@ const nextConfig = {
     // Für Seiten ohne Anmeldung (Startseite, Registrierung): Sind Benutzerlevel aktiv?
     // Wird beim Build eingesetzt – nach einer Änderung von PLANS_ENABLED neu bauen.
     NEXT_PUBLIC_PLANS_ENABLED: process.env.PLANS_ENABLED === 'true' ? 'true' : '',
+    // „Komplett“ ist buchbar (Level aktiv und Stripe vollständig eingerichtet)
+    NEXT_PUBLIC_BILLING_ENABLED:
+      process.env.PLANS_ENABLED === 'true' &&
+      ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PRICE_MONTHLY', 'STRIPE_PRICE_YEARLY'].every(
+        (key) => Boolean(process.env[key])
+      )
+        ? 'true'
+        : '',
+    // Vorhandene Rechtstexte (content/legal/<slug>.md) – nur diese Seiten werden verlinkt
+    NEXT_PUBLIC_LEGAL_PAGES: ['impressum', 'datenschutz', 'agb', 'widerruf']
+      .filter((slug) => {
+        try {
+          return fs.readFileSync(path.join(__dirname, 'content', 'legal', `${slug}.md`), 'utf8').trim() !== ''
+        } catch {
+          return false
+        }
+      })
+      .join(','),
   },
   typescript: {
     ignoreBuildErrors: false,

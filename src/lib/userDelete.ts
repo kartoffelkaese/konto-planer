@@ -1,5 +1,6 @@
 import { AccountMemberRole } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { cancelSubscriptionsNow } from '@/lib/billing'
 
 /**
  * Löscht einen Nutzer mit allem, was nur ihm gehört: Konten ohne weitere Mitglieder (samt
@@ -7,8 +8,19 @@ import { prisma } from '@/lib/prisma'
  *
  * Konten, die er mit anderen teilt, bleiben für diese erhalten; war er der einzige Inhaber,
  * wird das am längsten beteiligte Mitglied Inhaber.
+ *
+ * Ein laufendes Stripe-Abo wird vorher sofort beendet. Gelingt das nicht, wird nicht gelöscht –
+ * sonst würde ohne Nutzer weiter abgebucht.
  */
 export async function deleteUserWithData(userId: string): Promise<void> {
+  const billing = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { stripeCustomerId: true },
+  })
+  if (billing?.stripeCustomerId && process.env.STRIPE_SECRET_KEY) {
+    await cancelSubscriptionsNow(billing.stripeCustomerId)
+  }
+
   await prisma.$transaction(async (tx) => {
     const memberships = await tx.accountMember.findMany({
       where: { userId },

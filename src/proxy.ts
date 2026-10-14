@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { isPublicApiPath } from '@/lib/public-api'
 import { isCrossSiteRequest } from '@/lib/csrf'
+import { isLegalPath } from '@/lib/legalPages'
 
 /** Statische Dateien aus public/ – ohne Login (OG-Bild, Icons, …). */
 const PUBLIC_STATIC_FILE = /\.(?:png|svg|ico|jpg|jpeg|webp|woff2?)$/i
@@ -42,6 +43,7 @@ export default auth((req) => {
     !token &&
     !pathname.startsWith('/auth/') &&
     !pathname.startsWith('/split/s/') &&
+    !isLegalPath(pathname) &&
     pathname !== '/'
   ) {
     if (isRscOrPrefetchRequest(req)) {

@@ -1,4 +1,5 @@
 import { SMTP_ENV_KEYS } from '@/lib/email'
+import { STRIPE_ENV_KEYS, missingStripeEnv } from '@/lib/stripe'
 
 /**
  * Pflicht-Umgebungsvariablen für Produktion (öffentliches Hosting).
@@ -30,6 +31,12 @@ export function assertProductionEnv(): void {
     if (!process.env[key]) {
       missing.push(key)
     }
+  }
+
+  // Stripe ist freiwillig – aber nur ganz oder gar nicht
+  const missingStripe = missingStripeEnv()
+  if (missingStripe.length > 0 && missingStripe.length < STRIPE_ENV_KEYS.length) {
+    missing.push(...missingStripe.map((key) => `${key} (Stripe ist nur teilweise eingerichtet)`))
   }
 
   if (missing.length > 0) {

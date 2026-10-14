@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/admin'
 import { isErrorResponse } from '@/lib/api-auth'
 import { getStoredPlan } from '@/lib/plans'
+import { hasRunningSubscription } from '@/lib/billingRoute'
 import { withErrorHandling } from '@/lib/route-handler'
 import type { AdminUsersResponse } from '@/types/admin'
 
@@ -36,6 +37,9 @@ export const GET = withErrorHandling('/api/admin/users', async function GET(requ
         planSource: true,
         planExpiresAt: true,
         isAdmin: true,
+        stripeSubscriptionStatus: true,
+        planInterval: true,
+        planCancelAtPeriodEnd: true,
         _count: {
           select: {
             memberships: { where: { role: 'OWNER' } },
@@ -58,6 +62,10 @@ export const GET = withErrorHandling('/api/admin/users', async function GET(requ
       planSource: user.planSource,
       planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
       isAdmin: user.isAdmin,
+      subscriptionStatus: user.stripeSubscriptionStatus,
+      subscriptionRunning: hasRunningSubscription(user.stripeSubscriptionStatus),
+      planInterval: user.planInterval,
+      cancelAtPeriodEnd: user.planCancelAtPeriodEnd,
       ownedAccounts: user._count.memberships,
       splitLists: user._count.splitListsCreated,
     })),

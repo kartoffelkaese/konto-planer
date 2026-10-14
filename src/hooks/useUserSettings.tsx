@@ -37,10 +37,24 @@ export type UserSettings = {
   /** Schreibschutz des aktiven Kontos durch das Level (`limit` / `shared`) */
   planLock?: 'limit' | 'shared' | null
   keptAccountId?: string | null
+  /** Ab wann das beschreibbare Konto wieder gewechselt werden darf; `null` = sofort */
+  keptAccountChangeAllowedAt?: string | null
+  /** Nach einer Herabstufung steht die Wahl des beschreibbaren Kontos aus */
+  keptAccountChoiceRequired?: boolean
   planSource?: PlanSourceId | null
   planExpiresAt?: string | null
   plansEnabled?: boolean
   isAdmin?: boolean
+  /** Abo über Stripe; `enabled` = „Komplett“ lässt sich in dieser Installation buchen */
+  billing?: {
+    enabled: boolean
+    hasCustomer: boolean
+    running: boolean
+    status: string | null
+    interval: 'MONTHLY' | 'YEARLY' | null
+    cancelAtPeriodEnd: boolean
+    periodEnd: string | null
+  }
 }
 
 type UserSettingsValue = {

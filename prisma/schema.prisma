@@ -42,6 +42,12 @@ enum PlanSource {
   STRIPE
 }
 
+/// Abrechnungszeitraum eines Abos
+enum PlanInterval {
+  MONTHLY
+  YEARLY
+}
+
 enum SplitListStatus {
   ACTIVE
   ARCHIVED
@@ -76,6 +82,14 @@ model User {
   lastLoginAt             DateTime?
   /// Eigenes Konto, das auf BASIC beschreibbar bleibt, wenn mehr Konten vorhanden sind als erlaubt
   keptAccountId           String?
+  /// Letzter Wechsel des beschreibbaren Kontos – danach ist der Wechsel für eine Frist gesperrt
+  keptAccountChangedAt    DateTime?
+  /// Stripe: Kunde und laufendes bzw. letztes Abo (Stand des letzten Abgleichs, siehe src/lib/billing.ts)
+  stripeCustomerId        String?                  @unique
+  stripeSubscriptionId    String?
+  stripeSubscriptionStatus String?                 @db.VarChar(32)
+  planInterval            PlanInterval?
+  planCancelAtPeriodEnd   Boolean                  @default(false)
   createdAt               DateTime                 @default(now())
   memberships             AccountMember[]
   invitesSent             AccountInvite[]          @relation("InvitedBy")
@@ -105,6 +119,15 @@ model EmailVerificationToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("email_verification_tokens")
+}
+
+/// Bereits verarbeitete Stripe-Ereignisse (Stripe stellt Ereignisse mehrfach zu)
+model StripeEvent {
+  id        String   @id
+  type      String   @db.VarChar(100)
+  createdAt DateTime @default(now())
+
+  @@map("stripe_events")
 }
 
 /// Protokoll jeder Level-Änderung (wer, wann, von, nach, Quelle)

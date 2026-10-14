@@ -15,6 +15,11 @@ export type AdminUser = {
   planSource: PlanSourceId | null
   planExpiresAt: string | null
   isAdmin: boolean
+  /** Stripe-Abo: Status (`active`, `past_due`, `canceled` …), `null` ohne Abo */
+  subscriptionStatus: string | null
+  subscriptionRunning: boolean
+  planInterval: 'MONTHLY' | 'YEARLY' | null
+  cancelAtPeriodEnd: boolean
   ownedAccounts: number
   splitLists: number
 }

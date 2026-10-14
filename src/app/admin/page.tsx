@@ -25,6 +25,11 @@ const SOURCE_LABELS: Record<PlanSourceId, string> = {
 function planDetail(user: AdminUser): string {
   const parts: string[] = []
   if (user.planSource) parts.push(SOURCE_LABELS[user.planSource])
+  if (user.subscriptionRunning) {
+    parts.push(user.planInterval === 'YEARLY' ? 'jährlich' : 'monatlich')
+    if (user.subscriptionStatus === 'past_due') parts.push('Zahlung offen')
+    if (user.cancelAtPeriodEnd) parts.push('gekündigt')
+  }
   if (user.planExpiresAt) {
     const expired = user.plan === 'FULL' && user.effectivePlan === 'BASIC'
     parts.push(`${expired ? 'abgelaufen am' : 'bis'} ${formatDate(user.planExpiresAt)}`)

@@ -14,7 +14,7 @@ Geschützte Routen erwarten eine **gültige NextAuth-Session** (`credentials: 'i
 { "error": "Nicht autorisiert" }
 ```
 
-**Ohne Session erreichbar:** `/api/auth/*`, `POST /api/auth/register`, `/api/split/public/*`
+**Ohne Session erreichbar:** `/api/auth/*`, `POST /api/auth/register`, `/api/split/public/*`, `POST /api/stripe/webhook` (Signatur), `POST /api/billing/cancel-request`
 
 **Schreibende Anfragen** (`POST`/`PUT`/`PATCH`/`DELETE`) mit einem `Origin`-Header, der nicht zum eigenen Host passt, werden mit `403` abgelehnt (Schutz gegen Cross-Site-Requests).
 
@@ -221,14 +221,14 @@ Nur für Konten mit `isSimpleAccount: false` (Statistik-Seite leitet sonst um).
 | `DELETE` | `/api/users/email/pending` | Ausstehende E-Mail-Änderung abbrechen |
 | `POST` | `/api/users/email/resend` | Bestätigungs-E-Mail für ausstehende Änderung erneut senden |
 | `PATCH` | `/api/users/password` | `{ "currentPassword", "newPassword" }` — Passwort ändern; beendet alle anderen Sitzungen (eigene Sitzung per `update({ refreshSessionVersion: true })` anheben) |
-| `PATCH` | `/api/users/kept-account` | `{ "accountId" }` — eigenes Konto wählen, das auf dem Level „Start“ beschreibbar bleibt |
+| `PATCH` | `/api/users/kept-account` | `{ "accountId" }` — eigenes Konto wählen, das auf dem Level „Start“ beschreibbar bleibt. Die erste Wahl und die Wahl nach jeder Herabstufung sind frei, sonst einmal in 60 Tagen; zu früh → **409** mit `allowedAt` |
 | `DELETE` | `/api/users/delete` | Anmeldung löschen (mit Passwort) |
 
 **`GET/PATCH /api/users/settings` – Felder**
 
 `email`, `accountName`, `salaryDay`, `transferSenderName`, `splitDisplayName`, `bankId`, `isSimpleAccount`, `activeAccountId`, `role`, `createdAt`, `pendingEmail`
 
-Nur lesend, zum Benutzerlevel: `plan` (eigenes Level, `BASIC`/`FULL`), `accountPlan` (Level des Konto-Inhabers), `planLock` (`limit`/`shared`/`null` – Schreibschutz des aktiven Kontos), `keptAccountId`, `planSource`, `planExpiresAt`, `plansEnabled`, `isAdmin`
+Nur lesend, zum Benutzerlevel: `plan` (eigenes Level, `BASIC`/`FULL`), `accountPlan` (Level des Konto-Inhabers), `planLock` (`limit`/`shared`/`null` – Schreibschutz des aktiven Kontos), `keptAccountId`, `keptAccountChangeAllowedAt` (ab wann ein Wechsel wieder möglich ist, sonst `null`), `keptAccountChoiceRequired` (nach einer Herabstufung steht die Wahl aus), `planSource`, `planExpiresAt`, `plansEnabled`, `isAdmin`
 
 ### Benutzerlevel
 
@@ -237,6 +237,21 @@ Aktiv nur mit `PLANS_ENABLED=true`; was welches Level darf, steht in `src/lib/pl
 - **Eigenes Level** entscheidet über: weiteres Konto anlegen (`POST /api/accounts`), eigene Split-Liste anlegen (`POST /api/split/lists`).
 - **Level des Inhabers** entscheidet über: Statistiken, CSV-Import, Mitglieder einladen sowie Schreiben in Split-Listen und deren Freigabe-Link.
 - **Schreibschutz:** Hat der Inhaber mehr Konten als erlaubt, sind alle außer dem gewählten nur lesbar; Mitglieder eines Kontos, dessen Inhaber nicht teilen darf, haben nur Lesezugriff.
+
+### Abo über Stripe
+
+Nur aktiv, wenn `PLANS_ENABLED=true` und die Stripe-Angaben vollständig gesetzt sind (siehe `INSTALL.md`); sonst antworten die Kauf-Routen mit **404**. Bezahlt und verwaltet wird auf Seiten von Stripe – die App speichert keine Zahlungsdaten.
+
+| Methode | Pfad | Beschreibung |
+|---------|------|--------------|
+| `POST` | `/api/billing/checkout` | `{ "interval": "MONTHLY" \| "YEARLY" }` — liefert `{ url }` der Stripe-Bezahlseite. **400** bei dauerhaftem „Komplett“, **409** bei laufendem Abo |
+| `POST` | `/api/billing/portal` | liefert `{ url }` des Stripe-Kundenportals (Zahlungsmittel, Rechnungen, kündigen) |
+| `POST` | `/api/billing/sync` | gleicht das eigene Abo sofort mit Stripe ab (Rückkehr vom Kauf) |
+| `POST` | `/api/billing/cancel` | kündigt das eigene Abo zum Ende des bezahlten Zeitraums, liefert `{ endsAt }` und bestätigt per E-Mail |
+| `POST` | `/api/billing/cancel-request` | ohne Sitzung: `{ "email", "note"? }` — Kündigung als Auftrag an den Betreiber plus Eingangsbestätigung (3 je Stunde und IP) |
+| `POST` | `/api/stripe/webhook` | Stripe-Webhook, ohne Sitzung; weist sich per Signatur aus (`STRIPE_WEBHOOK_SECRET`) |
+
+`GET /api/users/settings` enthält dazu `billing`: `enabled`, `hasCustomer`, `running`, `status`, `interval`, `cancelAtPeriodEnd`, `periodEnd`.
 
 ### Verwaltung (nur Admins)
 
@@ -388,9 +403,10 @@ Ungültiger oder deaktivierter Token → **`404`** (kein Unterschied für den Cl
 |------|-----------|
 | `400` | Ungültige Eingabe |
 | `401` | Nicht angemeldet |
-| `403` | Kein Zugriff / Nur-Lese / Planungsfunktion auf einfachem Konto |
-| `404` | Ressource nicht gefunden |
-| `429` | Rate-Limit (Registrierung, Error-Log, Login, Einladungen, Kontolöschung) |
+| `403` | Kein Zugriff / Nur-Lese / Planungsfunktion auf einfachem Konto / Funktion gehört zum Level „Komplett“ (`code: "PLAN_REQUIRED"`) / fremder `Origin` |
+| `404` | Ressource nicht gefunden; auch Verwaltung ohne Admin-Recht und Kauf-Routen ohne Stripe-Einrichtung |
+| `409` | Zustand lässt die Aktion nicht zu (laufendes Abo beim Kauf, Wechsel des beschreibbaren Kontos innerhalb der Frist) |
+| `429` | Rate-Limit (Registrierung, Error-Log, Login, Einladungen, Kontolöschung, Kauf und Kündigung) |
 | `500` | Serverfehler |
 
 Fehlerantworten: meist `{ "error": "…" }` oder `{ "message": "…" }` (Registrierung).

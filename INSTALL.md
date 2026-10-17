@@ -313,6 +313,8 @@ npm run lint
 npm run audit:check
 ```
 
+**E-Mails ansehen ohne Versand:** `npm run email:preview` schreibt alle E-Mails (Registrierung, neue Adresse, Passwort, „Bereits registriert“, Kündigung) als HTML- und Text-Datei nach `.email-preview/` (nicht im Repository); `index.html` dort im Browser öffnen. Verweise auf Rechtstexte in der Fußzeile erscheinen mit `NEXT_PUBLIC_LEGAL_PAGES=impressum,datenschutz npm run email:preview`. Alle E-Mails nutzen die gemeinsame Vorlage `src/lib/emailLayout.ts`, die Texte stehen in `src/lib/emailTemplates.ts`.
+
 ## Paket-Updates und Sicherheit
 
 Empfohlener Ablauf bei Dependency-Updates:

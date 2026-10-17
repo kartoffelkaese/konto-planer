@@ -9,6 +9,15 @@
         "dev"
       ],
       "port": 3000
+    },
+    {
+      "name": "email-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-e",
+        "const h=require('http'),f=require('fs'),p=require('path');const d=p.resolve('.email-preview');h.createServer((q,r)=>{const n=p.join(d,decodeURIComponent(q.url.split('?')[0])==='/'?'index.html':decodeURIComponent(q.url.split('?')[0]));if(!n.startsWith(d)||!f.existsSync(n)){r.writeHead(404);return r.end()}r.writeHead(200,{'content-type':n.endsWith('.txt')?'text/plain; charset=utf-8':'text/html; charset=utf-8'});f.createReadStream(n).pipe(r)}).listen(process.env.PORT||3099,'127.0.0.1')"
+      ],
+      "port": 3099
     }
   ]
 }

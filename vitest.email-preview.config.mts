@@ -1,15 +1,15 @@
 import path from 'path'
 import { defineConfig } from 'vitest/config'
 
+// Nur für `npm run email:preview` – siehe scripts/email-preview.test.ts
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
-    setupFiles: ['./vitest.setup.ts'],
+    include: ['scripts/email-preview.test.ts'],
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(import.meta.dirname, './src'),
     },
   },
 })

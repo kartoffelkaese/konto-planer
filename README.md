@@ -42,6 +42,7 @@ App: [http://localhost:3000](http://localhost:3000) (Standard-Port von `next dev
 | `npm run db:migrate:dev` | Migrationen (Entwicklung) |
 | `npm run set-admin <E-Mail>` | Admin-Recht für die Verwaltung vergeben (`--remove` entzieht es) |
 | `npm run stripe:setup` | Stripe-Produkt, Preise und Kundenportal anlegen (siehe INSTALL.md) |
+| `npm run email:preview` | Alle E-Mails als HTML- und Text-Dateien nach `.email-preview/` schreiben (ohne Versand) |
 | `npm run release 9.4.5` | Typecheck, Lint, Tests; dann Version setzen, alles committen (Nachricht = Version) und pushen |
 
 `postinstall` führt `prisma generate` aus. Der Ordner `prisma/node_modules/` gehört **nicht** ins Repository (veralteter Prisma-Client).

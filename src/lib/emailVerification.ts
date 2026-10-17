@@ -2,6 +2,12 @@ import { createHash, randomBytes } from 'crypto'
 import { EmailVerificationPurpose } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getAuthBaseUrl, sendEmail } from '@/lib/email'
+import {
+  alreadyRegisteredEmail,
+  emailChangeVerificationEmail,
+  passwordResetEmail,
+  signupVerificationEmail,
+} from '@/lib/emailTemplates'
 import { normalizeEmail } from '@/lib/accounts'
 import { trialEndsAt } from '@/lib/plans'
 import { updateStripeCustomerEmail } from '@/lib/billing'
@@ -34,39 +40,6 @@ function buildVerificationUrl(rawToken: string): string {
 
 function buildPasswordResetUrl(rawToken: string): string {
   return `${getAuthBaseUrl()}/auth/reset-password?token=${encodeURIComponent(rawToken)}`
-}
-
-function verificationEmailContent(
-  purpose: EmailVerificationPurpose,
-  verifyUrl: string
-): { subject: string; html: string; text: string } {
-  const expiresHint = 'Der Link ist 24 Stunden gültig.'
-
-  if (purpose === EmailVerificationPurpose.EMAIL_CHANGE) {
-    return {
-      subject: 'Neue E-Mail-Adresse bestätigen – KontoPlaner',
-      html: `
-        <p>Hallo,</p>
-        <p>bitte bestätige deine neue E-Mail-Adresse für KontoPlaner:</p>
-        <p><a href="${verifyUrl}">E-Mail-Adresse bestätigen</a></p>
-        <p>${expiresHint}</p>
-        <p>Falls du diese Änderung nicht angefordert hast, ignoriere diese E-Mail.</p>
-      `,
-      text: `Bitte bestätige deine neue E-Mail-Adresse für KontoPlaner:\n${verifyUrl}\n\n${expiresHint}`,
-    }
-  }
-
-  return {
-    subject: 'Bitte bestätige deine E-Mail-Adresse – KontoPlaner',
-    html: `
-      <p>Hallo,</p>
-      <p>vielen Dank für deine Registrierung bei KontoPlaner.</p>
-      <p>Bitte bestätige deine E-Mail-Adresse:</p>
-      <p><a href="${verifyUrl}">E-Mail-Adresse bestätigen</a></p>
-      <p>${expiresHint}</p>
-    `,
-    text: `Vielen Dank für deine Registrierung bei KontoPlaner.\n\nBitte bestätige deine E-Mail-Adresse:\n${verifyUrl}\n\n${expiresHint}`,
-  }
 }
 
 export async function createVerificationToken(
@@ -104,66 +77,23 @@ export async function sendSignupVerificationEmail(
   email: string,
   rawToken: string
 ): Promise<void> {
-  const verifyUrl = buildVerificationUrl(rawToken)
-  const content = verificationEmailContent(
-    EmailVerificationPurpose.SIGNUP,
-    verifyUrl
-  )
-  await sendEmail({
-    to: email,
-    subject: content.subject,
-    html: content.html,
-    text: content.text,
-  })
+  await sendEmail({ to: email, ...signupVerificationEmail(buildVerificationUrl(rawToken)) })
 }
 
 export async function sendEmailChangeVerificationEmail(
   newEmail: string,
   rawToken: string
 ): Promise<void> {
-  const verifyUrl = buildVerificationUrl(rawToken)
-  const content = verificationEmailContent(
-    EmailVerificationPurpose.EMAIL_CHANGE,
-    verifyUrl
-  )
-  await sendEmail({
-    to: newEmail,
-    subject: content.subject,
-    html: content.html,
-    text: content.text,
-  })
+  await sendEmail({ to: newEmail, ...emailChangeVerificationEmail(buildVerificationUrl(rawToken)) })
 }
 
 export async function sendPasswordResetEmail(email: string, rawToken: string): Promise<void> {
-  const resetUrl = buildPasswordResetUrl(rawToken)
-  await sendEmail({
-    to: email,
-    subject: 'Passwort zurücksetzen – KontoPlaner',
-    html: `
-      <p>Hallo,</p>
-      <p>für dein KontoPlaner-Konto wurde ein neues Passwort angefordert:</p>
-      <p><a href="${resetUrl}">Neues Passwort festlegen</a></p>
-      <p>Der Link ist 1 Stunde gültig. Danach werden alle anderen Anmeldungen beendet.</p>
-      <p>Falls du das nicht angefordert hast, ignoriere diese E-Mail – dein Passwort bleibt unverändert.</p>
-    `,
-    text: `Für dein KontoPlaner-Konto wurde ein neues Passwort angefordert:\n${resetUrl}\n\nDer Link ist 1 Stunde gültig. Falls du das nicht angefordert hast, ignoriere diese E-Mail.`,
-  })
+  await sendEmail({ to: email, ...passwordResetEmail(buildPasswordResetUrl(rawToken)) })
 }
 
 /** Registrierung mit einer bereits verwendeten Adresse: Hinweis an diese Adresse statt Meldung im Formular */
 export async function sendAlreadyRegisteredEmail(email: string): Promise<void> {
-  const baseUrl = getAuthBaseUrl()
-  await sendEmail({
-    to: email,
-    subject: 'Du hast bereits ein Konto – KontoPlaner',
-    html: `
-      <p>Hallo,</p>
-      <p>mit dieser E-Mail-Adresse wurde gerade versucht, ein KontoPlaner-Konto zu erstellen. Du hast bereits eines.</p>
-      <p><a href="${baseUrl}/auth/login">Zur Anmeldung</a> · <a href="${baseUrl}/auth/forgot-password">Passwort vergessen?</a></p>
-      <p>Falls du das nicht warst, kannst du diese E-Mail ignorieren.</p>
-    `,
-    text: `Mit dieser E-Mail-Adresse wurde gerade versucht, ein KontoPlaner-Konto zu erstellen. Du hast bereits eines.\n\nAnmelden: ${baseUrl}/auth/login\nPasswort vergessen: ${baseUrl}/auth/forgot-password`,
-  })
+  await sendEmail({ to: email, ...alreadyRegisteredEmail(getAuthBaseUrl()) })
 }
 
 /** Setzt ein neues Passwort über einen Reset-Link; beendet alle bestehenden Sitzungen */

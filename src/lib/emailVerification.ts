@@ -228,8 +228,12 @@ export async function verifyEmailToken(rawToken: string): Promise<VerifyEmailRes
     include: { user: true },
   })
 
-  // Reset-Links dürfen nie als E-Mail-Bestätigung gelten
-  if (!record || record.purpose === EmailVerificationPurpose.PASSWORD_RESET) {
+  // Reset- und Kündigungslinks dürfen nie als E-Mail-Bestätigung gelten
+  if (
+    !record ||
+    record.purpose === EmailVerificationPurpose.PASSWORD_RESET ||
+    record.purpose === EmailVerificationPurpose.CANCEL_SUBSCRIPTION
+  ) {
     return { ok: false, error: 'invalid' }
   }
 
@@ -321,6 +325,31 @@ export async function verifyEmailToken(rawToken: string): Promise<VerifyEmailRes
   }
 
   return { ok: true, purpose: EmailVerificationPurpose.EMAIL_CHANGE }
+}
+
+export type CancellationTokenResult =
+  | { ok: true; userId: string }
+  | { ok: false; error: 'invalid' | 'expired' }
+
+/**
+ * Löst einen Link zur Bestätigung einer Kündigung ein. Der Link gilt nur einmal: Er wird
+ * hier gelöscht, auch wenn die Kündigung danach (z. B. weil kein Abo mehr läuft) nichts tut.
+ */
+export async function consumeCancellationToken(rawToken: string): Promise<CancellationTokenResult> {
+  const record = await prisma.emailVerificationToken.findUnique({
+    where: { tokenHash: hashToken(rawToken) },
+  })
+
+  if (!record || record.purpose !== EmailVerificationPurpose.CANCEL_SUBSCRIPTION) {
+    return { ok: false, error: 'invalid' }
+  }
+
+  await prisma.emailVerificationToken.delete({ where: { id: record.id } })
+  if (record.expiresAt <= new Date()) {
+    return { ok: false, error: 'expired' }
+  }
+
+  return { ok: true, userId: record.userId }
 }
 
 export async function cancelPendingEmailChange(userId: string): Promise<void> {

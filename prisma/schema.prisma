@@ -26,6 +26,7 @@ enum EmailVerificationPurpose {
   SIGNUP
   EMAIL_CHANGE
   PASSWORD_RESET
+  CANCEL_SUBSCRIPTION
 }
 
 /// Benutzerlevel: BASIC = „Start“ (kostenlos), FULL = „Komplett“ – Merkmale siehe src/lib/plans.ts

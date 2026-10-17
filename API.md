@@ -14,7 +14,7 @@ Geschützte Routen erwarten eine **gültige NextAuth-Session** (`credentials: 'i
 { "error": "Nicht autorisiert" }
 ```
 
-**Ohne Session erreichbar:** `/api/auth/*`, `POST /api/auth/register`, `/api/split/public/*`, `POST /api/stripe/webhook` (Signatur), `POST /api/billing/cancel-request`
+**Ohne Session erreichbar:** `/api/auth/*`, `POST /api/auth/register`, `/api/split/public/*`, `POST /api/stripe/webhook` (Signatur), `POST /api/billing/cancel-request`, `POST /api/billing/cancel-confirm`
 
 **Schreibende Anfragen** (`POST`/`PUT`/`PATCH`/`DELETE`) mit einem `Origin`-Header, der nicht zum eigenen Host passt, werden mit `403` abgelehnt (Schutz gegen Cross-Site-Requests).
 
@@ -248,7 +248,8 @@ Nur aktiv, wenn `PLANS_ENABLED=true` und die Stripe-Angaben vollständig gesetzt
 | `POST` | `/api/billing/portal` | liefert `{ url }` des Stripe-Kundenportals (Zahlungsmittel, Rechnungen, kündigen) |
 | `POST` | `/api/billing/sync` | gleicht das eigene Abo sofort mit Stripe ab (Rückkehr vom Kauf) |
 | `POST` | `/api/billing/cancel` | kündigt das eigene Abo zum Ende des bezahlten Zeitraums, liefert `{ endsAt }` und bestätigt per E-Mail |
-| `POST` | `/api/billing/cancel-request` | ohne Sitzung: `{ "email", "note"? }` — Kündigung als Auftrag an den Betreiber plus Eingangsbestätigung (3 je Stunde und IP) |
+| `POST` | `/api/billing/cancel-request` | ohne Sitzung: `{ "email" }` — schickt bei laufendem Abo einen Link zur Bestätigung an diese Adresse. Antwort immer `{ "received": true }` (3 je Stunde und IP bzw. Adresse) |
+| `POST` | `/api/billing/cancel-confirm` | ohne Sitzung: `{ "token" }` aus dem Link — kündigt zum Periodenende, liefert `{ endsAt }` (`null`, wenn kein Abo mehr läuft). **400** bei ungültigem, abgelaufenem oder schon verwendetem Link |
 | `POST` | `/api/stripe/webhook` | Stripe-Webhook, ohne Sitzung; weist sich per Signatur aus (`STRIPE_WEBHOOK_SECRET`) |
 
 `GET /api/users/settings` enthält dazu `billing`: `enabled`, `hasCustomer`, `running`, `status`, `interval`, `cancelAtPeriodEnd`, `periodEnd`.

@@ -4,6 +4,7 @@ const PUBLIC_API_PATHS = [
   '/api/split/public',
   '/api/stripe/webhook',
   '/api/billing/cancel-request',
+  '/api/billing/cancel-confirm',
 ] as const
 
 export function isPublicApiPath(pathname: string): boolean {

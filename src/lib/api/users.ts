@@ -62,10 +62,17 @@ export const syncBilling = () =>
 export const cancelSubscription = () =>
   apiFetch<{ endsAt: string }>('/billing/cancel', { method: 'POST', timeoutMs: 30000 })
 
-/** Kündigung ohne Anmeldung – geht als Auftrag an den Betreiber */
-export const requestCancellation = (email: string, note?: string) =>
+/** Kündigung ohne Anmeldung, Schritt 1: Link zur Bestätigung an die Adresse schicken lassen */
+export const requestCancellation = (email: string) =>
   apiFetch<{ received: boolean }>('/billing/cancel-request', {
     method: 'POST',
-    body: JSON.stringify({ email, note }),
-    timeoutMs: null,
+    body: JSON.stringify({ email }),
+  })
+
+/** Kündigung ohne Anmeldung, Schritt 2: mit dem Link aus der E-Mail bestätigen */
+export const confirmCancellation = (token: string) =>
+  apiFetch<{ endsAt: string | null }>('/billing/cancel-confirm', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+    timeoutMs: 30000,
   })

@@ -14,7 +14,8 @@ import { BILLING_ENABLED_PUBLIC, PLAN_LABELS } from '@/lib/plans'
 
 /**
  * „Verträge hier kündigen“: Kündigung des Abos, erreichbar ohne Anmeldung.
- * Angemeldet wird direkt zum Periodenende gekündigt; ohne Anmeldung geht ein Auftrag ein.
+ * Angemeldet wird direkt zum Periodenende gekündigt; ohne Anmeldung kommt ein Link an die
+ * angegebene Adresse, mit dem die Kündigung bestätigt wird (`/kuendigen/bestaetigen`).
  */
 export default function CancelPage() {
   const { status } = useSession()
@@ -23,7 +24,6 @@ export default function CancelPage() {
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<string | null>(null)
   const [email, setEmail] = useState('')
-  const [note, setNote] = useState('')
 
   if (status === 'loading' || (status === 'authenticated' && loading)) {
     return <PageLoader message="Wird geladen…" />
@@ -55,8 +55,8 @@ export default function CancelPage() {
   const handleRequest = (e: React.FormEvent) => {
     e.preventDefault()
     void run(async () => {
-      await requestCancellation(email.trim(), note.trim() || undefined)
-      return 'Deine Kündigung ist eingegangen. Eine Eingangsbestätigung ist per E-Mail unterwegs.'
+      await requestCancellation(email.trim())
+      return 'Wenn es zu dieser Adresse ein laufendes Abo gibt, bekommst du gleich eine E-Mail mit einem Link. Erst mit der Bestätigung über diesen Link wird gekündigt.'
     })
   }
 
@@ -102,8 +102,9 @@ export default function CancelPage() {
     content = (
       <form onSubmit={handleRequest} className="space-y-4">
         <p className="text-sm text-secondary">
-          Gib die E-Mail-Adresse an, mit der du bei KontoPlaner registriert bist. Das Abo
-          „{PLAN_LABELS.FULL}“ wird zum Ende des bezahlten Zeitraums beendet. Wenn du{' '}
+          Gib die E-Mail-Adresse an, mit der du bei KontoPlaner registriert bist. Wir schicken dir
+          einen Link, mit dem du die Kündigung bestätigst – so kann niemand dein Abo ohne dich
+          kündigen. Das Abo „{PLAN_LABELS.FULL}“ endet dann zum Ende des bezahlten Zeitraums. Wenn du{' '}
           <Link href="/auth/login" className="text-accent underline">
             angemeldet
           </Link>{' '}
@@ -120,19 +121,6 @@ export default function CancelPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
-            className="mt-1 w-full"
-          />
-        </div>
-        <div>
-          <label htmlFor="cancel-note" className="block text-sm font-medium text-primary">
-            Anmerkung (optional)
-          </label>
-          <input
-            id="cancel-note"
-            type="text"
-            value={note}
-            maxLength={500}
-            onChange={(e) => setNote(e.target.value)}
             className="mt-1 w-full"
           />
         </div>

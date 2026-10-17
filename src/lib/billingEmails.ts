@@ -5,15 +5,6 @@ import { PLAN_LABELS } from '@/lib/plans'
 const escapeHtml = (text: string) =>
   text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 
-/** Empfänger für Kündigungsaufträge ohne Anmeldung: der Betreiber */
-export function billingContactEmail(): string | null {
-  const explicit = process.env.BILLING_CONTACT_EMAIL?.trim()
-  if (explicit) return explicit
-  // „Name <adresse>“ → Adresse
-  const from = process.env.SMTP_FROM ?? ''
-  return /<([^>]+)>/.exec(from)?.[1] ?? (from.includes('@') ? from.trim() : null)
-}
-
 /** Bestätigung einer Kündigung in Textform */
 export async function sendCancellationConfirmation(email: string, endsAt: Date | null): Promise<void> {
   const until = endsAt ? ` zum ${formatDate(endsAt)}` : ''
@@ -29,28 +20,21 @@ export async function sendCancellationConfirmation(email: string, endsAt: Date |
   })
 }
 
-/** Kündigung ohne Anmeldung: Auftrag an den Betreiber, Eingangsbestätigung an die Person */
-export async function sendCancellationRequest(email: string, note: string | null): Promise<void> {
-  const contact = billingContactEmail()
-  if (!contact) throw new Error('Keine Kontaktadresse für Kündigungen eingerichtet')
-
-  const received = formatDate(new Date())
-  await sendEmail({
-    to: contact,
-    subject: 'Kündigung über das Formular – KontoPlaner',
-    html: `<p>Kündigung des Abos „${PLAN_LABELS.FULL}“, eingegangen am ${received}.</p><p>E-Mail-Adresse: ${escapeHtml(email)}</p>${note ? `<p>Anmerkung: ${escapeHtml(note)}</p>` : ''}<p>Bitte das Abo in der Verwaltung bzw. bei Stripe zum Periodenende kündigen.</p>`,
-    text: `Kündigung des Abos „${PLAN_LABELS.FULL}“, eingegangen am ${received}.\n\nE-Mail-Adresse: ${email}${note ? `\nAnmerkung: ${note}` : ''}\n\nBitte das Abo in der Verwaltung bzw. bei Stripe zum Periodenende kündigen.`,
-  })
-
+/**
+ * Kündigung ohne Anmeldung: Link zur Bestätigung an die angegebene Adresse. Erst der Klick
+ * auf den Link (und die Bestätigung auf der Seite) kündigt – so kann niemand das Abo einer
+ * fremden Adresse kündigen.
+ */
+export async function sendCancellationLink(email: string, confirmUrl: string): Promise<void> {
   const lines = [
-    `wir haben am ${received} eine Kündigung des Abos „${PLAN_LABELS.FULL}“ für diese E-Mail-Adresse erhalten.`,
-    'Gibt es zu dieser Adresse ein laufendes Abo, wird es zum Ende des bezahlten Zeitraums beendet. Du erhältst dazu keine weitere Nachricht.',
-    'Falls du diese Kündigung nicht abgeschickt hast, antworte bitte auf diese E-Mail.',
+    `für diese E-Mail-Adresse wurde die Kündigung des Abos „${PLAN_LABELS.FULL}“ angefordert.`,
+    'Bitte bestätige die Kündigung über diesen Link. Das Abo endet dann zum Ende des bezahlten Zeitraums; bis dahin kannst du alles weiter nutzen, deine Daten bleiben erhalten.',
+    'Der Link ist 24 Stunden gültig. Falls du die Kündigung nicht angefordert hast, ignoriere diese E-Mail – dann bleibt dein Abo bestehen.',
   ]
   await sendEmail({
     to: email,
-    subject: 'Eingang deiner Kündigung – KontoPlaner',
-    html: `<p>Hallo,</p>${lines.map((l) => `<p>${escapeHtml(l)}</p>`).join('')}`,
-    text: `Hallo,\n\n${lines.join('\n\n')}`,
+    subject: 'Kündigung bestätigen – KontoPlaner',
+    html: `<p>Hallo,</p><p>${escapeHtml(lines[0])}</p><p>${escapeHtml(lines[1])}</p><p><a href="${escapeHtml(confirmUrl)}">Kündigung bestätigen</a></p><p>${escapeHtml(lines[2])}</p>`,
+    text: `Hallo,\n\n${lines[0]}\n\n${lines[1]}\n\nKündigung bestätigen:\n${confirmUrl}\n\n${lines[2]}`,
   })
 }

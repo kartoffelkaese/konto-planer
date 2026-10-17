@@ -163,6 +163,20 @@ describe('emailVerification', () => {
     expect(mockPrisma.user.update).not.toHaveBeenCalled()
   })
 
+  it('verifyEmailToken akzeptiert keinen Kündigungslink als Bestätigung', async () => {
+    mockPrisma.emailVerificationToken.findUnique.mockResolvedValue({
+      id: 't1',
+      userId: 'u1',
+      purpose: EmailVerificationPurpose.CANCEL_SUBSCRIPTION,
+      tokenHash: hashToken('cancel'),
+      newEmail: null,
+      expiresAt: new Date(Date.now() + 60_000),
+      user: { id: 'u1' },
+    })
+    expect(await verifyEmailToken('cancel')).toEqual({ ok: false, error: 'invalid' })
+    expect(mockPrisma.user.update).not.toHaveBeenCalled()
+  })
+
   it('resetPasswordWithToken lehnt Bestätigungs-Tokens ab', async () => {
     mockPrisma.emailVerificationToken.findUnique.mockResolvedValue({
       id: 't1',

@@ -26,5 +26,9 @@ export const CANCEL_PATH = '/kuendigen'
 
 /** Pfade, die ohne Anmeldung erreichbar sind */
 export function isLegalPath(pathname: string): boolean {
-  return pathname === CANCEL_PATH || LEGAL_PAGES.some((page) => pathname === `/${page.slug}`)
+  return (
+    pathname === CANCEL_PATH ||
+    pathname === `${CANCEL_PATH}/bestaetigen` ||
+    LEGAL_PAGES.some((page) => pathname === `/${page.slug}`)
+  )
 }

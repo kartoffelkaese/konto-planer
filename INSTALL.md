@@ -46,7 +46,7 @@ NODE_ENV=production
 | `SMTP_FROM` | ja (Prod.) | Absender, z. B. `KontoPlaner <noreply@ihre-domain.de>` |
 | `SMTP_SECURE` | optional | `true` für Port 465 |
 | `PLANS_ENABLED` | optional | `true` aktiviert die Benutzerlevel „Start“ und „Komplett“, siehe [Benutzerlevel](#benutzerlevel-optional) |
-| `STRIPE_…`, `BILLING_CONTACT_EMAIL` | optional | „Komplett“ als Abo buchen, siehe [Stripe](#stripe-komplett-als-abo-optional) |
+| `STRIPE_…` | optional | „Komplett“ als Abo buchen, siehe [Stripe](#stripe-komplett-als-abo-optional) |
 
 Die App lauscht intern auf **127.0.0.1:3001** (siehe `npm start` in `package.json`).
 
@@ -164,7 +164,6 @@ Mit Stripe lässt sich „Komplett“ als Abo buchen (monatlich oder jährlich, 
 | `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY` | Preis-Kennungen des Abos (`price_…`) |
 | `STRIPE_PORTAL_CONFIGURATION` | optional: Einstellung des Kundenportals (`bpc_…`); ohne Angabe gilt die Standard-Einstellung des Stripe-Kontos |
 | `STRIPE_TOS_CONSENT` | optional: `true` verlangt auf der Bezahlseite die Zustimmung zu den AGB. Die AGB-Adresse muss dafür bei Stripe hinterlegt sein, sonst schlägt der Kauf fehl |
-| `BILLING_CONTACT_EMAIL` | optional: Empfänger für Kündigungen ohne Anmeldung (Vorgabe: Adresse aus `SMTP_FROM`) |
 
 Die ersten vier gehören zusammen: Nur wenn alle gesetzt sind, ist der Kauf aktiv. Ist nur ein Teil gesetzt, startet die App in Produktion nicht. Auch dieser Zustand wird für Startseite und Fußzeilen beim Build übernommen – nach einer Änderung neu bauen.
 
@@ -230,7 +229,7 @@ Die App legt keine Zahlungsarten fest. Welche auf der Bezahlseite erscheinen (Ka
 #### Kündigen
 
 - **Angemeldet:** unter `/kuendigen` (Verweis „Abo kündigen“ in den Einstellungen) oder im Stripe-Kundenportal, jeweils zum Ende des bezahlten Zeitraums. Die App bestätigt die Kündigung per E-Mail.
-- **Ohne Anmeldung:** Das Formular unter `/kuendigen` schickt die Kündigung als Auftrag per E-Mail an `BILLING_CONTACT_EMAIL` und eine Eingangsbestätigung an die angegebene Adresse. Der Auftrag muss **von Hand** im Stripe-Dashboard umgesetzt werden.
+- **Ohne Anmeldung:** Unter `/kuendigen` gibt man die E-Mail-Adresse an. Gibt es dazu ein laufendes Abo, schickt die App einen Link an genau diese Adresse (24 Stunden gültig, nur einmal verwendbar). Auf der Seite `/kuendigen/bestaetigen` wird die Kündigung per Knopf bestätigt und dann automatisch zum Periodenende ausgeführt, mit Bestätigung per E-Mail. So kann niemand das Abo einer fremden Adresse kündigen. Die Seite antwortet immer gleich und verrät nicht, ob es Adresse oder Abo gibt; ohne Abo wird nichts verschickt.
 - Der Verweis „Verträge hier kündigen“ erscheint in den Fußzeilen, sobald der Kauf aktiv ist.
 
 ## 5. Reverse-Proxy

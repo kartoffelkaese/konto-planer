@@ -21,6 +21,19 @@ vi.mock('@/lib/email', async (importOriginal) => ({
   sendEmail: sendMail,
 }))
 
+// Arbeit nach der Antwort (`after`) wird gesammelt und im Test von Hand ausgeführt
+const afterCallbacks = vi.hoisted(() => [] as Array<() => unknown>)
+vi.mock('next/server', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('next/server')>()),
+  after: (callback: () => unknown) => {
+    afterCallbacks.push(callback)
+  },
+}))
+async function runAfter() {
+  for (const callback of afterCallbacks.splice(0)) await callback()
+}
+
+import { createHash } from 'node:crypto'
 import { NextRequest } from 'next/server'
 import * as checkoutRoute from '@/app/api/billing/checkout/route'
 import * as portalRoute from '@/app/api/billing/portal/route'
@@ -201,22 +214,106 @@ describe('Kündigen', () => {
     expect(sendMail).not.toHaveBeenCalled()
   })
 
-  it('ohne Anmeldung: Auftrag an den Betreiber und Eingangsbestätigung', async () => {
-    const requestRoute = await import('@/app/api/billing/cancel-request/route')
-    vi.stubEnv('SMTP_FROM', 'KontoPlaner <betreiber@app.test>')
-    const post = (body: unknown) =>
-      requestRoute.POST(new NextRequest(jsonRequest('POST', body, 'http://localhost/api/billing/cancel-request')))
+  describe('ohne Anmeldung, über einen Link an die Adresse', () => {
+    // Jede Anfrage von einer eigenen IP, damit das Rate-Limit die Tests nicht gegenseitig beeinflusst
+    let ipCounter = 0
+    const requestCancellation = async (body: unknown) => {
+      const route = await import('@/app/api/billing/cancel-request/route')
+      const request = jsonRequest('POST', body, 'http://localhost/api/billing/cancel-request')
+      request.headers.set('x-real-ip', `10.0.0.${++ipCounter}`)
+      return route.POST(new NextRequest(request))
+    }
+    const confirm = async (body: unknown) => {
+      const route = await import('@/app/api/billing/cancel-confirm/route')
+      return route.POST(new NextRequest(jsonRequest('POST', body, 'http://localhost/api/billing/cancel-confirm')))
+    }
+    const tokenRecord = (overrides: Record<string, unknown> = {}) => ({
+      id: 'tok_1',
+      userId: 'user-2',
+      purpose: 'CANCEL_SUBSCRIPTION',
+      expiresAt: new Date(Date.now() + 60_000),
+      ...overrides,
+    })
 
-    expect((await post({ email: 'kein-at' })).status).toBe(400)
-    expect(sendMail).not.toHaveBeenCalled()
+    beforeEach(() => {
+      afterCallbacks.length = 0
+      vi.stubEnv('TRUST_PROXY', 'true')
+    })
 
-    const response = await post({ email: ' Anna@Beispiel.de ', note: '<b>bitte</b>' })
-    expect(response.status).toBe(200)
-    expect(sendMail).toHaveBeenCalledTimes(2)
-    const [toOperator, toUser] = sendMail.mock.calls.map((call) => call[0])
-    expect(toOperator.to).toBe('betreiber@app.test')
-    expect(toOperator.text).toContain('anna@beispiel.de')
-    expect(toOperator.html).toContain('&lt;b&gt;bitte&lt;/b&gt;')
-    expect(toUser.to).toBe('anna@beispiel.de')
+    it('ungültige Adresse: 400', async () => {
+      expect((await requestCancellation({ email: 'kein-at' })).status).toBe(400)
+    })
+
+    it('antwortet immer gleich – ohne Abo wird nichts verschickt', async () => {
+      prismaMock.user.findUnique.mockResolvedValue(null)
+      const unknown = await requestCancellation({ email: 'fremd@beispiel.de' })
+      prismaMock.user.findUnique.mockResolvedValue({ id: 'user-2', email: 'anna@beispiel.de', stripeSubscriptionStatus: 'canceled' })
+      const withoutSubscription = await requestCancellation({ email: 'anna@beispiel.de' })
+      await runAfter()
+
+      expect(await unknown.json()).toEqual({ received: true })
+      expect(await withoutSubscription.json()).toEqual({ received: true })
+      expect(sendMail).not.toHaveBeenCalled()
+      expect(prismaMock.emailVerificationToken.create).not.toHaveBeenCalled()
+    })
+
+    it('mit laufendem Abo: Link zur Bestätigung an genau diese Adresse, gekündigt wird noch nicht', async () => {
+      prismaMock.user.findUnique.mockResolvedValue({ id: 'user-2', email: 'anna@beispiel.de', stripeSubscriptionStatus: 'active' })
+      const update = vi.fn()
+      Object.assign(stripeMock.subscriptions, { update })
+
+      const response = await requestCancellation({ email: ' Anna@Beispiel.de ' })
+      expect(await response.json()).toEqual({ received: true })
+      await runAfter()
+
+      expect(prismaMock.emailVerificationToken.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ userId: 'user-2', purpose: 'CANCEL_SUBSCRIPTION' }),
+      })
+      expect(sendMail).toHaveBeenCalledTimes(1)
+      const mail = sendMail.mock.calls[0][0]
+      expect(mail.to).toBe('anna@beispiel.de')
+      expect(mail.text).toMatch(/https:\/\/app\.test\/kuendigen\/bestaetigen\?token=[0-9a-f]{64}/)
+      expect(update).not.toHaveBeenCalled()
+    })
+
+    it('Bestätigung mit gültigem Link: kündigt zum Periodenende, Link gilt nur einmal', async () => {
+      const raw = 'a'.repeat(64)
+      prismaMock.emailVerificationToken.findUnique.mockResolvedValue(tokenRecord())
+      prismaMock.user.findUnique.mockResolvedValue({ email: 'anna@beispiel.de', stripeCustomerId: 'cus_1' })
+      const update = vi.fn().mockResolvedValue({ ...running, cancel_at_period_end: true })
+      Object.assign(stripeMock.subscriptions, { update })
+      stripeMock.subscriptions.list.mockResolvedValue({ data: [running] })
+
+      const response = await confirm({ token: raw })
+      expect(response.status).toBe(200)
+      expect((await response.json()).endsAt).toBe(new Date(periodEnd * 1000).toISOString())
+      expect(prismaMock.emailVerificationToken.findUnique).toHaveBeenCalledWith({
+        where: { tokenHash: createHash('sha256').update(raw).digest('hex') },
+      })
+      expect(prismaMock.emailVerificationToken.delete).toHaveBeenCalledWith({ where: { id: 'tok_1' } })
+      expect(update).toHaveBeenCalledWith('sub_1', { cancel_at_period_end: true })
+      expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: 'anna@beispiel.de' }))
+    })
+
+    it('abgelaufener, fremder oder unbekannter Link: 400, nichts wird gekündigt', async () => {
+      const update = vi.fn()
+      Object.assign(stripeMock.subscriptions, { update })
+      prismaMock.emailVerificationToken.findUnique.mockResolvedValue(tokenRecord({ expiresAt: new Date(Date.now() - 1) }))
+      expect((await confirm({ token: 'x' })).status).toBe(400)
+      prismaMock.emailVerificationToken.findUnique.mockResolvedValue(tokenRecord({ purpose: 'PASSWORD_RESET' }))
+      expect((await confirm({ token: 'x' })).status).toBe(400)
+      prismaMock.emailVerificationToken.findUnique.mockResolvedValue(null)
+      expect((await confirm({ token: 'x' })).status).toBe(400)
+      expect((await confirm({})).status).toBe(400)
+      expect(update).not.toHaveBeenCalled()
+    })
+
+    it('ohne Sitzung erreichbar', async () => {
+      const { isPublicApiPath } = await import('@/lib/public-api')
+      const { isLegalPath } = await import('@/lib/legalPages')
+      expect(isPublicApiPath('/api/billing/cancel-request')).toBe(true)
+      expect(isPublicApiPath('/api/billing/cancel-confirm')).toBe(true)
+      expect(isLegalPath('/kuendigen/bestaetigen')).toBe(true)
+    })
   })
 })

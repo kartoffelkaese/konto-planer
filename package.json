@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "9.7.5",
+  "version": "9.7.6",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",
@@ -16,6 +16,7 @@
     "db:cleanup-unverified": "node scripts/cleanup-unverified-users.mjs",
     "set-admin": "node scripts/set-admin.mjs",
     "stripe:setup": "node scripts/stripe-setup.mjs",
+    "stripe:cleanup": "node scripts/stripe-cleanup.mjs",
     "email:preview": "vitest run --config vitest.email-preview.config.mts",
     "audit:check": "npm audit --audit-level=high --omit=dev",
     "audit:all": "npm audit --audit-level=high",

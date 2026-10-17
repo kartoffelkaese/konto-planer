@@ -234,9 +234,9 @@ function PlanForm({ user, onClose, onSaved, onDelete }: FormProps & { onDelete: 
         </Button>
       </div>
 
-      {(user.subscriptionStatus !== null || !user.isAdmin) && (
+      {(user.hasStripeCustomer || !user.isAdmin) && (
         <div className="flex flex-wrap gap-2 border-t border-hairline pt-4">
-          {user.subscriptionStatus !== null && (
+          {user.hasStripeCustomer && (
             <Button
               type="button"
               variant="secondary"

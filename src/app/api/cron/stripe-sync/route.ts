@@ -30,11 +30,13 @@ export const POST = withErrorHandling('/api/cron/stripe-sync', async function PO
     return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
   }
 
-  // Laufende Abos und solche, deren Level aus Stripe kürzlich endete oder noch gilt
+  // Laufende oder noch unbekannte Abos und solche, deren Level aus Stripe kürzlich endete oder noch gilt
   const users = await prisma.user.findMany({
     where: {
       stripeCustomerId: { not: null },
       OR: [
+        // Noch nie abgeglichen, etwa weil schon das erste Ereignis verloren ging
+        { stripeSubscriptionStatus: null },
         { stripeSubscriptionStatus: { in: ['active', 'trialing', 'past_due'] } },
         { planSource: 'STRIPE', planExpiresAt: { gt: new Date(Date.now() - 7 * DAY_MS) } },
       ],

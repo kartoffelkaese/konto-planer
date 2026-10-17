@@ -56,9 +56,9 @@ export default function KeptAccountDialog() {
 
   const reason =
     settings.planSource === 'TRIAL'
-      ? 'Deine Testphase ist beendet.'
+      ? `Deine Testphase ist beendet, es gilt jetzt das Level „${PLAN_LABELS.BASIC}“.`
       : settings.planSource === 'STRIPE'
-        ? `Dein Abo „${PLAN_LABELS.FULL}“ ist beendet.`
+        ? `Dein Abo „${PLAN_LABELS.FULL}“ ist beendet, es gilt jetzt das Level „${PLAN_LABELS.BASIC}“.`
         : `Dein Level ist jetzt „${PLAN_LABELS.BASIC}“.`
 
   const postpone = () => {

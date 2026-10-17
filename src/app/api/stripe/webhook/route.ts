@@ -8,6 +8,9 @@ import { getStripe } from '@/lib/stripe'
 /** Ereignisse, nach denen sich der Abo-Stand geändert haben kann */
 const SYNC_EVENTS = new Set([
   'checkout.session.completed',
+  // Lastschrift: Ergebnis der ersten Zahlung kommt erst Tage nach dem Kauf
+  'checkout.session.async_payment_succeeded',
+  'checkout.session.async_payment_failed',
   'customer.subscription.created',
   'customer.subscription.updated',
   'customer.subscription.deleted',

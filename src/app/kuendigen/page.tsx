@@ -80,8 +80,10 @@ export default function CancelPage() {
     content = (
       <div className="space-y-4">
         <p className="text-sm text-secondary">
-          Du kündigst dein Abo „{PLAN_LABELS.FULL}“ zum Ende des bezahlten Zeitraums
-          {billing.periodEnd ? ` (${formatDate(billing.periodEnd)})` : ''}. Bis dahin kannst du alles
+          Du kündigst dein Abo „{PLAN_LABELS.FULL}“ zum Ende{' '}
+          {billing.status === 'trialing' ? 'deiner Testphase' : 'des bezahlten Zeitraums'}
+          {billing.periodEnd ? ` (${formatDate(billing.periodEnd)})` : ''}.
+          {billing.status === 'trialing' ? ' Abgebucht wird nichts.' : ''} Bis dahin kannst du alles
           weiter nutzen; danach gilt das kostenlose Level „{PLAN_LABELS.BASIC}“. Deine Daten bleiben
           erhalten.
         </p>

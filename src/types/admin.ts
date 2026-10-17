@@ -17,6 +17,8 @@ export type AdminUser = {
   isAdmin: boolean
   /** Stripe-Abo: Status (`active`, `past_due`, `canceled` …), `null` ohne Abo */
   subscriptionStatus: string | null
+  /** Es gibt einen Stripe-Kunden – Abgleich möglich, auch wenn noch kein Abo-Stand bekannt ist */
+  hasStripeCustomer: boolean
   subscriptionRunning: boolean
   planInterval: 'MONTHLY' | 'YEARLY' | null
   cancelAtPeriodEnd: boolean

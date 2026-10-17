@@ -89,4 +89,13 @@ describe('Täglicher Abgleich', () => {
     expect(await response.json()).toEqual({ synced: 2, failed: 1 })
     expect(syncCustomer.mock.calls.map((c) => c[0])).toEqual(['cus_1', 'cus_2', 'cus_3'])
   })
+
+  it('nimmt auch Kunden ohne bekannten Abo-Stand mit (verpasstes erstes Ereignis)', async () => {
+    vi.stubEnv('CRON_SECRET', 'geheim-und-lang')
+    prismaMock.user.findMany.mockResolvedValue([])
+    await run('Bearer geheim-und-lang')
+    const where = prismaMock.user.findMany.mock.calls[0][0].where
+    expect(where.stripeCustomerId).toEqual({ not: null })
+    expect(where.OR).toContainEqual({ stripeSubscriptionStatus: null })
+  })
 })

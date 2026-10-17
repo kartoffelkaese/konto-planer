@@ -75,6 +75,14 @@ describe('Stripe-Webhook', () => {
     expect(syncCustomer).toHaveBeenCalledWith('cus_2')
   })
 
+  it.each(['checkout.session.async_payment_succeeded', 'checkout.session.async_payment_failed'])(
+    'Lastschrift-Ergebnis (%s) löst den Abgleich aus',
+    async (type) => {
+      await POST(webhookRequest(event(type, { customer: 'cus_3' })))
+      expect(syncCustomer).toHaveBeenCalledWith('cus_3')
+    }
+  )
+
   it('überspringt bereits verarbeitete Ereignisse', async () => {
     prismaMock.stripeEvent.findUnique.mockResolvedValue({ id: 'evt_1' })
     const response = await POST(webhookRequest(event('invoice.paid', { customer: 'cus_1' })))

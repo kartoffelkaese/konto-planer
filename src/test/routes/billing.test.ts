@@ -41,6 +41,16 @@ import * as syncRoute from '@/app/api/billing/sync/route'
 import { jsonRequest, loginAs, prismaMock, resetRouteMocks } from '@/test/routeHarness'
 
 const BASIC = { plan: 'BASIC' as const, planSource: null }
+const runningSubscription = {
+  id: 'sub_1',
+  status: 'active',
+  created: 1,
+  cancel_at_period_end: false,
+  cancel_at: null,
+  ended_at: null,
+  trial_end: null,
+  items: { data: [{ current_period_end: 4070908800, price: { id: 'price_month' } }] },
+}
 const DAY = 24 * 60 * 60 * 1000
 
 const checkout = (body: unknown) =>
@@ -74,7 +84,7 @@ describe('Kauf starten', () => {
     loginAs({ user: BASIC })
     expect((await checkout({ interval: 'YEARLY' })).status).toBe(404)
     expect((await portalRoute.POST()).status).toBe(404)
-    expect((await syncRoute.POST()).status).toBe(404)
+    expect((await syncRoute.POST(new NextRequest(jsonRequest('POST', {}, 'http://localhost/api/billing/sync')))).status).toBe(404)
   })
 
   it('ohne Anmeldung: 401', async () => {
@@ -157,16 +167,42 @@ describe('Abo verwalten und abgleichen', () => {
     )
   })
 
-  it('Abgleich holt den Stand des eigenen Kunden', async () => {
+  const sync = (body: unknown = {}) =>
+    syncRoute.POST(new NextRequest(jsonRequest('POST', body, 'http://localhost/api/billing/sync')))
+
+  it('Abgleich holt den Stand des eigenen Kunden und meldet, ob sich etwas geändert hat', async () => {
     loginAs({ user: BASIC })
-    expect(await (await syncRoute.POST()).json()).toEqual({ synced: false })
+    expect(await (await sync()).json()).toEqual({ synced: false, changed: false })
     expect(stripeMock.subscriptions.list).not.toHaveBeenCalled()
 
-    stripeMock.subscriptions.list.mockResolvedValue({ data: [] })
-    loginAs({ user: { ...BASIC, stripeCustomerId: 'cus_1' } })
-    expect(await (await syncRoute.POST()).json()).toEqual({ synced: true })
+    // Bei Stripe gekündigt, in der App noch nicht – der Abgleich übernimmt es
+    stripeMock.subscriptions.list.mockResolvedValue({
+      data: [{ ...runningSubscription, cancel_at_period_end: true }],
+    })
+    const user = { ...BASIC, plan: 'FULL' as const, planSource: 'STRIPE' as const, planExpiresAt: new Date('2099-01-01'), stripeCustomerId: 'cus_1', stripeSubscriptionStatus: 'active' }
+    const { user: dbUser } = loginAs({ user })
+    prismaMock.user.findUnique
+      .mockResolvedValueOnce(dbUser)
+      .mockResolvedValueOnce({ id: dbUser.id, plan: 'FULL', planSource: 'STRIPE', planExpiresAt: new Date('2099-01-01') })
+      .mockResolvedValueOnce({ ...dbUser, planCancelAtPeriodEnd: true, planExpiresAt: new Date('2098-01-01') })
+    expect(await (await sync()).json()).toEqual({ synced: true, changed: true })
     expect(stripeMock.subscriptions.list).toHaveBeenCalledWith(expect.objectContaining({ customer: 'cus_1' }))
-    expect(prismaMock.user.update).toHaveBeenCalled()
+    expect(prismaMock.user.update.mock.calls[0][0].data.planCancelAtPeriodEnd).toBe(true)
+  })
+
+  it('im Hintergrund höchstens einmal in fünf Minuten je Nutzer', async () => {
+    const user = { ...BASIC, id: 'user-hintergrund', stripeCustomerId: 'cus_1' }
+    stripeMock.subscriptions.list.mockResolvedValue({ data: [] })
+    loginAs({ user })
+    expect((await (await sync({ background: true })).json()).synced).toBe(true)
+    loginAs({ user })
+    expect(await (await sync({ background: true })).json()).toEqual({ synced: false, changed: false })
+    expect(stripeMock.subscriptions.list).toHaveBeenCalledTimes(1)
+
+    // Rückkehr von Stripe gleicht trotzdem sofort ab
+    loginAs({ user })
+    expect((await (await sync()).json()).synced).toBe(true)
+    expect(stripeMock.subscriptions.list).toHaveBeenCalledTimes(2)
   })
 })
 

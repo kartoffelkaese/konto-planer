@@ -11,6 +11,7 @@ import {
   getAdminPlanChanges,
   getApiErrorMessage,
   setAdminUserPlan,
+  syncAdminUserBilling,
 } from '@/lib/api'
 import { formatDate, formatDateForInput } from '@/lib/dateUtils'
 import { PLAN_LABELS, type PlanId } from '@/lib/plans'
@@ -106,6 +107,21 @@ function DeleteUserForm({ user, onBack, onSaved }: { user: AdminUser; onBack: ()
 
 function PlanForm({ user, onClose, onSaved, onDelete }: FormProps & { onDelete: () => void }) {
   const { showToast } = useToast()
+  const [syncing, setSyncing] = useState(false)
+
+  // Holt den Abo-Stand von Stripe, z. B. wenn ein Webhook nicht angekommen ist
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      await syncAdminUserBilling(user.id)
+      showToast(`Abo-Stand von ${user.email} abgeglichen`, 'success')
+      onSaved()
+    } catch (err) {
+      showToast(getApiErrorMessage(err, 'Abgleich mit Stripe fehlgeschlagen'), 'error')
+    } finally {
+      setSyncing(false)
+    }
+  }
   const [plan, setPlan] = useState<PlanId>(user.effectivePlan)
   const [expiresAt, setExpiresAt] = useState(
     user.effectivePlan === 'FULL' && user.planExpiresAt ? formatDateForInput(user.planExpiresAt) : ''
@@ -218,11 +234,25 @@ function PlanForm({ user, onClose, onSaved, onDelete }: FormProps & { onDelete: 
         </Button>
       </div>
 
-      {!user.isAdmin && (
-        <div className="border-t border-hairline pt-4">
-          <Button type="button" variant="danger-outline" size="sm" onClick={onDelete}>
-            Benutzer löschen
-          </Button>
+      {(user.subscriptionStatus !== null || !user.isAdmin) && (
+        <div className="flex flex-wrap gap-2 border-t border-hairline pt-4">
+          {user.subscriptionStatus !== null && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={handleSync}
+              loading={syncing}
+              loadingText="Wird abgeglichen…"
+            >
+              Mit Stripe abgleichen
+            </Button>
+          )}
+          {!user.isAdmin && (
+            <Button type="button" variant="danger-outline" size="sm" onClick={onDelete}>
+              Benutzer löschen
+            </Button>
+          )}
         </div>
       )}
     </form>

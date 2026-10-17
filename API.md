@@ -14,7 +14,7 @@ Geschützte Routen erwarten eine **gültige NextAuth-Session** (`credentials: 'i
 { "error": "Nicht autorisiert" }
 ```
 
-**Ohne Session erreichbar:** `/api/auth/*`, `POST /api/auth/register`, `/api/split/public/*`, `POST /api/stripe/webhook` (Signatur), `POST /api/billing/cancel-request`, `POST /api/billing/cancel-confirm`
+**Ohne Session erreichbar:** `/api/auth/*`, `POST /api/auth/register`, `/api/split/public/*`, `POST /api/stripe/webhook` (Signatur), `POST /api/billing/cancel-request`, `POST /api/billing/cancel-confirm`, `POST /api/cron/stripe-sync` (Geheimnis)
 
 **Schreibende Anfragen** (`POST`/`PUT`/`PATCH`/`DELETE`) mit einem `Origin`-Header, der nicht zum eigenen Host passt, werden mit `403` abgelehnt (Schutz gegen Cross-Site-Requests).
 
@@ -246,7 +246,8 @@ Nur aktiv, wenn `PLANS_ENABLED=true` und die Stripe-Angaben vollständig gesetzt
 |---------|------|--------------|
 | `POST` | `/api/billing/checkout` | `{ "interval": "MONTHLY" \| "YEARLY" }` — liefert `{ url }` der Stripe-Bezahlseite. **400** bei dauerhaftem „Komplett“, **409** bei laufendem Abo |
 | `POST` | `/api/billing/portal` | liefert `{ url }` des Stripe-Kundenportals (Zahlungsmittel, Rechnungen, kündigen) |
-| `POST` | `/api/billing/sync` | gleicht das eigene Abo sofort mit Stripe ab (Rückkehr vom Kauf) |
+| `POST` | `/api/billing/sync` | gleicht das eigene Abo mit Stripe ab und liefert `{ synced, changed }`. Ohne Rumpf sofort (Rückkehr vom Kauf), mit `{ "background": true }` höchstens alle 5 Minuten je Nutzer (beim Öffnen von „Dein Level“) |
+| `POST` | `/api/cron/stripe-sync` | ohne Sitzung, mit `Authorization: Bearer <CRON_SECRET>` — gleicht alle laufenden Abos ab, liefert `{ synced, failed }`. Ohne `CRON_SECRET` **404** |
 | `POST` | `/api/billing/cancel` | kündigt das eigene Abo zum Ende des bezahlten Zeitraums, liefert `{ endsAt }` und bestätigt per E-Mail |
 | `POST` | `/api/billing/cancel-request` | ohne Sitzung: `{ "email" }` — schickt bei laufendem Abo einen Link zur Bestätigung an diese Adresse. Antwort immer `{ "received": true }` (3 je Stunde und IP bzw. Adresse) |
 | `POST` | `/api/billing/cancel-confirm` | ohne Sitzung: `{ "token" }` aus dem Link — kündigt zum Periodenende, liefert `{ endsAt }` (`null`, wenn kein Abo mehr läuft). **400** bei ungültigem, abgelaufenem oder schon verwendetem Link |
@@ -263,6 +264,7 @@ Admin-Recht per `npm run set-admin <E-Mail>`. Ohne Admin-Recht oder ohne aktive 
 | `GET` | `/api/admin/users?q=&page=` | Nutzer (E-Mail-Suche, 25 je Seite) mit Level, Quelle, Ablauf, letzter Anmeldung und Zählwerten – keine Finanzdaten |
 | `GET` | `/api/admin/users/:id/plan` | Verlauf der Level-Änderungen |
 | `DELETE` | `/api/admin/users/:id` | `{ "confirmEmail" }` — Nutzer samt eigener Konten, Buchungen und Split-Listen löschen; geteilte Konten bleiben den anderen Mitgliedern. Nicht für die eigene Anmeldung und nicht für Admins |
+| `POST` | `/api/admin/users/:id/sync` | Abo-Stand des Nutzers mit Stripe abgleichen |
 | `PATCH` | `/api/admin/users/:id/plan` | `{ "plan": "BASIC" \| "FULL", "expiresAt"?, "note"? }` — Level von Hand setzen, mit Protokolleintrag |
 
 **`PATCH` – Body:** `accountName`, `salaryDay`, `transferSenderName`, `bankId`, `isSimpleAccount` (nur **OWNER**; Aktivierung nur ohne Recurring-Templates), `splitDisplayName` (nutzerweit, auch bei Nur-Lese-Konto speicherbar)

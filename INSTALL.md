@@ -149,7 +149,7 @@ Mit Stripe lässt sich „Komplett“ als Abo buchen (monatlich oder jährlich, 
 **So arbeitet die Anbindung**
 
 - Bezahlt wird auf der von Stripe gehosteten Bezahlseite; Zahlungsmittel, Rechnungen und Intervallwechsel liegen im Stripe-Kundenportal. Die App speichert keine Zahlungsdaten, nur Kunden- und Abo-Kennung.
-- Das Level setzt ein Abgleich mit Stripe (`syncCustomer` in [`src/lib/billing.ts`](src/lib/billing.ts)), ausgelöst durch den Webhook und bei der Rückkehr vom Kauf. „Komplett“ gilt bis zum Ende des bezahlten Zeitraums plus 3 Tage Kulanz; nach einer Kündigung genau bis zum Periodenende.
+- Das Level setzt ein Abgleich mit Stripe (`syncCustomer` in [`src/lib/billing.ts`](src/lib/billing.ts)). Er holt immer den aktuellen Stand bei Stripe und wird ausgelöst durch den Webhook, bei der Rückkehr vom Kauf oder aus dem Kundenportal, im Hintergrund beim Öffnen von Einstellungen → „Dein Level“ (höchstens alle 5 Minuten je Nutzer), über „Mit Stripe abgleichen“ in der Verwaltung und optional täglich per Cron (siehe unten). Geht ein Webhook verloren, stimmt der Stand also spätestens, wenn der Nutzer nachsieht. „Komplett“ gilt bis zum Ende des bezahlten Zeitraums plus 3 Tage Kulanz; nach einer Kündigung genau bis zum Periodenende.
 - Von Hand oder als Bestand vergebenes „Komplett“ wird nie überschrieben; diese Nutzer bekommen kein Kaufangebot.
 - Wer in der Testphase bucht, zahlt erst ab deren Ende (bei weniger als rund zwei Tagen Rest sofort).
 - Wird ein Nutzer gelöscht (selbst oder über die Verwaltung), beendet die App vorher sein laufendes Abo. Ist Stripe nicht erreichbar, wird nicht gelöscht.
@@ -163,6 +163,7 @@ Mit Stripe lässt sich „Komplett“ als Abo buchen (monatlich oder jährlich, 
 | `STRIPE_WEBHOOK_SECRET` | Signatur-Schlüssel des Webhook-Endpunkts (`whsec_…`) |
 | `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_YEARLY` | Preis-Kennungen des Abos (`price_…`) |
 | `STRIPE_PORTAL_CONFIGURATION` | optional: Einstellung des Kundenportals (`bpc_…`); ohne Angabe gilt die Standard-Einstellung des Stripe-Kontos |
+| `CRON_SECRET` | optional: Geheimnis für den täglichen Abgleich (`/api/cron/stripe-sync`); ohne den Wert gibt es die Route nicht |
 | `STRIPE_TOS_CONSENT` | optional: `true` verlangt auf der Bezahlseite die Zustimmung zu den AGB. Die AGB-Adresse muss dafür bei Stripe hinterlegt sein, sonst schlägt der Kauf fehl |
 
 Die ersten vier gehören zusammen: Nur wenn alle gesetzt sind, ist der Kauf aktiv. Ist nur ein Teil gesetzt, startet die App in Produktion nicht. Auch dieser Zustand wird für Startseite und Fußzeilen beim Build übernommen – nach einer Änderung neu bauen.
@@ -193,7 +194,7 @@ Gebraucht werden ein Stripe-Konto mit Sandbox bzw. Testmodus und die [Stripe-CLI
    stripe listen --all-snapshot --forward-to localhost:3000/api/stripe/webhook
    ```
 
-   Die CLI zeigt beim Start einen Signatur-Schlüssel (`whsec_…`). Als `STRIPE_WEBHOOK_SECRET` eintragen und die CLI laufen lassen.
+   Die CLI zeigt beim Start einen Signatur-Schlüssel (`whsec_…`). Als `STRIPE_WEBHOOK_SECRET` eintragen und die CLI laufen lassen. **Lokal kommen Ereignisse nur an, solange `stripe listen` läuft** – Stripe stellt verpasste Ereignisse über die CLI nicht erneut zu. Den Stand holt sich die App dann beim nächsten Öffnen von „Dein Level“.
 5. **Dev-Server neu starten** (`npm run dev`), damit die neuen Werte gelten.
 6. **Ausprobieren:** Mit einem Nutzer auf „Start“ unter Einstellungen → „Dein Level“ „Komplett buchen“. Auf der Stripe-Seite Stripes Testkarte `4242 4242 4242 4242` mit beliebigem künftigem Datum und beliebiger Prüfziffer verwenden. Nach der Rückkehr steht dort „Jahres-Abo – verlängert sich am …“; die CLI zeigt die zugestellten Ereignisse mit `[200]`.
 
@@ -202,12 +203,33 @@ Gebraucht werden ein Stripe-Konto mit Sandbox bzw. Testmodus und die [Stripe-CLI
 1. **Rechtstexte** unter `content/legal/` anlegen (Impressum, Datenschutz, AGB, Widerruf).
 2. **Stripe-Dashboard (Live-Modus):** Firmenangaben, Zahlungsarten, E-Mail-Belege und Rechnungsvorlage einrichten (als Kleinunternehmer mit Hinweis nach § 19 UStG).
 3. **Schlüssel und Preise:** Live-Schlüssel als `STRIPE_SECRET_KEY` in die `.env` des Servers, dann `npm run stripe:setup -- --live` und die ausgegebenen Zeilen eintragen.
-4. **Webhook:** im Dashboard einen Endpunkt auf `https://<Domain>/api/stripe/webhook` anlegen mit den Ereignissen `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.paused`, `customer.subscription.resumed`, `invoice.paid`, `invoice.payment_failed`. Dessen Signatur-Schlüssel als `STRIPE_WEBHOOK_SECRET` eintragen.
+4. **Webhook:** im Dashboard unter Entwickler → Webhooks ein Ereignisziel auf `https://<Domain>/api/stripe/webhook` anlegen, **Nutzlast-Stil „Snapshot“**, mit den Ereignissen `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.paused`, `customer.subscription.resumed`, `invoice.paid`, `invoice.payment_failed`. Dessen Signatur-Schlüssel als `STRIPE_WEBHOOK_SECRET` eintragen. Ein Ziel mit Nutzlast-Stil „Thin“ schickt nur eine Kurzform (`v2.core.event`), die die App nicht verarbeiten kann; der Stil lässt sich nachträglich nicht ändern, dann ein neues Ziel anlegen.
 5. Optional `STRIPE_TOS_CONSENT=true`, wenn die AGB-Adresse bei Stripe hinterlegt ist.
 6. `PLANS_ENABLED=true`, neu bauen (`npm run build`), neu starten.
 7. **Abnahme:** ein echter Kauf, Kündigung unter `/kuendigen`, Kontrolle im Stripe-Dashboard.
 
 Die Preise auf der Startseite und in den Einstellungen stehen in `PLAN_PRICE` ([`src/lib/plans.ts`](src/lib/plans.ts)), die Beträge für Stripe in `scripts/stripe-setup.mjs`. Beide müssen zusammenpassen; ein bestehender Stripe-Preis wird vom Skript nicht verändert.
+
+#### Test-Server mit Sandbox
+
+Ein öffentlich erreichbarer Test-Server (z. B. `dev.ihre-domain.de`) bekommt Ereignisse direkt von Stripe, ohne CLI:
+
+1. In der `.env` des Test-Servers die **Sandbox**-Schlüssel und -Preise eintragen (dieselben wie lokal oder per `npm run stripe:setup` mit dem Sandbox-Schlüssel).
+2. In derselben Sandbox ein Ereignisziel (Snapshot, siehe oben) auf `https://<Test-Server>/api/stripe/webhook` anlegen und **dessen** Signatur-Schlüssel als `STRIPE_WEBHOOK_SECRET` eintragen – nicht den der CLI.
+3. Der Pfad `/api/stripe/webhook` muss für Stripe erreichbar sein; steht der Test-Server hinter Passwortschutz oder IP-Sperre, diesen Pfad ausnehmen.
+4. Neu bauen und neu starten; im Dashboard beim Ziel „Ereignisübermittlungen“ prüfen (Antwort 200).
+
+Nutzen lokale Entwicklung und Test-Server dieselbe Sandbox, bekommt der Test-Server auch die Ereignisse lokaler Testkäufe. Kunden, die er nicht kennt, ignoriert die App.
+
+#### Täglicher Abgleich (empfohlen)
+
+Zusätzlich zum Webhook kann ein Cron-Eintrag einmal täglich alle laufenden Abos mit Stripe abgleichen. Das fängt Verlängerungen, Kündigungen und Zahlungsausfälle ab, deren Webhook nicht angekommen ist. Dafür ein langes Zufallsgeheimnis als `CRON_SECRET` in die `.env` (z. B. `openssl rand -hex 32`) und:
+
+```bash
+15 4 * * * curl -fsS -X POST -H "Authorization: Bearer <CRON_SECRET>" https://<Domain>/api/cron/stripe-sync >> /var/log/konto-planer-stripe-sync.log 2>&1
+```
+
+Die Antwort nennt, wie viele Abos abgeglichen wurden und wie viele Abgleiche fehlschlugen (`{"synced": …, "failed": …}`); Details zu Fehlern stehen im App-Log.
 
 #### Gutschein-Codes
 
@@ -347,7 +369,8 @@ Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber o
 | Verify-Script schlägt fehl | Schema und generierter Client passen nicht zusammen — siehe Zeile oben |
 | `Unknown field` / Prisma-Laufzeitfehler | `git pull`, dann `npm run db:migrate`, `npm run build` **und Neustart** – ein noch laufender Prozess kennt neue Spalten nicht |
 | Kaufangebot fehlt trotz Stripe-Angaben | Alle vier Pflicht-Angaben gesetzt? `PLANS_ENABLED=true`? Nach Änderungen neu gebaut und neu gestartet? Nutzer mit dauerhaftem „Komplett“ bekommen kein Angebot |
-| Kauf bezahlt, Level bleibt „Start“ | Webhook kommt nicht an: Endpunkt-Adresse und Ereignisse im Dashboard prüfen; lokal muss `stripe listen` laufen und auf dasselbe Konto zeigen wie der Schlüssel (`stripe switch`) |
+| Kauf bezahlt, Level bleibt „Start“ oder Kündigung erscheint nicht | Webhook kommt nicht an: Ereignisziel im Dashboard prüfen (Adresse, Ereignisse, Nutzlast-Stil „Snapshot“, Reiter „Ereignisübermittlungen“); lokal muss `stripe listen` laufen und auf dasselbe Konto zeigen wie der Schlüssel (`stripe switch`). Sofort beheben: Einstellungen → „Dein Level“ öffnen oder in der Verwaltung „Mit Stripe abgleichen“ |
+| Ereignisübermittlungen zeigen `v2.core.event` | Ereignisziel mit Nutzlast-Stil „Thin“ – durch ein neues Ziel mit „Snapshot“ ersetzen |
 | Webhook antwortet mit 400 „Ungültige Signatur“ | `STRIPE_WEBHOOK_SECRET` passt nicht zum Endpunkt (Test/Live verwechselt, CLI-Schlüssel geändert) |
 | Webhook antwortet mit 503 | `STRIPE_SECRET_KEY` oder `STRIPE_WEBHOOK_SECRET` fehlt |
 | „Abo verwalten“ schlägt fehl | Kundenportal im Stripe-Konto nicht eingerichtet: `npm run stripe:setup` ausführen und `STRIPE_PORTAL_CONFIGURATION` eintragen |

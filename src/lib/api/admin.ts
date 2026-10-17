@@ -16,6 +16,13 @@ export const deleteAdminUser = (userId: string, confirmEmail: string) =>
     timeoutMs: null,
   })
 
+/** Verwaltung: Abo-Stand eines Nutzers mit Stripe abgleichen */
+export const syncAdminUserBilling = (userId: string) =>
+  apiFetch<{ synced: boolean }>(`/admin/users/${encodeURIComponent(userId)}/sync`, {
+    method: 'POST',
+    timeoutMs: 30000,
+  })
+
 export const setAdminUserPlan = (
   userId: string,
   data: { plan: PlanId; expiresAt?: string | null; note?: string }

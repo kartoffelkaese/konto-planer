@@ -55,8 +55,12 @@ export const openBillingPortal = () =>
   apiFetch<{ url: string }>('/billing/portal', { method: 'POST', timeoutMs: 30000 })
 
 /** Gleicht das eigene Abo sofort mit Stripe ab */
-export const syncBilling = () =>
-  apiFetch<{ synced: boolean }>('/billing/sync', { method: 'POST', timeoutMs: 30000 })
+export const syncBilling = (options: { background?: boolean } = {}) =>
+  apiFetch<{ synced: boolean; changed: boolean }>('/billing/sync', {
+    method: 'POST',
+    body: JSON.stringify(options),
+    timeoutMs: 30000,
+  })
 
 /** Kündigt das eigene Abo zum Ende des bezahlten Zeitraums */
 export const cancelSubscription = () =>

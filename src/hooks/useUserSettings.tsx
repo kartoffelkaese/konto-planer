@@ -74,6 +74,8 @@ type UserSettingsValue = {
   loading: boolean
   error: string | null
   reload: () => void
+  /** Im Hintergrund neu laden, ohne Ladeanzeige (z. B. nach einem Abgleich mit Stripe) */
+  refresh: () => void
 }
 
 type LoadState = {
@@ -137,6 +139,10 @@ export function UserSettingsProvider({ children }: { children: ReactNode }) {
     setReloadCount((count) => count + 1)
   }, [])
 
+  const refresh = useCallback(() => {
+    setReloadCount((count) => count + 1)
+  }, [])
+
   useEffect(() => {
     window.addEventListener(ACCOUNT_CHANGED_EVENT, reload)
     return () => window.removeEventListener(ACCOUNT_CHANGED_EVENT, reload)
@@ -168,8 +174,9 @@ export function UserSettingsProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       reload,
+      refresh,
     }),
-    [settings, role, plan, accountPlan, isAdmin, loading, error, reload]
+    [settings, role, plan, accountPlan, isAdmin, loading, error, reload, refresh]
   )
 
   return <UserSettingsContext.Provider value={value}>{children}</UserSettingsContext.Provider>

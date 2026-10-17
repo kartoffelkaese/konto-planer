@@ -13,6 +13,10 @@ import { PLAN_LABELS, PLAN_PRICE } from '@/lib/plans'
 
 type Interval = 'MONTHLY' | 'YEARLY'
 
+/** Hintergrund-Abgleich höchstens einmal je Minute aus diesem Tab (der Server drosselt zusätzlich) */
+const BACKGROUND_SYNC_INTERVAL_MS = 60 * 1000
+let lastBackgroundSyncAt = 0
+
 const INTERVAL_OPTIONS: { value: Interval; label: string }[] = [
   { value: 'YEARLY', label: `Jährlich · ${formatCurrency(PLAN_PRICE.yearly)}` },
   { value: 'MONTHLY', label: `Monatlich · ${formatCurrency(PLAN_PRICE.monthly)}` },
@@ -24,7 +28,7 @@ const INTERVAL_OPTIONS: { value: Interval; label: string }[] = [
  */
 export default function PlanBilling() {
   const router = useRouter()
-  const { settings, plan, reload } = useUserSettings()
+  const { settings, plan, reload, refresh } = useUserSettings()
   const { showToast } = useToast()
   const [interval, setChosenInterval] = useState<Interval>('YEARLY')
   const [busy, setBusy] = useState<'checkout' | 'portal' | null>(null)
@@ -32,11 +36,24 @@ export default function PlanBilling() {
   const billing = settings?.billing
   const enabled = Boolean(billing?.enabled)
 
-  // Rückkehr von Stripe („?billing=…“): sofort abgleichen, statt auf den Webhook zu warten
+  // Rückkehr von Stripe („?billing=…“): sofort abgleichen, statt auf den Webhook zu warten.
+  // Sonst beim Öffnen im Hintergrund abgleichen (der Server drosselt), falls ein Webhook
+  // verloren ging – neu geladen wird nur, wenn sich etwas geändert hat.
+  const hasCustomer = Boolean(billing?.hasCustomer)
   useEffect(() => {
     if (!enabled) return
     const outcome = new URLSearchParams(window.location.search).get('billing')
-    if (!outcome) return
+    if (!outcome) {
+      if (!hasCustomer || Date.now() - lastBackgroundSyncAt < BACKGROUND_SYNC_INTERVAL_MS) return
+      lastBackgroundSyncAt = Date.now()
+      syncBilling({ background: true }).then(
+        ({ changed }) => {
+          if (changed) refresh()
+        },
+        () => undefined
+      )
+      return
+    }
     router.replace('/settings#plan', { scroll: false })
     if (outcome === 'cancelled') return
 
@@ -50,7 +67,7 @@ export default function PlanBilling() {
       (err: unknown) =>
         showToast(getApiErrorMessage(err, 'Der Abo-Stand konnte nicht abgerufen werden'), 'error')
     )
-  }, [enabled, router, reload, showToast])
+  }, [enabled, hasCustomer, router, reload, refresh, showToast])
 
   if (!settings || !billing?.enabled) return null
 

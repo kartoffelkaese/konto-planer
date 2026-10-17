@@ -3,7 +3,10 @@ import Stripe from 'stripe'
 
 vi.mock('@/lib/prisma', async () => (await import('@/test/routeHarness')).prismaModule)
 const syncCustomer = vi.hoisted(() => vi.fn())
-vi.mock('@/lib/billing', () => ({ syncCustomer }))
+vi.mock('@/lib/billing', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/billing')>()),
+  syncCustomer,
+}))
 
 import { POST } from '@/app/api/stripe/webhook/route'
 import { isPublicApiPath } from '@/lib/public-api'
@@ -87,6 +90,16 @@ describe('Stripe-Webhook', () => {
     prismaMock.stripeEvent.findUnique.mockResolvedValue({ id: 'evt_1' })
     const response = await POST(webhookRequest(event('invoice.paid', { customer: 'cus_1' })))
     expect(response.status).toBe(200)
+    expect(syncCustomer).not.toHaveBeenCalled()
+  })
+
+  it('Kunde im Dashboard gelöscht: löst die Verknüpfung, gleicht nicht ab', async () => {
+    const response = await POST(webhookRequest(event('customer.deleted', { id: 'cus_weg', object: 'customer' })))
+    expect(response.status).toBe(200)
+    expect(prismaMock.user.updateMany).toHaveBeenCalledWith({
+      where: { stripeCustomerId: 'cus_weg' },
+      data: expect.objectContaining({ stripeCustomerId: null, stripeSubscriptionStatus: null }),
+    })
     expect(syncCustomer).not.toHaveBeenCalled()
   })
 

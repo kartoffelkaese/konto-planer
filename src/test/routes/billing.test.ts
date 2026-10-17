@@ -6,7 +6,7 @@ vi.mock('@/lib/auth', async () => (await import('@/test/routeHarness')).authModu
 const stripeMock = vi.hoisted(() => ({
   checkout: { sessions: { create: vi.fn() } },
   billingPortal: { sessions: { create: vi.fn() } },
-  customers: { create: vi.fn() },
+  customers: { create: vi.fn(), retrieve: vi.fn() },
   subscriptions: { list: vi.fn() },
 }))
 vi.mock('@/lib/stripe', async (importOriginal) => ({
@@ -68,6 +68,8 @@ beforeEach(() => {
   }
   stripeMock.checkout.sessions.create.mockResolvedValue({ url: 'https://checkout.stripe.test/s1' })
   stripeMock.customers.create.mockResolvedValue({ id: 'cus_neu' })
+  stripeMock.customers.retrieve.mockReset()
+  stripeMock.customers.retrieve.mockResolvedValue({ id: 'cus_1' })
   vi.stubEnv('PLANS_ENABLED', 'true')
   vi.stubEnv('AUTH_URL', 'https://app.test')
   vi.stubEnv('STRIPE_SECRET_KEY', 'sk_test_x')

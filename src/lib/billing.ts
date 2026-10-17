@@ -178,13 +178,38 @@ export async function syncCustomer(stripeCustomerId: string): Promise<SyncResult
   return 'updated'
 }
 
-/** Stripe-Kunde des Nutzers; wird beim ersten Kauf angelegt */
+/** Abo-Felder eines Nutzers, dessen Stripe-Kunde nicht mehr existiert – das Level bleibt unberührt */
+export const CLEARED_CUSTOMER_FIELDS = {
+  stripeCustomerId: null,
+  stripeSubscriptionId: null,
+  stripeSubscriptionStatus: null,
+  planInterval: null,
+  planCancelAtPeriodEnd: false,
+} as const
+
+/** Gibt es den Kunden bei Stripe noch? Im Dashboard gelöschte Kunden zählen nicht. */
+async function customerExists(stripeCustomerId: string): Promise<boolean> {
+  try {
+    const customer = await getStripe().customers.retrieve(stripeCustomerId)
+    return !customer.deleted
+  } catch (error) {
+    if ((error as { code?: string })?.code === 'resource_missing') return false
+    throw error
+  }
+}
+
+/**
+ * Stripe-Kunde des Nutzers; wird beim ersten Kauf angelegt – und neu angelegt, wenn der
+ * gespeicherte Kunde bei Stripe gelöscht wurde.
+ */
 export async function ensureStripeCustomer(user: {
   id: string
   email: string
   stripeCustomerId: string | null
 }): Promise<string> {
-  if (user.stripeCustomerId) return user.stripeCustomerId
+  if (user.stripeCustomerId && (await customerExists(user.stripeCustomerId))) {
+    return user.stripeCustomerId
+  }
 
   const customer = await getStripe().customers.create({
     email: user.email,
@@ -192,7 +217,7 @@ export async function ensureStripeCustomer(user: {
   })
   await prisma.user.update({
     where: { id: user.id },
-    data: { stripeCustomerId: customer.id },
+    data: { ...CLEARED_CUSTOMER_FIELDS, stripeCustomerId: customer.id },
   })
   return customer.id
 }

@@ -4,7 +4,7 @@ vi.mock('@/lib/prisma', async () => (await import('@/test/routeHarness')).prisma
 
 const stripeMock = vi.hoisted(() => ({
   subscriptions: { list: vi.fn() },
-  customers: { create: vi.fn() },
+  customers: { create: vi.fn(), retrieve: vi.fn() },
 }))
 vi.mock('@/lib/stripe', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/stripe')>()),
@@ -40,6 +40,8 @@ beforeEach(() => {
   resetRouteMocks()
   stripeMock.subscriptions.list.mockReset()
   stripeMock.customers.create.mockReset()
+  stripeMock.customers.retrieve.mockReset()
+  stripeMock.customers.retrieve.mockResolvedValue({ id: 'cus_1' })
   vi.stubEnv('STRIPE_PRICE_MONTHLY', 'price_month')
   vi.stubEnv('STRIPE_PRICE_YEARLY', 'price_year')
 })
@@ -226,7 +228,27 @@ describe('ensureStripeCustomer', () => {
     stripeMock.customers.create.mockResolvedValue({ id: 'cus_2' })
     expect(await ensureStripeCustomer({ id: 'u1', email: 'a@b.de', stripeCustomerId: null })).toBe('cus_2')
     expect(stripeMock.customers.create).toHaveBeenCalledWith({ email: 'a@b.de', metadata: { userId: 'u1' } })
-    expect(prismaMock.user.update).toHaveBeenCalledWith({ where: { id: 'u1' }, data: { stripeCustomerId: 'cus_2' } })
+    expect(prismaMock.user.update.mock.calls[0][0]).toMatchObject({ where: { id: 'u1' }, data: { stripeCustomerId: 'cus_2' } })
+  })
+
+  it.each([
+    ['gelöscht', () => stripeMock.customers.retrieve.mockResolvedValue({ id: 'cus_1', deleted: true })],
+    ['unbekannt', () => stripeMock.customers.retrieve.mockRejectedValue(Object.assign(new Error('x'), { code: 'resource_missing' }))],
+  ])('Kunde bei Stripe %s: legt einen neuen an und löst den alten Abo-Stand', async (_name, setup) => {
+    setup()
+    stripeMock.customers.create.mockResolvedValue({ id: 'cus_neu' })
+    expect(await ensureStripeCustomer({ id: 'u1', email: 'a@b.de', stripeCustomerId: 'cus_1' })).toBe('cus_neu')
+    expect(prismaMock.user.update.mock.calls[0][0].data).toMatchObject({
+      stripeCustomerId: 'cus_neu',
+      stripeSubscriptionId: null,
+      stripeSubscriptionStatus: null,
+    })
+  })
+
+  it('andere Stripe-Fehler brechen ab, statt einen zweiten Kunden anzulegen', async () => {
+    stripeMock.customers.retrieve.mockRejectedValue(new Error('Netzwerk'))
+    await expect(ensureStripeCustomer({ id: 'u1', email: 'a@b.de', stripeCustomerId: 'cus_1' })).rejects.toThrow('Netzwerk')
+    expect(stripeMock.customers.create).not.toHaveBeenCalled()
   })
 })
 

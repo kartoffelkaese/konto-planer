@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
-import { syncCustomer } from '@/lib/billing'
+import { CLEARED_CUSTOMER_FIELDS, syncCustomer } from '@/lib/billing'
 import { logger } from '@/lib/logger'
 import { getStripe } from '@/lib/stripe'
 
@@ -57,7 +57,14 @@ export async function POST(request: Request) {
     const seen = await prisma.stripeEvent.findUnique({ where: { id: event.id } })
     if (seen) return NextResponse.json({ received: true, duplicate: true })
 
-    if (SYNC_EVENTS.has(event.type)) {
+    if (event.type === 'customer.deleted') {
+      // Kunde im Dashboard gelöscht: Verknüpfung lösen, damit ein neuer Kauf einen neuen Kunden anlegt
+      const customerId = (event.data.object as { id: string }).id
+      await prisma.user.updateMany({
+        where: { stripeCustomerId: customerId },
+        data: CLEARED_CUSTOMER_FIELDS,
+      })
+    } else if (SYNC_EVENTS.has(event.type)) {
       const customerId = customerIdOf(event)
       if (customerId) await syncCustomer(customerId)
     }

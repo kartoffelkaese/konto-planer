@@ -86,6 +86,7 @@ describe('Kauf starten', () => {
       customer: 'cus_neu',
       line_items: [{ price: 'price_year', quantity: 1 }],
       locale: 'de',
+      allow_promotion_codes: true,
       success_url: 'https://app.test/settings?billing=success#plan',
     })
     expect(params.subscription_data).not.toHaveProperty('trial_end')

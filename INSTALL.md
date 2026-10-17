@@ -210,6 +210,23 @@ Gebraucht werden ein Stripe-Konto mit Sandbox bzw. Testmodus und die [Stripe-CLI
 
 Die Preise auf der Startseite und in den Einstellungen stehen in `PLAN_PRICE` ([`src/lib/plans.ts`](src/lib/plans.ts)), die Beträge für Stripe in `scripts/stripe-setup.mjs`. Beide müssen zusammenpassen; ein bestehender Stripe-Preis wird vom Skript nicht verändert.
 
+#### Gutschein-Codes
+
+Die Bezahlseite zeigt ein Feld für Aktionscodes. Die Codes legst du im Stripe-Dashboard an (Produktkatalog → Gutscheine): erst einen Gutschein mit Rabatt (Prozent oder Betrag, einmalig, für einige Monate oder dauerhaft), dann dazu einen Aktionscode, den Kunden eingeben (z. B. `START2026`). Einschränkungen wie Ablaufdatum, Höchstzahl an Einlösungen oder „nur für Erstkunden“ stellst du dort ein. Ein Rabatt von 100 % auf den ersten Zeitraum verschenkt „Komplett“ ohne Zahlung; das Abo läuft danach zum normalen Preis weiter, bis es gekündigt wird.
+
+Ohne angelegte Codes bleibt das Feld wirkungslos; ein falscher Code wird von Stripe abgelehnt.
+
+#### Zahlungsarten und SEPA-Lastschrift
+
+Die App legt keine Zahlungsarten fest. Welche auf der Bezahlseite erscheinen (Karte, SEPA-Lastschrift, PayPal, Klarna …), stellst du im Stripe-Dashboard unter Einstellungen → Zahlungsmethoden ein – getrennt für Sandbox und Live-Modus. Stripe zeigt nur die Arten an, die zu Währung (Euro) und Abo passen.
+
+**SEPA-Lastschrift** lässt sich dort zuschalten; die App muss dafür nicht geändert werden. Stripe zeigt beim Abschluss das Lastschriftmandat an und zieht die Beträge danach automatisch ein.
+
+- **Kosten** (Stripe-Standardpreise Deutschland): 0,35 € je Lastschrift; europäische Karten 1,5 % + 0,25 €.
+- **Verzögerte Bestätigung:** Eine Lastschrift ist erst nach einigen Tagen sicher. Das Abo steht bei Stripe trotzdem sofort auf „aktiv“, und die App gibt „Komplett“ gleich frei. Schlägt die Lastschrift fehl, geht das Abo in Verzug bzw. endet; die App gleicht über den Webhook ab, und das Level fällt nach den bekannten Regeln zurück.
+- **Rückbuchungen:** Zahler können autorisierte Lastschriften 8 Wochen lang ohne Begründung zurückgeben. Das wickelt Stripe ab; die App reagiert nur, wenn sich dadurch der Abo-Stand ändert.
+- **Testen:** In der Sandbox stellt Stripe Test-IBANs für erfolgreiche und fehlschlagende Lastschriften bereit; das Ergebnis kommt nach einigen Minuten.
+
 #### Kündigen
 
 - **Angemeldet:** unter `/kuendigen` (Verweis „Abo kündigen“ in den Einstellungen) oder im Stripe-Kundenportal, jeweils zum Ende des bezahlten Zeitraums. Die App bestätigt die Kündigung per E-Mail.

@@ -56,6 +56,8 @@ export const POST = withErrorHandling('/api/billing/checkout', async function PO
     client_reference_id: user.id,
     line_items: [{ price: priceIdFor(body.interval), quantity: 1 }],
     locale: 'de',
+    // Feld für Aktionscodes auf der Bezahlseite; die Codes werden im Stripe-Dashboard angelegt
+    allow_promotion_codes: true,
     success_url: `${baseUrl}/settings?billing=success#plan`,
     cancel_url: `${baseUrl}/settings?billing=cancelled#plan`,
     subscription_data: {

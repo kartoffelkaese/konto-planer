@@ -230,6 +230,8 @@ Nur für Konten mit `isSimpleAccount: false` (Statistik-Seite leitet sonst um).
 
 `email`, `accountName`, `salaryDay`, `transferSenderName`, `splitDisplayName`, `bankId`, `isSimpleAccount`, `activeAccountId`, `role`, `createdAt`, `pendingEmail`
 
+`recurringIntroSeen` – Einführung „Aus Kontoauszug erkennen“ gesehen (am Nutzer gespeichert). `PATCH` mit `{ "recurringIntroSeen": true }` vermerkt sie einmalig, auch mit Nur-Lese-Zugriff.
+
 Nur lesend, zum Benutzerlevel: `plan` (eigenes Level, `BASIC`/`FULL`), `accountPlan` (Level des Konto-Inhabers), `planLock` (`limit`/`shared`/`null` – Schreibschutz des aktiven Kontos), `keptAccountId`, `keptAccountChangeAllowedAt` (ab wann ein Wechsel wieder möglich ist, sonst `null`), `keptAccountChoiceRequired` (nach einer Herabstufung steht die Wahl aus), `planSource`, `planExpiresAt`, `plansEnabled`, `isAdmin`
 
 ### Benutzerlevel

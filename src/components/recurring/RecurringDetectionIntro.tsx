@@ -4,27 +4,8 @@ import { useState } from 'react'
 import { ArrowUpTrayIcon, DocumentMagnifyingGlassIcon, LockClosedIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
 import { Button } from '@/components/Button'
-
-function seenKey(userId: string) {
-  return `recurring-detection-intro-seen:${userId}`
-}
-
-function readSeen(userId: string): boolean {
-  try {
-    return window.localStorage.getItem(seenKey(userId)) === '1'
-  } catch {
-    // Ohne Speicher lieber nicht bei jedem Besuch erneut zeigen
-    return true
-  }
-}
-
-function markSeen(userId: string) {
-  try {
-    window.localStorage.setItem(seenKey(userId), '1')
-  } catch {
-    // ohne Speicher gilt „gesehen“ nur bis zum Neuladen
-  }
-}
+import { updateUserSettings } from '@/lib/api'
+import { useUserSettings } from '@/hooks/useUserSettings'
 
 const POINTS = [
   {
@@ -51,25 +32,31 @@ const POINTS = [
 
 /**
  * Einmalige Einführung in „Aus Kontoauszug erkennen“, wenn jemand die Seite „Wiederkehrend“
- * zum ersten Mal öffnet und noch keine wiederkehrenden Zahlungen hat.
+ * zum ersten Mal öffnet und noch keine wiederkehrenden Zahlungen hat. „Gesehen“ wird am Nutzer
+ * gespeichert – die Einführung erscheint also auch auf anderen Geräten nicht erneut.
  */
 export default function RecurringDetectionIntro({
-  userId,
+  seen,
   eligible,
   onStart,
 }: {
-  userId: string | null
+  /** Laut Einstellungen schon gesehen (`undefined` solange sie laden) */
+  seen: boolean | undefined
   /** Noch keine wiederkehrenden Zahlungen und Schreibrecht */
   eligible: boolean
   onStart: () => void
 }) {
-  const [closedFor, setClosedFor] = useState<string | null>(null)
-  const open = Boolean(userId) && eligible && closedFor !== userId && !readSeen(userId!)
+  const { refresh } = useUserSettings()
+  const [closed, setClosed] = useState(false)
+  const open = seen === false && eligible && !closed
 
   const close = () => {
-    if (!userId) return
-    markSeen(userId)
-    setClosedFor(userId)
+    setClosed(true)
+    // Danach die Einstellungen still neu laden, damit die Einführung auch beim nächsten
+    // Seitenwechsel ausbleibt. Schlägt das Speichern fehl, erscheint sie später noch einmal.
+    updateUserSettings({ recurringIntroSeen: true })
+      .then(() => refresh())
+      .catch(() => undefined)
   }
 
   return (

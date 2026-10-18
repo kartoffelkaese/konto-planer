@@ -26,6 +26,8 @@ export type UserSettings = {
   splitDisplayName?: string | null
   bankId?: string | null
   isSimpleAccount?: boolean
+  /** Einführung „Aus Kontoauszug erkennen“ schon gesehen */
+  recurringIntroSeen?: boolean
   createdAt: string
   activeAccountId?: string
   role?: AccountMemberRole

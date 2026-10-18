@@ -85,6 +85,8 @@ model User {
   keptAccountId           String?
   /// Letzter Wechsel des beschreibbaren Kontos – danach ist der Wechsel für eine Frist gesperrt
   keptAccountChangedAt    DateTime?
+  /// Einführung „Aus Kontoauszug erkennen“ gesehen – erscheint nur einmal pro Nutzer
+  recurringIntroSeenAt    DateTime?
   /// Stripe: Kunde und laufendes bzw. letztes Abo (Stand des letzten Abgleichs, siehe src/lib/billing.ts)
   stripeCustomerId        String?                  @unique
   stripeSubscriptionId    String?

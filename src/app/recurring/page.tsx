@@ -468,7 +468,7 @@ export default function RecurringTransactionsPage() {
       </div>
 
       <RecurringDetectionIntro
-        userId={settings?.id ?? null}
+        seen={settings?.recurringIntroSeen}
         eligible={!loading && !error && canWrite && transactions.length === 0}
         onStart={() => setShowDetectionDialog(true)}
       />

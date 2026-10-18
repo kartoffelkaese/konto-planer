@@ -76,6 +76,7 @@ export const TEST_USER = {
   planCancelAtPeriodEnd: false,
   keptAccountId: null as string | null,
   keptAccountChangedAt: null as Date | null,
+  recurringIntroSeenAt: null as Date | null,
   createdAt: new Date('2026-01-01'),
 }
 

@@ -6,6 +6,8 @@ vi.mock('@/lib/auth', async () => (await import('@/test/routeHarness')).authModu
 import * as detectRoute from '@/app/api/transactions/recurring/detect/route'
 import * as bulkRoute from '@/app/api/transactions/recurring/bulk/route'
 import * as importPreviewRoute from '@/app/api/transactions/import/preview/route'
+import * as settingsRoute from '@/app/api/users/settings/route'
+import { NextRequest } from 'next/server'
 import { isPublicApiPath } from '@/lib/public-api'
 import { jsonRequest, loginAs, prismaMock, resetRouteMocks, TEST_ACCOUNT } from '@/test/routeHarness'
 
@@ -139,5 +141,31 @@ describe('Import-Vorschau', () => {
     )
     expect(response.status).toBe(200)
     expect((await response.json()).recurringSuggestionCount).toBe(2)
+  })
+})
+
+describe('Einführung „Aus Kontoauszug erkennen“', () => {
+  const patch = (body: unknown) =>
+    settingsRoute.PATCH(new NextRequest(jsonRequest('PATCH', body, 'http://localhost/api/users/settings')))
+
+  it('Einstellungen melden, ob sie schon gesehen wurde', async () => {
+    const response = await settingsRoute.GET()
+    expect((await response.json()).recurringIntroSeen).toBe(false)
+    loginAs({ user: { id: `user-seen-${ipCounter}`, recurringIntroSeenAt: new Date('2026-10-18') } })
+    expect((await (await settingsRoute.GET()).json()).recurringIntroSeen).toBe(true)
+  })
+
+  it('„gesehen“ wird einmal am Nutzer gespeichert – auch mit Nur-Lese-Zugriff', async () => {
+    loginAs({ role: 'READ_ONLY', user: { id: `user-ro-intro-${ipCounter}` } })
+    await patch({ recurringIntroSeen: true })
+    expect(prismaMock.user.update).toHaveBeenCalledWith({
+      where: { id: `user-ro-intro-${ipCounter}` },
+      data: { recurringIntroSeenAt: expect.any(Date) },
+    })
+
+    prismaMock.user.update.mockClear()
+    loginAs({ user: { id: `user-seen2-${ipCounter}`, recurringIntroSeenAt: new Date('2026-10-18') } })
+    await patch({ recurringIntroSeen: true })
+    expect(prismaMock.user.update).not.toHaveBeenCalled()
   })
 })

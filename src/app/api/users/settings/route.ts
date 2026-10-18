@@ -72,6 +72,14 @@ export async function PATCH(request: NextRequest) {
 
     let splitDisplayNameUpdated: string | null | undefined
 
+    // Einführung „Aus Kontoauszug erkennen“ gesehen – gilt für den Nutzer, nicht das Konto
+    if (body.recurringIntroSeen === true && user.recurringIntroSeenAt === null) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { recurringIntroSeenAt: new Date() },
+      })
+    }
+
     if (body.splitDisplayName !== undefined) {
       const splitDisplayName = validateSplitDisplayName(body.splitDisplayName)
       if (isErrorResponse(splitDisplayName)) return splitDisplayName
@@ -197,6 +205,7 @@ export async function GET() {
       accountName: account.name,
       transferSenderName: account.transferSenderName,
       splitDisplayName: user.splitDisplayName,
+      recurringIntroSeen: user.recurringIntroSeenAt !== null,
       bankId: account.bankId,
       isSimpleAccount: account.isSimpleAccount,
       createdAt: account.createdAt,

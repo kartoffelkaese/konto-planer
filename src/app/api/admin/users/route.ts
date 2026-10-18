@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/admin'
 import { isErrorResponse } from '@/lib/api-auth'
 import { getStoredPlan } from '@/lib/plans'
-import { hasRunningSubscription } from '@/lib/billingRoute'
+import { hasRunningSubscription, paidPeriodEnd } from '@/lib/billingRoute'
 import { withErrorHandling } from '@/lib/route-handler'
 import type { AdminUsersResponse } from '@/types/admin'
 
@@ -62,6 +62,7 @@ export const GET = withErrorHandling('/api/admin/users', async function GET(requ
       effectivePlan: getStoredPlan(user),
       planSource: user.planSource,
       planExpiresAt: user.planExpiresAt?.toISOString() ?? null,
+      paidUntil: paidPeriodEnd(user)?.toISOString() ?? null,
       isAdmin: user.isAdmin,
       subscriptionStatus: user.stripeSubscriptionStatus,
       hasStripeCustomer: user.stripeCustomerId !== null,

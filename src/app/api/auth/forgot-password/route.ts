@@ -3,7 +3,7 @@ import { EmailVerificationPurpose } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { normalizeEmail } from '@/lib/accounts'
 import { readJsonBody, isErrorResponse } from '@/lib/api-auth'
-import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
+import { checkMailCooldown, checkRateLimit, getClientIp, MAIL_COOLDOWN_MESSAGE, RATE_LIMITS } from '@/lib/rate-limit'
 import { createVerificationToken, sendPasswordResetEmail } from '@/lib/emailVerification'
 import { logger } from '@/lib/logger'
 
@@ -18,13 +18,10 @@ export async function POST(request: Request) {
     const email = normalizeEmail(typeof body.email === 'string' ? body.email : '')
 
     // Mindestabstand je Adresse (unabhängig von der IP), zählt nicht zum Stundenlimit
-    const cooldown = checkRateLimit(`password-reset-cooldown:${email}`, RATE_LIMITS.passwordResetCooldown)
+    const cooldown = checkMailCooldown(`password-reset:${email}`)
     if (!cooldown.allowed) {
       return NextResponse.json(
-        {
-          message: 'Bitte warte kurz, bevor du den Link erneut anforderst.',
-          retryAfterSec: cooldown.retryAfterSec,
-        },
+        { message: MAIL_COOLDOWN_MESSAGE, retryAfterSec: cooldown.retryAfterSec },
         { status: 429 }
       )
     }

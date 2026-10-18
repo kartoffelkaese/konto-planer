@@ -17,8 +17,7 @@ import {
 } from '@/lib/simpleAccount'
 import { logger } from '@/lib/logger'
 import { keptAccountChangeAllowedAt, plansEnabled } from '@/lib/plans'
-import { BILLING_GRACE_DAYS } from '@/lib/billing'
-import { hasRunningSubscription } from '@/lib/billingRoute'
+import { hasRunningSubscription, paidPeriodEnd } from '@/lib/billingRoute'
 import { billingEnabled } from '@/lib/stripe'
 import { isKeptAccountChoiceRequired } from '@/lib/keptAccount'
 import type { AccountContext } from '@/lib/account-context'
@@ -43,13 +42,7 @@ async function planFields({ user, plan, accountPlan, planLock }: AccountContext)
 /** Abo-Angaben für die Oberfläche – ohne Stripe-Kennungen */
 function billingFields(user: AccountContext['user']) {
   const running = hasRunningSubscription(user.stripeSubscriptionStatus)
-  // Das gespeicherte Ablaufdatum enthält die Kulanz; angezeigt wird das Ende des bezahlten Zeitraums
-  const periodEnd =
-    running && user.planSource === 'STRIPE' && user.planExpiresAt
-      ? user.planCancelAtPeriodEnd
-        ? user.planExpiresAt
-        : new Date(user.planExpiresAt.getTime() - BILLING_GRACE_DAYS * 24 * 60 * 60 * 1000)
-      : null
+  const periodEnd = paidPeriodEnd(user)
   return {
     enabled: billingEnabled(),
     hasCustomer: user.stripeCustomerId !== null,

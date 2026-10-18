@@ -42,6 +42,33 @@ describe('Zugang zur Verwaltung', () => {
 })
 
 describe('Nutzerliste', () => {
+  it('laufendes Abo: bezahlt bis Periodenende, ohne die 3 Tage Kulanz', async () => {
+    loginAs({ user: { isAdmin: true } })
+    prismaMock.user.count.mockResolvedValue(2)
+    const base = {
+      emailVerified: new Date('2026-09-01'),
+      createdAt: new Date('2026-09-01'),
+      lastLoginAt: null,
+      plan: 'FULL',
+      planSource: 'STRIPE',
+      isAdmin: false,
+      stripeCustomerId: 'cus_1',
+      stripeSubscriptionStatus: 'active',
+      planInterval: 'MONTHLY',
+      _count: { memberships: 1, splitListsCreated: 0 },
+    }
+    prismaMock.user.findMany.mockResolvedValue([
+      // gespeichert: 17.11. + 3 Tage Kulanz
+      { ...base, id: 'u-a', email: 'a@beispiel.de', planExpiresAt: new Date('2026-11-20T10:00:00Z'), planCancelAtPeriodEnd: false },
+      // gekündigt zum Periodenende: ohne Kulanz gespeichert
+      { ...base, id: 'u-b', email: 'b@beispiel.de', planExpiresAt: new Date('2026-11-17T10:00:00Z'), planCancelAtPeriodEnd: true },
+    ])
+
+    const body = await (await usersRoute.GET(req('GET'))).json()
+    expect(body.users[0]).toMatchObject({ planExpiresAt: '2026-11-20T10:00:00.000Z', paidUntil: '2026-11-17T10:00:00.000Z' })
+    expect(body.users[1].paidUntil).toBe('2026-11-17T10:00:00.000Z')
+  })
+
   it('liefert Stammdaten, geltendes Level und Zählwerte', async () => {
     loginAs({ user: { isAdmin: true } })
     prismaMock.user.count.mockResolvedValue(1)

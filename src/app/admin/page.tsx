@@ -30,7 +30,10 @@ function planDetail(user: AdminUser): string {
     if (user.subscriptionStatus === 'past_due') parts.push('Zahlung offen')
     if (user.cancelAtPeriodEnd) parts.push('gekündigt')
   }
-  if (user.planExpiresAt) {
+  if (user.paidUntil) {
+    // Laufendes Abo: bezahlter Zeitraum statt Ablaufdatum mit Kulanz
+    parts.push(`bis ${formatDate(user.paidUntil)}`)
+  } else if (user.planExpiresAt) {
     const expired = user.plan === 'FULL' && user.effectivePlan === 'BASIC'
     parts.push(`${expired ? 'abgelaufen am' : 'bis'} ${formatDate(user.planExpiresAt)}`)
   }

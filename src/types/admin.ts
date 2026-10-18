@@ -13,7 +13,10 @@ export type AdminUser = {
   /** Level, das gerade gilt (Ablaufdatum berücksichtigt) */
   effectivePlan: PlanId
   planSource: PlanSourceId | null
+  /** Ablaufdatum des Levels – bei laufendem Abo inklusive Kulanz */
   planExpiresAt: string | null
+  /** Laufendes Abo: Ende des bezahlten Zeitraums (ohne Kulanz), sonst `null` */
+  paidUntil: string | null
   isAdmin: boolean
   /** Stripe-Abo: Status (`active`, `past_due`, `canceled` …), `null` ohne Abo */
   subscriptionStatus: string | null

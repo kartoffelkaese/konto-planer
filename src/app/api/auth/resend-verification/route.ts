@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { normalizeEmail } from '@/lib/accounts'
-import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
+import { checkMailCooldown, checkRateLimit, getClientIp, MAIL_COOLDOWN_MESSAGE, RATE_LIMITS } from '@/lib/rate-limit'
 import { cleanupUnverifiedUsers } from '@/lib/cleanupUnverifiedUsers'
 import {
   createVerificationToken,
@@ -18,6 +18,15 @@ export async function POST(request: Request) {
     const ip = getClientIp(request.headers)
     const body = await request.json()
     const email = normalizeEmail(String(body.email || ''))
+
+    // Mindestabstand je Adresse (startet schon mit der Registrierung), zählt nicht zum Stundenlimit
+    const cooldown = checkMailCooldown(`signup:${email}`)
+    if (!cooldown.allowed) {
+      return NextResponse.json(
+        { message: MAIL_COOLDOWN_MESSAGE, retryAfterSec: cooldown.retryAfterSec },
+        { status: 429 }
+      )
+    }
 
     const { allowed } = checkRateLimit(
       `resend-verification:${ip}:${email}`,

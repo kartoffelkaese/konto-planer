@@ -221,7 +221,7 @@ Nur für Konten mit `isSimpleAccount: false` (Statistik-Seite leitet sonst um).
 | `PATCH` | `/api/users/settings` | Einstellungen ändern (Schreibzugriff nötig) |
 | `PATCH` | `/api/users/email` | Neue E-Mail anfordern (Passwort); Bestätigungslink an neue Adresse |
 | `DELETE` | `/api/users/email/pending` | Ausstehende E-Mail-Änderung abbrechen |
-| `POST` | `/api/users/email/resend` | Bestätigungs-E-Mail für ausstehende Änderung erneut senden |
+| `POST` | `/api/users/email/resend` | Bestätigungs-E-Mail für ausstehende Änderung erneut senden. Frühestens 1 Minute nach der Änderungsanfrage bzw. der letzten Anfrage, sonst `429` mit `retryAfterSec` |
 | `PATCH` | `/api/users/password` | `{ "currentPassword", "newPassword" }` — Passwort ändern; beendet alle anderen Sitzungen (eigene Sitzung per `update({ refreshSessionVersion: true })` anheben) |
 | `PATCH` | `/api/users/kept-account` | `{ "accountId" }` — eigenes Konto wählen, das auf dem Level „Start“ beschreibbar bleibt. Die erste Wahl und die Wahl nach jeder Herabstufung sind frei, sonst einmal in 60 Tagen; zu früh → **409** mit `allowedAt` |
 | `DELETE` | `/api/users/delete` | Anmeldung löschen (mit Passwort) |
@@ -265,7 +265,7 @@ Admin-Recht per `npm run set-admin <E-Mail>`. Ohne Admin-Recht oder ohne aktive 
 
 | Methode | Pfad | Beschreibung |
 |---------|------|--------------|
-| `GET` | `/api/admin/users?q=&page=` | Nutzer (E-Mail-Suche, 25 je Seite) mit Level, Quelle, Ablauf, letzter Anmeldung und Zählwerten – keine Finanzdaten |
+| `GET` | `/api/admin/users?q=&page=` | Nutzer (E-Mail-Suche, 25 je Seite) mit Level, Quelle, Ablauf (`planExpiresAt` inkl. Kulanz, `paidUntil` = Ende des bezahlten Zeitraums bei laufendem Abo), letzter Anmeldung und Zählwerten – keine Finanzdaten |
 | `GET` | `/api/admin/users/:id/plan` | Verlauf der Level-Änderungen |
 | `DELETE` | `/api/admin/users/:id` | `{ "confirmEmail" }` — Nutzer samt eigener Konten, Buchungen und Split-Listen löschen; geteilte Konten bleiben den anderen Mitgliedern. Nicht für die eigene Anmeldung und nicht für Admins |
 | `POST` | `/api/admin/users/:id/sync` | Abo-Stand des Nutzers mit Stripe abgleichen |
@@ -290,7 +290,7 @@ Admin-Recht per `npm run set-admin <E-Mail>`. Ohne Admin-Recht oder ohne aktive 
 | `POST` | `/api/auth/verify-email` | `{ "token" }` — E-Mail bestätigen; Antwort `{ ok, purpose }` oder `{ ok: false, error }` mit `error` ∈ `missing`, `invalid`, `expired`, `taken`. `GET ?token=…` leitet nur zur Bestätigungsseite weiter |
 | `POST` | `/api/auth/forgot-password` | `{ "email" }` — Link zum Zurücksetzen (1 h gültig); Antwort immer gleich. Je Adresse höchstens eine Anfrage pro Minute, sonst `429` mit `retryAfterSec` |
 | `POST` | `/api/auth/reset-password` | `{ "token", "password" }` — neues Passwort; beendet alle Sitzungen |
-| `POST` | `/api/auth/resend-verification` | `{ "email" }` — Bestätigungs-E-Mail erneut (Registrierung) |
+| `POST` | `/api/auth/resend-verification` | `{ "email" }` — Bestätigungs-E-Mail erneut (Registrierung). Frühestens 1 Minute nach der Registrierung bzw. der letzten Anfrage, sonst `429` mit `retryAfterSec` |
 | `POST` | `/api/error-log` | Client-Fehler ans Server-Log (Session, Rate-Limit) |
 
 ## Split-Budget (eigenes Modul)

@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/Button'
+import { formatCountdown, getRetryAfterSec, RESEND_COOLDOWN_SEC, useResendCooldown } from '@/hooks/useResendCooldown'
 
 function CheckEmailContent() {
   const searchParams = useSearchParams()
@@ -11,6 +12,8 @@ function CheckEmailContent() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Die Seite folgt direkt auf die Registrierung – die erste Mail ist gerade unterwegs
+  const { remainingSec, start: startCooldown } = useResendCooldown(RESEND_COOLDOWN_SEC)
 
   const handleResend = async () => {
     if (!email) return
@@ -24,10 +27,13 @@ function CheckEmailContent() {
         body: JSON.stringify({ email }),
       })
       const data = await response.json()
+      const retryAfterSec = getRetryAfterSec(data)
+      if (retryAfterSec) startCooldown(retryAfterSec)
       if (!response.ok) {
         throw new Error(data.message || 'Anfrage fehlgeschlagen')
       }
       setMessage(data.message)
+      startCooldown()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten')
     } finally {
@@ -71,8 +77,13 @@ function CheckEmailContent() {
               loading={loading}
               loadingText="Wird gesendet…"
               onClick={handleResend}
+              disabled={remainingSec > 0}
             >
-              Bestätigungs-E-Mail erneut senden
+              {remainingSec > 0 ? (
+                <span className="tabular-nums">Erneut senden in {formatCountdown(remainingSec)}</span>
+              ) : (
+                'Bestätigungs-E-Mail erneut senden'
+              )}
             </Button>
           )}
         </div>

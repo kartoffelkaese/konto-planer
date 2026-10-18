@@ -8,6 +8,7 @@ import { Button } from '@/components/Button'
 import PageLoader from '@/components/PageLoader'
 import AuthAlert from '@/components/auth/AuthAlert'
 import AuthFormField from '@/components/auth/AuthFormField'
+import { formatCountdown, getRetryAfterSec, useResendCooldown } from '@/hooks/useResendCooldown'
 import AuthPageLayout, {
   AuthAlternateLink,
   AuthCard,
@@ -23,6 +24,7 @@ function LoginForm() {
   const [resendMessage, setResendMessage] = useState<string | null>(null)
   const [lastEmail, setLastEmail] = useState('')
   const [showResend, setShowResend] = useState(false)
+  const { remainingSec: resendRemainingSec, start: startResendCooldown } = useResendCooldown()
 
   const verifyError = searchParams.get('verifyError')
   const authError = searchParams.get('error')
@@ -79,6 +81,7 @@ function LoginForm() {
       })
       const data = await response.json()
       setResendMessage(data.message)
+      startResendCooldown(getRetryAfterSec(data) ?? undefined)
     } catch {
       setResendMessage('Anfrage fehlgeschlagen. Bitte später erneut versuchen.')
     } finally {
@@ -197,8 +200,15 @@ function LoginForm() {
                         loading={resendLoading}
                         loadingText="Wird gesendet…"
                         onClick={handleResend}
+                        disabled={resendRemainingSec > 0}
                       >
-                        Bestätigungs-E-Mail erneut senden
+                        {resendRemainingSec > 0 ? (
+                          <span className="tabular-nums">
+                            Erneut senden in {formatCountdown(resendRemainingSec)}
+                          </span>
+                        ) : (
+                          'Bestätigungs-E-Mail erneut senden'
+                        )}
                       </Button>
                       {resendMessage && (
                         <p className="text-xs text-secondary">{resendMessage}</p>

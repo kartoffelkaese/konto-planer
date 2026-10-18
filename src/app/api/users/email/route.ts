@@ -10,6 +10,7 @@ import {
 } from '@/lib/api-auth'
 import { isValidEmail, normalizeEmail } from '@/lib/accounts'
 import {
+  checkMailCooldown,
   checkRateLimit,
   getClientIp,
   RATE_LIMITS,
@@ -93,6 +94,8 @@ export async function PATCH(request: NextRequest) {
         newEmail
       )
       await sendEmailChangeVerificationEmail(newEmail, rawToken)
+      // Startet den Mindestabstand für „Link erneut senden“
+      checkMailCooldown(`email-change:${user.id}`)
     } catch (error) {
       await prisma.user.update({
         where: { id: user.id },

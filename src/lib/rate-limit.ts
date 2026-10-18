@@ -36,8 +36,8 @@ export const RATE_LIMITS = {
   recurringBulk: { limit: 10, windowMs: 15 * 60 * 1000 },
   backupRestore: { limit: 5, windowMs: 60 * 60 * 1000 },
   passwordResetRequest: { limit: 3, windowMs: 60 * 60 * 1000 },
-  /** Mindestabstand zwischen zwei Reset-Mails an dieselbe Adresse */
-  passwordResetCooldown: { limit: 1, windowMs: 60 * 1000 },
+  /** Mindestabstand zwischen zwei gleichartigen Mails an dieselbe Adresse (siehe `checkMailCooldown`) */
+  mailCooldown: { limit: 1, windowMs: 60 * 1000 },
   passwordReset: { limit: 10, windowMs: 60 * 60 * 1000 },
   passwordChange: { limit: 5, windowMs: 60 * 60 * 1000 },
   verifyEmail: { limit: 20, windowMs: 60 * 60 * 1000 },
@@ -92,6 +92,18 @@ export function checkRateLimit(
 
   return { allowed: true }
 }
+
+/**
+ * Mindestabstand von 1 Minute zwischen zwei gleichartigen Mails (Schlüssel z. B. `signup:<E-Mail>`).
+ * Unabhängig von der IP; der erste Aufruf startet die Wartezeit, auch wenn danach nichts versandt
+ * wird – so verrät die Sperre nicht, ob es die Adresse gibt.
+ */
+export function checkMailCooldown(key: string) {
+  return checkRateLimit(`mail-cooldown:${key}`, RATE_LIMITS.mailCooldown)
+}
+
+/** Antworttext, wenn `checkMailCooldown` sperrt */
+export const MAIL_COOLDOWN_MESSAGE = 'Bitte warte kurz, bevor du die E-Mail erneut anforderst.'
 
 /** Nur für Tests: aktuelle Anzahl gespeicherter Zähler */
 export function rateLimitBucketCount(): number {

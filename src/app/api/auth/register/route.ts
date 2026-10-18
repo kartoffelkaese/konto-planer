@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { EmailVerificationPurpose } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
-import { checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
+import { checkMailCooldown, checkRateLimit, getClientIp, RATE_LIMITS } from '@/lib/rate-limit'
 import { hashPassword } from '@/lib/password-hash'
 import { validatePassword } from '@/lib/password-policy'
 import {
@@ -124,6 +124,9 @@ export async function POST(request: Request) {
 
     // Hash immer berechnen, damit die Antwortzeit nicht verrät, ob die Adresse schon existiert
     const passwordHash = await hashPassword(password)
+
+    // Startet den Mindestabstand für „Bestätigungs-E-Mail erneut senden“ – für jede Adresse gleich
+    checkMailCooldown(`signup:${email}`)
 
     const existingUser = await prisma.user.findFirst({
       where: {

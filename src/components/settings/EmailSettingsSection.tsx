@@ -5,10 +5,13 @@ import { useSession } from 'next-auth/react'
 import { Button } from '@/components/Button'
 import PasswordChangeForm from '@/components/settings/PasswordChangeForm'
 import { useToast } from '@/hooks/useToast'
+import { formatCountdown, getRetryAfterSec, useResendCooldown } from '@/hooks/useResendCooldown'
 import {
   cancelPendingEmailChange,
   requestEmailChange,
   resendEmailChange,
+  ApiError,
+  getApiErrorMessage,
   withApiErrorFallback,
 } from '@/lib/api'
 
@@ -31,6 +34,7 @@ export default function EmailSettingsSection({
   const [emailError, setEmailError] = useState<string | null>(null)
   const [emailLoading, setEmailLoading] = useState(false)
   const [pendingResendLoading, setPendingResendLoading] = useState(false)
+  const { remainingSec: resendRemainingSec, start: startResendCooldown } = useResendCooldown()
 
   const handleEmailChange = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,6 +51,7 @@ export default function EmailSettingsSection({
         'success'
       )
       onPendingEmailChange(data.pendingEmail ?? null)
+      startResendCooldown()
       setShowEmailForm(false)
       setNewEmail('')
       setPassword('')
@@ -81,11 +86,14 @@ export default function EmailSettingsSection({
     setPendingResendLoading(true)
     setEmailError(null)
     try {
-      await withApiErrorFallback(resendEmailChange(), 'Senden fehlgeschlagen')
+      await resendEmailChange()
       showToast('Bestätigungs-E-Mail erneut gesendet', 'success')
+      startResendCooldown()
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten'
+      // Bei aktiver Sperre liefert der Server die Restzeit
+      const retryAfterSec = err instanceof ApiError ? getRetryAfterSec(err.data) : null
+      if (retryAfterSec) startResendCooldown(retryAfterSec)
+      const message = getApiErrorMessage(err, 'Senden fehlgeschlagen')
       setEmailError(message)
       showToast(message, 'error')
     } finally {
@@ -123,8 +131,13 @@ export default function EmailSettingsSection({
               loading={pendingResendLoading}
               loadingText="Wird gesendet…"
               onClick={handleResendPendingEmail}
+              disabled={resendRemainingSec > 0}
             >
-              Link erneut senden
+              {resendRemainingSec > 0 ? (
+                <span className="tabular-nums">Erneut senden in {formatCountdown(resendRemainingSec)}</span>
+              ) : (
+                'Link erneut senden'
+              )}
             </Button>
             <Button
               type="button"

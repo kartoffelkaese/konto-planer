@@ -61,7 +61,7 @@ export const TEST_USER = {
   email: 'nutzer@beispiel.de',
   passwordHash: '$2b$10$invalidinvalidinvalidinvalidinvalidinvalidinvalidinva',
   emailVerified: new Date('2026-01-01'),
-  pendingEmail: null,
+  pendingEmail: null as string | null,
   splitDisplayName: null,
   sessionVersion: 0,
   plan: 'FULL' as 'BASIC' | 'FULL',

@@ -349,8 +349,9 @@ Lokal prüfen: `npm run audit:check` (High/Critical müssen 0 sein). Geprüft wi
 | `find-my-way`, `valibot` | Prisma-Dev-CLI | Nur Entwicklung |
 | `brace-expansion@^5.0.8` | ReDoS | ESLint-Plugins |
 | `postcss@^8.5.29`, `@hono/node-server@^1.19.13` | gemeldete Lücken in transitiven Paketen | Build bzw. Prisma-Dev-CLI |
+| `@next/eslint-plugin-next` → `fast-glob` = `npm:tinyglobby@^0.2.17` | `fast-glob` zieht `micromatch` → `braces` (Stack-Exhaustion, GHSA-vfj7-8cjw-p6xm; `braces` wird nicht mehr gepflegt). Das Plugin nutzt nur `globSync(…, { onlyDirectories: true })` für `settings.next.rootDir` – `tinyglobby` bietet dieselbe Funktion ohne `braces` | Dev: Lint/CI |
 
-Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber offiziell anhebt — dann Override ggf. entfernen.
+Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber offiziell anhebt — dann Override ggf. entfernen. Bei `eslint-config-next`-Updates prüfen, ob `@next/eslint-plugin-next` `fast-glob` noch verwendet; falls nicht, den `tinyglobby`-Override entfernen.
 
 ### DB-Sicherheit
 

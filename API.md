@@ -78,6 +78,8 @@ Wenn das aktive Konto als **einfaches Konto** markiert ist:
 | `PATCH` | `/api/transactions/:id` | Aktualisieren (inkl. `isConfirmed`, `lastConfirmedDate`, Umbuchung) |
 | `DELETE` | `/api/transactions/:id` | Löschen |
 | `GET` | `/api/transactions/recurring` | Wiederkehrende Vorlagen inkl. Intervall und Fälligkeit (Planungskonto) |
+| `POST` | `/api/transactions/recurring/detect` | Kontoauszug (CSV) auswerten und wiederkehrende Zahlungen vorschlagen – speichert nichts (Planungskonto, alle Level) |
+| `POST` | `/api/transactions/recurring/bulk` | Mehrere wiederkehrende Zahlungen auf einmal anlegen, optional Gehaltstag setzen (Planungskonto, alle Level) |
 | `GET` | `/api/transactions/totals` | Summen fürs Konto/Gehaltsmonat |
 | `POST` | `/api/transactions/create-pending` | Fällige ausstehende Instanzen erzeugen |
 | `POST` | `/api/transactions/create-pending/undo` | Zuletzt erzeugte Instanzen wieder entfernen. Body: `items` (Stand je Buchung direkt nach dem Erstellen: `id`, `merchant`, `description`, `amount`, `date`, `categoryId`; max. 500), `mode`: `ask` (Standard; bei bearbeiteten/bestätigten Buchungen wird nichts gelöscht, Antwort `status: "needs-confirmation"` mit `changed`, `unchangedCount`), `unchanged` (geänderte behalten) oder `all`. Sonst `status: "done"` mit `deleted`, `kept`. Gegenbuchungen von Umbuchungen werden mit entfernt |
@@ -123,7 +125,7 @@ Antwort: `{ transactions, total, page, hasMore }`
 | `dkbExport` | DKB | `Buchungsdatum`, `Status`, `Zahlungspflichtige*r`, `Zahlungsempfänger*in`, `Verwendungszweck`, `Umsatztyp`, `Betrag (€)` |
 | `ingExport` | ING | `Datum`, `Empfänger/Auftraggeber`, `Verwendungszweck`, `Betrag` (vorzeichenbehaftet) |
 
-Antwort: `{ formatId, formatLabel, bankId, bankName, headerMismatch?, availableFormats, rows, merchants, summary }` – `rows` sind **nach Datum aufsteigend** sortiert; `headerMismatch: true` wenn CSV-Spalten nicht zum gewählten Format passen; `summary.confirmable` zählt bestätigbare Duplikate und wiederkehrende Zeilen; `summary.recurring` zählt erkannte wiederkehrende Treffer; `summary.dateRange` – Duplikatprüfung nur in diesem Bereich
+Antwort: `{ formatId, formatLabel, bankId, bankName, headerMismatch?, availableFormats, rows, merchants, summary }` – `rows` sind **nach Datum aufsteigend** sortiert; `headerMismatch: true` wenn CSV-Spalten nicht zum gewählten Format passen; `summary.confirmable` zählt bestätigbare Duplikate und wiederkehrende Zeilen; `summary.recurring` zählt erkannte wiederkehrende Treffer; `summary.dateRange` – Duplikatprüfung nur in diesem Bereich; `recurringSuggestionCount` – erkannte, noch nicht angelegte wiederkehrende Zahlungen in der Datei (Hinweis auf den Assistenten)
 
 **Bestätigungs-Flow (Duplikat + CSV „Gebucht“ + DB offen):** `canConfirmDuplicate: true` – keine Neuanlage; Commit mit `confirmExistingId` setzt nur `isConfirmed: true` auf der bestehenden Transaktion.
 

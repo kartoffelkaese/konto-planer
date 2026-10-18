@@ -42,18 +42,22 @@ import PageContextHeader from '@/components/PageContextHeader'
 import { resolveTransactionMerchantName } from '@/lib/merchantCategories'
 import { Button } from '@/components/Button'
 import PendingUndoButton from '@/components/PendingUndoButton'
+import EmptyState from '@/components/EmptyState'
+import RecurringDetectionDialog from '@/components/recurring/RecurringDetectionDialog'
+import RecurringDetectionIntro from '@/components/recurring/RecurringDetectionIntro'
 import { usePendingUndo } from '@/contexts/PendingUndoContext'
 
 export default function RecurringTransactionsPage() {
   const router = useRouter()
   const { showToast } = useToast()
   const { registerCreated } = usePendingUndo()
-  const { salaryDay, canWrite, isSimpleAccount, loading: settingsLoading, accountName } = useUserSettings()
+  const { salaryDay, canWrite, isSimpleAccount, loading: settingsLoading, accountName, settings } = useUserSettings()
   const [transactions, setTransactions] = useState<RecurringWithStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isCreatingPending, setIsCreatingPending] = useState(false)
   const [showNewTransactionModal, setShowNewTransactionModal] = useState(false)
+  const [showDetectionDialog, setShowDetectionDialog] = useState(false)
   const [showEditTransactionModal, setShowEditTransactionModal] = useState(false)
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null)
   const [togglingPauseId, setTogglingPauseId] = useState<string | null>(null)
@@ -232,6 +236,15 @@ export default function RecurringTransactionsPage() {
               {canWrite && (
                 <Button
                   type="button"
+                  variant="secondary"
+                  onClick={() => setShowDetectionDialog(true)}
+                >
+                  Aus Kontoauszug erkennen
+                </Button>
+              )}
+              {canWrite && (
+                <Button
+                  type="button"
                   onClick={() => setShowNewTransactionModal(true)}
                 >
                   <PlusIcon className="h-5 w-5" aria-hidden />
@@ -315,8 +328,13 @@ export default function RecurringTransactionsPage() {
               <tbody>
                 {transactions.length === 0 ? (
                   <tr>
-                    <td colSpan={canWrite ? 9 : 8} className="text-center p-4 text-sm text-secondary">
-                      Keine wiederkehrenden Zahlungen vorhanden
+                    <td colSpan={canWrite ? 9 : 8}>
+                      <EmptyState
+                        title="Keine wiederkehrenden Zahlungen vorhanden"
+                        description={canWrite ? 'Lade deinen Kontoauszug der letzten 18 Monate hoch – wir schlagen dir vor, welche Zahlungen regelmäßig wiederkehren.' : undefined}
+                        actionLabel={canWrite ? 'Aus Kontoauszug erkennen' : undefined}
+                        onAction={canWrite ? () => setShowDetectionDialog(true) : undefined}
+                      />
                     </td>
                   </tr>
                 ) : (
@@ -421,9 +439,12 @@ export default function RecurringTransactionsPage() {
             {/* Mobile-Ansicht */}
             <div className="md:hidden space-y-4">
               {transactions.length === 0 ? (
-                <div className="text-center py-8 text-sm text-secondary">
-                  Keine wiederkehrenden Zahlungen vorhanden
-                </div>
+                <EmptyState
+                  title="Keine wiederkehrenden Zahlungen vorhanden"
+                  description={canWrite ? 'Lade deinen Kontoauszug der letzten 18 Monate hoch – wir schlagen dir vor, welche Zahlungen regelmäßig wiederkehren.' : undefined}
+                  actionLabel={canWrite ? 'Aus Kontoauszug erkennen' : undefined}
+                  onAction={canWrite ? () => setShowDetectionDialog(true) : undefined}
+                />
               ) : (
                 sortedTransactions.map((transaction) => (
                   <RecurringMobileCard
@@ -445,6 +466,18 @@ export default function RecurringTransactionsPage() {
           </div>
         </div>
       </div>
+
+      <RecurringDetectionIntro
+        userId={settings?.id ?? null}
+        eligible={!loading && !error && canWrite && transactions.length === 0}
+        onStart={() => setShowDetectionDialog(true)}
+      />
+
+      <RecurringDetectionDialog
+        isOpen={showDetectionDialog}
+        onClose={() => setShowDetectionDialog(false)}
+        onCreated={loadTransactions}
+      />
 
       {/* Neue Transaktion Modal */}
       <Modal

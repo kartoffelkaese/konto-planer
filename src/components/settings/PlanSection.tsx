@@ -61,7 +61,9 @@ export default function PlanSection() {
       ? `${rhythm} – gekündigt zum ${date}. Danach gilt „${PLAN_LABELS.BASIC}“.`
       : billing.status === 'trialing'
         ? `${rhythm} – beginnt am ${date}, bis dahin läuft deine Testphase.`
-        : `${rhythm} – verlängert sich am ${date}.`
+        : billing.status === 'past_due'
+          ? `${rhythm} – die letzte Zahlung ist noch offen.`
+          : `${rhythm} – verlängert sich am ${date}.`
   } else if (trialDays !== null) {
     status = `Testphase – noch ${trialDays === 1 ? '1 Tag' : `${trialDays} Tage`}, bis ${formatDate(settings.planExpiresAt!)}. Danach gilt „${PLAN_LABELS.BASIC}“.`
   } else if (trialEnded) {

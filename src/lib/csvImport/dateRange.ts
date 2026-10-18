@@ -84,3 +84,20 @@ export function toImportDateRangeIso(
     end: formatDateIso(range.end),
   }
 }
+
+/**
+ * Ende des Zeitraums, den ein Export abdeckt: aus den Metadaten (z. B. DKB „Zeitraum“),
+ * sonst die letzte Buchung. Für die Frage, ob eine wiederkehrende Zahlung noch läuft.
+ */
+export function getExportPeriodEnd(
+  rows: Array<{ date: Date | null }>,
+  csvText: string,
+  parseMetadata?: (csvText: string) => ImportDateRange | null
+): Date | null {
+  const fromMetadata = parseMetadata?.(csvText) ?? parseZeitraumFromCsv(csvText)
+  const fromRows = getImportDateRange(rows)
+  if (fromMetadata && fromRows) {
+    return fromMetadata.end > fromRows.end ? fromMetadata.end : fromRows.end
+  }
+  return fromMetadata?.end ?? fromRows?.end ?? null
+}

@@ -31,12 +31,14 @@ export function useCsvImport(onImported: () => void) {
   const [rows, setRows] = useState<EditableImportRow[]>([])
   const [stats, setStats] = useState<ImportSummary | null>(null)
   const [formatMeta, setFormatMeta] = useState<ImportFormatMeta | null>(null)
+  const [recurringSuggestionCount, setRecurringSuggestionCount] = useState(0)
 
   const resetImportState = useCallback(() => {
     setRows([])
     setMerchants([])
     setStats(null)
     setFormatMeta(null)
+    setRecurringSuggestionCount(0)
     csvTextRef.current = ''
     if (fileInputRef.current) fileInputRef.current.value = ''
   }, [])
@@ -46,6 +48,7 @@ export function useCsvImport(onImported: () => void) {
       setMerchants(preview.merchants)
       setRows(toEditableRows(preview.rows))
       setStats(preview.summary)
+      setRecurringSuggestionCount(preview.recurringSuggestionCount ?? 0)
       setFormatMeta({
         formatId: preview.formatId,
         formatLabel: preview.formatLabel,
@@ -71,6 +74,9 @@ export function useCsvImport(onImported: () => void) {
     setOpen(false)
     resetImportState()
   }
+
+  /** Datei des laufenden Imports – für den Assistenten „Aus Kontoauszug erkennen“ */
+  const getCsvText = () => csvTextRef.current
 
   const selectedImportCount = useMemo(() => rowsToImport(rows).length, [rows])
 
@@ -231,6 +237,8 @@ export function useCsvImport(onImported: () => void) {
     rows,
     stats,
     formatMeta,
+    recurringSuggestionCount,
+    getCsvText,
     selectedImportCount,
     selectedConfirmCount,
     selectedCount,

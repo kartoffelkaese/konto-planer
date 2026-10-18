@@ -99,8 +99,8 @@ export default function PlanBilling() {
       <div className="mt-5 space-y-3">
         {billing.status === 'past_due' && (
           <p className="rounded-control bg-pending-bg p-3 text-sm text-primary">
-            Die letzte Zahlung ist offen. Bitte prüfe dein Zahlungsmittel, damit „{PLAN_LABELS.FULL}“
-            erhalten bleibt.
+            Die Abbuchung hat nicht geklappt. Stripe versucht es in den nächsten Tagen erneut – prüfe
+            bitte in der Abo-Verwaltung dein Zahlungsmittel, damit „{PLAN_LABELS.FULL}“ erhalten bleibt.
           </p>
         )}
         <Button

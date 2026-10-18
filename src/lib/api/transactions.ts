@@ -1,4 +1,5 @@
 import { Transaction, CreateTransactionData } from '@/types'
+import type { RecurringSuggestion, SalaryDaySuggestion } from '@/lib/recurringDetection'
 import type { RecurringWithStatus } from '@/lib/recurringStatus'
 import { toISOString } from '@/lib/dateUtils'
 import type { PendingUndoItem, PendingUndoMode, PendingUndoResult } from '@/lib/pendingUndo'
@@ -162,4 +163,49 @@ export const setRecurringPaused = async (
   paused: boolean
 ): Promise<Transaction> => {
   return updateTransaction(id, { isRecurringPaused: paused })
+}
+
+export type { RecurringSuggestion, SalaryDaySuggestion }
+
+export type RecurringDetectionResponse = {
+  formatId: string
+  formatLabel: string
+  headerMismatch?: boolean
+  availableFormats: Array<{ id: string; label: string }>
+  period: { start: string; end: string } | null
+  rowCount: number
+  suggestions: RecurringSuggestion[]
+  salaryDaySuggestion: SalaryDaySuggestion | null
+}
+
+/** Wertet einen Kontoauszug aus und schlägt wiederkehrende Zahlungen vor (speichert nichts) */
+export const detectRecurring = async (options: {
+  csvText: string
+  formatId?: string
+}): Promise<RecurringDetectionResponse> => {
+  return apiFetch<RecurringDetectionResponse>('/transactions/recurring/detect', {
+    method: 'POST',
+    body: JSON.stringify(options),
+  })
+}
+
+export type RecurringBulkItem = {
+  merchantId?: string | null
+  merchant: string
+  createNewMerchant?: boolean
+  amount: number
+  date: string
+  recurringInterval: string
+  categoryId?: string | null
+}
+
+/** Legt mehrere wiederkehrende Zahlungen an und setzt optional den Gehaltstag */
+export const createRecurringBulk = async (payload: {
+  items: RecurringBulkItem[]
+  salaryDay?: number
+}): Promise<{ created: number; salaryDay: number | null }> => {
+  return apiFetch('/transactions/recurring/bulk', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
 }

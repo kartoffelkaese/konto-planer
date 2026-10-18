@@ -226,3 +226,22 @@ describe('isTransactionPending', () => {
     expect(isTransactionPending({ ...tx, isConfirmed: true }, 23)).toBe(false)
   })
 })
+
+describe('wiederkehrende Termine über die Zeitumstellung', () => {
+  const berlinDay = (date: Date) =>
+    new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin' }).format(date)
+
+  it('behält den Tag im Monat nach dem Wechsel zur Winterzeit', () => {
+    // Anker wie vom Formular gespeichert: Mitternacht UTC (02:00 Sommerzeit)
+    const anchor = new Date('2026-09-01T00:00:00.000Z')
+    expect(berlinDay(getNextRecurringDueDate(anchor, 'monthly', new Date('2026-10-18T10:00:00Z')))).toBe('2026-11-01')
+    expect(
+      getRecurringDueDatesInRange(anchor, 'monthly', new Date('2026-10-01T10:00:00Z'), new Date('2027-04-30T10:00:00Z')).map(berlinDay)
+    ).toEqual(['2026-10-01', '2026-11-01', '2026-12-01', '2027-01-01', '2027-02-01', '2027-03-01', '2027-04-01'])
+  })
+
+  it('auch umgekehrt: Anker in der Winterzeit, Termine in der Sommerzeit', () => {
+    const anchor = new Date('2026-01-15T00:00:00.000Z')
+    expect(berlinDay(getNextRecurringDueDate(anchor, 'quarterly', new Date('2026-04-01T10:00:00Z')))).toBe('2026-04-15')
+  })
+})

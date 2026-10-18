@@ -14,9 +14,11 @@ import {
 import type { CsvImportFormatId } from '@/lib/csvImport/types'
 import { buildImportPreviewRows } from '@/lib/csvImport/buildPreview'
 import {
+  getExportPeriodEnd,
   getImportDateRange,
   toImportDateRangeIso,
 } from '@/lib/csvImport/dateRange'
+import { detectRecurringPayments } from '@/lib/recurringDetection'
 import { CSV_IMPORT_MAX_BYTES } from '@/lib/csvImport/types'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { getBankById } from '@/lib/germanBanks'
@@ -192,6 +194,18 @@ export async function POST(request: Request) {
       }
     )
 
+    // Hinweis auf den Assistenten „Aus Kontoauszug erkennen“: nur neue, laufende Muster
+    const recurringSuggestionCount = account.isSimpleAccount
+      ? 0
+      : detectRecurringPayments(
+          parsedRows.filter((row) => row.errors.length === 0),
+          {
+            merchants: merchantsForPreview,
+            templates: recurringTemplates,
+            periodEnd: getExportPeriodEnd(parsedRows, csvText, format?.parseMetadata),
+          }
+        ).suggestions.filter((s) => s.status === 'active').length
+
     const summary = {
       total: previewRows.length,
       duplicates: previewRows.filter((r) => r.isDuplicate).length,
@@ -223,6 +237,7 @@ export async function POST(request: Request) {
         })),
       })),
       summary,
+      recurringSuggestionCount,
     })
   } catch (error) {
     logger.error('CSV preview error', error, { endpoint: '/api/transactions/import/preview' })

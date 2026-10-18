@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import Modal from '@/components/Modal'
 import { Button } from '@/components/Button'
@@ -9,6 +10,7 @@ import ImportFormatInfo from '@/components/csvImport/ImportFormatInfo'
 import ImportPreviewRowCard from '@/components/csvImport/ImportPreviewRowCard'
 import ImportSummaryStats from '@/components/csvImport/ImportSummaryStats'
 import { useCsvImport } from '@/components/csvImport/useCsvImport'
+import RecurringDetectionDialog from '@/components/recurring/RecurringDetectionDialog'
 
 type TransactionCsvImportProps = {
   onImported: () => void
@@ -26,6 +28,8 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
     rows,
     stats,
     formatMeta,
+    recurringSuggestionCount,
+    getCsvText,
     selectedImportCount,
     selectedConfirmCount,
     selectedCount,
@@ -40,6 +44,13 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
     selectNone,
     selectWithoutDuplicates,
   } = useCsvImport(onImported)
+  // Datei für den Assistenten „Aus Kontoauszug erkennen“, wenn er aus dem Import geöffnet wird
+  const [detection, setDetection] = useState<{ csvText: string; formatId?: string } | null>(null)
+
+  const openDetection = () => {
+    setDetection({ csvText: getCsvText(), formatId: formatMeta?.formatId })
+    handleClose()
+  }
 
   if (settingsLoading || !csvImportAvailable || !accountEntitlements.csvImport) {
     return null
@@ -79,6 +90,22 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
               disabled={loading}
               onFormatChange={handleFormatOverride}
             />
+          )}
+
+          {recurringSuggestionCount > 0 && !settings?.isSimpleAccount && (
+            <div className="flex flex-col gap-2 rounded-control bg-accent-subtle p-3 text-sm text-primary sm:flex-row sm:items-center">
+              <p className="flex-1">
+                {recurringSuggestionCount === 1
+                  ? 'In dieser Datei steckt eine mögliche wiederkehrende Zahlung, die noch nicht angelegt ist.'
+                  : `In dieser Datei stecken ${recurringSuggestionCount} mögliche wiederkehrende Zahlungen, die noch nicht angelegt sind.`}
+                <span className="block text-xs text-secondary">
+                  Der Import wird dabei abgebrochen; du kannst ihn danach erneut starten.
+                </span>
+              </p>
+              <Button type="button" variant="secondary" size="sm" onClick={openDetection}>
+                Vorschläge ansehen
+              </Button>
+            </div>
           )}
 
           {stats && (
@@ -145,6 +172,14 @@ export default function TransactionCsvImport({ onImported }: TransactionCsvImpor
           </div>
         </div>
       </Modal>
+
+      <RecurringDetectionDialog
+        isOpen={detection !== null}
+        onClose={() => setDetection(null)}
+        onCreated={onImported}
+        initialCsvText={detection?.csvText}
+        initialFormatId={detection?.formatId}
+      />
     </>
   )
 }

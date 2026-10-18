@@ -59,18 +59,26 @@ export function addRecurringInterval(
 ): dayjs.Dayjs {
   const d = dayjs.isDayjs(date) ? date.tz(DEFAULT_TIMEZONE) : toBerlinDay(date)
 
+  let next: dayjs.Dayjs
   switch (interval) {
     case 'monthly':
-      return d.add(1, 'month')
+      next = d.add(1, 'month')
+      break
     case 'quarterly':
-      return d.add(3, 'month')
+      next = d.add(3, 'month')
+      break
     case 'semiannual':
-      return d.add(6, 'month')
+      next = d.add(6, 'month')
+      break
     case 'yearly':
-      return d.add(1, 'year')
+      next = d.add(1, 'year')
+      break
     default:
       return d
   }
+  // `add` behält den UTC-Versatz des Ausgangsdatums; über die Zeitumstellung hinweg
+  // läge der Termin sonst auf 23 Uhr des Vortags. Daher den Kalendertag neu verankern.
+  return dayjs.tz(next.format('YYYY-MM-DD'), DEFAULT_TIMEZONE)
 }
 
 const MAX_RECURRING_ITERATIONS = 500

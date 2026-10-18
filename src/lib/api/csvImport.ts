@@ -50,6 +50,8 @@ export type CsvImportPreviewResponse = {
     confirmable: number
     dateRange: { start: string; end: string } | null
   }
+  /** Erkannte, noch nicht angelegte wiederkehrende Zahlungen in der Datei */
+  recurringSuggestionCount?: number
 }
 
 export type CsvImportPreviewOptions = {

@@ -10,6 +10,7 @@ Webapp zur Verwaltung persönlicher Finanzen: mehrere Konten, Transaktionen, Kat
 - **Planungskonto:** Dashboard mit Kategorien, wiederkehrende Zahlungen (monatlich, vierteljährlich, halbjährlich, jährlich), Gehaltsmonat, Bestätigungs-Workflow, Verfügbar-Saldo
 - **Einfaches Konto:** reduzierte Ansicht für Sparkonten/Depots (Saldo, Kalendermonat, letzte Buchungen)
 - Transaktionen, Umbuchungen zwischen Konten, CSV-Import (DKB, ING)
+- **Wiederkehrende Zahlungen aus dem Kontoauszug erkennen:** Bank-Export der letzten 18 Monate hochladen (Einführung beim ersten Besuch von „Wiederkehrend“), die App schlägt regelmäßige Einnahmen und Ausgaben vor (inkl. schwankender Beträge, beendeter Verträge und Gehaltstag); die Datei wird nur ausgewertet, nicht gespeichert
 - Statistiken mit getrennter Darstellung von Einnahmen und Ausgaben pro Monat
 - Kategorien und Händler; geteilte Konten (OWNER, MEMBER, Nur-Lese)
 - **Split-Budget:** gemeinsame Ausgabenlisten, Salden, Ausgleich, E-Mail-Einladungen, **öffentliche Lese-Links** (`/split/s/…`)

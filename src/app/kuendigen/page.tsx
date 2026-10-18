@@ -30,7 +30,9 @@ export default function CancelPage() {
   }
 
   const billing = settings?.billing
-  const loggedIn = status === 'authenticated'
+  // Ohne Einstellungen (z. B. Sitzung eines gelöschten Nutzers) gilt die Seite als abgemeldet –
+  // dann bleibt die Kündigung per Bestätigungslink möglich
+  const loggedIn = status === 'authenticated' && settings !== null
   const available = loggedIn ? Boolean(billing?.enabled) : BILLING_ENABLED_PUBLIC
 
   const run = async (action: () => Promise<string>) => {

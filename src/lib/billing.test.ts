@@ -151,6 +151,20 @@ describe('syncCustomer', () => {
     expect(stripeMock.subscriptions.list).not.toHaveBeenCalled()
   })
 
+  it('Nutzer zwischendurch gelöscht (Abo-Ende beim Löschen): kein Fehler', async () => {
+    prismaMock.user.findUnique.mockResolvedValue({ id: 'u1', plan: 'FULL', planSource: 'STRIPE', planExpiresAt: null })
+    listReturns(stripeSubscription({ status: 'canceled', ended_at: 100 }))
+    prismaMock.user.update.mockRejectedValue(Object.assign(new Error('No record was found for an update.'), { code: 'P2025' }))
+    expect(await syncCustomer('cus_1')).toBe('unknown-customer')
+  })
+
+  it('andere Datenbankfehler werden weitergereicht (Stripe stellt erneut zu)', async () => {
+    prismaMock.user.findUnique.mockResolvedValue({ id: 'u1', plan: 'BASIC', planSource: null, planExpiresAt: null })
+    listReturns(stripeSubscription())
+    prismaMock.user.update.mockRejectedValue(new Error('Verbindung verloren'))
+    await expect(syncCustomer('cus_1')).rejects.toThrow('Verbindung verloren')
+  })
+
   it('neues Abo: setzt „Komplett“ aus Stripe und protokolliert den Wechsel', async () => {
     prismaMock.user.findUnique.mockResolvedValue({ id: 'u1', plan: 'BASIC', planSource: null, planExpiresAt: null })
     listReturns(stripeSubscription())

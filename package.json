@@ -1,6 +1,6 @@
 {
   "name": "konto-planer",
-  "version": "9.7.8",
+  "version": "9.7.9",
   "private": true,
   "scripts": {
     "dev": "next dev -H localhost",

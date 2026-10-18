@@ -149,31 +149,38 @@ export async function syncCustomer(stripeCustomerId: string): Promise<SyncResult
     ? getStoredPlan({ plan: state.plan!.plan, planExpiresAt: state.plan!.expiresAt }, now)
     : before
 
-  await prisma.$transaction(async (tx) => {
-    await tx.user.update({
-      where: { id: user.id },
-      data: {
-        stripeSubscriptionId: state.subscriptionId,
-        stripeSubscriptionStatus: state.status,
-        planInterval: state.interval,
-        planCancelAtPeriodEnd: state.cancelAtPeriodEnd,
-        ...(setPlan
-          ? { plan: state.plan!.plan, planSource: 'STRIPE', planExpiresAt: state.plan!.expiresAt }
-          : {}),
-      },
-    })
-    if (setPlan && before !== after) {
-      await tx.planChange.create({
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: user.id },
         data: {
-          userId: user.id,
-          fromPlan: before,
-          toPlan: after,
-          source: 'STRIPE',
-          expiresAt: after === 'FULL' ? state.plan!.expiresAt : null,
+          stripeSubscriptionId: state.subscriptionId,
+          stripeSubscriptionStatus: state.status,
+          planInterval: state.interval,
+          planCancelAtPeriodEnd: state.cancelAtPeriodEnd,
+          ...(setPlan
+            ? { plan: state.plan!.plan, planSource: 'STRIPE', planExpiresAt: state.plan!.expiresAt }
+            : {}),
         },
       })
-    }
-  })
+      if (setPlan && before !== after) {
+        await tx.planChange.create({
+          data: {
+            userId: user.id,
+            fromPlan: before,
+            toPlan: after,
+            source: 'STRIPE',
+            expiresAt: after === 'FULL' ? state.plan!.expiresAt : null,
+          },
+        })
+      }
+    })
+  } catch (error) {
+    // Nutzer wurde zwischen Lesen und Schreiben gelöscht (z. B. Ereignis zur Abo-Beendigung
+    // beim Löschen des Nutzers) – dann gibt es nichts mehr abzugleichen
+    if ((error as { code?: string })?.code === 'P2025') return 'unknown-customer'
+    throw error
+  }
 
   return 'updated'
 }

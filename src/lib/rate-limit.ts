@@ -36,6 +36,8 @@ export const RATE_LIMITS = {
   recurringBulk: { limit: 10, windowMs: 15 * 60 * 1000 },
   backupRestore: { limit: 5, windowMs: 60 * 60 * 1000 },
   passwordResetRequest: { limit: 3, windowMs: 60 * 60 * 1000 },
+  /** Mindestabstand zwischen zwei Reset-Mails an dieselbe Adresse */
+  passwordResetCooldown: { limit: 1, windowMs: 60 * 1000 },
   passwordReset: { limit: 10, windowMs: 60 * 60 * 1000 },
   passwordChange: { limit: 5, windowMs: 60 * 60 * 1000 },
   verifyEmail: { limit: 20, windowMs: 60 * 60 * 1000 },

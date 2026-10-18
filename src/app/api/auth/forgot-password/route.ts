@@ -17,6 +17,18 @@ export async function POST(request: Request) {
     if (isErrorResponse(body)) return body
     const email = normalizeEmail(typeof body.email === 'string' ? body.email : '')
 
+    // Mindestabstand je Adresse (unabhängig von der IP), zählt nicht zum Stundenlimit
+    const cooldown = checkRateLimit(`password-reset-cooldown:${email}`, RATE_LIMITS.passwordResetCooldown)
+    if (!cooldown.allowed) {
+      return NextResponse.json(
+        {
+          message: 'Bitte warte kurz, bevor du den Link erneut anforderst.',
+          retryAfterSec: cooldown.retryAfterSec,
+        },
+        { status: 429 }
+      )
+    }
+
     const ip = getClientIp(request.headers)
     const { allowed } = checkRateLimit(
       `password-reset-request:${ip}:${email}`,

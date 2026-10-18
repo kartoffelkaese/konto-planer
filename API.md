@@ -288,7 +288,7 @@ Admin-Recht per `npm run set-admin <E-Mail>`. Ohne Admin-Recht oder ohne aktive 
 |---------|------|----------------|
 | `POST` | `/api/auth/register` | `email`, `password`, `salaryDay` — sendet Bestätigungs-E-Mail. Antwortet bei vergebener Adresse genauso (201); die Adresse erhält dann einen Hinweis bzw. einen neuen Bestätigungslink |
 | `POST` | `/api/auth/verify-email` | `{ "token" }` — E-Mail bestätigen; Antwort `{ ok, purpose }` oder `{ ok: false, error }` mit `error` ∈ `missing`, `invalid`, `expired`, `taken`. `GET ?token=…` leitet nur zur Bestätigungsseite weiter |
-| `POST` | `/api/auth/forgot-password` | `{ "email" }` — Link zum Zurücksetzen (1 h gültig); Antwort immer gleich |
+| `POST` | `/api/auth/forgot-password` | `{ "email" }` — Link zum Zurücksetzen (1 h gültig); Antwort immer gleich. Je Adresse höchstens eine Anfrage pro Minute, sonst `429` mit `retryAfterSec` |
 | `POST` | `/api/auth/reset-password` | `{ "token", "password" }` — neues Passwort; beendet alle Sitzungen |
 | `POST` | `/api/auth/resend-verification` | `{ "email" }` — Bestätigungs-E-Mail erneut (Registrierung) |
 | `POST` | `/api/error-log` | Client-Fehler ans Server-Log (Session, Rate-Limit) |

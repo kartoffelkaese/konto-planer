@@ -108,7 +108,7 @@ export default function PlanSection() {
 
   return (
     <div id="plan" className="card scroll-mt-6 p-4 md:p-5">
-      <h2 className="text-lg font-medium text-primary mb-1">Dein Level</h2>
+      <h3 className="text-lg font-semibold text-primary mb-1">Dein Level</h3>
       <p className={`text-sm text-secondary ${showComparison ? 'mb-4' : ''}`}>
         <span className="font-medium text-primary">{PLAN_LABELS[plan]}</span> · {status}
       </p>
@@ -131,7 +131,7 @@ export default function PlanSection() {
       {writable && (
         <div className="mt-5 space-y-3">
           <div>
-            <h3 className="text-sm font-medium text-primary">Beschreibbares Konto</h3>
+            <h4 className="text-sm font-medium text-primary">Beschreibbares Konto</h4>
             <p className="mt-1 text-sm text-secondary">
               Das Level „{PLAN_LABELS.BASIC}“ umfasst ein Konto. Wähle, welches du weiter bearbeiten
               möchtest – die anderen bleiben sichtbar und lassen sich sichern oder löschen.
@@ -160,7 +160,6 @@ export default function PlanSection() {
           <Button
             type="button"
             variant="secondary"
-            size="sm"
             onClick={handleSaveKept}
             loading={saving}
             loadingText="Wird gespeichert…"

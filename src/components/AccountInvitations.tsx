@@ -111,8 +111,8 @@ export default function AccountInvitations() {
 
   return (
     <>
-      <div className="rounded-lg border border-accent-border bg-accent-subtle p-4">
-        <h2 className="text-lg font-medium text-primary mb-1">
+      <div className="rounded-card bg-accent-subtle p-4 md:p-5">
+        <h2 className="text-lg font-semibold text-primary mb-1">
           Einladungen zu geteilten Konten
         </h2>
         <p className="text-sm text-secondary mb-4">
@@ -123,7 +123,7 @@ export default function AccountInvitations() {
           {invites.map((invite) => (
             <li
               key={invite.id}
-              className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-control border border-border bg-surface p-3"
+              className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-control bg-surface p-3"
             >
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-primary truncate">

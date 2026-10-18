@@ -103,17 +103,17 @@ export default function EmailSettingsSection({
 
   return (
     <div id="email-settings" className="card p-4 md:p-5">
-      <h2 className="text-lg font-medium text-primary mb-1">Benutzerkonto</h2>
-      <p className="text-sm text-secondary mb-4">Anmeldung, E-Mail-Adresse und Passwort</p>
+      <h3 className="text-lg font-semibold text-primary mb-1">Anmeldung</h3>
+      <p className="text-sm text-secondary mb-4">E-Mail-Adresse und Passwort</p>
       
       {emailError && (
-        <div className="mb-4 p-4 bg-danger-subtle text-danger rounded-lg">
+        <div className="mb-4 rounded-control bg-danger-subtle p-4 text-sm text-danger">
           {emailError}
         </div>
       )}
 
       {pendingEmail && (
-        <div className="mb-4 p-4 bg-accent-subtle rounded-lg border border-border">
+        <div className="mb-4 rounded-control bg-accent-subtle p-4">
           <p className="text-sm text-primary">
             Ausstehende Änderung auf{' '}
             <span className="font-medium">{pendingEmail}</span>. Bitte
@@ -160,7 +160,7 @@ export default function EmailSettingsSection({
           </div>
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             onClick={() => setShowEmailForm(true)}
             disabled={!!pendingEmail}
           >
@@ -178,7 +178,7 @@ export default function EmailSettingsSection({
               id="newEmail"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
-              className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
+              className="mt-1 block w-full"
               required
               disabled={emailLoading}
             />
@@ -193,14 +193,14 @@ export default function EmailSettingsSection({
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
+              className="mt-1 block w-full"
               required
               disabled={emailLoading}
             />
           </div>
 
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="secondary" onClick={() => setShowEmailForm(false)}>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setShowEmailForm(false)}>
               Abbrechen
             </Button>
             <Button type="submit" loading={emailLoading} loadingText="Wird gesendet…">

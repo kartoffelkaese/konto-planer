@@ -44,20 +44,22 @@ export default function DeleteUserAccount() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-medium text-primary">Anmeldung löschen</h2>
-      <p className="text-sm text-secondary">
-        Entfernt deinen Zugang zu KontoPlaner (E-Mail und Passwort). Buchführungs-Konten,
-        die nur dir gehören, werden dabei mit allen Daten gelöscht. Geteilte Konten
-        bleiben für andere Nutzer erhalten. Diese Aktion kann nicht rückgängig gemacht
-        werden.
-      </p>
+      <div>
+        <h3 className="text-lg font-semibold text-primary mb-1">Anmeldung löschen</h3>
+        <p className="text-sm text-secondary">
+          Entfernt deinen Zugang zu KontoPlaner (E-Mail und Passwort). Buchführungs-Konten,
+          die nur dir gehören, werden dabei mit allen Daten gelöscht. Geteilte Konten
+          bleiben für andere Nutzer erhalten. Diese Aktion kann nicht rückgängig gemacht
+          werden.
+        </p>
+      </div>
 
       {error && (
-        <div className="p-4 bg-danger-subtle text-danger rounded-lg text-sm">{error}</div>
+        <div className="rounded-control bg-danger-subtle p-4 text-sm text-danger">{error}</div>
       )}
 
       {!showConfirmDialog ? (
-        <Button type="button" variant="danger" onClick={() => setShowConfirmDialog(true)}>
+        <Button type="button" variant="danger-outline" onClick={() => setShowConfirmDialog(true)}>
           <TrashIcon className="h-5 w-5" aria-hidden="true" />
           Anmeldung löschen
         </Button>
@@ -72,7 +74,7 @@ export default function DeleteUserAccount() {
               id="delete-user-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-danger focus:ring-danger bg-surface text-primary"
+              className="mt-1 block w-full"
               disabled={isLoading}
               autoComplete="current-password"
             />
@@ -86,16 +88,16 @@ export default function DeleteUserAccount() {
               id="confirmText"
               value={confirmText}
               onChange={(e) => setConfirmText(e.target.value)}
-              className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-danger focus:ring-danger bg-surface text-primary"
+              className="mt-1 block w-full"
               disabled={isLoading}
               autoComplete="off"
             />
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             <Button
               type="button"
-              variant="secondary"
+              variant="ghost"
               onClick={() => {
                 setShowConfirmDialog(false)
                 setConfirmText('')

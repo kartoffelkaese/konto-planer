@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { TagIcon, BuildingStorefrontIcon, ChevronRightIcon, UserGroupIcon } from '@heroicons/react/24/outline'
+import { TagIcon, BuildingStorefrontIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import BackupManager from '@/components/BackupManager'
 import DeleteFinancialAccount from '@/components/DeleteFinancialAccount'
 import DeleteUserAccount from '@/components/DeleteUserAccount'
@@ -155,273 +155,275 @@ export default function SettingsPage() {
     : 'Logo im Menü; für CSV-Import wird eine unterstützte Bank benötigt (z. B. DKB, ING).'
 
   return (
-    <div className="p-6">
-      <main id="settings-page" className="min-h-screen">
-        <div id="settings-container" className="max-w-2xl mx-auto">
+    <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 md:py-8">
+      <main id="settings-page">
+        <div id="settings-container" className="max-w-3xl">
           <PageContextHeader
             title="Einstellungen"
             subtitle={`${activeAccountName} · Konto und App`}
           />
 
           {error && (
-            <div id="error-message" className="mb-4 p-4 bg-danger-subtle text-danger rounded-lg">
+            <div id="error-message" className="mb-4 rounded-card bg-danger-subtle p-4 text-sm text-danger">
               {error}
             </div>
           )}
 
-          <div id="settings-sections" className="space-y-6">
+          <div id="settings-sections" className="space-y-10 md:space-y-12">
             <AccountInvitations />
 
-            {!canWrite && (
-              <div className="rounded-lg border border-accent-border bg-accent-subtle p-4 text-sm text-primary">
-                Du hast für dieses Konto nur Lesezugriff. Einstellungen und
-                Buchungen können nicht geändert werden.
+            <section aria-labelledby="settings-account" className="space-y-4 md:space-y-6">
+              <div>
+                <h2 id="settings-account" className="text-xl font-semibold text-primary">Konto „{activeAccountName}“</h2>
+                <p className="text-sm text-secondary">Gilt nur für dieses Konto. Ein anderes Konto wählst du in der Navigation.</p>
               </div>
-            )}
+              {!canWrite && (
+                <div className="rounded-card bg-accent-subtle p-4 text-sm text-primary">
+                  Du hast für dieses Konto nur Lesezugriff. Einstellungen und
+                  Buchungen können nicht geändert werden.
+                </div>
+              )}
 
-            <PlanSection />
-
-            <div id="data-management" className="card p-4 md:p-5">
-              <h2 className="text-lg font-medium text-primary mb-1">Datenverwaltung</h2>
-              <p className="text-sm text-secondary mb-4">
-                Kategorien und Händler für {activeAccountName}
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Link
-                  href="/settings/categories"
-                  className="flex items-center justify-between rounded-control border border-border px-4 py-3 text-primary hover:bg-accent-muted transition-colors duration-feedback"
-                >
-                  <span className="flex items-center gap-3">
-                    <TagIcon className="h-5 w-5 text-accent shrink-0" aria-hidden="true" />
-                    <span className="text-sm font-medium">Kategorien</span>
-                  </span>
-                  <ChevronRightIcon className="h-5 w-5 text-secondary shrink-0" aria-hidden="true" />
-                </Link>
-                <Link
-                  href="/settings/merchants"
-                  className="flex items-center justify-between rounded-control border border-border px-4 py-3 text-primary hover:bg-accent-muted transition-colors duration-feedback"
-                >
-                  <span className="flex items-center gap-3">
-                    <BuildingStorefrontIcon className="h-5 w-5 text-accent shrink-0" aria-hidden="true" />
-                    <span className="text-sm font-medium">Händler</span>
-                  </span>
-                  <ChevronRightIcon className="h-5 w-5 text-secondary shrink-0" aria-hidden="true" />
-                </Link>
-              </div>
-            </div>
-
-            <form id="general-settings" onSubmit={handleSubmit} className="card p-4 md:p-5">
-              <h2 className="text-lg font-medium text-primary mb-1">Aktuelles Konto</h2>
-              <p className="text-sm text-secondary mb-4">
-                Einstellungen für {activeAccountName}
-              </p>
+              <form id="general-settings" onSubmit={handleSubmit} className="card p-4 md:p-5">
+                <h3 className="text-lg font-semibold text-primary mb-1">Kontodaten</h3>
+                <p className="text-sm text-secondary mb-4">
+                  Name, Bank, Gehaltsmonat und Umbuchungen
+                </p>
               
-              <div className="space-y-6">
-                <div>
-                  <label htmlFor="accountName" className="block text-sm font-medium text-primary">
-                    Kontobezeichnung
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      id="accountName"
-                      value={accountName}
-                      onChange={(e) => setAccountName(e.target.value)}
-                      className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
-                      placeholder="z.B. Girokonto"
-                      disabled={loading || !canWrite}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="bankId" className="block text-sm font-medium text-primary">
-                    Bank
-                  </label>
-                  <p className="mt-1 mb-2 text-sm text-secondary">
-                    {csvImportHint}
-                  </p>
-                  <BankSelect
-                    id="bankId"
-                    value={bankId}
-                    onChange={setBankId}
-                    disabled={loading || !canWrite}
-                  />
-                </div>
-
-                {role === 'OWNER' && (
-                  <div className="rounded-control border border-border p-4 bg-canvas">
-                    <div className="flex items-start gap-3">
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="accountName" className="block text-sm font-medium text-primary">
+                      Kontobezeichnung
+                    </label>
+                    <div className="mt-1">
                       <input
-                        type="checkbox"
-                        id="isSimpleAccount"
-                        checked={isSimpleAccount}
-                        onChange={(e) => {
-                          setIsSimpleAccount(e.target.checked)
-                          setSimpleAccountError(null)
-                        }}
-                        className="mt-1 h-4 w-4 rounded border-border text-accent focus:ring-accent bg-surface"
+                        type="text"
+                        id="accountName"
+                        value={accountName}
+                        onChange={(e) => setAccountName(e.target.value)}
+                        className="mt-1 block w-full"
+                        placeholder="z. B. Girokonto"
                         disabled={loading || !canWrite}
                       />
-                      <div>
-                        <label htmlFor="isSimpleAccount" className="block text-sm font-medium text-primary">
-                          Einfaches Konto
-                        </label>
-                        <p className="mt-1 text-sm text-secondary">
-                          Für Sparkonten, Depots oder andere Konten ohne Haushaltsplanung:
-                          kein Gehaltsmonat, keine wiederkehrenden Zahlungen, vereinfachte
-                          Übersicht. Bestehende Buchungen bleiben erhalten.
-                        </p>
-                        {simpleAccountError && (
-                          <p className="mt-2 text-sm text-danger">
-                            {simpleAccountError}{' '}
-                            <Link href="/recurring" className="underline font-medium">
-                              Wiederkehrende Zahlungen verwalten
-                            </Link>
-                          </p>
-                        )}
-                      </div>
                     </div>
                   </div>
-                )}
 
-                {!isSimpleAccount && (
-                <div>
-                  <label htmlFor="salaryDay" className="block text-sm font-medium text-primary">
-                    Tag des Gehaltseingangs
-                  </label>
-                  <div className="mt-1">
-                    <select
-                      id="salaryDay"
-                      value={salaryDay}
-                      onChange={(e) => setSalaryDay(parseInt(e.target.value))}
-                      className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
-                      disabled={loading || !canWrite}
-                    >
-                      {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                        <option key={day} value={day}>
-                          {day}. des Monats
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <p className="mt-2 text-sm text-secondary">
-                    Der Gehaltsmonat läuft dann vom {salaryDay}. bis zum {salaryDay}. des Folgemonats
-                  </p>
-                </div>
-                )}
-
-                <div>
-                  <label htmlFor="transferSenderName" className="block text-sm font-medium text-primary">
-                    Absendername für Umbuchungen
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      id="transferSenderName"
-                      value={transferSenderName}
-                      onChange={(e) => setTransferSenderName(e.target.value)}
-                      className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
-                      placeholder="z.B. Martin, Familie Müller"
+                  <div>
+                    <label htmlFor="bankId" className="block text-sm font-medium text-primary">
+                      Bank
+                    </label>
+                    <p className="mt-1 mb-2 text-sm text-secondary">
+                      {csvImportHint}
+                    </p>
+                    <BankSelect
+                      id="bankId"
+                      value={bankId}
+                      onChange={setBankId}
                       disabled={loading || !canWrite}
                     />
                   </div>
+
+                  {role === 'OWNER' && (
+                    <div className="rounded-control bg-surface-muted p-4">
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          id="isSimpleAccount"
+                          checked={isSimpleAccount}
+                          onChange={(e) => {
+                            setIsSimpleAccount(e.target.checked)
+                            setSimpleAccountError(null)
+                          }}
+                          className="mt-1 h-4 w-4 rounded border-border text-accent focus:ring-accent bg-surface"
+                          disabled={loading || !canWrite}
+                        />
+                        <div>
+                          <label htmlFor="isSimpleAccount" className="block text-sm font-medium text-primary">
+                            Einfaches Konto
+                          </label>
+                          <p className="mt-1 text-sm text-secondary">
+                            Für Sparkonten, Depots oder andere Konten ohne Haushaltsplanung:
+                            kein Gehaltsmonat, keine wiederkehrenden Zahlungen, vereinfachte
+                            Übersicht. Bestehende Buchungen bleiben erhalten.
+                          </p>
+                          {simpleAccountError && (
+                            <p className="mt-2 text-sm text-danger">
+                              {simpleAccountError}{' '}
+                              <Link href="/recurring" className="underline font-medium">
+                                Wiederkehrende Zahlungen verwalten
+                              </Link>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {!isSimpleAccount && (
+                  <div>
+                    <label htmlFor="salaryDay" className="block text-sm font-medium text-primary">
+                      Tag des Gehaltseingangs
+                    </label>
+                    <div className="mt-1">
+                      <select
+                        id="salaryDay"
+                        value={salaryDay}
+                        onChange={(e) => setSalaryDay(parseInt(e.target.value))}
+                        className="mt-1 block w-full"
+                        disabled={loading || !canWrite}
+                      >
+                        {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                          <option key={day} value={day}>
+                            {day}. des Monats
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <p className="mt-2 text-sm text-secondary">
+                      Der Gehaltsmonat läuft dann vom {salaryDay}. bis zum {salaryDay}. des Folgemonats
+                    </p>
+                  </div>
+                  )}
+
+                  <div>
+                    <label htmlFor="transferSenderName" className="block text-sm font-medium text-primary">
+                      Absendername für Umbuchungen
+                    </label>
+                    <div className="mt-1">
+                      <input
+                        type="text"
+                        id="transferSenderName"
+                        value={transferSenderName}
+                        onChange={(e) => setTransferSenderName(e.target.value)}
+                        className="mt-1 block w-full"
+                        placeholder="z. B. Martin, Familie Müller"
+                        disabled={loading || !canWrite}
+                      />
+                    </div>
+                    <p className="mt-2 text-sm text-secondary">
+                      Erscheint als Händler bei eingehenden Umbuchungen in anderen Konten.
+                      Wenn leer, wird die Kontobezeichnung verwendet.
+                    </p>
+                  </div>
+
+                  {canWrite && (
+                  <div className="flex justify-end">
+                    <Button type="submit" loading={loading} loadingText="Wird gespeichert…">
+                      Speichern
+                    </Button>
+                  </div>
+                  )}
+                </div>
+              </form>
+
+              <div id="data-management" className="card p-4 md:p-5">
+                <h3 className="text-lg font-semibold text-primary mb-1">Kategorien und Händler</h3>
+                <p className="text-sm text-secondary mb-4">
+                  Eigene Listen dieses Kontos – für Zuordnung und Statistiken
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Link
+                    href="/settings/categories"
+                    className="flex min-h-11 items-center justify-between rounded-control bg-surface-muted px-4 py-3 text-primary transition-colors duration-feedback hover:bg-accent-subtle"
+                  >
+                    <span className="flex items-center gap-3">
+                      <TagIcon className="h-5 w-5 text-accent shrink-0" aria-hidden="true" />
+                      <span className="text-sm font-medium">Kategorien</span>
+                    </span>
+                    <ChevronRightIcon className="h-5 w-5 text-secondary shrink-0" aria-hidden="true" />
+                  </Link>
+                  <Link
+                    href="/settings/merchants"
+                    className="flex min-h-11 items-center justify-between rounded-control bg-surface-muted px-4 py-3 text-primary transition-colors duration-feedback hover:bg-accent-subtle"
+                  >
+                    <span className="flex items-center gap-3">
+                      <BuildingStorefrontIcon className="h-5 w-5 text-accent shrink-0" aria-hidden="true" />
+                      <span className="text-sm font-medium">Händler</span>
+                    </span>
+                    <ChevronRightIcon className="h-5 w-5 text-secondary shrink-0" aria-hidden="true" />
+                  </Link>
+                </div>
+              </div>
+
+              {role === 'OWNER' && (
+              <div className="card p-4 md:p-5">
+                <h3 className="text-lg font-semibold text-primary mb-1">Konto teilen</h3>
+                <p className="text-sm text-secondary mb-4">
+                  Lade andere per E-Mail ein – mit vollem Zugriff oder nur zum Lesen.
+                </p>
+                <AccountSharing />
+              </div>
+              )}
+
+              <div id="backup-settings" className="card p-4 md:p-5">
+                <BackupManager allowRestore={canWrite} />
+              </div>
+
+              <DeleteFinancialAccount />
+            </section>
+
+            <section aria-labelledby="settings-user" className="space-y-4 md:space-y-6">
+              <div>
+                <h2 id="settings-user" className="text-xl font-semibold text-primary">Dein Benutzerkonto</h2>
+                <p className="text-sm text-secondary">Gilt für alle deine Konten.</p>
+              </div>
+              <PlanSection />
+
+              <EmailSettingsSection
+                pendingEmail={pendingEmail}
+                onPendingEmailChange={setPendingEmail}
+              />
+
+              <form
+                onSubmit={handleSplitProfileSubmit}
+                className="card p-4 md:p-5"
+              >
+                <h3 className="text-lg font-semibold text-primary mb-1">Profil & Split</h3>
+                <p className="text-sm text-secondary mb-4">
+                  Wie andere dich in gemeinsamen Split-Listen sehen
+                </p>
+                <div>
+                  <label htmlFor="splitDisplayName" className="block text-sm font-medium text-primary">
+                    Anzeigename in Split-Listen
+                  </label>
+                  <input
+                    type="text"
+                    id="splitDisplayName"
+                    value={splitDisplayName}
+                    onChange={(e) => setSplitDisplayName(e.target.value)}
+                    className="mt-1 block w-full"
+                    placeholder="z. B. Martin"
+                    disabled={splitProfileLoading}
+                  />
                   <p className="mt-2 text-sm text-secondary">
-                    Erscheint als Händler bei eingehenden Umbuchungen in anderen Konten.
-                    Wenn leer, wird die Kontobezeichnung verwendet.
+                    Wird beim Anlegen neuer Listen oder beim Beitreten per Einladung verwendet.
+                    Bestehende Namen in Listen bleiben unverändert.
                   </p>
                 </div>
-
-                {canWrite && (
-                <div className="flex justify-end">
-                  <Button type="submit" loading={loading} loadingText="Wird gespeichert…">
-                    Speichern
+                <div className="mt-4 flex justify-end">
+                  <Button type="submit" variant="secondary" loading={splitProfileLoading} loadingText="Wird gespeichert…">
+                    Split-Namen speichern
                   </Button>
                 </div>
-                )}
-              </div>
-            </form>
+              </form>
 
-            {role === 'OWNER' && (
-            <div className="card p-4 md:p-5">
-              <h2 className="text-lg font-medium text-primary mb-4">Konto teilen</h2>
-              <p className="text-sm text-secondary mb-4">
-                Lade andere Nutzer per E-Mail ein. Du kannst vollen Zugriff
-                oder Nur-Lese-Zugriff auf das aktuell gewählte Konto vergeben.
-              </p>
-              <AccountSharing />
-            </div>
-            )}
-
-            <div className="card p-4 md:p-5">
-              <h2 className="text-lg font-medium text-primary mb-1">Weitere Konten</h2>
-              <p className="text-sm text-secondary mb-4">
-                Zusätzliche Buchführungs-Konten anlegen oder entfernen
-              </p>
-              <CreateAdditionalAccount />
-              <DeleteFinancialAccount />
-            </div>
-
-            <form
-              onSubmit={handleSplitProfileSubmit}
-              className="card p-4 md:p-5"
-            >
-              <div className="mb-4 flex items-start gap-3">
-                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-accent-border bg-accent-subtle text-accent">
-                  <UserGroupIcon className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <div>
-                  <h2 className="text-lg font-medium text-primary">Profil & Split</h2>
-                  <p className="mt-1 text-sm text-secondary">
-                    Gilt für alle Konten — unabhängig vom Kontowechsel
-                  </p>
-                </div>
-              </div>
-              <div>
-                <label htmlFor="splitDisplayName" className="block text-sm font-medium text-primary">
-                  Anzeigename in Split-Listen
-                </label>
-                <input
-                  type="text"
-                  id="splitDisplayName"
-                  value={splitDisplayName}
-                  onChange={(e) => setSplitDisplayName(e.target.value)}
-                  className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
-                  placeholder="z. B. Martin"
-                  disabled={splitProfileLoading}
-                />
-                <p className="mt-2 text-sm text-secondary">
-                  Wird beim Anlegen neuer Listen oder beim Beitreten per Einladung verwendet.
-                  Bestehende Namen in Listen bleiben unverändert.
+              <div id="appearance-settings" className="card p-4 md:p-5">
+                <h3 className="text-lg font-semibold text-primary mb-1">Darstellung</h3>
+                <p className="text-sm text-secondary mb-4">
+                  Hell, Dunkel oder automatisch wie im Betriebssystem
                 </p>
+                <ColorSchemeSwitcher />
               </div>
-              <div className="mt-4">
-                <Button type="submit" loading={splitProfileLoading} loadingText="Speichern…" size="sm">
-                  Split-Namen speichern
-                </Button>
+
+              <div className="card p-4 md:p-5">
+                <h3 className="text-lg font-semibold text-primary mb-1">Weitere Konten</h3>
+                <CreateAdditionalAccount />
               </div>
-            </form>
 
-            <EmailSettingsSection
-              pendingEmail={pendingEmail}
-              onPendingEmailChange={setPendingEmail}
-            />
-
-            <div id="appearance-settings" className="card p-4 md:p-5">
-              <h2 className="text-lg font-medium text-primary mb-1">Darstellung</h2>
-              <p className="text-sm text-secondary mb-4">
-                Hell, Dunkel oder automatisch wie im Betriebssystem
-              </p>
-              <ColorSchemeSwitcher />
-            </div>
-
-            <div id="backup-settings" className="card p-4 md:p-5">
-              <BackupManager allowRestore={canWrite} />
-            </div>
-
-            <div id="delete-user-account" className="card p-4 md:p-5">
-              <DeleteUserAccount />
-            </div>
+              <div id="delete-user-account" className="card p-4 md:p-5">
+                <DeleteUserAccount />
+              </div>
+            </section>
           </div>
 
           <LegalLinks className="mt-6" />

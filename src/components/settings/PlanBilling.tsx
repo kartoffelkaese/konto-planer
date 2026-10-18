@@ -131,7 +131,7 @@ export default function PlanBilling() {
   return (
     <div className="mt-5 space-y-3">
       <div>
-        <h3 className="text-sm font-medium text-primary">„{PLAN_LABELS.FULL}“ buchen</h3>
+        <h4 className="text-sm font-medium text-primary">„{PLAN_LABELS.FULL}“ buchen</h4>
         <p className="mt-1 text-sm text-secondary">
           Als Abo, jederzeit zum Ende des bezahlten Zeitraums kündbar. Bezahlt wird sicher über
           Stripe.
@@ -147,6 +147,7 @@ export default function PlanBilling() {
       />
       <Button
         type="button"
+        variant="accent-subtle"
         onClick={() => redirect('checkout')}
         loading={busy === 'checkout'}
         loadingText="Weiter zu Stripe…"

@@ -15,6 +15,16 @@ import {
 } from '@/lib/accountSwitchEvents'
 import { deleteAccount, getAccounts, withApiErrorFallback } from '@/lib/api'
 
+/** Karte „Konto löschen“ in den Einstellungen (Bereich des aktuellen Kontos) */
+function DeleteAccountCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div id="delete-financial-account" className="card p-4 md:p-5">
+      <h3 className="text-lg font-semibold text-primary mb-1">Konto löschen</h3>
+      <div className="space-y-4">{children}</div>
+    </div>
+  )
+}
+
 export default function DeleteFinancialAccount() {
   const router = useRouter()
   const { update } = useSession()
@@ -72,35 +82,38 @@ export default function DeleteFinancialAccount() {
 
   if (role !== 'OWNER') {
     return (
-      <p className="text-sm text-secondary border-t border-border pt-4 mt-4">
-        Nur der <span className="font-medium text-primary">Inhaber</span> kann das
-        aktuelle Buchführungs-Konto löschen. Du bist als Mitglied eingeladen.
-      </p>
+      <DeleteAccountCard>
+        <p className="text-sm text-secondary">
+          Nur der <span className="font-medium text-primary">Inhaber</span> kann dieses
+          Buchführungs-Konto löschen. Du bist als Mitglied eingeladen.
+        </p>
+      </DeleteAccountCard>
     )
   }
 
   if (accountCount <= 1) {
     return (
-      <p className="text-sm text-secondary border-t border-border pt-4 mt-4">
-        Dies ist dein einziges Buchführungs-Konto. Um den Zugang vollständig zu
-        entfernen, nutze unten{' '}
-        <span className="font-medium text-primary">Anmeldung löschen</span>.
-      </p>
+      <DeleteAccountCard>
+        <p className="text-sm text-secondary">
+          Dies ist dein einziges Buchführungs-Konto. Um den Zugang vollständig zu
+          entfernen, nutze unten{' '}
+          <span className="font-medium text-primary">Anmeldung löschen</span>.
+        </p>
+      </DeleteAccountCard>
     )
   }
 
   return (
-    <div className="border-t border-border pt-4 mt-4 space-y-3">
-      <h3 className="text-sm font-medium text-primary">Aktuelles Konto löschen</h3>
+    <DeleteAccountCard>
       <p className="text-sm text-secondary">
         Löscht nur das Buchführungs-Konto{' '}
         <span className="font-medium text-primary">„{accountName}“</span> mit allen
-        Transaktionen, Kategorien und Händlern. Deine Anmeldung und andere Konten
+        Buchungen, Kategorien und Händlern. Deine Anmeldung und andere Konten
         bleiben erhalten. Danach wechselst du automatisch zu einem anderen Konto.
       </p>
 
       {error && (
-        <div className="p-3 bg-danger-subtle text-danger rounded-control text-sm">
+        <div className="rounded-control bg-danger-subtle p-4 text-sm text-danger">
           {error}
         </div>
       )}
@@ -129,7 +142,7 @@ export default function DeleteFinancialAccount() {
               type="text"
               value={confirmName}
               onChange={(e) => setConfirmName(e.target.value)}
-              className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-danger focus:ring-danger bg-surface text-primary"
+              className="mt-1 block w-full"
               disabled={loading}
               autoComplete="off"
             />
@@ -137,7 +150,7 @@ export default function DeleteFinancialAccount() {
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
-              variant="secondary"
+              variant="ghost"
               onClick={() => {
                 setShowConfirm(false)
                 setConfirmName('')
@@ -160,6 +173,6 @@ export default function DeleteFinancialAccount() {
           </div>
         </div>
       )}
-    </div>
+    </DeleteAccountCard>
   )
 }

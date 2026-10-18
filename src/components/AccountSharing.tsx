@@ -8,6 +8,7 @@ import { useUserSettings } from '@/hooks/useUserSettings'
 import PlanHint from '@/components/PlanHint'
 import { PLAN_MESSAGES } from '@/lib/planMessages'
 import { Button } from '@/components/Button'
+import ConfirmDialog from '@/components/ConfirmDialog'
 import { inviteRoleLabel, roleLabel } from '@/lib/accountPermissions'
 import {
   getAccountMembers,
@@ -41,6 +42,7 @@ export default function AccountSharing() {
   const [inviteRole, setInviteRole] = useState<InviteRole>('MEMBER')
   const [loading, setLoading] = useState(false)
   const [updatingMemberId, setUpdatingMemberId] = useState<string | null>(null)
+  const [removeTarget, setRemoveTarget] = useState<Member | null>(null)
 
   // Fehler still übergehen (wie bisher): die zuletzt geladene Liste bleibt stehen
   const { data: membersData, reload: loadMembers } = useApiQuery(
@@ -89,7 +91,6 @@ export default function AccountSharing() {
 
   const removeMember = async (memberId: string) => {
     if (!accountId) return
-    if (!window.confirm('Zugriff für diese Person wirklich entfernen?')) return
     try {
       await removeAccountMember(accountId, { memberId })
       showToast('Zugriff entfernt', 'success')
@@ -133,11 +134,12 @@ export default function AccountSharing() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="E-Mail des Nutzers"
-            className="flex-1 rounded-control border-border bg-surface shadow-sm focus:ring-accent sm:text-sm"
+            className="flex-1"
+            aria-label="E-Mail der einzuladenden Person"
             required
             disabled={loading}
           />
-          <Button type="submit" loading={loading} loadingText="Lädt…">
+          <Button type="submit" variant="secondary" loading={loading} loadingText="Wird eingeladen…">
             Einladen
           </Button>
         </div>
@@ -178,8 +180,8 @@ export default function AccountSharing() {
 
       {members.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-primary mb-2">Mitglieder</h3>
-          <ul className="divide-y divide-border rounded-control border border-border">
+          <h4 className="text-sm font-medium text-primary mb-2">Mitglieder</h4>
+          <ul className="divide-y divide-hairline rounded-control bg-surface-muted">
             {members.map((m) => (
               <li
                 key={m.id}
@@ -196,19 +198,19 @@ export default function AccountSharing() {
                           updateMemberRole(m.id, e.target.value as InviteRole)
                         }
                         disabled={updatingMemberId === m.id}
-                        className="rounded-control border-border bg-surface text-xs"
-                        aria-label={`Rolle für ${m.email}`}
+                                                aria-label={`Rolle für ${m.email}`}
                       >
                         <option value="MEMBER">Mitglied</option>
                         <option value="READ_ONLY">Nur Lesen</option>
                       </select>
-                      <button
+                      <Button
                         type="button"
-                        onClick={() => removeMember(m.id)}
-                        className="text-xs text-danger hover:underline"
+                        variant="danger-outline"
+                        size="sm"
+                        onClick={() => setRemoveTarget(m)}
                       >
                         Entfernen
-                      </button>
+                      </Button>
                     </>
                   )}
                 </span>
@@ -220,10 +222,10 @@ export default function AccountSharing() {
 
       {pendingInvites.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-primary mb-2">
+          <h4 className="text-sm font-medium text-primary mb-2">
             Ausstehende Einladungen
-          </h3>
-          <ul className="divide-y divide-border rounded-control border border-border">
+          </h4>
+          <ul className="divide-y divide-hairline rounded-control bg-surface-muted">
             {pendingInvites.map((inv) => (
               <li
                 key={inv.id}
@@ -235,18 +237,38 @@ export default function AccountSharing() {
                     ({inviteRoleLabel(inv.role)})
                   </span>
                 </span>
-                <button
+                <Button
                   type="button"
+                  variant="danger-outline"
+                  size="sm"
                   onClick={() => revokeInvite(inv.id)}
-                  className="text-xs text-danger hover:underline shrink-0 ml-2"
+                  className="ml-2 shrink-0"
                 >
                   Widerrufen
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={removeTarget !== null}
+        onClose={() => setRemoveTarget(null)}
+        onConfirm={async () => {
+          if (!removeTarget) return
+          await removeMember(removeTarget.id)
+        }}
+        title="Zugriff entfernen?"
+        message={
+          removeTarget
+            ? `${removeTarget.email} verliert den Zugriff auf dieses Konto. Du kannst die Person später erneut einladen.`
+            : ''
+        }
+        confirmText="Entfernen"
+        confirmLoadingText="Wird entfernt…"
+        type="danger"
+      />
     </div>
   )
 }

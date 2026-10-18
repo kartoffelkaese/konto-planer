@@ -8,9 +8,17 @@ const linkClass =
 /**
  * Verweise auf die vorhandenen Rechtstexte und – wenn „Komplett“ buchbar ist – auf den
  * Kündigungsweg. Gibt es beides nicht, wird nichts ausgegeben.
+ * `hideCancelLink` lässt den Kündigungsweg weg (auf der Kündigungsseite selbst).
  */
-export default function LegalLinks({ className = '' }: { className?: string }) {
-  if (AVAILABLE_LEGAL_PAGES.length === 0 && !BILLING_ENABLED_PUBLIC) return null
+export default function LegalLinks({
+  className = '',
+  hideCancelLink = false,
+}: {
+  className?: string
+  hideCancelLink?: boolean
+}) {
+  const showCancelLink = BILLING_ENABLED_PUBLIC && !hideCancelLink
+  if (AVAILABLE_LEGAL_PAGES.length === 0 && !showCancelLink) return null
 
   return (
     <nav aria-label="Rechtliches" className={`flex flex-wrap gap-x-4 gap-y-1 text-sm ${className}`}>
@@ -23,7 +31,7 @@ export default function LegalLinks({ className = '' }: { className?: string }) {
           {page.label}
         </Link>
       ))}
-      {BILLING_ENABLED_PUBLIC && (
+      {showCancelLink && (
         <Link href={CANCEL_PATH} className={linkClass}>
           Verträge hier kündigen
         </Link>

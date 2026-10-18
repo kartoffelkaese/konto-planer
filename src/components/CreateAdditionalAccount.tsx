@@ -65,7 +65,7 @@ export default function CreateAdditionalAccount() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="z. B. Haushalt"
-          className="mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary"
+          className="mt-1 block w-full"
           disabled={loading}
           autoFocus
         />
@@ -102,7 +102,7 @@ export default function CreateAdditionalAccount() {
       <div className="flex flex-wrap gap-2 justify-end">
         <Button
           type="button"
-          variant="secondary"
+          variant="ghost"
           onClick={() => {
             setExpanded(false)
             setName('')

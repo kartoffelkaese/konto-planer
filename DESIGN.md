@@ -125,6 +125,8 @@ Für Links im Button-Look `getButtonClassName()`.
 | `lg` | 48 px | Landing-Page |
 
 - **Referenz ist die Übersicht:** Im Seitenkopf stehen immer `md`-Buttons; die Hauptaktion rechts, mit Icon vor dem Text (`PlusIcon` für „Neu …“).
+- **Formular-Karten** (z. B. Einstellungen): Buttons einer Karte in `md`; Absenden und Abbrechen stehen rechtsbündig unter dem Formular; `sm` nur für Aktionen in Listenzeilen (Mitglied entfernen, Einladung annehmen).
+- **Seiten mit mehreren Formularen:** Nur das wichtigste Formular sendet mit `primary` (Einstellungen: „Speichern“ bei „Aktuelles Konto“), alle anderen mit `secondary`. Ein auf Wunsch aufgeklapptes Formular (z. B. „E-Mail ändern“) darf `primary` nutzen, solange es offen ist. Ein Kauf-Aufruf neben der Hauptaktion nutzt `accent-subtle`.
 - Icons aus `@heroicons/react/24/outline`, mit `aria-hidden`.
 - Laufende Aktion über `loading` und `loadingText` („Wird gespeichert…“), nicht über eigenen Spinner.
 - Beschriftung: Verb oder „Neue …“, kurz, ohne Punkt.

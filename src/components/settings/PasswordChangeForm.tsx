@@ -9,7 +9,7 @@ import { changePassword, withApiErrorFallback } from '@/lib/api'
 import { validatePassword } from '@/lib/password-policy'
 
 const inputClassName =
-  'mt-1 block w-full rounded-control border-border shadow-sm focus:border-accent focus:ring-accent bg-surface text-primary'
+  'mt-1 block w-full'
 
 /** Einstellungen → „Benutzerkonto“: Passwort ändern; andere Anmeldungen werden dabei beendet */
 export default function PasswordChangeForm() {
@@ -68,7 +68,7 @@ export default function PasswordChangeForm() {
           <p className="text-sm text-secondary">Passwort</p>
           <p className="font-medium text-primary" aria-hidden="true">••••••••</p>
         </div>
-        <Button type="button" variant="ghost" onClick={() => setOpen(true)}>
+        <Button type="button" variant="secondary" onClick={() => setOpen(true)}>
           Ändern
         </Button>
       </div>
@@ -77,7 +77,7 @@ export default function PasswordChangeForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="p-4 bg-danger-subtle text-danger rounded-lg">{error}</div>}
+      {error && <div className="rounded-control bg-danger-subtle p-4 text-sm text-danger">{error}</div>}
 
       <div>
         <label htmlFor="currentPassword" className="block text-sm font-medium text-primary">
@@ -133,7 +133,7 @@ export default function PasswordChangeForm() {
       </p>
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button type="button" variant="secondary" onClick={reset} disabled={loading}>
+        <Button type="button" variant="ghost" onClick={reset} disabled={loading}>
           Abbrechen
         </Button>
         <Button type="submit" loading={loading} loadingText="Wird gespeichert…">

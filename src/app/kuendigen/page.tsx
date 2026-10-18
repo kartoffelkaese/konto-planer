@@ -156,7 +156,7 @@ export default function CancelPage() {
           )}
         </div>
 
-        <LegalLinks className="mt-6 justify-center" />
+        <LegalLinks className="mt-6 justify-center" hideCancelLink />
       </div>
     </div>
   )

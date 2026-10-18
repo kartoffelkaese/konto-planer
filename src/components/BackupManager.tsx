@@ -4,10 +4,16 @@ import { useState } from 'react'
 import { ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
 import { Button, getButtonClassName } from '@/components/Button'
+import ConfirmDialog from '@/components/ConfirmDialog'
+import { useUserSettings } from '@/hooks/useUserSettings'
 import { exportBackup, restoreBackup } from '@/lib/api'
+
+const INVALID_FILE_MESSAGE = 'Die Datei ist kein gültiges Backup.'
 
 export default function BackupManager({ allowRestore = true }: { allowRestore?: boolean }) {
   const { showToast } = useToast()
+  const { accountName } = useUserSettings()
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [isBackingUp, setIsBackingUp] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
   const isBusy = isBackingUp || isRestoring
@@ -42,62 +48,69 @@ export default function BackupManager({ allowRestore = true }: { allowRestore?: 
     }
   }
 
-  const handleRestore = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Erst nach Rückfrage einspielen: das Wiederherstellen ersetzt die Daten des Kontos
+  const handleFileChosen = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    event.target.value = ''
     if (!file) return
+    setError(null)
+    setSuccess(null)
+    setPendingFile(file)
+  }
 
+  const handleRestore = async () => {
+    if (!pendingFile) return
+    setIsRestoring(true)
     try {
-      setIsRestoring(true)
-      setError(null)
-      setSuccess(null)
-
-      const reader = new FileReader()
-      reader.onload = async (e) => {
-        try {
-          const backup = JSON.parse(e.target?.result as string)
-          await restoreBackup(backup)
-
-          setSuccess('Backup erfolgreich wiederhergestellt')
-          showToast('Backup erfolgreich wiederhergestellt', 'success')
-          window.location.reload()
-        } catch (err) {
-          console.error('Fehler beim Wiederherstellen des Backups:', err)
-          setError('Fehler beim Wiederherstellen des Backups')
-          showToast('Fehler beim Wiederherstellen des Backups', 'error')
-        } finally {
-          setIsRestoring(false)
-        }
+      let backup: unknown
+      try {
+        backup = JSON.parse(await pendingFile.text())
+      } catch {
+        throw new Error(INVALID_FILE_MESSAGE)
       }
-      reader.readAsText(file)
+      await restoreBackup(backup)
+      showToast('Backup wiederhergestellt', 'success')
+      window.location.reload()
     } catch (err) {
-      console.error('Fehler beim Lesen der Datei:', err)
-      setError('Fehler beim Lesen der Datei')
+      console.error('Fehler beim Wiederherstellen des Backups:', err)
+      const message =
+        err instanceof Error && err.message === INVALID_FILE_MESSAGE
+          ? INVALID_FILE_MESSAGE
+          : 'Fehler beim Wiederherstellen des Backups'
+      setError(message)
+      showToast(message, 'error')
+    } finally {
       setIsRestoring(false)
+      setPendingFile(null)
     }
   }
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-medium text-primary">Backup & Wiederherstellung</h3>
-      <p className="text-sm text-secondary">
-        Erstelle ein Backup deiner Daten oder stelle ein vorheriges Backup wieder her.
-      </p>
+      <div>
+        <h3 className="text-lg font-semibold text-primary mb-1">Backup & Wiederherstellung</h3>
+        <p className="text-sm text-secondary">
+          Sichert Buchungen, Kategorien und Händler dieses Kontos als Datei. Beim
+          Wiederherstellen werden die Daten des Kontos durch das Backup ersetzt.
+        </p>
+      </div>
 
       {error && (
-        <div className="p-4 bg-danger-subtle text-danger rounded-lg">
+        <div className="rounded-control bg-danger-subtle p-4 text-sm text-danger">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="p-4 bg-income-bg text-income rounded-lg">
+        <div className="rounded-control bg-income-bg p-4 text-sm text-income">
           {success}
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2">
         <Button
           type="button"
+          variant="secondary"
           onClick={handleBackup}
           disabled={isBusy}
           loading={isBackingUp}
@@ -109,29 +122,31 @@ export default function BackupManager({ allowRestore = true }: { allowRestore?: 
 
         {allowRestore && (
         <label
-          className={`${getButtonClassName({ variant: 'primary' })} cursor-pointer ${isBusy ? 'pointer-events-none opacity-50' : ''}`}
+          className={`${getButtonClassName({ variant: 'secondary' })} cursor-pointer ${isBusy ? 'pointer-events-none opacity-50' : ''}`}
         >
-          {isRestoring ? (
-            <>
-              <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true" />
-              Wird wiederhergestellt…
-            </>
-          ) : (
-            <>
-              <ArrowUpTrayIcon className="h-5 w-5" aria-hidden="true" />
-              Backup wiederherstellen
-            </>
-          )}
+          <ArrowUpTrayIcon className="h-5 w-5" aria-hidden="true" />
+          Backup wiederherstellen
           <input
             type="file"
             accept=".json"
-            onChange={handleRestore}
+            onChange={handleFileChosen}
             disabled={isBusy}
             className="hidden"
           />
         </label>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={pendingFile !== null}
+        onClose={() => setPendingFile(null)}
+        onConfirm={handleRestore}
+        title="Backup wiederherstellen?"
+        message={`Alle Buchungen, Kategorien und Händler von „${accountName}“ werden durch den Inhalt von „${pendingFile?.name ?? ''}“ ersetzt. Das lässt sich nicht rückgängig machen.`}
+        confirmText="Wiederherstellen"
+        confirmLoadingText="Wird wiederhergestellt…"
+        type="danger"
+      />
     </div>
   )
-} 
+}

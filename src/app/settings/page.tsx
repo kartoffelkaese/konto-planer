@@ -12,6 +12,7 @@ import EmailSettingsSection from '@/components/settings/EmailSettingsSection'
 import AccountSharing from '@/components/AccountSharing'
 import LegalLinks from '@/components/LegalLinks'
 import PlanSection from '@/components/settings/PlanSection'
+import ResetAccount from '@/components/settings/ResetAccount'
 import AccountInvitations from '@/components/AccountInvitations'
 import CreateAdditionalAccount from '@/components/CreateAdditionalAccount'
 import BankSelect from '@/components/BankSelect'
@@ -358,6 +359,8 @@ export default function SettingsPage() {
               <div id="backup-settings" className="card p-4 md:p-5">
                 <BackupManager allowRestore={canWrite} />
               </div>
+
+              <ResetAccount />
 
               <DeleteFinancialAccount />
             </section>

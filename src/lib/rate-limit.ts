@@ -31,6 +31,7 @@ export const RATE_LIMITS = {
   resendVerification: { limit: 3, windowMs: 60 * 60 * 1000 },
   emailChangeResend: { limit: 3, windowMs: 60 * 60 * 1000 },
   accountDelete: { limit: 3, windowMs: 60 * 60 * 1000 },
+  accountReset: { limit: 5, windowMs: 60 * 60 * 1000 },
   csvImport: { limit: 10, windowMs: 15 * 60 * 1000 },
   recurringDetect: { limit: 10, windowMs: 15 * 60 * 1000 },
   recurringBulk: { limit: 10, windowMs: 15 * 60 * 1000 },

@@ -126,9 +126,17 @@ describe('Backup', () => {
     for (const model of ['category', 'merchant', 'merchantCategory', 'transaction']) {
       prismaMock[model].findMany.mockResolvedValue([])
     }
-    expect((await backupRoute.GET()).status).toBe(200)
+    expect((await backupRoute.GET(jsonRequest('GET', undefined, 'http://localhost/api/backup'))).status).toBe(200)
     expect(prismaMock.transaction.findMany).toHaveBeenCalledWith({ where: { accountId: TEST_ACCOUNT.id } })
     expect(prismaMock.category.findMany).toHaveBeenCalledWith({ where: { accountId: TEST_ACCOUNT.id } })
+  })
+
+  it('Export eines anderen Kontos nur mit Mitgliedschaft', async () => {
+    loginAs()
+    prismaMock.accountMember.findUnique.mockResolvedValue(null)
+    const url = 'http://localhost/api/backup?accountId=fremd'
+    expect((await backupRoute.GET(jsonRequest('GET', undefined, url))).status).toBe(403)
+    expect(prismaMock.transaction.findMany).not.toHaveBeenCalled()
   })
 
   it('Nur-Lesen-Mitglied darf nicht wiederherstellen (403), nichts gelöscht', async () => {

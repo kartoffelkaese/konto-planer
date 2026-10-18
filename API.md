@@ -162,6 +162,8 @@ Antwort: `currentIncome`, `currentExpenses`, `totalIncome`, `totalExpenses`, `cl
 | `GET` | `/api/accounts/active` | Aktives Konto inkl. Rolle |
 | `PATCH` | `/api/accounts/active` | Konto wechseln (`accountId`) oder Name/Gehaltstag ändern |
 | `DELETE` | `/api/accounts/:id` | Aktives Konto löschen (nur OWNER, nicht das letzte) |
+| `GET` | `/api/accounts/reset` | Eigene Konten (OWNER) mit Zählwerten für „Konto zurücksetzen“: `transactions`, `recurring`, `categories`, `merchants`; dazu `activeAccountId` |
+| `POST` | `/api/accounts/reset` | `{ "scope": "current" \| "all", "level": "transactions" \| "recurring" \| "everything", "confirmText" }` — Konto zurücksetzen (nur OWNER; `all` = alle eigenen Konten). `transactions` behält wiederkehrende Zahlungen, `recurring` löscht sie mit, `everything` zusätzlich Kategorien und Händler. Bestätigung: Kontoname bzw. `ZURÜCKSETZEN`. Umbuchungen in anderen Konten bleiben, nur die Verknüpfung wird gelöst. 5 Versuche pro Stunde |
 | `GET` | `/api/accounts/transfer-targets` | Zielkonten für Umbuchungen |
 
 ### Teilen & Einladungen
@@ -279,7 +281,7 @@ Admin-Recht per `npm run set-admin <E-Mail>`. Ohne Admin-Recht oder ohne aktive 
 
 | Methode | Pfad | Beschreibung |
 |---------|------|----------------|
-| `GET` | `/api/backup` | Export (JSON, Version `1.0`) |
+| `GET` | `/api/backup?accountId=` | Export (JSON, Version `1.0`) des aktiven Kontos oder – mit `accountId` – eines anderen Kontos, in dem man Mitglied ist |
 | `POST` | `/api/backup` | Import validiertes Backup |
 
 ### Sonstiges

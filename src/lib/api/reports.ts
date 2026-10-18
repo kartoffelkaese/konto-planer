@@ -6,7 +6,11 @@ export const getStatistics = <T>(params: Record<string, string | undefined>) =>
   apiFetch<T>(`/statistics${encodeQuery(params)}`)
 
 /** Backups können groß sein – ohne Zeitlimit. */
-export const exportBackup = () => apiFetch<unknown>('/backup', { timeoutMs: null })
+/** Backup des aktiven Kontos oder – mit `accountId` – eines anderen eigenen Kontos */
+export const exportBackup = (accountId?: string) =>
+  apiFetch<unknown>(accountId ? `/backup?accountId=${encodeURIComponent(accountId)}` : '/backup', {
+    timeoutMs: null,
+  })
 
 export const restoreBackup = (backup: unknown) =>
   apiFetch<unknown>('/backup', {

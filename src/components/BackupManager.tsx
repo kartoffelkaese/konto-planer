@@ -6,7 +6,8 @@ import { useToast } from '@/hooks/useToast'
 import { Button, getButtonClassName } from '@/components/Button'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useUserSettings } from '@/hooks/useUserSettings'
-import { exportBackup, restoreBackup } from '@/lib/api'
+import { restoreBackup } from '@/lib/api'
+import { downloadBackup } from '@/lib/backupDownload'
 
 const INVALID_FILE_MESSAGE = 'Die Datei ist kein gültiges Backup.'
 
@@ -26,16 +27,7 @@ export default function BackupManager({ allowRestore = true }: { allowRestore?: 
       setError(null)
       setSuccess(null)
 
-      const backup = await exportBackup()
-      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `konto-planer-backup-${new Date().toISOString().split('T')[0]}.json`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
+      await downloadBackup()
 
       setSuccess('Backup erfolgreich erstellt')
       showToast('Backup erfolgreich erstellt', 'success')

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getAccountContext, requireWritableContext } from '@/lib/account-context'
+import {
+  getAccountContext,
+  getAccountContextForAccountId,
+  requireWritableContext,
+} from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import {
   BACKUP_MAX_BYTES,
@@ -10,9 +14,11 @@ import { setMerchantCategories } from '@/lib/merchantCategories'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 
-export async function GET() {
+/** Backup des aktiven Kontos – oder mit `?accountId=` eines anderen Kontos, in dem man Mitglied ist */
+export async function GET(request: Request) {
   try {
-    const ctx = await getAccountContext()
+    const accountId = new URL(request.url).searchParams.get('accountId')
+    const ctx = accountId ? await getAccountContextForAccountId(accountId) : await getAccountContext()
     if (isErrorResponse(ctx)) return ctx
 
     const { account, user } = ctx

@@ -1,3 +1,4 @@
+import type { ResetLevel, ResetResult, ResettableAccount } from '@/lib/accountResetShared'
 import type { TransferTarget } from '@/lib/transfers'
 import { apiFetch } from './client'
 
@@ -15,6 +16,16 @@ export const deleteAccount = (accountId: string) =>
     `/accounts/${encodeURIComponent(accountId)}`,
     { method: 'DELETE', timeoutMs: null }
   )
+
+export const getResettableAccounts = () =>
+  apiFetch<{ activeAccountId: string; accounts: ResettableAccount[] }>('/accounts/reset')
+
+export const resetAccounts = (data: { scope: 'current' | 'all'; level: ResetLevel; confirmText: string }) =>
+  apiFetch<ResetResult & { accounts: number }>('/accounts/reset', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    timeoutMs: null,
+  })
 
 export const setActiveAccount = (accountId: string) =>
   apiFetch<unknown>('/accounts/active', {

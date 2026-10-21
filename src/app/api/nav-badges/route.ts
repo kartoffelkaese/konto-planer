@@ -4,7 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { getAccountContext } from '@/lib/account-context'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 import { normalizeEmail } from '@/lib/accounts'
-import { getSalaryMonthRange, isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
+import { getSalaryMonthRange } from '@/lib/dateUtils'
+import { loadInstanceKeys, openDueDatesWithoutInstance } from '@/lib/recurringAutoPending'
 import { logger } from '@/lib/logger'
 
 export async function GET() {
@@ -38,61 +39,35 @@ export async function GET() {
         accountId: account.id,
         isConfirmed: false,
         date: { gte: startDate, lte: endDate },
+        // Vorlagen wiederkehrender Zahlungen sind keine Buchungen
+        NOT: { isRecurring: true, parentTransactionId: null },
       },
     })
 
     let recurringAttention = 0
 
     if (!account.isSimpleAccount) {
-    const recurringParents = await prisma.transaction.findMany({
+    // Handlungsbedarf: Termine im Gehaltsmonat ohne Buchung, die nicht schon eingetragen bzw.
+    // bewusst übergangen wurden. „Am Buchungstag“ trägt künftige Termine selbst ein – die zählen nicht.
+    const templates = await prisma.transaction.findMany({
       where: {
         accountId: account.id,
         isRecurring: true,
         isRecurringPaused: false,
+        parentTransactionId: null,
       },
-      select: {
-        id: true,
-        date: true,
-        recurringInterval: true,
-        lastConfirmedDate: true,
-      },
+      select: { id: true, date: true, recurringInterval: true, autoPendingUntil: true },
     })
-
-    const recurringIds = recurringParents.map((t) => t.id)
-    const instancesInSalaryMonth =
-      recurringIds.length > 0
-        ? await prisma.transaction.findMany({
-            where: {
-              accountId: account.id,
-              isRecurring: false,
-              parentTransactionId: { in: recurringIds },
-              date: { gte: startDate, lte: endDate },
-            },
-            select: { parentTransactionId: true },
-          })
-        : []
-
-    const parentsWithInstance = new Set(
-      instancesInSalaryMonth
-        .map((i) => i.parentTransactionId)
-        .filter((id): id is string => id != null)
+    const attentionUntil = account.recurringAutoMode === 'ON_DUE_DATE' ? new Date() : endDate
+    const instanceKeys = await loadInstanceKeys(
+      account.id,
+      templates.map((t) => t.id),
+      startDate,
+      endDate
     )
-
-    for (const t of recurringParents) {
-      const due = isTransactionDueInSalaryMonth(
-        {
-          date: t.date,
-          isRecurring: true,
-          isRecurringPaused: false,
-          recurringInterval: t.recurringInterval,
-          lastConfirmedDate: t.lastConfirmedDate,
-        },
-        account.salaryDay
-      )
-      if (due && !parentsWithInstance.has(t.id)) {
-        recurringAttention += 1
-      }
-    }
+    recurringAttention = templates.filter(
+      (t) => openDueDatesWithoutInstance(t, startDate, attentionUntil, instanceKeys).length > 0
+    ).length
     }
 
     return NextResponse.json({

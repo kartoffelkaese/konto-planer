@@ -64,6 +64,11 @@ describe('POST /api/accounts/reset', () => {
     })
     expect(prismaMock.merchant.deleteMany).not.toHaveBeenCalled()
     expect(prismaMock.category.deleteMany).not.toHaveBeenCalled()
+    // Marken der Vorlagen zurücksetzen, damit der laufende Gehaltsmonat wieder befüllt wird
+    expect(prismaMock.transaction.updateMany).toHaveBeenCalledWith({
+      where: { accountId: { in: [TEST_ACCOUNT.id] }, isRecurring: true, parentTransactionId: null },
+      data: { autoPendingUntil: null },
+    })
   })
 
   it('„Buchungen und wiederkehrende“: alle Buchungen des Kontos', async () => {

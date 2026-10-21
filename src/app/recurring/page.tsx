@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import {
   getRecurringTransactions,
   createRecurringInstance,
-  createPendingInstances,
   setRecurringPaused,
 } from '@/lib/api'
 import { getNextRecurringDueDate, formatDate } from '@/lib/dateUtils'
@@ -16,7 +15,6 @@ import {
 } from '@/lib/recurringIntervals'
 import {
   getRecurringSalaryMonthStatus,
-  hasDueRecurringWithoutInstance,
   type RecurringWithStatus,
 } from '@/lib/recurringStatus'
 import { formatCurrency } from '@/lib/formatters'
@@ -45,17 +43,14 @@ import PendingUndoButton from '@/components/PendingUndoButton'
 import EmptyState from '@/components/EmptyState'
 import RecurringDetectionDialog from '@/components/recurring/RecurringDetectionDialog'
 import RecurringDetectionIntro from '@/components/recurring/RecurringDetectionIntro'
-import { usePendingUndo } from '@/contexts/PendingUndoContext'
 
 export default function RecurringTransactionsPage() {
   const router = useRouter()
   const { showToast } = useToast()
-  const { registerCreated } = usePendingUndo()
   const { salaryDay, canWrite, isSimpleAccount, loading: settingsLoading, accountName, settings } = useUserSettings()
   const [transactions, setTransactions] = useState<RecurringWithStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isCreatingPending, setIsCreatingPending] = useState(false)
   const [showNewTransactionModal, setShowNewTransactionModal] = useState(false)
   const [showDetectionDialog, setShowDetectionDialog] = useState(false)
   const [showEditTransactionModal, setShowEditTransactionModal] = useState(false)
@@ -105,20 +100,6 @@ export default function RecurringTransactionsPage() {
       void loadTransactions()
     }
   })
-
-  const handleCreateAllPending = async () => {
-    setIsCreatingPending(true)
-    try {
-      const created = await createPendingInstances()
-      await loadTransactions()
-      registerCreated(created)
-    } catch (err) {
-      console.error('Fehler beim Erstellen der ausstehenden Transaktionen:', err)
-      showToast('Fehler beim Erstellen der ausstehenden Zahlungen', 'error')
-    } finally {
-      setIsCreatingPending(false)
-    }
-  }
 
   const handleTogglePause = async (transaction: RecurringWithStatus) => {
     const willPause = !transaction.isRecurringPaused
@@ -172,8 +153,6 @@ export default function RecurringTransactionsPage() {
     )
   }
 
-  const hasDueWithoutInstance = hasDueRecurringWithoutInstance(transactions)
-
   if (settingsLoading || isSimpleAccount) {
     return <PageLoader message="Wird weitergeleitet…" />
   }
@@ -221,17 +200,6 @@ export default function RecurringTransactionsPage() {
           subtitle={`${accountName} · Regelmäßige Ein- und Ausgaben`}
           actions={
             <>
-              {canWrite && hasDueWithoutInstance && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleCreateAllPending}
-                  loading={isCreatingPending}
-                  loadingText="Wird erstellt…"
-                >
-                  Ausstehende erstellen
-                </Button>
-              )}
               {canWrite && <PendingUndoButton onUndone={loadTransactions} />}
               {canWrite && (
                 <Button

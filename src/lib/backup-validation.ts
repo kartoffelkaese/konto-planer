@@ -106,7 +106,10 @@ export function validateBackupPayload(
         { status: 400 }
       )
     }
-    if (t.lastConfirmedDate != null && !isValidDateString(t.lastConfirmedDate)) {
+    if (
+      (t.lastConfirmedDate != null && !isValidDateString(t.lastConfirmedDate)) ||
+      (t.autoPendingUntil != null && !isValidDateString(t.autoPendingUntil))
+    ) {
       return NextResponse.json(
         { error: 'Ungültiges Datum in Transaktion im Backup' },
         { status: 400 }

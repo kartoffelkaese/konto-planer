@@ -145,9 +145,33 @@ describe('Backup', () => {
     expect(response.status).toBe(403)
     expect(prismaMock.transaction.deleteMany).not.toHaveBeenCalled()
   })
+
+  it('Wiederherstellen übernimmt die Marke wiederkehrender Zahlungen', async () => {
+    loginAs()
+    prismaMock.transaction.createMany.mockResolvedValue({ count: 1 })
+    const template = {
+      id: 'v1',
+      amount: -950,
+      date: '2026-09-05T00:00:00.000Z',
+      description: null,
+      isConfirmed: false,
+      isRecurring: true,
+      recurringInterval: 'monthly',
+      autoPendingUntil: '2026-10-05T00:00:00.000Z',
+      merchant: 'Vermieter',
+      merchantId: null,
+    }
+    const response = await backupRoute.POST(
+      jsonRequest('POST', { version: '1.0', categories: [], merchants: [], transactions: [template] })
+    )
+    expect(response.status).toBe(200)
+    expect(prismaMock.transaction.createMany.mock.calls[0][0].data[0].autoPendingUntil).toEqual(
+      new Date('2026-10-05T00:00:00.000Z')
+    )
+  })
 })
 
-describe('„Ausstehende erstellen“ rückgängig', () => {
+describe('Automatisch eingetragene Zahlungen rückgängig', () => {
   const item = {
     id: 't1',
     merchant: 'Miete',

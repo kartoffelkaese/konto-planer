@@ -24,6 +24,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import AccountSwitcher from '@/components/AccountSwitcher'
 import { useToast } from '@/hooks/useToast'
 import { useUserSettings } from '@/hooks/useUserSettings'
+import { TRANSACTIONS_CHANGED_EVENT } from '@/lib/accountSwitchEvents'
 import { getNavBadges } from '@/lib/api'
 import {
   SIDEBAR_WIDTH_COLLAPSED,
@@ -106,9 +107,11 @@ export default function Navigation() {
 
     loadBadges()
     window.addEventListener('focus', loadBadges)
+    window.addEventListener(TRANSACTIONS_CHANGED_EVENT, loadBadges)
     const interval = setInterval(loadBadges, 60_000)
     return () => {
       window.removeEventListener('focus', loadBadges)
+      window.removeEventListener(TRANSACTIONS_CHANGED_EVENT, loadBadges)
       clearInterval(interval)
     }
   }, [session])

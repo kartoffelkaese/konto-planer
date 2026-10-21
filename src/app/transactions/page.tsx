@@ -1,10 +1,7 @@
 'use client'
 
-import { Suspense, useState, useCallback } from 'react'
+import { Suspense, useCallback } from 'react'
 import { PlusIcon } from '@heroicons/react/24/outline'
-import { createPendingInstances, getRecurringTransactions } from '@/lib/api'
-import { useApiQuery } from '@/hooks/useApiQuery'
-import { hasDueRecurringWithoutInstance } from '@/lib/recurringStatus'
 import { isPeriodFilterActive } from '@/lib/transactionPeriodRange'
 import TransactionList from '@/components/TransactionList'
 import TransactionPeriodFilter from '@/components/TransactionPeriodFilter'
@@ -12,10 +9,8 @@ import MonthlyOverview from '@/components/MonthlyOverview'
 import Modal from '@/components/Modal'
 import TransactionForm from '@/components/TransactionForm'
 import EditTransactionForm from '@/components/EditTransactionForm'
-import { useToast } from '@/hooks/useToast'
 import { Button } from '@/components/Button'
 import PendingUndoButton from '@/components/PendingUndoButton'
-import { usePendingUndo } from '@/contexts/PendingUndoContext'
 import TransactionCsvImport from '@/components/TransactionCsvImport'
 import PageLoader from '@/components/PageLoader'
 import PageError from '@/components/PageError'
@@ -30,8 +25,6 @@ import { useTransactionDialogs } from './useTransactionDialogs'
 
 function TransactionsPageContent() {
   const { salaryDay, accountName, loading: settingsLoading, canWrite, isSimpleAccount } = useUserSettings()
-  const { showToast } = useToast()
-  const { registerCreated } = usePendingUndo()
 
   const {
     period,
@@ -84,18 +77,7 @@ function TransactionsPageContent() {
     finishEditTransaction,
   } = useTransactionDialogs()
 
-  // „Ausstehende erstellen“ nur anbieten, wenn eine wiederkehrende Zahlung fällig ist und noch keine Buchung hat
-  const canCreatePending = !settingsLoading && !isSimpleAccount && canWrite
-  const { data: recurringTemplates, reload: reloadRecurringTemplates } = useApiQuery(
-    'recurring-templates',
-    getRecurringTransactions,
-    { enabled: canCreatePending }
-  )
-
-  const [isCreatingPending, setIsCreatingPending] = useState(false)
-
   useActiveAccountReload(() => {
-    reloadRecurringTemplates()
     if (salaryDay !== null && !customPeriodBlocked) {
       void loadTransactions(1, false)
       void loadTotals()
@@ -103,25 +85,9 @@ function TransactionsPageContent() {
   })
 
   const handleTransactionChange = useCallback(async () => {
-    reloadRecurringTemplates()
     await loadTotals()
     await loadTransactions(page, false)
-  }, [reloadRecurringTemplates, loadTotals, loadTransactions, page])
-
-  const handleCreatePending = async () => {
-    setIsCreatingPending(true)
-    try {
-      const created = await createPendingInstances()
-      await handleTransactionChange()
-      registerCreated(created)
-    } catch (err) {
-      console.error('Error creating pending instances:', err)
-      setError('Fehler beim Erstellen der ausstehenden Zahlungen')
-      showToast('Fehler beim Erstellen der ausstehenden Zahlungen', 'error')
-    } finally {
-      setIsCreatingPending(false)
-    }
-  }
+  }, [loadTotals, loadTransactions, page])
 
   const handleEditTransactionSuccess = async () => {
     finishEditTransaction()
@@ -132,8 +98,6 @@ function TransactionsPageContent() {
     closeNewTransaction()
     await handleTransactionChange()
   }
-
-  const showPendingAction = canCreatePending && hasDueRecurringWithoutInstance(recurringTemplates ?? [])
 
   if ((loading || settingsLoading) && transactions.length === 0 && !error) {
     return <PageLoader message="Transaktionen werden geladen…" />
@@ -173,19 +137,6 @@ function TransactionsPageContent() {
           }
           actions={
             <>
-              {showPendingAction && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleCreatePending}
-                  loading={isCreatingPending}
-                  loadingText="Wird erstellt…"
-                  title="Erstellt Buchungen für fällige wiederkehrende Zahlungen im aktuellen Gehaltsmonat"
-                  aria-label="Ausstehende Zahlungen für den Gehaltsmonat erstellen"
-                >
-                  Ausstehende erstellen
-                </Button>
-              )}
               {canWrite && <PendingUndoButton onUndone={handleTransactionChange} />}
               {canWrite && (
                 <>

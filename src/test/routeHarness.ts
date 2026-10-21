@@ -86,6 +86,7 @@ export const TEST_ACCOUNT = {
   salaryDay: 1,
   bankId: null,
   isSimpleAccount: false,
+  recurringAutoMode: 'SALARY_MONTH' as 'SALARY_MONTH' | 'ON_DUE_DATE' | 'OFF',
   transferSenderName: null,
   createdAt: new Date('2026-01-01'),
 }

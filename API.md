@@ -52,7 +52,7 @@ Unbekannter Wert bei `POST`/`PATCH` → **`400`** `{ "error": "Ungültiges Wiede
 Wenn das aktive Konto als **einfaches Konto** markiert ist:
 
 - Dashboard: Kalendermonat, `monthLabel`, `recentTransactions`; keine Kategorien/Recurring-Daten
-- **`403`** für wiederkehrende Planungs-Endpunkte (`/api/transactions/recurring`, `create-pending`, `create-instance`)
+- **`403`** für wiederkehrende Planungs-Endpunkte (`/api/transactions/recurring`, `create-instance`; `auto-pending` liefert dort still `[]`)
 - **`400`/`403`** bei `POST/PATCH` mit `isRecurring: true` bzw. Recurring-Feldern
 - Aktivierung per `PATCH /api/users/settings` nur als **OWNER**; blockiert, solange Recurring-Templates existieren
 
@@ -62,7 +62,7 @@ Wenn das aktive Konto als **einfaches Konto** markiert ist:
 
 | Methode | Pfad | Beschreibung |
 |---------|------|----------------|
-| `GET` | `/api/dashboard` | Kennzahlen fürs aktive Konto |
+| `GET` | `/api/dashboard` | Kennzahlen fürs aktive Konto. `available` = bestätigter Kontostand − offene Ausgaben bis Ende des Gehaltsmonats − `plannedRecurringExpenses` (Termine wiederkehrender Ausgaben im Gehaltsmonat, die noch nicht eingetragen sind); Vorlagen selbst zählen nie |
 
 **Planungskonto:** `monthlyIncome`, `monthlyExpenses`, `totalBalance`, `clearedBalance`, `available`, `totalPendingExpenses`, `categoryDistribution`, `categoryPeriod`, `monthLabel`, `recurringTransactions` (30 Tage), `recentTransactions` (max. 6)
 
@@ -72,17 +72,17 @@ Wenn das aktive Konto als **einfaches Konto** markiert ist:
 
 | Methode | Pfad | Beschreibung |
 |---------|------|----------------|
-| `GET` | `/api/transactions` | Paginierte Liste |
+| `GET` | `/api/transactions` | Paginierte Liste der Buchungen (ohne die Vorlagen wiederkehrender Zahlungen – die liefert `/api/transactions/recurring`) |
 | `POST` | `/api/transactions` | Anlegen |
 | `GET` | `/api/transactions/:id` | Einzelbuchung |
 | `PATCH` | `/api/transactions/:id` | Aktualisieren (inkl. `isConfirmed`, `lastConfirmedDate`, Umbuchung) |
 | `DELETE` | `/api/transactions/:id` | Löschen |
-| `GET` | `/api/transactions/recurring` | Wiederkehrende Vorlagen inkl. Intervall und Fälligkeit (Planungskonto) |
+| `GET` | `/api/transactions/recurring` | Wiederkehrende Vorlagen inkl. Intervall und Fälligkeit (Planungskonto). `dueInSalaryMonth`: offener Termin ohne Buchung; `autoPendingDate`: bei „Am Buchungstag“ der nächste Termin, an dem eingetragen wird |
 | `POST` | `/api/transactions/recurring/detect` | Kontoauszug (CSV) auswerten und wiederkehrende Zahlungen vorschlagen – speichert nichts (Planungskonto, alle Level) |
 | `POST` | `/api/transactions/recurring/bulk` | Mehrere wiederkehrende Zahlungen auf einmal anlegen, optional Gehaltstag setzen (Planungskonto, alle Level) |
-| `GET` | `/api/transactions/totals` | Summen fürs Konto/Gehaltsmonat |
-| `POST` | `/api/transactions/create-pending` | Fällige ausstehende Instanzen erzeugen |
-| `POST` | `/api/transactions/create-pending/undo` | Zuletzt erzeugte Instanzen wieder entfernen. Body: `items` (Stand je Buchung direkt nach dem Erstellen: `id`, `merchant`, `description`, `amount`, `date`, `categoryId`; max. 500), `mode`: `ask` (Standard; bei bearbeiteten/bestätigten Buchungen wird nichts gelöscht, Antwort `status: "needs-confirmation"` mit `changed`, `unchangedCount`), `unchanged` (geänderte behalten) oder `all`. Sonst `status: "done"` mit `deleted`, `kept`. Gegenbuchungen von Umbuchungen werden mit entfernt |
+| `GET` | `/api/transactions/totals` | Summen fürs Konto/Gehaltsmonat; `available` wie in `/api/dashboard` |
+| `POST` | `/api/transactions/auto-pending` | Fällige wiederkehrende Zahlungen nach `recurringAutoMode` des Kontos als ausstehende Buchungen eintragen (ruft die App beim Öffnen auf); liefert die neuen Buchungen. Jede Vorlage merkt sich in `autoPendingUntil` den letzten berücksichtigten Termin – gelöschte oder zurückgenommene Buchungen werden nicht erneut eingetragen, nie vor Beginn des Gehaltsmonats. Ohne Schreibrecht oder bei einfachen Konten `[]` |
+| `POST` | `/api/transactions/create-pending/undo` | Zuletzt automatisch eingetragene Instanzen wieder entfernen (die Marke der Vorlagen bleibt). Body: `items` (Stand je Buchung direkt nach dem Erstellen: `id`, `merchant`, `description`, `amount`, `date`, `categoryId`; max. 500), `mode`: `ask` (Standard; bei bearbeiteten/bestätigten Buchungen wird nichts gelöscht, Antwort `status: "needs-confirmation"` mit `changed`, `unchangedCount`), `unchanged` (geänderte behalten) oder `all`. Sonst `status: "done"` mit `deleted`, `kept`. Gegenbuchungen von Umbuchungen werden mit entfernt |
 | `POST` | `/api/transactions/:id/create-instance` | Instanz einer wiederkehrenden Buchung |
 
 **`GET /api/transactions` – Query**
@@ -230,7 +230,7 @@ Nur für Konten mit `isSimpleAccount: false` (Statistik-Seite leitet sonst um).
 
 **`GET/PATCH /api/users/settings` – Felder**
 
-`email`, `accountName`, `salaryDay`, `transferSenderName`, `splitDisplayName`, `bankId`, `isSimpleAccount`, `activeAccountId`, `role`, `createdAt`, `pendingEmail`
+`email`, `accountName`, `salaryDay`, `transferSenderName`, `splitDisplayName`, `bankId`, `isSimpleAccount`, `recurringAutoMode`, `activeAccountId`, `role`, `createdAt`, `pendingEmail`
 
 `recurringIntroSeen` – Einführung „Aus Kontoauszug erkennen“ gesehen (am Nutzer gespeichert). `PATCH` mit `{ "recurringIntroSeen": true }` vermerkt sie einmalig, auch mit Nur-Lese-Zugriff.
 
@@ -273,7 +273,7 @@ Admin-Recht per `npm run set-admin <E-Mail>`. Ohne Admin-Recht oder ohne aktive 
 | `POST` | `/api/admin/users/:id/sync` | Abo-Stand des Nutzers mit Stripe abgleichen |
 | `PATCH` | `/api/admin/users/:id/plan` | `{ "plan": "BASIC" \| "FULL", "expiresAt"?, "note"? }` — Level von Hand setzen, mit Protokolleintrag |
 
-**`PATCH` – Body:** `accountName`, `salaryDay`, `transferSenderName`, `bankId`, `isSimpleAccount` (nur **OWNER**; Aktivierung nur ohne Recurring-Templates), `splitDisplayName` (nutzerweit, auch bei Nur-Lese-Konto speicherbar)
+**`PATCH` – Body:** `accountName`, `salaryDay`, `transferSenderName`, `bankId`, `recurringAutoMode` (`SALARY_MONTH` = zu Beginn des Gehaltsmonats, `ON_DUE_DATE` = am Buchungstag, `OFF` = von Hand), `isSimpleAccount` (nur **OWNER**; Aktivierung nur ohne Recurring-Templates), `splitDisplayName` (nutzerweit, auch bei Nur-Lese-Konto speicherbar)
 
 `bankId`: Slug aus dem Bank-Katalog (z. B. `ing`, `trade-republic`) oder `null`
 

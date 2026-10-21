@@ -84,6 +84,13 @@ export async function resetAccounts(accountIds: string[], level: ResetLevel): Pr
     const recurring =
       level === 'transactions' ? 0 : await tx.transaction.count({ where: { ...inAccounts, ...RECURRING_TEMPLATE } })
     const { count: deleted } = await tx.transaction.deleteMany({ where: deleteWhere })
+    if (level === 'transactions') {
+      // Vorlagen bleiben: der laufende Gehaltsmonat soll wieder automatisch befüllt werden
+      await tx.transaction.updateMany({
+        where: { ...inAccounts, ...RECURRING_TEMPLATE },
+        data: { autoPendingUntil: null },
+      })
+    }
 
     let categories = 0
     let merchants = 0

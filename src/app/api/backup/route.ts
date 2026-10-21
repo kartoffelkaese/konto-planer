@@ -133,6 +133,7 @@ export async function POST(request: Request) {
         isRecurringPaused?: boolean
         recurringInterval?: string | null
         lastConfirmedDate?: string | null
+        autoPendingUntil?: string | null
         merchant: string
         merchantId: string | null
         categoryId?: string | null
@@ -195,6 +196,10 @@ export async function POST(request: Request) {
           recurringInterval: transaction.recurringInterval,
           lastConfirmedDate: transaction.lastConfirmedDate
             ? new Date(transaction.lastConfirmedDate)
+            : null,
+          // Sonst kämen bewusst gelöschte Buchungen des laufenden Monats wieder
+          autoPendingUntil: transaction.autoPendingUntil
+            ? new Date(transaction.autoPendingUntil)
             : null,
           merchant: transaction.merchant,
           merchantId: transaction.merchantId

@@ -16,6 +16,7 @@ import {
   assertOwnerForSimpleAccountToggle,
 } from '@/lib/simpleAccount'
 import { logger } from '@/lib/logger'
+import { isRecurringAutoMode, type RecurringAutoModeId } from '@/lib/recurringAutoMode'
 import { keptAccountChangeAllowedAt, plansEnabled } from '@/lib/plans'
 import { hasRunningSubscription, paidPeriodEnd } from '@/lib/billingRoute'
 import { billingEnabled } from '@/lib/stripe'
@@ -89,6 +90,7 @@ export async function PATCH(request: NextRequest) {
       transferSenderName?: string | null
       bankId?: string | null
       isSimpleAccount?: boolean
+      recurringAutoMode?: RecurringAutoModeId
     } = {}
 
     if (body.isSimpleAccount !== undefined) {
@@ -126,6 +128,16 @@ export async function PATCH(request: NextRequest) {
       const senderName = validateTransferSenderName(body.transferSenderName)
       if (isErrorResponse(senderName)) return senderName
       data.transferSenderName = senderName
+    }
+
+    if (body.recurringAutoMode !== undefined) {
+      if (!isRecurringAutoMode(body.recurringAutoMode)) {
+        return NextResponse.json(
+          { error: 'Ungültige Auswahl für wiederkehrende Zahlungen' },
+          { status: 400 }
+        )
+      }
+      data.recurringAutoMode = body.recurringAutoMode
     }
 
     if (body.bankId !== undefined) {
@@ -169,6 +181,7 @@ export async function PATCH(request: NextRequest) {
       splitDisplayName: freshUser.splitDisplayName,
       bankId: updated.bankId,
       isSimpleAccount: updated.isSimpleAccount,
+      recurringAutoMode: updated.recurringAutoMode,
       createdAt: updated.createdAt,
       activeAccountId: account.id,
       role: membership.role,
@@ -201,6 +214,7 @@ export async function GET() {
       recurringIntroSeen: user.recurringIntroSeenAt !== null,
       bankId: account.bankId,
       isSimpleAccount: account.isSimpleAccount,
+      recurringAutoMode: account.recurringAutoMode,
       createdAt: account.createdAt,
       activeAccountId: account.id,
       role: membership.role,

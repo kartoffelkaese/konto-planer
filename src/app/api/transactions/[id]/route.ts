@@ -219,6 +219,17 @@ export async function PATCH(
           : undefined,
     }
 
+    // Vorlage mit neuem Termin oder Intervall: automatisches Eintragen beginnt im laufenden
+    // Gehaltsmonat neu, sonst fielen Termine vor der alten Marke weg
+    const scheduleChanged =
+      (allowedUpdateFields.date instanceof Date &&
+        allowedUpdateFields.date.getTime() !== existingTransaction.date.getTime()) ||
+      (updateData.recurringInterval !== undefined &&
+        updateData.recurringInterval !== existingTransaction.recurringInterval)
+    if (willBeRecurring && !existingTransaction.parentTransactionId && scheduleChanged) {
+      allowedUpdateFields.autoPendingUntil = null
+    }
+
     if (
       updateData.isTransfer !== undefined ||
       updateData.transferTargetAccountId !== undefined

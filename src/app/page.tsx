@@ -22,7 +22,7 @@ import { useUserSettings } from '@/hooks/useUserSettings'
 import { resolveTransactionMerchantName } from '@/lib/merchantCategories'
 import { formatCurrency } from '@/lib/formatters'
 import { formatDate } from '@/lib/dateUtils'
-import { ACCOUNT_CHANGED_EVENT } from '@/lib/accountSwitchEvents'
+import { ACCOUNT_CHANGED_EVENT, TRANSACTIONS_CHANGED_EVENT } from '@/lib/accountSwitchEvents'
 import { useApiQuery } from '@/hooks/useApiQuery'
 import { getDashboard } from '@/lib/api'
 
@@ -97,7 +97,11 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!session) return
     window.addEventListener(ACCOUNT_CHANGED_EVENT, fetchDashboardData)
-    return () => window.removeEventListener(ACCOUNT_CHANGED_EVENT, fetchDashboardData)
+    window.addEventListener(TRANSACTIONS_CHANGED_EVENT, fetchDashboardData)
+    return () => {
+      window.removeEventListener(ACCOUNT_CHANGED_EVENT, fetchDashboardData)
+      window.removeEventListener(TRANSACTIONS_CHANGED_EVENT, fetchDashboardData)
+    }
   }, [session, fetchDashboardData])
 
   if (status === 'loading') {
@@ -304,7 +308,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <p className="mt-2 text-xs text-secondary">
-                  Verfügbar ist, was nach offenen Ausgaben vom gebuchten Kontostand übrig bleibt.
+                  Verfügbar ist, was vom gebuchten Kontostand übrig bleibt – nach offenen Ausgaben und den wiederkehrenden Zahlungen dieses Gehaltsmonats, die noch nicht eingetragen sind.
                 </p>
               </div>
             </div>

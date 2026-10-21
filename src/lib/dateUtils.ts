@@ -52,6 +52,11 @@ function toBerlinDay(date: Date | string) {
   return dayjs(date).tz(DEFAULT_TIMEZONE).startOf('day')
 }
 
+/** Kalendertag in Europe/Berlin als „YYYY-MM-DD“ – lässt sich als Text vergleichen */
+export function berlinDayKey(date: Date | string): string {
+  return dayjs(date).tz(DEFAULT_TIMEZONE).format('YYYY-MM-DD')
+}
+
 /** Ein Intervall-Schritt ab einem Datum (Anker-Kette). */
 export function addRecurringInterval(
   date: Date | string | dayjs.Dayjs,

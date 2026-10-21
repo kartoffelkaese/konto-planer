@@ -16,6 +16,7 @@ import { isAccountWritable } from '@/lib/accountPermissions'
 import { ApiError, getUserSettings } from '@/lib/api'
 import { ACCOUNT_CHANGED_EVENT } from '@/lib/accountSwitchEvents'
 import { getEntitlements, type Entitlements, type PlanId, type PlanSourceId } from '@/lib/plans'
+import type { RecurringAutoModeId } from '@/lib/recurringAutoMode'
 
 export type UserSettings = {
   id: string
@@ -26,6 +27,8 @@ export type UserSettings = {
   splitDisplayName?: string | null
   bankId?: string | null
   isSimpleAccount?: boolean
+  /** Wann wiederkehrende Zahlungen eingetragen werden */
+  recurringAutoMode?: RecurringAutoModeId
   /** Einführung „Aus Kontoauszug erkennen“ schon gesehen */
   recurringIntroSeen?: boolean
   createdAt: string

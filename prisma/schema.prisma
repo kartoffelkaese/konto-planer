@@ -49,6 +49,16 @@ enum PlanInterval {
   YEARLY
 }
 
+/// Wann wiederkehrende Zahlungen als ausstehende Buchungen eingetragen werden
+enum RecurringAutoMode {
+  /// Zu Beginn des Gehaltsmonats alle Termine des Monats
+  SALARY_MONTH
+  /// Jede Zahlung an ihrem Termin
+  ON_DUE_DATE
+  /// Nur von Hand
+  OFF
+}
+
 enum SplitListStatus {
   ACTIVE
   ARCHIVED
@@ -158,6 +168,7 @@ model Account {
   transferSenderName String?
   bankId             String?
   isSimpleAccount    Boolean         @default(false)
+  recurringAutoMode  RecurringAutoMode @default(SALARY_MONTH)
   createdAt          DateTime        @default(now())
   members         AccountMember[]
   invites         AccountInvite[]
@@ -214,6 +225,8 @@ model Transaction {
   isRecurringPaused       Boolean       @default(false)
   recurringInterval       String?
   lastConfirmedDate       DateTime?
+  /// Nur an Vorlagen: letzter Termin, der schon automatisch eingetragen (oder bewusst übergangen) wurde
+  autoPendingUntil        DateTime?
   version                 Int           @default(1)
   parentTransactionId     String?
   parentTransaction       Transaction?  @relation("RecurringInstances", fields: [parentTransactionId], references: [id])

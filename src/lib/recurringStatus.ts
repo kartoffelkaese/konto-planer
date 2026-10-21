@@ -1,9 +1,12 @@
 import type { Transaction } from '@/types'
+import { formatDate } from '@/lib/dateUtils'
 
 export type RecurringWithStatus = Transaction & {
   dueInSalaryMonth?: boolean
   hasInstanceInSalaryMonth?: boolean
   hasUnconfirmedInstanceInSalaryMonth?: boolean
+  /** „Am Buchungstag“: nächster Termin im Gehaltsmonat, an dem automatisch eingetragen wird */
+  autoPendingDate?: string | null
 }
 
 export function isRecurringTemplateActive(t: {
@@ -11,13 +14,6 @@ export function isRecurringTemplateActive(t: {
   isRecurringPaused?: boolean
 }): boolean {
   return t.isRecurring && !t.isRecurringPaused
-}
-
-/** Mindestens eine aktive Vorlage ist im Gehaltsmonat fällig und hat noch keine Buchung – „Ausstehende erstellen“ hätte etwas zu tun */
-export function hasDueRecurringWithoutInstance(templates: RecurringWithStatus[]): boolean {
-  return templates.some(
-    (t) => !t.isRecurringPaused && t.dueInSalaryMonth && !t.hasInstanceInSalaryMonth
-  )
 }
 
 export function getRecurringSalaryMonthStatus(transaction: RecurringWithStatus): {
@@ -44,8 +40,14 @@ export function getRecurringSalaryMonthStatus(transaction: RecurringWithStatus):
   }
   if (transaction.dueInSalaryMonth) {
     return {
-      label: 'Fällig – oben „Ausstehende erstellen“',
+      label: 'Fällig – noch nicht eingetragen',
       className: 'bg-accent-subtle text-accent',
+    }
+  }
+  if (transaction.autoPendingDate) {
+    return {
+      label: `Wird am ${formatDate(transaction.autoPendingDate)} eingetragen`,
+      className: 'bg-surface-muted text-secondary',
     }
   }
   return {

@@ -296,6 +296,8 @@ pm2 restart konto-planer
 
 Reihenfolge einhalten: Nach einer Migration muss die App neu gebaut **und** neu gestartet werden. Läuft der alte Prozess weiter, kennt er neue Spalten nicht (Fehler 500 in den betroffenen Bereichen). Auch `PLANS_ENABLED`, die Stripe-Angaben und die Rechtstexte wirken auf Startseite und Fußzeilen erst nach einem neuen Build.
 
+**Hinweis zur Migration `20261021100000_recurring_auto_pending`:** Danach tragen alle Planungskonten wiederkehrende Zahlungen automatisch ein (Vorgabe „Zu Beginn des Gehaltsmonats“, änderbar unter Einstellungen → Kontodaten). Beim ersten Öffnen erscheinen die fälligen Zahlungen des laufenden Gehaltsmonats einmalig mit Meldung und „Rückgängig“; frühere Monate werden nicht nachgetragen.
+
 Bei hartnäckigen Build-Problemen:
 
 ```bash

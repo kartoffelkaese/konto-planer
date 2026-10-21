@@ -140,8 +140,9 @@ export const createRecurringInstance = async (transactionId: string): Promise<Tr
   }
 }
 
-export const createPendingInstances = async (): Promise<Transaction[]> => {
-  return apiFetch<Transaction[]>('/transactions/create-pending', { method: 'POST' })
+/** Fällige wiederkehrende Zahlungen nach der Einstellung des Kontos eintragen (beim Öffnen der App) */
+export const createAutoPendingInstances = async (): Promise<Transaction[]> => {
+  return apiFetch<Transaction[]>('/transactions/auto-pending', { method: 'POST' })
 }
 
 export const undoPendingInstances = async (

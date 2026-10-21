@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { NOT_RECURRING_TEMPLATE } from '@/lib/availableBalance'
 import { resolveSalaryDay } from '@/lib/salaryDay'
 import { getAccountContext, requireWritableContext } from '@/lib/account-context'
 import {
@@ -45,6 +46,7 @@ export async function GET(request: Request) {
 
     const whereClause: {
       accountId: string
+      NOT: typeof NOT_RECURRING_TEMPLATE.NOT
       date?: { gte: Date; lte: Date }
       OR?: Array<
         | { merchant: { contains: string } }
@@ -52,6 +54,8 @@ export async function GET(request: Request) {
       >
     } = {
       accountId: account.id,
+      // Vorlagen wiederkehrender Zahlungen stehen unter „Wiederkehrend“ – hier nur ihre Buchungen
+      ...NOT_RECURRING_TEMPLATE,
     }
 
     const dateRange = resolveTransactionPeriodRange({

@@ -52,7 +52,8 @@ function validateMode(value: unknown): PendingUndoMode | NextResponse {
 }
 
 /**
- * Nimmt per „Ausstehende erstellen“ angelegte Instanzen zurück.
+ * Nimmt automatisch eingetragene Instanzen zurück. Die Marke der Vorlagen bleibt stehen – die
+ * Buchungen werden also nicht erneut eingetragen.
  * Der Client schickt den Stand direkt nach dem Erstellen mit; weicht eine Buchung davon ab
  * (bearbeitet oder bestätigt), wird im Modus `ask` nichts gelöscht, sondern nachgefragt.
  */

@@ -1,5 +1,5 @@
 /**
- * „Rückgängig“ für „Ausstehende erstellen“: merkt sich den letzten Durchlauf im sessionStorage.
+ * „Rückgängig“ für automatisch eingetragene Zahlungen: merkt sich den letzten Durchlauf im sessionStorage.
  * Gilt damit nur für den aktuellen Tab – übersteht Neuladen, endet beim Schließen des Tabs.
  */
 
@@ -48,7 +48,7 @@ type CreatedTransaction = {
   categoryId?: string | null
 }
 
-/** Baut den Rückgängig-Eintrag aus der Antwort von „Ausstehende erstellen“ (null, wenn nichts erstellt wurde) */
+/** Baut den Rückgängig-Eintrag aus den neu eingetragenen Buchungen (null, wenn nichts entstanden ist) */
 export function buildPendingUndoEntry(created: CreatedTransaction[]): PendingUndoEntry | null {
   if (created.length === 0) return null
   return {

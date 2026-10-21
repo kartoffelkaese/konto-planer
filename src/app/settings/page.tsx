@@ -20,6 +20,7 @@ import PageContextHeader from '@/components/PageContextHeader'
 import PageLoader from '@/components/PageLoader'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { isCsvImportAvailableForBank } from '@/lib/csvImport/bankFormats'
+import { RECURRING_AUTO_MODE_OPTIONS, type RecurringAutoModeId } from '@/lib/recurringAutoMode'
 import { Button } from '@/components/Button'
 import { dispatchAccountChanged } from '@/lib/accountSwitchEvents'
 import {
@@ -40,6 +41,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [salaryDay, setSalaryDay] = useState(1)
+  const [recurringAutoMode, setRecurringAutoMode] = useState<RecurringAutoModeId>('SALARY_MONTH')
   const [accountName, setAccountName] = useState("Mein Konto")
   const [transferSenderName, setTransferSenderName] = useState('')
   const [splitDisplayName, setSplitDisplayName] = useState('')
@@ -59,6 +61,7 @@ export default function SettingsPage() {
         .then(
           (data) => {
             setSalaryDay(data.salaryDay)
+            setRecurringAutoMode(data.recurringAutoMode ?? 'SALARY_MONTH')
             setAccountName(data.accountName || 'Mein Konto')
             setTransferSenderName(data.transferSenderName || '')
             setSplitDisplayName(data.splitDisplayName || '')
@@ -117,6 +120,7 @@ export default function SettingsPage() {
       try {
         await updateUserSettings({
           salaryDay,
+          ...(isSimpleAccount ? {} : { recurringAutoMode }),
           accountName,
           transferSenderName,
           bankId,
@@ -188,7 +192,7 @@ export default function SettingsPage() {
               <form id="general-settings" onSubmit={handleSubmit} className="card p-4 md:p-5">
                 <h3 className="text-lg font-semibold text-primary mb-1">Kontodaten</h3>
                 <p className="text-sm text-secondary mb-4">
-                  Name, Bank, Gehaltsmonat und Umbuchungen
+                  Name, Bank, Gehaltsmonat, wiederkehrende Zahlungen und Umbuchungen
                 </p>
               
                 <div className="space-y-6">
@@ -284,6 +288,39 @@ export default function SettingsPage() {
                       Der Gehaltsmonat läuft dann vom {salaryDay}. bis zum {salaryDay}. des Folgemonats
                     </p>
                   </div>
+                  )}
+
+                  {!isSimpleAccount && (
+                    <fieldset>
+                      <legend className="block text-sm font-medium text-primary">
+                        Wiederkehrende Zahlungen eintragen
+                      </legend>
+                      <p className="mt-1 mb-2 text-sm text-secondary">
+                        Als ausstehende Buchungen, die du bestätigst, sobald sie abgebucht sind.
+                      </p>
+                      <div className="space-y-2">
+                        {RECURRING_AUTO_MODE_OPTIONS.map((option) => (
+                          <label
+                            key={option.value}
+                            className="flex items-start gap-3 rounded-control bg-surface-muted p-3 text-sm text-primary transition-colors duration-feedback has-[:checked]:bg-accent-subtle"
+                          >
+                            <input
+                              type="radio"
+                              name="recurringAutoMode"
+                              value={option.value}
+                              checked={recurringAutoMode === option.value}
+                              onChange={() => setRecurringAutoMode(option.value)}
+                              disabled={loading || !canWrite}
+                              className="mt-0.5 h-4 w-4 shrink-0 border-border text-accent"
+                            />
+                            <span>
+                              <span className="block font-medium">{option.label}</span>
+                              <span className="block text-secondary">{option.description}</span>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
                   )}
 
                   <div>

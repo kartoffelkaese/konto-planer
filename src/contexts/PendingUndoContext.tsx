@@ -15,8 +15,9 @@ import { useSession } from 'next-auth/react'
 import Modal from '@/components/Modal'
 import { Button } from '@/components/Button'
 import { useToast } from '@/contexts/ToastContext'
-import { getApiErrorMessage, undoPendingInstances } from '@/lib/api'
-import { ACCOUNT_CHANGED_EVENT } from '@/lib/accountSwitchEvents'
+import { createAutoPendingInstances, getApiErrorMessage, undoPendingInstances } from '@/lib/api'
+import { ACCOUNT_CHANGED_EVENT, dispatchTransactionsChanged } from '@/lib/accountSwitchEvents'
+import { useUserSettings } from '@/hooks/useUserSettings'
 import { formatDate } from '@/lib/dateUtils'
 import { formatCurrency } from '@/lib/formatters'
 import {
@@ -31,6 +32,8 @@ import {
 import type { Transaction } from '@/types'
 
 const MAX_LISTED_CHANGES = 5
+/** Beim Zurückkehren in den Tab höchstens so oft erneut eintragen */
+const AUTO_PENDING_INTERVAL_MS = 60 * 60 * 1000
 
 type PendingConfirmation = {
   changed: PendingUndoChangedItem[]
@@ -41,8 +44,6 @@ interface PendingUndoContextValue {
   /** Anzahl der Buchungen aus dem letzten Durchlauf, die sich zurücknehmen lassen (0 = nichts) */
   undoCount: number
   isUndoing: boolean
-  /** Nach „Ausstehende erstellen“ aufrufen; zeigt die Erfolgsmeldung samt „Rückgängig“ */
-  registerCreated: (created: Transaction[]) => void
   requestUndo: () => void
   /** Wird nach erfolgreichem Zurücknehmen aufgerufen, damit Seiten ihre Listen neu laden */
   subscribeUndone: (listener: () => void) => () => void
@@ -98,13 +99,18 @@ export function PendingUndoProvider({ children }: { children: ReactNode }) {
         setConfirmation(null)
         storePendingUndoEntry(null)
         listeners.current.forEach((listener) => listener())
+        // Übersicht und Navigationszähler ebenfalls auffrischen
+        dispatchTransactionsChanged()
 
+        // Die Marke der Vorlagen bleibt stehen – entfernte Buchungen kommen nicht automatisch wieder
+        const notAgain =
+          result.deleted === 1 ? 'sie wird nicht erneut eingetragen' : 'sie werden nicht erneut eingetragen'
         if (result.deleted === 0) {
           showToast('Keine Zahlungen entfernt', 'warning')
         } else if (result.kept > 0) {
-          showToast(`${paymentCount(result.deleted)} entfernt, ${result.kept} behalten`, 'success')
+          showToast(`${paymentCount(result.deleted)} entfernt, ${result.kept} behalten – ${notAgain}`, 'success')
         } else {
-          showToast(`${paymentCount(result.deleted)} entfernt`, 'success')
+          showToast(`${paymentCount(result.deleted)} entfernt – ${notAgain}`, 'success')
         }
       } catch (error) {
         showToast(getApiErrorMessage(error, 'Rückgängig machen fehlgeschlagen'), 'error')
@@ -122,13 +128,10 @@ export function PendingUndoProvider({ children }: { children: ReactNode }) {
   const registerCreated = useCallback(
     (created: Transaction[]) => {
       const next = buildPendingUndoEntry(created)
-      if (!next) {
-        // Nichts Neues entstanden: der vorherige Durchlauf bleibt rücknehmbar
-        showToast('Keine neuen ausstehenden Zahlungen fällig', 'success')
-        return
-      }
+      // Nichts Neues entstanden: still bleiben, der vorherige Durchlauf bleibt rücknehmbar
+      if (!next) return
       storePendingUndoEntry(next)
-      showToast(`${paymentCount(created.length)} erstellt`, 'success', {
+      showToast(`${paymentCount(created.length)} eingetragen`, 'success', {
         label: 'Rückgängig',
         onClick: requestUndo,
       })
@@ -136,15 +139,54 @@ export function PendingUndoProvider({ children }: { children: ReactNode }) {
     [requestUndo, showToast]
   )
 
+  // Fällige wiederkehrende Zahlungen automatisch eintragen: beim Öffnen, nach einem Kontowechsel
+  // und beim Zurückkehren in den Tab (höchstens stündlich). Ob und bis wann, entscheidet der Server.
+  const { settings, canWrite, isSimpleAccount } = useUserSettings()
+  const autoAccountId = settings?.activeAccountId ?? null
+  const autoEnabled =
+    status === 'authenticated' &&
+    autoAccountId !== null &&
+    canWrite &&
+    !isSimpleAccount &&
+    settings?.recurringAutoMode !== undefined &&
+    settings.recurringAutoMode !== 'OFF'
+  // Konto und Modus: nach einem Wechsel des Modus sofort neu eintragen
+  const autoKey = `${autoAccountId}:${settings?.recurringAutoMode}`
+  const lastAutoRun = useRef<{ key: string; at: number } | null>(null)
+
+  const runAutoPending = useCallback(async () => {
+    if (!autoEnabled) return
+    const last = lastAutoRun.current
+    if (last?.key === autoKey && Date.now() - last.at < AUTO_PENDING_INTERVAL_MS) return
+    lastAutoRun.current = { key: autoKey, at: Date.now() }
+    try {
+      const created = await createAutoPendingInstances()
+      if (created.length === 0) return
+      registerCreated(created)
+      dispatchTransactionsChanged()
+    } catch {
+      // Still: beim nächsten Öffnen wird es erneut versucht
+      lastAutoRun.current = null
+    }
+  }, [autoEnabled, autoKey, registerCreated])
+
+  useEffect(() => {
+    void runAutoPending()
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void runAutoPending()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [runAutoPending])
+
   const value = useMemo(
     () => ({
       undoCount: entry?.items.length ?? 0,
       isUndoing,
-      registerCreated,
       requestUndo,
       subscribeUndone,
     }),
-    [entry, isUndoing, registerCreated, requestUndo, subscribeUndone]
+    [entry, isUndoing, requestUndo, subscribeUndone]
   )
 
   const changedCount = confirmation?.changed.length ?? 0
@@ -217,7 +259,7 @@ export function PendingUndoProvider({ children }: { children: ReactNode }) {
   )
 }
 
-/** Zugriff auf „Rückgängig“ für „Ausstehende erstellen“; `onUndone` lädt die Seite danach neu */
+/** Zugriff auf „Rückgängig“ für automatisch eingetragene Zahlungen; `onUndone` lädt die Seite danach neu */
 export function usePendingUndo(onUndone?: () => void): PendingUndoContextValue {
   const context = useContext(PendingUndoContext)
   if (!context) {

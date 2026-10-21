@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { assertPlanningAccount } from '@/lib/simpleAccount'
-import { getSalaryMonthRange, isTransactionDueInSalaryMonth } from '@/lib/dateUtils'
+import { berlinDayKey, getSalaryMonthRange } from '@/lib/dateUtils'
+import { loadInstanceKeys, openDueDatesWithoutInstance } from '@/lib/recurringAutoPending'
 import { transactionCategoryInclude } from '@/lib/merchantCategories'
 import { logger } from '@/lib/logger'
 
@@ -50,25 +51,27 @@ export async function GET() {
         .filter((id): id is string => id != null)
     )
 
-    const enriched = transactions.map((t) => ({
-      ...t,
-      dueInSalaryMonth: t.isRecurringPaused
-        ? false
-        : isTransactionDueInSalaryMonth(
-            {
-              date: t.date,
-              isRecurring: true,
-              isRecurringPaused: t.isRecurringPaused,
-              recurringInterval: t.recurringInterval,
-              lastConfirmedDate: t.lastConfirmedDate,
-            },
-            account.salaryDay
-          ),
-      hasInstanceInSalaryMonth: parentsWithInstance.has(t.id),
-      hasUnconfirmedInstanceInSalaryMonth: instancesInSalaryMonth.some(
-        (i) => i.parentTransactionId === t.id && !i.isConfirmed
-      ),
-    }))
+    // Offene Termine: ohne Buchung und nicht schon eingetragen bzw. bewusst übergangen.
+    // „Am Buchungstag“ trägt künftige Termine selbst ein – die gelten nicht als fällig.
+    const now = new Date()
+    const onDueDate = account.recurringAutoMode === 'ON_DUE_DATE'
+    const instanceKeys = await loadInstanceKeys(account.id, recurringIds, startDate, endDate)
+    const todayKey = berlinDayKey(now)
+
+    const enriched = transactions.map((t) => {
+      const open = t.isRecurringPaused ? [] : openDueDatesWithoutInstance(t, startDate, endDate, instanceKeys)
+      const due = onDueDate ? open.filter((date) => berlinDayKey(date) <= todayKey) : open
+      const upcoming = onDueDate ? open.find((date) => berlinDayKey(date) > todayKey) : undefined
+      return {
+        ...t,
+        dueInSalaryMonth: due.length > 0,
+        autoPendingDate: upcoming?.toISOString() ?? null,
+        hasInstanceInSalaryMonth: parentsWithInstance.has(t.id),
+        hasUnconfirmedInstanceInSalaryMonth: instancesInSalaryMonth.some(
+          (i) => i.parentTransactionId === t.id && !i.isConfirmed
+        ),
+      }
+    })
 
     return NextResponse.json(enriched)
   } catch (error) {

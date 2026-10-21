@@ -8,6 +8,7 @@ import {
   resolveTransactionPeriodRangeForTotals,
 } from '@/lib/transactionPeriodRange'
 import { logger } from '@/lib/logger'
+import { getAvailableBalance, NOT_RECURRING_TEMPLATE } from '@/lib/availableBalance'
 
 export async function GET(request: Request) {
   const ctx = await getAccountContext()
@@ -38,6 +39,7 @@ export async function GET(request: Request) {
           gte: periodRange.gte,
           lte: periodRange.lte,
         },
+        ...NOT_RECURRING_TEMPLATE,
       },
     })
 
@@ -45,13 +47,7 @@ export async function GET(request: Request) {
       where: {
         accountId: account.id,
         isConfirmed: true,
-      },
-    })
-
-    const pendingTransactions = await prisma.transaction.findMany({
-      where: {
-        accountId: account.id,
-        isConfirmed: false,
+        ...NOT_RECURRING_TEMPLATE,
       },
     })
 
@@ -73,14 +69,8 @@ export async function GET(request: Request) {
         Number(t.amount) < 0 ? sum + Math.abs(Number(t.amount)) : sum,
       0
     )
-    const totalPendingExpenses = pendingTransactions.reduce(
-      (sum, t) =>
-        Number(t.amount) < 0 ? sum + Math.abs(Number(t.amount)) : sum,
-      0
-    )
-
-    const clearedBalance = totalIncome - totalExpenses
-    const available = clearedBalance - totalPendingExpenses
+    // Wie in der Übersicht: jede Zahlung zählt einmal (Buchung oder Prognose aus der Vorlage)
+    const { clearedBalance, totalPendingExpenses, available } = await getAvailableBalance(account)
 
     return NextResponse.json({
       currentIncome,

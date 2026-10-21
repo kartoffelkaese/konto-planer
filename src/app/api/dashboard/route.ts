@@ -12,6 +12,7 @@ import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { transactionTransferInclude } from '@/lib/transfers'
 import { resolveTransactionCategory, resolveTransactionMerchantName } from '@/lib/merchantCategories'
+import { getAvailableBalance } from '@/lib/availableBalance'
 
 export async function GET() {
   try {
@@ -104,8 +105,7 @@ export async function GET() {
       totalBalance,
       recurringTransactions,
       transactionsWithCategories,
-      confirmedSum,
-      pendingExpenseSum,
+      balance,
       recentRaw,
     ] = await Promise.all([
       prisma.transaction.aggregate({
@@ -130,16 +130,8 @@ export async function GET() {
         where: { ...monthWhere, amount: { lt: 0 } },
         include: transactionTransferInclude,
       }),
-      // Gebuchter Kontostand: Summe aller bestätigten Beträge (Einnahmen − Ausgaben)
-      prisma.transaction.aggregate({
-        where: { accountId: account.id, isConfirmed: true },
-        _sum: { amount: true },
-      }),
-      // Offene (unbestätigte) Ausgaben
-      prisma.transaction.aggregate({
-        where: { accountId: account.id, isConfirmed: false, amount: { lt: 0 } },
-        _sum: { amount: true },
-      }),
+      // Kontostand, offene Ausgaben und noch nicht eingetragene wiederkehrende Zahlungen
+      getAvailableBalance(account),
       prisma.transaction.findMany({
         where: {
           accountId: account.id,
@@ -216,9 +208,7 @@ export async function GET() {
     const kumulatedCategoryData = Array.from(categoryMap.values())
       .sort((a, b) => b.value - a.value)
 
-    const clearedBalance = confirmedSum._sum.amount?.toNumber() || 0
-    const totalPendingExpenses = Math.abs(pendingExpenseSum._sum.amount?.toNumber() || 0)
-    const available = clearedBalance - totalPendingExpenses
+    const { clearedBalance, totalPendingExpenses, plannedRecurringExpenses, available } = balance
 
     const income = monthlyIncome._sum.amount?.toNumber() || 0
     const expenses = Math.abs(monthlyExpenses._sum.amount?.toNumber() || 0)
@@ -230,6 +220,7 @@ export async function GET() {
       clearedBalance,
       available,
       totalPendingExpenses,
+      plannedRecurringExpenses,
       recurringTransactions: upcomingTransactions,
       categoryDistribution: kumulatedCategoryData,
       categoryPeriod: {

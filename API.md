@@ -62,7 +62,7 @@ Wenn das aktive Konto als **einfaches Konto** markiert ist:
 
 | Methode | Pfad | Beschreibung |
 |---------|------|----------------|
-| `GET` | `/api/dashboard` | Kennzahlen fürs aktive Konto. `available` = bestätigter Kontostand − offene Ausgaben bis Ende des Gehaltsmonats − `plannedRecurringExpenses` (Termine wiederkehrender Ausgaben im Gehaltsmonat, die noch nicht eingetragen sind); Vorlagen selbst zählen nie |
+| `GET` | `/api/dashboard` | Kennzahlen fürs aktive Konto. `available` = bestätigter Kontostand − offene Ausgaben bis Ende des Gehaltsmonats − `plannedRecurringExpenses` (spätere Termine wiederkehrender Ausgaben im Gehaltsmonat ohne Buchung). Die Vorlage selbst ist die Buchung ihres eigenen Termins und zählt wie jede Buchung |
 
 **Planungskonto:** `monthlyIncome`, `monthlyExpenses`, `totalBalance`, `clearedBalance`, `available`, `totalPendingExpenses`, `categoryDistribution`, `categoryPeriod`, `monthLabel`, `recurringTransactions` (30 Tage), `recentTransactions` (max. 6)
 
@@ -72,7 +72,7 @@ Wenn das aktive Konto als **einfaches Konto** markiert ist:
 
 | Methode | Pfad | Beschreibung |
 |---------|------|----------------|
-| `GET` | `/api/transactions` | Paginierte Liste der Buchungen (ohne die Vorlagen wiederkehrender Zahlungen – die liefert `/api/transactions/recurring`) |
+| `GET` | `/api/transactions` | Paginierte Liste der Buchungen (inkl. Vorlagen wiederkehrender Zahlungen – jede ist die Buchung ihres eigenen Termins) |
 | `POST` | `/api/transactions` | Anlegen |
 | `GET` | `/api/transactions/:id` | Einzelbuchung |
 | `PATCH` | `/api/transactions/:id` | Aktualisieren (inkl. `isConfirmed`, `lastConfirmedDate`, Umbuchung) |

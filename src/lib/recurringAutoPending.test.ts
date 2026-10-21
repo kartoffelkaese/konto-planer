@@ -51,9 +51,12 @@ const template = (id: string, startIso: string, extra: Record<string, unknown> =
   ...extra,
 })
 
-/** Erster findMany: Vorlagen, zweiter: vorhandene Instanzen */
-function givenTemplates(templates: ReturnType<typeof template>[], instances: { parentTransactionId: string; date: Date }[] = []) {
-  prismaMock.transaction.findMany.mockResolvedValueOnce(templates).mockResolvedValueOnce(instances)
+/** Vorlagen und je Vorlage die Zahl ihrer Buchungen im Gehaltsmonat */
+function givenTemplates(templates: ReturnType<typeof template>[], instanceCounts: Record<string, number> = {}) {
+  prismaMock.transaction.findMany.mockResolvedValueOnce(templates)
+  prismaMock.transaction.groupBy.mockResolvedValueOnce(
+    Object.entries(instanceCounts).map(([parentTransactionId, _count]) => ({ parentTransactionId, _count }))
+  )
 }
 
 const createdDays = () =>
@@ -73,10 +76,22 @@ beforeEach(() => {
 })
 
 describe('openDueDates', () => {
-  it('liefert nur Termine nach der Marke', () => {
+  const quarter = { startDate: berlin('2026-10-01'), endDate: berlin('2026-12-31') }
+
+  it('liefert nur Termine nach der Marke und bis zum Ende', () => {
     const t = { id: 't', date: berlin('2026-01-05'), recurringInterval: 'monthly', autoPendingUntil: berlin('2026-10-05') }
-    const days = openDueDates(t, berlin('2026-10-01'), berlin('2026-12-31')).map(berlinDayKey)
-    expect(days).toEqual(['2026-11-05', '2026-12-05'])
+    expect(openDueDates(t, quarter, quarter.endDate).map(berlinDayKey)).toEqual(['2026-11-05', '2026-12-05'])
+    expect(openDueDates(t, quarter, berlin('2026-11-30')).map(berlinDayKey)).toEqual(['2026-11-05'])
+  })
+
+  it('der Termin der Vorlage selbst ist keine offene Zahlung – sie ist die Buchung', () => {
+    const t = { id: 't', date: berlin('2026-10-12'), recurringInterval: 'monthly', autoPendingUntil: null }
+    expect(openDueDates(t, quarter, quarter.endDate).map(berlinDayKey)).toEqual(['2026-11-12', '2026-12-12'])
+  })
+
+  it('vorhandene Buchungen erledigen die ersten Termine – auch an einem anderen Tag', () => {
+    const t = { id: 't', date: berlin('2026-01-05'), recurringInterval: 'monthly', autoPendingUntil: null }
+    expect(openDueDates(t, quarter, quarter.endDate, 1).map(berlinDayKey)).toEqual(['2026-11-05', '2026-12-05'])
   })
 
   it('Modus bestimmt das Ende: Gehaltsmonat, heute oder gar nicht', () => {
@@ -122,10 +137,15 @@ describe('createDuePendingInstances', () => {
     expect(prismaMock.$transaction).not.toHaveBeenCalled()
   })
 
-  it('vorhandene Buchung wird übersprungen, die Marke trotzdem gesetzt', async () => {
-    givenTemplates([template('miete', '2026-09-05')], [{ parentTransactionId: 'miete', date: berlin('2026-10-05') }])
+  it('Buchung im Gehaltsmonat schon vorhanden (auch auf einen anderen Tag verschoben): nichts anlegen', async () => {
+    givenTemplates([template('miete', '2026-09-05')], { miete: 1 })
     expect(await createDuePendingInstances(account(), NOW)).toEqual([])
-    expect(prismaMock.transaction.updateMany).toHaveBeenCalledTimes(1)
+    expect(prismaMock.transaction.create).not.toHaveBeenCalled()
+  })
+
+  it('Vorlage mit Datum im Gehaltsmonat: für ihren eigenen Termin keine zweite Buchung', async () => {
+    givenTemplates([template('neu', '2026-10-08')])
+    expect(await createDuePendingInstances(account(), NOW)).toEqual([])
     expect(prismaMock.transaction.create).not.toHaveBeenCalled()
   })
 

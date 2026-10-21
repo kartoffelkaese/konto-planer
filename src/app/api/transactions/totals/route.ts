@@ -8,7 +8,7 @@ import {
   resolveTransactionPeriodRangeForTotals,
 } from '@/lib/transactionPeriodRange'
 import { logger } from '@/lib/logger'
-import { getAvailableBalance, NOT_RECURRING_TEMPLATE } from '@/lib/availableBalance'
+import { getAvailableBalance } from '@/lib/availableBalance'
 
 export async function GET(request: Request) {
   const ctx = await getAccountContext()
@@ -39,7 +39,6 @@ export async function GET(request: Request) {
           gte: periodRange.gte,
           lte: periodRange.lte,
         },
-        ...NOT_RECURRING_TEMPLATE,
       },
     })
 
@@ -47,7 +46,6 @@ export async function GET(request: Request) {
       where: {
         accountId: account.id,
         isConfirmed: true,
-        ...NOT_RECURRING_TEMPLATE,
       },
     })
 

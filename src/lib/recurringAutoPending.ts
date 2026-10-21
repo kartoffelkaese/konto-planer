@@ -6,7 +6,7 @@ import {
   getSalaryMonthRangeForDate,
   type RecurringInterval,
 } from '@/lib/dateUtils'
-import { buildRecurringInstanceData, recurringInstanceKey } from '@/lib/recurringInstances'
+import { buildRecurringInstanceData } from '@/lib/recurringInstances'
 import {
   createTransferPair,
   resolveTransferSenderName,
@@ -16,10 +16,14 @@ import {
 /**
  * Wiederkehrende Zahlungen automatisch als ausstehende Buchungen eintragen.
  *
+ * Die Vorlage selbst ist die erste Buchung (an ihrem eigenen Datum); eingetragen werden nur die
+ * späteren Termine. Je Gehaltsmonat gelten die ersten Termine als erledigt, wenn es dort schon
+ * Buchungen der Vorlage gibt – egal an welchem Tag (z. B. auf den Abbuchungstag verschoben).
+ *
  * Jede Vorlage merkt sich in `autoPendingUntil` den letzten Termin, der schon eingetragen
  * (oder bewusst übergangen) wurde. Eingetragen werden nur Termine danach – gelöschte oder per
- * „Rückgängig“ entfernte Buchungen kommen so nicht wieder. Ohne Marke wird nie vor dem Beginn
- * des laufenden Gehaltsmonats nachgetragen.
+ * „Rückgängig“ entfernte Buchungen kommen so nicht wieder. Vor dem Beginn des laufenden
+ * Gehaltsmonats wird nie nachgetragen.
  */
 
 export type DueTemplate = Pick<Transaction, 'id' | 'date' | 'recurringInterval' | 'autoPendingUntil'>
@@ -33,48 +37,50 @@ export function autoPendingUntil(mode: RecurringAutoMode, salaryMonth: SalaryMon
   return null
 }
 
-/** Termine einer Vorlage in [from, until], die nach ihrer Marke liegen */
-export function openDueDates(template: DueTemplate, from: Date, until: Date): Date[] {
-  const interval = (template.recurringInterval || 'monthly') as RecurringInterval
-  const mark = template.autoPendingUntil ? berlinDayKey(template.autoPendingUntil) : null
-  return getRecurringDueDatesInRange(template.date, interval, from, until).filter(
-    (date) => mark === null || berlinDayKey(date) > mark
-  )
-}
-
-/** Wie `openDueDates`, ohne Termine, für die es schon eine Buchung gibt */
-export function openDueDatesWithoutInstance(
+/**
+ * Offene Termine einer Vorlage im Gehaltsmonat bis `until`: ohne den Termin der Vorlage selbst,
+ * ohne die schon durch `instanceCount` Buchungen erledigten und nur nach der Marke.
+ */
+export function openDueDates(
   template: DueTemplate,
-  from: Date,
+  salaryMonth: SalaryMonth,
   until: Date,
-  instanceKeys: Set<string>
+  instanceCount = 0
 ): Date[] {
-  return openDueDates(template, from, until).filter(
-    (date) => !instanceKeys.has(recurringInstanceKey(template.id, date))
-  )
+  const interval = (template.recurringInterval || 'monthly') as RecurringInterval
+  const ownDay = berlinDayKey(template.date)
+  const mark = template.autoPendingUntil ? berlinDayKey(template.autoPendingUntil) : null
+  const untilDay = berlinDayKey(until)
+  return getRecurringDueDatesInRange(template.date, interval, salaryMonth.startDate, salaryMonth.endDate)
+    .filter((date) => berlinDayKey(date) !== ownDay)
+    .slice(instanceCount)
+    .filter((date) => {
+      const day = berlinDayKey(date)
+      return (mark === null || day > mark) && day <= untilDay
+    })
 }
 
-/** Schlüssel der vorhandenen Instanzen der Vorlagen im Zeitraum */
-export async function loadInstanceKeys(
+/** Anzahl der Buchungen je Vorlage im Gehaltsmonat – an beliebigem Tag */
+export async function loadInstanceCounts(
   accountId: string,
   templateIds: string[],
-  from: Date,
-  until: Date
-): Promise<Set<string>> {
-  if (templateIds.length === 0) return new Set()
-  const instances = await prisma.transaction.findMany({
+  salaryMonth: SalaryMonth
+): Promise<Map<string, number>> {
+  if (templateIds.length === 0) return new Map()
+  const groups = await prisma.transaction.groupBy({
+    by: ['parentTransactionId'],
     where: {
       accountId,
       isRecurring: false,
       parentTransactionId: { in: templateIds },
-      date: { gte: from, lte: until },
+      date: { gte: salaryMonth.startDate, lte: salaryMonth.endDate },
     },
-    select: { parentTransactionId: true, date: true },
+    _count: true,
   })
-  return new Set(
-    instances
-      .filter((instance) => instance.parentTransactionId)
-      .map((instance) => recurringInstanceKey(instance.parentTransactionId!, instance.date))
+  return new Map(
+    groups
+      .filter((group) => group.parentTransactionId)
+      .map((group) => [group.parentTransactionId!, group._count])
   )
 }
 
@@ -98,16 +104,11 @@ export async function createDuePendingInstances(account: AutoPendingAccount, now
     where: { accountId: account.id, isRecurring: true, isRecurringPaused: false, parentTransactionId: null },
     include: transactionTransferInclude,
   })
-  const instanceKeys = await loadInstanceKeys(
-    account.id,
-    templates.map((t) => t.id),
-    salaryMonth.startDate,
-    until
-  )
+  const instanceCounts = await loadInstanceCounts(account.id, templates.map((t) => t.id), salaryMonth)
 
   const created = []
   for (const template of templates) {
-    const dueDates = openDueDates(template, salaryMonth.startDate, until)
+    const dueDates = openDueDates(template, salaryMonth, until, instanceCounts.get(template.id) ?? 0)
     if (dueDates.length === 0) continue
     const newMark = dueDates[dueDates.length - 1]
 
@@ -123,7 +124,6 @@ export async function createDuePendingInstances(account: AutoPendingAccount, now
 
       const result = []
       for (const dueDate of dueDates) {
-        if (instanceKeys.has(recurringInstanceKey(template.id, dueDate))) continue
         const instance = await tx.transaction.create({
           data: buildRecurringInstanceData(template, dueDate, account.id, template.id),
         })

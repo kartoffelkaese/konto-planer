@@ -71,7 +71,7 @@ Ablauf von `npm run build`:
 
 1. `prisma generate` — Client aus `prisma/schema.prisma`
 2. `scripts/verify-prisma-client.mjs` — prüft Schema, generierten Client und eine Mini-Typecheck-Runde
-3. `npm run typecheck` — TypeScript 7 (`typescript-7`-Alias)
+3. `npm run typecheck` — TypeScript 7 (`typescript-7`-Alias); löscht vorher die Route-Typen des letzten Builds (`.next/types`), damit entfernte Routen nicht als Fehler auftauchen – `next build` erzeugt und prüft sie neu
 4. `next build`
 
 Typecheck und Next.js-Build nutzen `@typescript/native-preview` als Marker (TS 7 hat keine `lib/typescript.js`-API mehr). ESLint und andere Tooling-Peers nutzen das reguläre `typescript@6`-Paket — kein npm-Alias auf dem Namen `typescript`, damit `npm install` bei Updates stabil bleibt.

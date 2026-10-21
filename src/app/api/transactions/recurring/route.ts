@@ -4,7 +4,7 @@ import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
 import { assertPlanningAccount } from '@/lib/simpleAccount'
 import { berlinDayKey, getSalaryMonthRange } from '@/lib/dateUtils'
-import { loadInstanceKeys, openDueDatesWithoutInstance } from '@/lib/recurringAutoPending'
+import { loadInstanceCounts, openDueDates } from '@/lib/recurringAutoPending'
 import { transactionCategoryInclude } from '@/lib/merchantCategories'
 import { logger } from '@/lib/logger'
 
@@ -55,11 +55,12 @@ export async function GET() {
     // „Am Buchungstag“ trägt künftige Termine selbst ein – die gelten nicht als fällig.
     const now = new Date()
     const onDueDate = account.recurringAutoMode === 'ON_DUE_DATE'
-    const instanceKeys = await loadInstanceKeys(account.id, recurringIds, startDate, endDate)
+    const salaryMonth = { startDate, endDate }
+    const instanceCounts = await loadInstanceCounts(account.id, recurringIds, salaryMonth)
     const todayKey = berlinDayKey(now)
 
     const enriched = transactions.map((t) => {
-      const open = t.isRecurringPaused ? [] : openDueDatesWithoutInstance(t, startDate, endDate, instanceKeys)
+      const open = t.isRecurringPaused ? [] : openDueDates(t, salaryMonth, endDate, instanceCounts.get(t.id) ?? 0)
       const due = onDueDate ? open.filter((date) => berlinDayKey(date) <= todayKey) : open
       const upcoming = onDueDate ? open.find((date) => berlinDayKey(date) > todayKey) : undefined
       return {

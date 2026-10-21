@@ -29,7 +29,8 @@ describe('POST /api/transactions/auto-pending', () => {
       .mockResolvedValueOnce([
         {
           id: 'miete',
-          date: new Date(),
+          // am 1. jedes Monats, seit zwei Monaten – im laufenden Gehaltsmonat (Gehaltstag 1) fällig
+          date: dayjs().tz('Europe/Berlin').startOf('month').subtract(2, 'month').toDate(),
           recurringInterval: 'monthly',
           autoPendingUntil: null,
           amount: -950,
@@ -37,7 +38,7 @@ describe('POST /api/transactions/auto-pending', () => {
           isTransfer: false,
         },
       ])
-      .mockResolvedValueOnce([])
+    prismaMock.transaction.groupBy.mockResolvedValueOnce([])
     prismaMock.transaction.updateMany.mockResolvedValue({ count: 1 })
     prismaMock.transaction.create.mockResolvedValue({ id: 'neu' })
     prismaMock.transaction.findUniqueOrThrow.mockResolvedValue({ id: 'neu', merchant: 'Vermieter' })
@@ -84,23 +85,24 @@ describe('„Verfügbar“', () => {
     confirmed = 2000,
     open = 0,
     templates = [] as Record<string, unknown>[],
-    instances = [] as { parentTransactionId: string; date: Date }[],
+    instanceCounts = {} as Record<string, number>,
   }) {
     prismaMock.transaction.aggregate
       .mockResolvedValueOnce({ _sum: { amount: { toNumber: () => confirmed } } })
       .mockResolvedValueOnce({ _sum: { amount: { toNumber: () => -open } } })
-    prismaMock.transaction.findMany
-      .mockResolvedValueOnce(
-        templates.map((t) => ({ recurringInterval: 'monthly', autoPendingUntil: null, ...t, amount: { toNumber: () => t.amount } }))
-      )
-      .mockResolvedValueOnce(instances)
+    prismaMock.transaction.findMany.mockResolvedValueOnce(
+      templates.map((t) => ({ recurringInterval: 'monthly', autoPendingUntil: null, ...t, amount: { toNumber: () => t.amount } }))
+    )
+    prismaMock.transaction.groupBy.mockResolvedValueOnce(
+      Object.entries(instanceCounts).map(([parentTransactionId, _count]) => ({ parentTransactionId, _count }))
+    )
   }
 
   it('Vorlage mit eingetragener Buchung zählt nur einmal (als Buchung)', async () => {
     given({
       open: 950,
       templates: [{ id: 'miete', date: berlin('2026-09-05'), amount: -950 }],
-      instances: [{ parentTransactionId: 'miete', date: berlin('2026-10-05') }],
+      instanceCounts: { miete: 1 },
     })
     const balance = await getAvailableBalance(account, NOW)
     expect(balance).toMatchObject({ openExpenses: 950, plannedRecurringExpenses: 0, available: 1050 })
@@ -117,17 +119,24 @@ describe('„Verfügbar“', () => {
     expect((await getAvailableBalance(account, NOW)).plannedRecurringExpenses).toBe(0)
   })
 
-  it('offene Buchungen: ohne Vorlagen und nur bis Ende des Gehaltsmonats', async () => {
+  it('Vorlage mit Datum im Gehaltsmonat ist selbst die Buchung – keine zusätzliche Prognose', async () => {
+    given({ open: 30, templates: [{ id: 'neu', date: berlin('2026-10-08'), amount: -30 }] })
+    expect(await getAvailableBalance(account, NOW)).toMatchObject({ plannedRecurringExpenses: 0, available: 1970 })
+  })
+
+  it('Kontostand und offene Buchungen schließen Vorlagen ein (sie sind Buchungen), offene nur bis Ende des Gehaltsmonats', async () => {
     given({})
     await getAvailableBalance(account, NOW)
-    const openWhere = prismaMock.transaction.aggregate.mock.calls[1][0].where
-    expect(openWhere).toMatchObject({ isConfirmed: false, NOT: { isRecurring: true, parentTransactionId: null } })
+    const [confirmedWhere, openWhere] = prismaMock.transaction.aggregate.mock.calls.map((call) => call[0].where)
+    expect(confirmedWhere).not.toHaveProperty('NOT')
+    expect(openWhere).not.toHaveProperty('NOT')
+    expect(openWhere).toMatchObject({ isConfirmed: false })
     expect(dayjs(openWhere.date.lte).tz('Europe/Berlin').format('YYYY-MM-DD')).toBe('2026-10-31')
   })
 })
 
 describe('Navigationszähler „Wiederkehrend“', () => {
-  it('ein bewusst gelöschter Termin mahnt nicht, ein offener schon', async () => {
+  it('ein bewusst gelöschter oder verschobener Termin mahnt nicht, ein offener schon', async () => {
     prismaMock.accountInvite.count.mockResolvedValue(0)
     prismaMock.splitListInvite.count.mockResolvedValue(0)
     prismaMock.transaction.count.mockResolvedValue(0)
@@ -137,8 +146,10 @@ describe('Navigationszähler „Wiederkehrend“', () => {
         // Termin am 1. jedes Monats – in jedem Gehaltsmonat (Gehaltstag 1) fällig
         { id: 'offen', date: start.toDate(), recurringInterval: 'monthly', autoPendingUntil: null },
         { id: 'geloescht', date: start.toDate(), recurringInterval: 'monthly', autoPendingUntil: dayjs().add(40, 'day').toDate() },
+        { id: 'verschoben', date: start.toDate(), recurringInterval: 'monthly', autoPendingUntil: null },
       ])
-      .mockResolvedValueOnce([])
+    // „verschoben“ hat im Gehaltsmonat schon eine Buchung (an einem anderen Tag)
+    prismaMock.transaction.groupBy.mockResolvedValueOnce([{ parentTransactionId: 'verschoben', _count: 1 }])
     const body = await (await navBadgesRoute.GET()).json()
     expect(body.recurringAttention).toBe(1)
   })

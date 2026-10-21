@@ -1,12 +1,7 @@
-import type { Account, Prisma } from '@prisma/client'
+import type { Account } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getSalaryMonthRangeForDate } from '@/lib/dateUtils'
-import { loadInstanceKeys, openDueDatesWithoutInstance } from '@/lib/recurringAutoPending'
-
-/** Vorlage einer wiederkehrenden Zahlung – keine Buchung, zählt nie in Summen */
-export const NOT_RECURRING_TEMPLATE = {
-  NOT: { isRecurring: true, parentTransactionId: null },
-} satisfies Prisma.TransactionWhereInput
+import { loadInstanceCounts, openDueDates } from '@/lib/recurringAutoPending'
 
 export type AvailableBalance = {
   /** Summe aller bestätigten Buchungen */
@@ -23,19 +18,19 @@ export type AvailableBalance = {
 
 /**
  * „Verfügbar“ – für Übersicht und Buchungen gleich gerechnet. Jede Zahlung zählt genau einmal:
- * als Buchung, sobald sie eingetragen ist, sonst als Prognose aus ihrer Vorlage. Bewusst
- * gelöschte Termine (vor der Marke der Vorlage) zählen nicht. Buchungen nach dem Gehaltsmonat
- * senken „Verfügbar“ erst in ihrem Monat.
+ * als Buchung (die Vorlage ist die Buchung ihres eigenen Termins), sonst als Prognose aus der
+ * Vorlage für spätere Termine im Gehaltsmonat. Bewusst gelöschte Termine (bis zur Marke der
+ * Vorlage) zählen nicht. Buchungen nach dem Gehaltsmonat senken „Verfügbar“ erst in ihrem Monat.
  */
 export async function getAvailableBalance(
   account: Pick<Account, 'id' | 'salaryDay'>,
   now: Date = new Date()
 ): Promise<AvailableBalance> {
-  const { startDate, endDate } = getSalaryMonthRangeForDate(account.salaryDay, now)
+  const salaryMonth = getSalaryMonthRangeForDate(account.salaryDay, now)
 
   const [confirmed, open, templates] = await Promise.all([
     prisma.transaction.aggregate({
-      where: { accountId: account.id, isConfirmed: true, ...NOT_RECURRING_TEMPLATE },
+      where: { accountId: account.id, isConfirmed: true },
       _sum: { amount: true },
     }),
     prisma.transaction.aggregate({
@@ -43,8 +38,7 @@ export async function getAvailableBalance(
         accountId: account.id,
         isConfirmed: false,
         amount: { lt: 0 },
-        date: { lte: endDate },
-        ...NOT_RECURRING_TEMPLATE,
+        date: { lte: salaryMonth.endDate },
       },
       _sum: { amount: true },
     }),
@@ -60,17 +54,17 @@ export async function getAvailableBalance(
     }),
   ])
 
-  const instanceKeys = await loadInstanceKeys(
+  const instanceCounts = await loadInstanceCounts(
     account.id,
     templates.map((t) => t.id),
-    startDate,
-    endDate
+    salaryMonth
   )
   const plannedRecurringExpenses = templates.reduce(
     (sum, template) =>
       sum +
       Math.abs(template.amount.toNumber()) *
-        openDueDatesWithoutInstance(template, startDate, endDate, instanceKeys).length,
+        openDueDates(template, salaryMonth, salaryMonth.endDate, instanceCounts.get(template.id) ?? 0)
+          .length,
     0
   )
 

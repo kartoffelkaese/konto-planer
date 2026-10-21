@@ -5,7 +5,7 @@ import { getAccountContext } from '@/lib/account-context'
 import { getUserBySession, isErrorResponse } from '@/lib/api-auth'
 import { normalizeEmail } from '@/lib/accounts'
 import { getSalaryMonthRange } from '@/lib/dateUtils'
-import { loadInstanceKeys, openDueDatesWithoutInstance } from '@/lib/recurringAutoPending'
+import { loadInstanceCounts, openDueDates } from '@/lib/recurringAutoPending'
 import { logger } from '@/lib/logger'
 
 export async function GET() {
@@ -39,8 +39,6 @@ export async function GET() {
         accountId: account.id,
         isConfirmed: false,
         date: { gte: startDate, lte: endDate },
-        // Vorlagen wiederkehrender Zahlungen sind keine Buchungen
-        NOT: { isRecurring: true, parentTransactionId: null },
       },
     })
 
@@ -59,14 +57,10 @@ export async function GET() {
       select: { id: true, date: true, recurringInterval: true, autoPendingUntil: true },
     })
     const attentionUntil = account.recurringAutoMode === 'ON_DUE_DATE' ? new Date() : endDate
-    const instanceKeys = await loadInstanceKeys(
-      account.id,
-      templates.map((t) => t.id),
-      startDate,
-      endDate
-    )
+    const salaryMonth = { startDate, endDate }
+    const instanceCounts = await loadInstanceCounts(account.id, templates.map((t) => t.id), salaryMonth)
     recurringAttention = templates.filter(
-      (t) => openDueDatesWithoutInstance(t, startDate, attentionUntil, instanceKeys).length > 0
+      (t) => openDueDates(t, salaryMonth, attentionUntil, instanceCounts.get(t.id) ?? 0).length > 0
     ).length
     }
 

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline'
 import { useToast } from '@/hooks/useToast'
-import { Button, getButtonClassName } from '@/components/Button'
+import { Button } from '@/components/Button'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { restoreBackup } from '@/lib/api'
@@ -15,6 +15,7 @@ export default function BackupManager({ allowRestore = true }: { allowRestore?: 
   const { showToast } = useToast()
   const { accountName } = useUserSettings()
   const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isBackingUp, setIsBackingUp] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
   const isBusy = isBackingUp || isRestoring
@@ -113,19 +114,26 @@ export default function BackupManager({ allowRestore = true }: { allowRestore?: 
         </Button>
 
         {allowRestore && (
-        <label
-          className={`${getButtonClassName({ variant: 'secondary' })} cursor-pointer ${isBusy ? 'pointer-events-none opacity-50' : ''}`}
-        >
-          <ArrowUpTrayIcon className="h-5 w-5" aria-hidden="true" />
-          Backup wiederherstellen
-          <input
-            type="file"
-            accept=".json"
-            onChange={handleFileChosen}
-            disabled={isBusy}
-            className="hidden"
-          />
-        </label>
+          <>
+            {/* Echter Button statt label, damit die Aktion per Tastatur erreichbar ist */}
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isBusy}
+            >
+              <ArrowUpTrayIcon className="h-5 w-5" aria-hidden="true" />
+              Backup wiederherstellen
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleFileChosen}
+              disabled={isBusy}
+              className="hidden"
+            />
+          </>
         )}
       </div>
 

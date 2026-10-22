@@ -285,7 +285,9 @@ export default function SettingsPage() {
                       </select>
                     </div>
                     <p className="mt-2 text-sm text-secondary">
-                      Der Gehaltsmonat läuft dann vom {salaryDay}. bis zum {salaryDay}. des Folgemonats
+                      {salaryDay === 1
+                        ? 'Der Gehaltsmonat entspricht dann dem Kalendermonat.'
+                        : `Der Gehaltsmonat läuft dann vom ${salaryDay}. bis zum Tag vor dem ${salaryDay}. des Folgemonats.`}
                     </p>
                   </div>
                   )}

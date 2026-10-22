@@ -10,6 +10,8 @@ export default function PendingUndoButton({ onUndone }: { onUndone: () => void }
 
   if (undoCount === 0) return null
 
+  const payments = undoCount === 1 ? '1 automatisch eingetragene Zahlung' : `${undoCount} automatisch eingetragene Zahlungen`
+
   return (
     <Button
       type="button"
@@ -17,8 +19,9 @@ export default function PendingUndoButton({ onUndone }: { onUndone: () => void }
       onClick={requestUndo}
       loading={isUndoing}
       loadingText="Wird entfernt…"
-      title={`Entfernt die ${undoCount} zuletzt automatisch eingetragenen Zahlungen wieder`}
-      aria-label={`Automatisch eingetragene Zahlungen entfernen (${undoCount} Buchungen)`}
+      title={`Entfernt ${payments} wieder`}
+      // Der sichtbare Text steht vorn im Namen, damit Sprachsteuerung „Rückgängig“ findet
+      aria-label={`Rückgängig: ${payments} entfernen`}
     >
       <ArrowUturnLeftIcon className="h-5 w-5" aria-hidden="true" />
       Rückgängig

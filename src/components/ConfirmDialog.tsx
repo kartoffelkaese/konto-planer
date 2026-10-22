@@ -33,6 +33,8 @@ export default function ConfirmDialog({
   const [internalLoading, setInternalLoading] = useState(false)
   const managesLoading = externalLoading === undefined
   const isBusy = Boolean(externalLoading) || internalLoading
+  // Zerstörende Aktionen nur per Klick bestätigen – Enter soll nichts unwiderruflich löschen
+  const isDestructive = type === 'danger'
 
   const handleConfirm = useCallback(async () => {
     if (isBusy) return
@@ -51,9 +53,11 @@ export default function ConfirmDialog({
     onEscape: () => {
       if (!isBusy) onClose()
     },
-    onEnter: () => {
-      if (isOpen && !isBusy) void handleConfirm()
-    },
+    onEnter: isDestructive
+      ? undefined
+      : () => {
+          if (isOpen && !isBusy) void handleConfirm()
+        },
     disabled: !isOpen || isBusy,
   })
 
@@ -117,8 +121,8 @@ export default function ConfirmDialog({
               <div className="mt-2">
                 <p className="text-sm text-secondary">{message}</p>
               </div>
-              <div className="mt-2 text-xs text-secondary opacity-70">
-                <span className="mr-4">Enter = {confirmText}</span>
+              <div className="mt-2 text-xs text-secondary opacity-70 max-md:hidden">
+                {!isDestructive && <span className="mr-4">Enter = {confirmText}</span>}
                 <span>Esc = {cancelText}</span>
               </div>
             </div>
@@ -131,7 +135,7 @@ export default function ConfirmDialog({
               onClick={() => void handleConfirm()}
               loading={isBusy}
               loadingText={confirmLoadingText ?? `${confirmText}…`}
-              autoFocus
+              autoFocus={!isDestructive}
             >
               {confirmText}
             </Button>
@@ -141,6 +145,7 @@ export default function ConfirmDialog({
               className="w-full md:w-auto md:mt-0"
               onClick={onClose}
               disabled={isBusy}
+              autoFocus={isDestructive}
             >
               {cancelText}
             </Button>

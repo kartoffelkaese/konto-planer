@@ -157,7 +157,7 @@ Titel (`page-title`), eine Kontextzeile in `secondary`, Aktionen rechts. Jede Se
 ### Dialoge und Sheets
 
 - [`Modal`](src/components/Modal.tsx) für Formulare und Auswahl, [`ConfirmDialog`](src/components/ConfirmDialog.tsx) für Ja/Nein. Mobil erscheinen sie als Sheet von unten.
-- Zerstörende Aktionen immer mit Bestätigung; der Bestätigen-Button ist `danger`.
+- Zerstörende Aktionen immer mit Bestätigung; der Bestätigen-Button ist `danger`. Diese Bestätigung geht nur per Klick oder Tippen, nicht per Enter, und der Fokus startet auf „Abbrechen“ (macht `ConfirmDialog` mit `type="danger"`).
 - Mehr als zwei Wahlmöglichkeiten: Buttons untereinander, sicherste Option zuerst, „Abbrechen“ zuletzt als `ghost`.
 
 ### Meldungen – `useToast()`

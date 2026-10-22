@@ -64,7 +64,7 @@ Wenn das aktive Konto als **einfaches Konto** markiert ist:
 |---------|------|----------------|
 | `GET` | `/api/dashboard` | Kennzahlen fürs aktive Konto. `available` = bestätigter Kontostand − offene Ausgaben bis Ende des Gehaltsmonats − `plannedRecurringExpenses` (spätere Termine wiederkehrender Ausgaben im Gehaltsmonat ohne Buchung). Die Vorlage selbst ist die Buchung ihres eigenen Termins und zählt wie jede Buchung |
 
-**Planungskonto:** `monthlyIncome`, `monthlyExpenses`, `totalBalance`, `clearedBalance`, `available`, `totalPendingExpenses`, `categoryDistribution`, `categoryPeriod`, `monthLabel`, `recurringTransactions` (30 Tage), `recentTransactions` (max. 6)
+**Planungskonto:** `monthlyIncome`, `monthlyExpenses`, `totalBalance`, `clearedBalance`, `available`, `totalPendingExpenses` (offene Ausgaben einschließlich `plannedRecurringExpenses`), `plannedRecurringExpenses`, `categoryDistribution`, `categoryPeriod`, `monthLabel`, `recurringTransactions` (30 Tage), `recentTransactions` (max. 6)
 
 **Einfaches Konto:** `monthlyIncome`, `monthlyExpenses`, `totalBalance`, `monthLabel`, `recentTransactions` (max. 6); übrige Planungsfelder leer bzw. `0`
 
@@ -232,6 +232,10 @@ Nur für Konten mit `isSimpleAccount: false` (Statistik-Seite leitet sonst um).
 
 `email`, `accountName`, `salaryDay`, `transferSenderName`, `splitDisplayName`, `bankId`, `isSimpleAccount`, `recurringAutoMode`, `activeAccountId`, `role`, `createdAt`, `pendingEmail`
 
+**`PATCH /api/users/settings` – Body:** `accountName`, `salaryDay`, `transferSenderName`, `bankId`, `recurringAutoMode` (`SALARY_MONTH` = zu Beginn des Gehaltsmonats, `ON_DUE_DATE` = am Buchungstag, `OFF` = von Hand), `isSimpleAccount` (nur **OWNER**; Aktivierung nur ohne Recurring-Templates), `splitDisplayName` (nutzerweit, auch bei Nur-Lese-Konto speicherbar)
+
+`bankId`: Slug aus dem Bank-Katalog (z. B. `ing`, `trade-republic`) oder `null`
+
 `recurringIntroSeen` – Einführung „Aus Kontoauszug erkennen“ gesehen (am Nutzer gespeichert). `PATCH` mit `{ "recurringIntroSeen": true }` vermerkt sie einmalig, auch mit Nur-Lese-Zugriff.
 
 Nur lesend, zum Benutzerlevel: `plan` (eigenes Level, `BASIC`/`FULL`), `accountPlan` (Level des Konto-Inhabers), `planLock` (`limit`/`shared`/`null` – Schreibschutz des aktiven Kontos), `keptAccountId`, `keptAccountChangeAllowedAt` (ab wann ein Wechsel wieder möglich ist, sonst `null`), `keptAccountChoiceRequired` (nach einer Herabstufung steht die Wahl aus), `planSource`, `planExpiresAt`, `plansEnabled`, `isAdmin`
@@ -272,10 +276,6 @@ Admin-Recht per `npm run set-admin <E-Mail>`. Ohne Admin-Recht oder ohne aktive 
 | `DELETE` | `/api/admin/users/:id` | `{ "confirmEmail" }` — Nutzer samt eigener Konten, Buchungen und Split-Listen löschen; geteilte Konten bleiben den anderen Mitgliedern. Nicht für die eigene Anmeldung und nicht für Admins |
 | `POST` | `/api/admin/users/:id/sync` | Abo-Stand des Nutzers mit Stripe abgleichen |
 | `PATCH` | `/api/admin/users/:id/plan` | `{ "plan": "BASIC" \| "FULL", "expiresAt"?, "note"? }` — Level von Hand setzen, mit Protokolleintrag |
-
-**`PATCH` – Body:** `accountName`, `salaryDay`, `transferSenderName`, `bankId`, `recurringAutoMode` (`SALARY_MONTH` = zu Beginn des Gehaltsmonats, `ON_DUE_DATE` = am Buchungstag, `OFF` = von Hand), `isSimpleAccount` (nur **OWNER**; Aktivierung nur ohne Recurring-Templates), `splitDisplayName` (nutzerweit, auch bei Nur-Lese-Konto speicherbar)
-
-`bankId`: Slug aus dem Bank-Katalog (z. B. `ing`, `trade-republic`) oder `null`
 
 ### Backup
 

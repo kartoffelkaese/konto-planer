@@ -13,8 +13,8 @@ Pro **Export-Layout** ein Modul unter `formats/`. Banken werden in [`bankFormats
 
 1. **Sample-CSV** anonymisieren und als Test-Fixture ablegen.
 2. **Modul** `formats/<formatId>.ts` mit `detect`, `parseRow`, optional `headerMarkers`, `parseMetadata`, `skipRow`.
-3. **`types.ts`:** `CsvImportFormatId` erweitern.
-4. **`index.ts`:** Modul in `FORMATS`-Array registrieren.
+3. **[`types.ts`](../types.ts):** `CsvImportFormatId` erweitern.
+4. **[`index.ts`](../index.ts):** Modul in `FORMATS`-Array registrieren.
 5. **`bankFormats.ts`:** `bankId → formatId` eintragen (mehrere Banken dürfen dasselbe Format nutzen).
 6. **Tests** unter `src/lib/csvImport/<formatId>.test.ts`.
 7. **[API.md](../../../API.md):** Spalten unter „CSV-Import“ dokumentieren.

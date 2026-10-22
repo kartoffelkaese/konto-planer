@@ -4,7 +4,7 @@ Anleitung zum Betrieb von Konto-Planer auf einem Linux-Server (z. B. VPS mit n
 
 ## Voraussetzungen
 
-- **Node.js 20+** und npm
+- **Node.js 22.12+** und npm, empfohlen Node 24 wie im CI (Vitest braucht mindestens 22.12, Prisma 7 mindestens 20.19)
 - **MySQL 8** oder **MariaDB 10.6+** (eigene Datenbank und Benutzer)
 - Optional: **PM2** für Prozessverwaltung (`npm install -g pm2`)
 - Reverse-Proxy mit HTTPS (empfohlen)
@@ -333,7 +333,7 @@ Empfohlener Ablauf bei Dependency-Updates:
 
 Lokal prüfen: `npm run audit:check` (High/Critical müssen 0 sein). Geprüft wird, was auf dem Server läuft (`--omit=dev`); der CI bricht nur daran ab.
 
-`npm run audit:all` bezieht die Entwicklungswerkzeuge (ESLint, Tests) ein. Der CI führt das zusätzlich als reinen Hinweis aus. Dort kann eine Meldung offen bleiben, für die es noch keine bereinigte Version gibt – aktuell `braces` (über `eslint-config-next`, GHSA-vfj7-8cjw-p6xm): alle Versionen betroffen, kein Fix veröffentlicht, in der laufenden App nicht enthalten.
+`npm run audit:all` bezieht die Entwicklungswerkzeuge (ESLint, Tests) ein. Der CI führt das zusätzlich als reinen Hinweis aus. Derzeit meldet auch das keine Lücken; `braces` ist über den `tinyglobby`-Override (siehe unten) aus dem Baum entfernt.
 
 **`npm audit fix --force` nie ausführen** — downgraded Prisma, Next oder ESLint und bricht den Stack.
 
@@ -343,14 +343,14 @@ Lokal prüfen: `npm run audit:check` (High/Critical müssen 0 sein). Geprüft wi
 |----------|-------|------------------|
 | `mariadb@^3.5.4` | SSL/Credential-CVEs im DB-Treiber | Runtime: `@prisma/adapter-mariadb` → App |
 | `mysql2@^3.24.3` | Auth-Plugin-Downgrade (Prisma-CLI) | Dev/Deploy: `prisma migrate` |
-| `nodemailer@^10.0.15` | SMTP-Client auf aktueller Major | Runtime: E-Mail-Versand |
-| `eslint@10.12.0` | Tooling-Peers auf ESLint 10 halten | Dev: Lint/CI |
+| `nodemailer@^10.1.7` | SMTP-Client auf aktueller Major | Runtime: E-Mail-Versand |
+| `eslint@10.13.0` | Tooling-Peers auf ESLint 10 halten | Dev: Lint/CI |
 | `sharp@^0.35.0` | libvips-CVEs | Next.js Build / Image-Opt |
 | `deepmerge-ts@^8.0.0` | Stack-Exhaustion | Prisma-CLI |
 | `nanoid@^3.3.18` | Generator-Loop | Next.js |
 | `find-my-way`, `valibot` | Prisma-Dev-CLI | Nur Entwicklung |
 | `brace-expansion@^5.0.8` | ReDoS | ESLint-Plugins |
-| `postcss@^8.5.29`, `@hono/node-server@^1.19.13` | gemeldete Lücken in transitiven Paketen | Build bzw. Prisma-Dev-CLI |
+| `postcss@^8.5.31`, `@hono/node-server@^1.19.13` | gemeldete Lücken in transitiven Paketen | Build bzw. Prisma-Dev-CLI |
 | `@next/eslint-plugin-next` → `fast-glob` = `npm:tinyglobby@^0.2.17` | `fast-glob` zieht `micromatch` → `braces` (Stack-Exhaustion, GHSA-vfj7-8cjw-p6xm; `braces` wird nicht mehr gepflegt). Das Plugin nutzt nur `globSync(…, { onlyDirectories: true })` für `settings.next.rootDir` – `tinyglobby` bietet dieselbe Funktion ohne `braces` | Dev: Lint/CI |
 
 Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber offiziell anhebt — dann Override ggf. entfernen. Bei `eslint-config-next`-Updates prüfen, ob `@next/eslint-plugin-next` `fast-glob` noch verwendet; falls nicht, den `tinyglobby`-Override entfernen.

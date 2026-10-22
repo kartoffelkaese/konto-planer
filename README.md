@@ -36,11 +36,14 @@ App: [http://localhost:3000](http://localhost:3000) (Standard-Port von `next dev
 | `npm run dev` | Entwicklungsserver |
 | `npm run build` | Prisma Client generieren, Client-Verify, TS-7-Typecheck, Next.js-Produktionsbuild |
 | `npm run typecheck` | TypeScript 7 (`typescript-7`-Alias) |
-| `npm test` | Unit-Tests (Vitest) |
+| `npm test` | Unit-Tests (Vitest); `npm run test:watch` im Beobachtungsmodus |
 | `npm run lint` | ESLint |
 | `npm run audit:check` | npm audit der Laufzeit-Pakete (nur High/Critical); `npm run audit:all` bezieht Entwicklungswerkzeuge ein |
+| `npm run update:check` | Verfügbare Paket-Updates (`ncu`) und `audit:check` – Ablauf siehe INSTALL.md |
 | `npm run db:migrate` | Migrationen (Produktion) |
 | `npm run db:migrate:dev` | Migrationen (Entwicklung) |
+| `npm run db:seed-demo` | Demo-Zugang `demo@demo` mit drei Beispielkonten anlegen – nur für lokale Datenbanken, das Passwort ist bekannt |
+| `npm run db:cleanup-unverified` | Unbestätigte Registrierungen ohne gültigen Link löschen (auf dem Server per Cron, siehe INSTALL.md) |
 | `npm run set-admin <E-Mail>` | Admin-Recht für die Verwaltung vergeben (`--remove` entzieht es) |
 | `npm run stripe:setup` | Stripe-Produkt, Preise und Kundenportal anlegen (siehe INSTALL.md) |
 | `npm run stripe:cleanup` | Vor dem Live-Gang: Nutzer mit Sandbox-Kunden anzeigen, mit `-- --apply` deren Stripe-Felder leeren |

@@ -1,6 +1,6 @@
 # Installation (Server)
 
-Anleitung zum Betrieb von Konto-Planer auf einem Linux-Server (z. B. VPS mit nginx/Caddy davor).
+Anleitung zum Betrieb von KontoPlaner auf einem Linux-Server (z. B. VPS mit nginx/Caddy davor).
 
 ## Voraussetzungen
 

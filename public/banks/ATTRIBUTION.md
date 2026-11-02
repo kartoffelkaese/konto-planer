@@ -1,6 +1,6 @@
 # Bank-Logo-Attribution
 
-Logos dienen der Identifikation des vom Nutzer gewählten Instituts in [Konto-Planer](../../README.md).
+Logos dienen der Identifikation des vom Nutzer gewählten Instituts in [KontoPlaner](../../README.md).
 
 | Datei | Institut | Quelle / Hinweis |
 |-------|----------|------------------|

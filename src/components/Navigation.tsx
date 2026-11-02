@@ -22,6 +22,7 @@ import { APP_VERSION } from '@/lib/version'
 import { signOut } from 'next-auth/react'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import AccountSwitcher from '@/components/AccountSwitcher'
+import LogoMark from '@/components/LogoMark'
 import { useToast } from '@/hooks/useToast'
 import { useUserSettings } from '@/hooks/useUserSettings'
 import { TRANSACTIONS_CHANGED_EVENT } from '@/lib/accountSwitchEvents'
@@ -513,17 +514,6 @@ export default function Navigation() {
         type="warning"
       />
     </>
-  )
-}
-
-function LogoMark() {
-  return (
-    <span
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.65rem] bg-accent text-sm font-bold text-accent-foreground"
-      aria-hidden="true"
-    >
-      K
-    </span>
   )
 }
 

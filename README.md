@@ -1,4 +1,4 @@
-# Konto-Planer
+# KontoPlaner
 
 Webapp zur Verwaltung persönlicher Finanzen: mehrere Konten, Transaktionen, Kategorien, Gehaltsmonat, wiederkehrende Zahlungen, Auswertungen und gemeinsame Split-Listen.
 

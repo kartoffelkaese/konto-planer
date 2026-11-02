@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { getButtonClassName } from '@/components/Button'
 import LegalLinks from '@/components/LegalLinks'
+import LogoMark from '@/components/LogoMark'
 
 type AuthPageLayoutProps = {
   children: ReactNode
@@ -35,8 +36,9 @@ export default function AuthPageLayout({
 
           <Link
             href="/"
-            className="text-lg font-semibold tracking-tight text-accent max-sm:flex-1 max-sm:text-center sm:absolute sm:left-1/2 sm:-translate-x-1/2"
+            className="inline-flex items-center gap-2 text-lg font-semibold tracking-tight text-accent max-sm:flex-1 max-sm:justify-center sm:absolute sm:left-1/2 sm:-translate-x-1/2"
           >
+            <LogoMark />
             KontoPlaner
           </Link>
 

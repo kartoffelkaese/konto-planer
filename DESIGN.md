@@ -1,6 +1,6 @@
 # Design-Grundlagen
 
-Verbindliche Gestaltungsregeln für Konto-Planer. Stil: **„Soft & ruhig“** – weiche Flächen statt Rahmen, große Radien, sanfte Schatten, viel Weißraum, große Zahlen. Ein Design in Hell und Dunkel.
+Verbindliche Gestaltungsregeln für KontoPlaner. Stil: **„Soft & ruhig“** – weiche Flächen statt Rahmen, große Radien, sanfte Schatten, viel Weißraum, große Zahlen. Ein Design in Hell und Dunkel.
 
 Jede neue oder geänderte Oberfläche richtet sich nach diesem Dokument. Wer davon abweichen muss, ändert zuerst die Regel hier (und die Stelle im Code, die sie umsetzt) – nicht nur die eine Seite.
 

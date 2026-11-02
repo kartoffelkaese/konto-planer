@@ -1,6 +1,6 @@
 # API
 
-HTTP-JSON-API der Konto-Planer-Webapp. Gedacht für den eingebauten Next.js-Client (Session-Cookies), nicht als öffentliche Drittanbieter-API.
+HTTP-JSON-API der KontoPlaner-Webapp. Gedacht für den eingebauten Next.js-Client (Session-Cookies), nicht als öffentliche Drittanbieter-API.
 
 ## Authentifizierung
 

@@ -21,6 +21,7 @@ import {
 import { getButtonClassName } from '@/components/Button'
 import { APP_VERSION } from '@/lib/version'
 import LegalLinks from '@/components/LegalLinks'
+import LogoMark from '@/components/LogoMark'
 import { formatCurrency } from '@/lib/formatters'
 import {
   BILLING_ENABLED_PUBLIC,
@@ -157,17 +158,6 @@ const previewTransactions = [
   { merchant: 'Gehalt', meta: '01.05. · Einkommen', amount: '+3.240,00 €', income: true },
   { merchant: 'Spotify', meta: '15.05. · Abos', amount: '−9,99 €', initial: 'S', color: '#10b981' },
 ]
-
-function LogoMark({ className = '' }: { className?: string }) {
-  return (
-    <span
-      className={`flex h-8 w-8 items-center justify-center rounded-[0.65rem] bg-accent text-sm font-bold text-accent-foreground ${className}`}
-      aria-hidden="true"
-    >
-      K
-    </span>
-  )
-}
 
 /** Stilisierte App-Vorschau im Design der echten Übersicht */
 function LandingPreview() {

@@ -21,7 +21,7 @@ const POINTS = [
   {
     icon: LockClosedIcon,
     title: 'Deine Datei bleibt bei uns – und nur kurz',
-    text: 'Die Datei wird ausschließlich auf dem Konto-Planer-Server ausgewertet und an niemanden weitergegeben. Sie wird nicht gespeichert, sondern direkt nach der Auswertung verworfen.',
+    text: 'Die Datei wird ausschließlich auf dem KontoPlaner-Server ausgewertet und an niemanden weitergegeben. Sie wird nicht gespeichert, sondern direkt nach der Auswertung verworfen.',
   },
   {
     icon: CheckCircleIcon,
@@ -63,7 +63,7 @@ export default function RecurringDetectionIntro({
     <Modal isOpen={open} onClose={close} title="Wiederkehrende Zahlungen automatisch erkennen" maxWidth="lg">
       <div className="space-y-5">
         <p className="text-sm text-secondary">
-          Damit Konto-Planer weiß, was in den nächsten Monaten kommt, braucht es deine
+          Damit KontoPlaner weiß, was in den nächsten Monaten kommt, braucht es deine
           wiederkehrenden Zahlungen. Statt alles von Hand herauszusuchen, kannst du sie dir aus
           deinem Kontoauszug vorschlagen lassen.
         </p>

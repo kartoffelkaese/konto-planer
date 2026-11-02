@@ -1,6 +1,6 @@
-export const SITE_NAME = 'Konto-Planer'
+export const SITE_NAME = 'KontoPlaner'
 
-export const SITE_TITLE = 'Konto-Planer – Finanzen planen, nicht raten'
+export const SITE_TITLE = 'KontoPlaner – Finanzen planen, nicht raten'
 
 export const SITE_DESCRIPTION =
   'Finanzverwaltung für ein oder mehrere Konten: Gehaltsmonat, CSV-Import, Statistiken und gemeinsame Nutzung – kostenlos und auf Deutsch.'

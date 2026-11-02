@@ -333,7 +333,7 @@ Empfohlener Ablauf bei Dependency-Updates:
 
 Lokal prüfen: `npm run audit:check` (High/Critical müssen 0 sein). Geprüft wird, was auf dem Server läuft (`--omit=dev`); der CI bricht nur daran ab.
 
-`npm run audit:all` bezieht die Entwicklungswerkzeuge (ESLint, Tests) ein. Der CI führt das zusätzlich als reinen Hinweis aus. Derzeit meldet auch das keine Lücken; `braces` ist über den `tinyglobby`-Override (siehe unten) aus dem Baum entfernt.
+`npm run audit:all` bezieht die Entwicklungswerkzeuge (ESLint, Tests) ein. Der CI führt das zusätzlich als reinen Hinweis aus. `braces` ist über den `tinyglobby`-Override (siehe unten) aus dem Baum entfernt. Offen bleibt `minimatch` unter 11.0.1 (GHSA-g3hv-75wg-m249, moderat, 18 Folgemeldungen): nur in ESLint und seinen Plugins, also nicht auf dem Server, und die Suchmuster stammen aus der eigenen Konfiguration. `npm audit fix` kann das nicht lösen, weil diese Pakete selbst Versionen unter 11 verlangen; ein Override auf 11 ist nicht vorgesehen, weil die Plugins `minimatch` als Funktion aufrufen. Bei Updates von `eslint` und `eslint-config-next` erneut prüfen.
 
 **`npm audit fix --force` nie ausführen** — downgraded Prisma, Next oder ESLint und bricht den Stack.
 
@@ -344,7 +344,7 @@ Lokal prüfen: `npm run audit:check` (High/Critical müssen 0 sein). Geprüft wi
 | `mariadb@^3.5.4` | SSL/Credential-CVEs im DB-Treiber | Runtime: `@prisma/adapter-mariadb` → App |
 | `mysql2@^3.24.3` | Auth-Plugin-Downgrade (Prisma-CLI) | Dev/Deploy: `prisma migrate` |
 | `nodemailer@^10.1.7` | SMTP-Client auf aktueller Major | Runtime: E-Mail-Versand |
-| `eslint@10.13.0` | Tooling-Peers auf ESLint 10 halten | Dev: Lint/CI |
+| `eslint@10.14.0` | Tooling-Peers auf ESLint 10 halten | Dev: Lint/CI |
 | `sharp@^0.35.0` | libvips-CVEs | Next.js Build / Image-Opt |
 | `deepmerge-ts@^8.0.0` | Stack-Exhaustion | Prisma-CLI |
 | `nanoid@^3.3.18` | Generator-Loop | Next.js |

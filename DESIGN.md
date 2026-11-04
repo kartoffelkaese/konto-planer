@@ -177,6 +177,7 @@ Titel (`page-title`), eine Kontextzeile in `secondary`, Aktionen rechts. Jede Se
 | [`AccountAvatar`](src/components/AccountAvatar.tsx) | Konto/Bank-Logo |
 | [`PlanHint`](src/components/PlanHint.tsx) | Hinweis an Stellen, an denen eine Funktion zum Level „Komplett“ gehört – statt eines gesperrten oder fehlenden Elements |
 | [`LegalLinks`](src/components/LegalLinks.tsx) | Verweise auf Rechtstexte und Kündigungsweg in Fußzeilen |
+| [`InstallAppCard`](src/components/InstallAppCard.tsx), [`InstallAppHint`](src/components/InstallAppHint.tsx) | „Als App installieren“ – nur sichtbar, solange der Browser das anbietet bzw. auf iPhone/iPad (Anleitung) |
 
 ## 7. Navigation
 
@@ -189,6 +190,7 @@ Titel (`page-title`), eine Kontextzeile in `secondary`, Aktionen rechts. Jede Se
 
 - Umbruch der Navigation bei `md` (768 px). Layouts werden mobil zuerst gebaut.
 - Tippflächen mindestens 44 × 44 px.
+- **Bildschirmränder:** Die Seite läuft mit `viewport-fit=cover` bis an den Rand, auch als installierte App. Was unten oder seitlich fest steht (Tab-Leiste, Sheets, Meldungen, Schwebe-Buttons), hält Abstand über `env(safe-area-inset-…)`.
 - Etwas nur ab `md` zeigen: `max-md:hidden` – **nicht** `hidden md:inline-flex` (wirkt bei Buttons nicht, weil deren Grundklasse `inline-flex` setzt).
 - Tabellen werden mobil zu Karten oder Listen; kein horizontales Scrollen der Seite. Seitlich scrollen dürfen nur Tab-Leisten und Diagramme.
 - Geprüft wird bei 375 px und bei Desktop-Breite.

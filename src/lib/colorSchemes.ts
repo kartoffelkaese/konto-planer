@@ -1,3 +1,5 @@
+import { COLOR_SCHEME_TOKENS } from '@/lib/colorSchemeTokens'
+
 export const THEME_MODES = ['light', 'dark', 'system'] as const
 export type ThemeMode = (typeof THEME_MODES)[number]
 export type ResolvedTheme = Exclude<ThemeMode, 'system'>
@@ -42,7 +44,12 @@ export function resolveTheme(mode: ThemeMode): ResolvedTheme {
 }
 
 export function applyResolvedTheme(mode: ThemeMode) {
-  document.documentElement.classList.toggle('dark', resolveTheme(mode) === 'dark')
+  const resolved = resolveTheme(mode)
+  document.documentElement.classList.toggle('dark', resolved === 'dark')
+  // Systemleiste der installierten App: folgt der eigenen Wahl, nicht nur dem Betriebssystem
+  document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
+    meta.content = COLOR_SCHEME_TOKENS[resolved].canvas
+  })
 }
 
 export function applyThemeMode(mode: ThemeMode) {

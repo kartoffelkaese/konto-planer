@@ -97,6 +97,9 @@ html.dark {
     font-family: var(--font-inter, ui-sans-serif, system-ui, sans-serif);
     font-feature-settings: "cv11", "ss01";
     -webkit-font-smoothing: antialiased;
+    /* iPhone quer: Inhalt nicht unter Kamera-Aussparung oder Rundung legen */
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
 
   .tabular-nums {

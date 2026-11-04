@@ -1,5 +1,5 @@
 import './globals.css'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import Navigation from '@/components/Navigation'
 import AccountSwitchTransition from '@/components/AccountSwitchTransition'
@@ -8,6 +8,7 @@ import KeptAccountDialog from '@/components/KeptAccountDialog'
 import { Providers } from './providers'
 import { THEME_INIT_SCRIPT } from '@/lib/colorSchemes'
 import { SIDEBAR_INIT_SCRIPT } from '@/lib/sidebarLayout'
+import { COLOR_SCHEME_TOKENS } from '@/lib/colorSchemeTokens'
 import {
   SITE_DESCRIPTION,
   SITE_NAME,
@@ -57,6 +58,21 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  // Installiert auf dem iPhone: ohne Safari-Leisten starten, Statusleiste über dem Inhalt
+  appleWebApp: {
+    capable: true,
+    title: SITE_NAME,
+    statusBarStyle: 'default',
+  },
+}
+
+export const viewport: Viewport = {
+  // Nötig, damit env(safe-area-inset-*) im App-Modus die echten Abstände liefert
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: COLOR_SCHEME_TOKENS.light.canvas },
+    { media: '(prefers-color-scheme: dark)', color: COLOR_SCHEME_TOKENS.dark.canvas },
+  ],
 }
 
 export default function RootLayout({

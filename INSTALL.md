@@ -282,6 +282,8 @@ server {
 
 `AUTH_URL` muss exakt der öffentlichen URL entsprechen (z. B. `https://ihre-domain.de`).
 
+**Als App installieren (PWA):** Browser bieten die Installation nur über HTTPS an. Das Manifest (`/manifest.webmanifest`) und die Icons unter `/icons/` müssen ohne Anmeldung erreichbar sein; der Proxy der App lässt sie durch (`src/lib/publicStaticFiles.ts`), ein vorgeschalteter Passwortschutz muss sie ebenfalls ausnehmen.
+
 **Client-IP für Rate-Limits** (`TRUST_PROXY=true`): Die App nimmt zuerst `X-Real-IP`, sonst den **letzten** Eintrag von `X-Forwarded-For` – frühere Einträge kann der Client selbst mitschicken. Der Proxy muss `X-Real-IP` deshalb selbst setzen (wie oben) und darf ihn nicht vom Client durchreichen. Caddy setzt `X-Forwarded-For` korrekt; dort zusätzlich `header_up X-Real-IP {remote_host}` eintragen.
 
 ## 6. Updates deployen

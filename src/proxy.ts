@@ -4,9 +4,7 @@ import type { NextRequest } from 'next/server'
 import { isPublicApiPath } from '@/lib/public-api'
 import { isCrossSiteRequest } from '@/lib/csrf'
 import { isLegalPath } from '@/lib/legalPages'
-
-/** Statische Dateien aus public/ – ohne Login (OG-Bild, Icons, …). */
-const PUBLIC_STATIC_FILE = /\.(?:png|svg|ico|jpg|jpeg|webp|woff2?)$/i
+import { isPublicStaticFile } from '@/lib/publicStaticFiles'
 
 /** RSC/Soft-Navigation – Redirect würde den Flight-Fetch abbrechen. */
 function isRscOrPrefetchRequest(req: NextRequest): boolean {
@@ -22,7 +20,7 @@ export default auth((req) => {
   const token = req.auth
   const pathname = req.nextUrl.pathname
 
-  if (PUBLIC_STATIC_FILE.test(pathname)) {
+  if (isPublicStaticFile(pathname)) {
     return NextResponse.next()
   }
 
@@ -62,6 +60,7 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|banks/|[^/]+\\.(?:png|svg|ico|jpg|jpeg|webp|woff2?)$).*)',
+    // Muss als Literal hier stehen (Next liest den Matcher statisch); Endungen wie in publicStaticFiles.ts
+    '/((?!_next/static|_next/image|favicon.ico|banks/|[^/]+\\.(?:png|svg|ico|jpg|jpeg|webp|woff2?|webmanifest)$).*)',
   ],
 }

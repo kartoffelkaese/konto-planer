@@ -22,6 +22,7 @@ import { getButtonClassName } from '@/components/Button'
 import { APP_VERSION } from '@/lib/version'
 import LegalLinks from '@/components/LegalLinks'
 import LogoMark from '@/components/LogoMark'
+import InstallAppHint from '@/components/InstallAppHint'
 import { formatCurrency } from '@/lib/formatters'
 import {
   BILLING_ENABLED_PUBLIC,
@@ -494,6 +495,8 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
+
+              <InstallAppHint className="mt-4" />
             </div>
 
             <div className="landing-fade-in landing-fade-in-delay-2 px-2 sm:px-8 lg:px-0">

@@ -84,8 +84,11 @@ export default function Navigation() {
     )
   }, [session, isCollapsed])
 
+  // Nur bei An-/Abmeldung oder Nutzerwechsel neu laden, nicht bei jeder Sitzungsaktualisierung
+  const sessionUserId = session?.user?.id
+
   useEffect(() => {
-    if (!session) return
+    if (!sessionUserId) return
 
     const loadBadges = async () => {
       try {
@@ -115,7 +118,7 @@ export default function Navigation() {
       window.removeEventListener(TRANSACTIONS_CHANGED_EVENT, loadBadges)
       clearInterval(interval)
     }
-  }, [session])
+  }, [sessionUserId])
 
   useEffect(() => {
     if (!session) return

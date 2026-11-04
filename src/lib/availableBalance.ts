@@ -28,7 +28,8 @@ export async function getAvailableBalance(
 ): Promise<AvailableBalance> {
   const salaryMonth = getSalaryMonthRangeForDate(account.salaryDay, now)
 
-  const [confirmed, open, templates] = await Promise.all([
+  // Termin-Zählung gleich mit: alle Vorlagen des Kontos, unabhängig vom Ergebnis der Vorlagen-Abfrage
+  const [confirmed, open, templates, instanceCounts] = await Promise.all([
     prisma.transaction.aggregate({
       where: { accountId: account.id, isConfirmed: true },
       _sum: { amount: true },
@@ -52,13 +53,9 @@ export async function getAvailableBalance(
       },
       select: { id: true, date: true, recurringInterval: true, autoPendingUntil: true, amount: true },
     }),
+    loadInstanceCounts(account.id, undefined, salaryMonth),
   ])
 
-  const instanceCounts = await loadInstanceCounts(
-    account.id,
-    templates.map((t) => t.id),
-    salaryMonth
-  )
   const plannedRecurringExpenses = templates.reduce(
     (sum, template) =>
       sum +

@@ -10,8 +10,13 @@ import {
 import { logger } from '@/lib/logger'
 import { getAccountContext } from '@/lib/account-context'
 import { isErrorResponse } from '@/lib/api-auth'
-import { transactionTransferInclude } from '@/lib/transfers'
-import { resolveTransactionCategory, resolveTransactionMerchantName } from '@/lib/merchantCategories'
+import { resolveTransactionMerchantName } from '@/lib/merchantCategories'
+import {
+  completeCategoryLookup,
+  loadCategoryLookup,
+  lookupTransactionCategory,
+  lookupTransactionMerchantName,
+} from '@/lib/categoryLookup'
 import { getAvailableBalance } from '@/lib/availableBalance'
 
 export async function GET() {
@@ -98,6 +103,14 @@ export async function GET() {
       isConfirmed: true,
     }
 
+    // Nur die Felder, die die Übersicht braucht; Kategorie und Händler kommen aus der Nachschlagetabelle
+    const lookupFields = {
+      amount: true,
+      merchant: true,
+      merchantId: true,
+      categoryId: true,
+    } as const
+
     // Alle Abfragen gleichzeitig statt nacheinander (gleiche Ergebnisse, eine Datenbank-Runde)
     const [
       monthlyIncome,
@@ -107,6 +120,7 @@ export async function GET() {
       transactionsWithCategories,
       balance,
       recentRaw,
+      lookup,
     ] = await Promise.all([
       prisma.transaction.aggregate({
         where: { ...monthWhere, amount: { gt: 0 } },
@@ -123,12 +137,19 @@ export async function GET() {
       // Wiederkehrende Ausgaben mit Details
       prisma.transaction.findMany({
         where: { accountId: account.id, isRecurring: true, amount: { lt: 0 } },
-        include: transactionTransferInclude,
+        select: {
+          ...lookupFields,
+          id: true,
+          date: true,
+          description: true,
+          isRecurringPaused: true,
+          recurringInterval: true,
+        },
       }),
       // Für die Kategorieverteilung: bestätigte Ausgaben im Gehaltsmonat
       prisma.transaction.findMany({
         where: { ...monthWhere, amount: { lt: 0 } },
-        include: transactionTransferInclude,
+        select: lookupFields,
       }),
       // Kontostand, offene Ausgaben und noch nicht eingetragene wiederkehrende Zahlungen
       getAvailableBalance(account),
@@ -146,9 +167,15 @@ export async function GET() {
           amount: true,
           date: true,
           description: true,
-          merchantRef: { select: { name: true } },
+          merchantId: true,
         },
       }),
+      loadCategoryLookup(account.id),
+    ])
+    await completeCategoryLookup(lookup, [
+      ...recurringTransactions,
+      ...transactionsWithCategories,
+      ...recentRaw,
     ])
 
     // Berechne das nächste Zahlungsdatum für jede wiederkehrende Zahlung
@@ -164,8 +191,8 @@ export async function GET() {
         id: transaction.id,
         amount: Math.abs(transaction.amount.toNumber()),
         date: nextDate.toISOString(),
-        category: resolveTransactionCategory(transaction)?.name || 'Unkategorisiert',
-        merchant: resolveTransactionMerchantName(transaction),
+        category: lookupTransactionCategory(lookup, transaction)?.name || 'Unkategorisiert',
+        merchant: lookupTransactionMerchantName(lookup, transaction),
         description: transaction.description
       }
     })
@@ -187,7 +214,7 @@ export async function GET() {
     const categoryMap = new Map<string, { name: string; value: number; color: string }>()
 
     transactionsWithCategories.forEach(transaction => {
-      const resolvedCategory = resolveTransactionCategory(transaction)
+      const resolvedCategory = lookupTransactionCategory(lookup, transaction)
       const categoryName = resolvedCategory?.name || 'Unkategorisiert'
       const categoryColor = resolvedCategory?.color || 'var(--color-text-secondary)'
       const amount = Math.abs(transaction.amount.toNumber())
@@ -232,7 +259,7 @@ export async function GET() {
       monthLabel: categoryPeriod.rangeLabel,
       recentTransactions: recentRaw.map((t) => ({
         id: t.id,
-        merchant: resolveTransactionMerchantName(t),
+        merchant: lookupTransactionMerchantName(lookup, t),
         amount: t.amount.toNumber(),
         date: t.date.toISOString(),
         description: t.description,

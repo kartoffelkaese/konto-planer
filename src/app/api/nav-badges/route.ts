@@ -19,50 +19,47 @@ export async function GET() {
   const { account } = ctx
 
   try {
-    const pendingInvitations = await prisma.accountInvite.count({
-      where: {
-        email: normalizeEmail(user.email),
-        status: AccountInviteStatus.PENDING,
-      },
-    })
-
-    const pendingSplitInvitations = await prisma.splitListInvite.count({
-      where: {
-        email: normalizeEmail(user.email),
-        status: SplitInviteStatus.PENDING,
-      },
-    })
+    const email = normalizeEmail(user.email)
     const { startDate, endDate } = getSalaryMonthRange(account.salaryDay)
+    const salaryMonth = { startDate, endDate }
+    const planning = !account.isSimpleAccount
 
-    const unconfirmedTransactions = await prisma.transaction.count({
-      where: {
-        accountId: account.id,
-        isConfirmed: false,
-        date: { gte: startDate, lte: endDate },
-      },
-    })
+    // Alle Abfragen gleichzeitig – jede einzelne ist eine Rundreise zur Datenbank
+    const [pendingInvitations, pendingSplitInvitations, unconfirmedTransactions, templates, instanceCounts] =
+      await Promise.all([
+        prisma.accountInvite.count({
+          where: { email, status: AccountInviteStatus.PENDING },
+        }),
+        prisma.splitListInvite.count({
+          where: { email, status: SplitInviteStatus.PENDING },
+        }),
+        prisma.transaction.count({
+          where: {
+            accountId: account.id,
+            isConfirmed: false,
+            date: { gte: startDate, lte: endDate },
+          },
+        }),
+        planning
+          ? prisma.transaction.findMany({
+              where: {
+                accountId: account.id,
+                isRecurring: true,
+                isRecurringPaused: false,
+                parentTransactionId: null,
+              },
+              select: { id: true, date: true, recurringInterval: true, autoPendingUntil: true },
+            })
+          : Promise.resolve([]),
+        planning ? loadInstanceCounts(account.id, undefined, salaryMonth) : Promise.resolve(new Map<string, number>()),
+      ])
 
-    let recurringAttention = 0
-
-    if (!account.isSimpleAccount) {
     // Handlungsbedarf: Termine im Gehaltsmonat ohne Buchung, die nicht schon eingetragen bzw.
     // bewusst übergangen wurden. „Am Buchungstag“ trägt künftige Termine selbst ein – die zählen nicht.
-    const templates = await prisma.transaction.findMany({
-      where: {
-        accountId: account.id,
-        isRecurring: true,
-        isRecurringPaused: false,
-        parentTransactionId: null,
-      },
-      select: { id: true, date: true, recurringInterval: true, autoPendingUntil: true },
-    })
     const attentionUntil = account.recurringAutoMode === 'ON_DUE_DATE' ? new Date() : endDate
-    const salaryMonth = { startDate, endDate }
-    const instanceCounts = await loadInstanceCounts(account.id, templates.map((t) => t.id), salaryMonth)
-    recurringAttention = templates.filter(
+    const recurringAttention = templates.filter(
       (t) => openDueDates(t, salaryMonth, attentionUntil, instanceCounts.get(t.id) ?? 0).length > 0
     ).length
-    }
 
     return NextResponse.json({
       unconfirmedTransactions,

@@ -60,19 +60,22 @@ export function openDueDates(
     })
 }
 
-/** Anzahl der Buchungen je Vorlage im Gehaltsmonat – an beliebigem Tag */
+/**
+ * Anzahl der Buchungen je Vorlage im Gehaltsmonat – an beliebigem Tag. Ohne `templateIds` für
+ * alle Vorlagen des Kontos; so kann die Abfrage gleichzeitig mit dem Laden der Vorlagen laufen.
+ */
 export async function loadInstanceCounts(
   accountId: string,
-  templateIds: string[],
+  templateIds: string[] | undefined,
   salaryMonth: SalaryMonth
 ): Promise<Map<string, number>> {
-  if (templateIds.length === 0) return new Map()
+  if (templateIds?.length === 0) return new Map()
   const groups = await prisma.transaction.groupBy({
     by: ['parentTransactionId'],
     where: {
       accountId,
       isRecurring: false,
-      parentTransactionId: { in: templateIds },
+      parentTransactionId: templateIds ? { in: templateIds } : { not: null },
       date: { gte: salaryMonth.startDate, lte: salaryMonth.endDate },
     },
     _count: true,

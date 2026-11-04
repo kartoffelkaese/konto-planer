@@ -162,13 +162,6 @@ function SplitDetailPageContent() {
 
   const handleArchive = async () => {
     if (!list) return
-    if (
-      !confirm(
-        `Split-Liste „${list.name}“ archivieren? Es können dann keine neuen Ausgaben mehr erfasst werden.`
-      )
-    ) {
-      return
-    }
     setError(null)
     try {
       const updated = await updateSplitList(listId, { status: 'ARCHIVED' })
@@ -184,13 +177,6 @@ function SplitDetailPageContent() {
 
   const handleUnarchive = async () => {
     if (!list) return
-    if (
-      !confirm(
-        `Split-Liste „${list.name}“ wieder aktivieren? Ausgaben und Einstellungen können dann wieder bearbeitet werden.`
-      )
-    ) {
-      return
-    }
     setError(null)
     try {
       const updated = await updateSplitList(listId, { status: 'ACTIVE' })
@@ -205,13 +191,6 @@ function SplitDetailPageContent() {
 
   const handleDelete = async () => {
     if (!list) return
-    if (
-      !confirm(
-        `Split-Liste „${list.name}“ endgültig löschen? Alle Ausgaben, Salden und Teilnehmer werden unwiderruflich entfernt.`
-      )
-    ) {
-      return
-    }
     setError(null)
     try {
       await deleteSplitList(listId)
@@ -315,29 +294,13 @@ function SplitDetailPageContent() {
             : list.description ?? `${list.participantCount} Teilnehmer`
         }
         actions={
-          <div className="flex flex-wrap gap-2">
-            {canAddExpense && (
-              <Button className="max-md:hidden" onClick={openNewExpenseModal}>
-                <PlusIcon className="h-5 w-5" aria-hidden="true" />
-                Ausgabe
-              </Button>
-            )}
-            {isOwner && !readOnly && (
-              <Button variant="secondary" className="max-md:hidden" onClick={handleArchive}>
-                Archivieren
-              </Button>
-            )}
-            {isOwner && isArchived && (
-              <Button variant="secondary" className="max-md:hidden" onClick={handleUnarchive}>
-                Reaktivieren
-              </Button>
-            )}
-            {isOwner && (
-              <Button variant="danger-outline" className="max-md:hidden" onClick={handleDelete}>
-                Löschen
-              </Button>
-            )}
-          </div>
+          // Mobil übernimmt der Schwebe-Button; Archivieren und Löschen stehen in den Einstellungen
+          canAddExpense ? (
+            <Button className="max-md:hidden" onClick={openNewExpenseModal}>
+              <PlusIcon className="h-5 w-5" aria-hidden="true" />
+              Ausgabe
+            </Button>
+          ) : undefined
         }
       />
 
@@ -354,7 +317,7 @@ function SplitDetailPageContent() {
           {isOwner && (
             <span>
               {' '}
-              Als Ersteller kannst du sie jederzeit über „Reaktivieren“ wieder bearbeitbar machen.
+              Als Ersteller kannst du sie jederzeit unter „Einstellungen“ reaktivieren.
             </span>
           )}
         </div>
@@ -416,6 +379,12 @@ function SplitDetailPageContent() {
           readOnly={readOnly}
           isOwner={isOwner}
           onListChange={setList}
+          manage={{
+            canArchive: !readOnly,
+            onArchive: handleArchive,
+            onUnarchive: handleUnarchive,
+            onDelete: handleDelete,
+          }}
         />
       )}
 

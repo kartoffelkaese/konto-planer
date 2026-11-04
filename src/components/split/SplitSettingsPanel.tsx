@@ -10,6 +10,9 @@ import SplitParticipantList from '@/components/split/SplitParticipantList'
 import SplitCategoryManager from '@/components/split/SplitCategoryManager'
 import SplitCurrencyManager from '@/components/split/SplitCurrencyManager'
 import SplitSharePanel from '@/components/split/SplitSharePanel'
+import SplitListManageSection, {
+  type SplitListManageHandlers,
+} from '@/components/split/SplitListManageSection'
 import {
   splitInputClass,
   splitLabelClass,
@@ -153,7 +156,8 @@ export default function SplitSettingsPanel({
   readOnly,
   isOwner,
   onListChange,
-}: SplitSettingsPanelProps) {
+  manage,
+}: SplitSettingsPanelProps & { manage: SplitListManageHandlers }) {
   const pendingInvites = list.participants.filter((participant) => participant.pendingInvite).length
   const withAccount = list.participants.filter(
     (participant) => participant.userId && !participant.pendingInvite
@@ -230,6 +234,8 @@ export default function SplitSettingsPanel({
           readOnly={readOnly}
         />
       </div>
+
+      {isOwner && <SplitListManageSection list={list} {...manage} />}
     </div>
   )
 }

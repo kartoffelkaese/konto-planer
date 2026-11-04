@@ -18,7 +18,8 @@ Webapp zur Verwaltung persönlicher Finanzen: mehrere Konten, Transaktionen, Kat
 - **Split-Fremdwährungen:** optional bis zu 5 Währungen pro Liste (Frankfurter v2), Umrechnung in Euro, Originalbetrag unter dem Euro-Betrag; Währungen schon beim Anlegen der Liste wählbar
 - Backup/Restore, Konto zurücksetzen (Buchungen, wahlweise mit wiederkehrenden Zahlungen, Kategorien und Händlern), Hell-/Dunkel-/System-Modus, Registrierung per E-Mail
 - **Als App installierbar (PWA):** aus dem Browser auf Startbildschirm oder Desktop, startet ohne Browser-Leisten; Hinweis in den Einstellungen und auf der Startseite
-- **Benutzerlevel (optional):** „Start“ (kostenlos, ein Konto) und „Komplett“ (alles), 14 Tage Testphase, Verwaltung für Admins, „Komplett“ als Abo über Stripe – ohne `PLANS_ENABLED` haben alle Nutzer den vollen Umfang
+- **Benutzerlevel (optional):** „Start“ (kostenlos, ein Konto) und „Komplett“ (alles), 14 Tage Testphase, Level-Vergabe in der Verwaltung, „Komplett“ als Abo über Stripe – ohne `PLANS_ENABLED` haben alle Nutzer den vollen Umfang
+- **Verwaltung für Admins:** Nutzerliste mit Suche und Löschen von Nutzern; mit aktiven Leveln auch Level setzen und Stripe-Abgleich
 - Eigene Rechtstexte (Impressum, Datenschutz, AGB, Widerruf) als Dateien unter `content/legal/`
 
 ## Lokale Entwicklung

@@ -7,6 +7,7 @@ import { NextRequest } from 'next/server'
 import * as usersRoute from '@/app/api/admin/users/route'
 import * as planRoute from '@/app/api/admin/users/[id]/plan/route'
 import * as userRoute from '@/app/api/admin/users/[id]/route'
+import * as syncRoute from '@/app/api/admin/users/[id]/sync/route'
 import { jsonRequest, loginAs, prismaMock, resetRouteMocks, routeParams, TEST_USER } from '@/test/routeHarness'
 
 beforeEach(() => {
@@ -30,10 +31,24 @@ describe('Zugang zur Verwaltung', () => {
     expect(prismaMock.user.update).not.toHaveBeenCalled()
   })
 
-  it('ohne aktive Level: auch für Admins 404', async () => {
+  it('ohne aktive Level: Liste und Löschen ja, Level und Stripe-Abgleich nicht', async () => {
     vi.stubEnv('PLANS_ENABLED', 'false')
     loginAs({ user: { isAdmin: true } })
-    expect((await usersRoute.GET(req('GET'))).status).toBe(404)
+    prismaMock.user.count.mockResolvedValue(0)
+    prismaMock.user.findMany.mockResolvedValue([])
+    expect((await usersRoute.GET(req('GET'))).status).toBe(200)
+
+    // Löschen ist erreichbar (scheitert hier erst an der falschen E-Mail-Adresse)
+    prismaMock.user.findUnique
+      .mockResolvedValueOnce({ ...TEST_USER, isAdmin: true })
+      .mockResolvedValueOnce({ id: 'user-2', email: 'anna@beispiel.de', isAdmin: false })
+    expect((await userRoute.DELETE(req('DELETE', { confirmEmail: 'falsch@beispiel.de' }), params)).status).toBe(400)
+
+    expect((await planRoute.GET(req('GET'), params)).status).toBe(404)
+    expect((await planRoute.PATCH(req('PATCH', { plan: 'FULL' }), params)).status).toBe(404)
+    expect((await syncRoute.POST(req('POST'), params)).status).toBe(404)
+    expect(prismaMock.user.update).not.toHaveBeenCalled()
+    expect(prismaMock.user.delete).not.toHaveBeenCalled()
   })
 
   it('ohne Sitzung: 401', async () => {

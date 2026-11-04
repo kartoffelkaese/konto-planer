@@ -19,6 +19,8 @@ import type { AdminUser } from '@/types/admin'
 
 type AdminPlanDialogProps = {
   user: AdminUser | null
+  /** Ohne aktive Level zeigt der Dialog nur den Lösch-Schritt */
+  plansEnabled: boolean
   onClose: () => void
   onSaved: () => void
 }
@@ -35,10 +37,20 @@ const SOURCE_LABELS = {
   STRIPE: 'Abo',
 } as const
 
-type FormProps = { user: AdminUser } & Omit<AdminPlanDialogProps, 'user'>
+type FormProps = { user: AdminUser } & Omit<AdminPlanDialogProps, 'user' | 'plansEnabled'>
 
 /** Zweiter Schritt: Löschen erst nach Eingabe der E-Mail-Adresse */
-function DeleteUserForm({ user, onBack, onSaved }: { user: AdminUser; onBack: () => void; onSaved: () => void }) {
+function DeleteUserForm({
+  user,
+  onBack,
+  backLabel,
+  onSaved,
+}: {
+  user: AdminUser
+  onBack: () => void
+  backLabel: string
+  onSaved: () => void
+}) {
   const { showToast } = useToast()
   const [confirmEmail, setConfirmEmail] = useState('')
   const [deleting, setDeleting] = useState(false)
@@ -89,7 +101,7 @@ function DeleteUserForm({ user, onBack, onSaved }: { user: AdminUser; onBack: ()
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button type="button" variant="ghost" onClick={onBack}>
-          Zurück
+          {backLabel}
         </Button>
         <Button
           type="submit"
@@ -260,10 +272,11 @@ function PlanForm({ user, onClose, onSaved, onDelete }: FormProps & { onDelete: 
 }
 
 /** Verwaltung: Level eines Nutzers setzen (optional befristet), Verlauf ansehen, Nutzer löschen */
-export default function AdminPlanDialog({ user, onClose, onSaved }: AdminPlanDialogProps) {
-  // Löschen ist ein eigener Schritt und gilt nur für den Nutzer, für den es geöffnet wurde
+export default function AdminPlanDialog({ user, plansEnabled, onClose, onSaved }: AdminPlanDialogProps) {
+  // Löschen ist ein eigener Schritt und gilt nur für den Nutzer, für den es geöffnet wurde.
+  // Ohne aktive Level gibt es kein Level-Formular – dann direkt der Lösch-Schritt.
   const [deleteForId, setDeleteForId] = useState<string | null>(null)
-  const deleting = user !== null && deleteForId === user.id
+  const deleting = user !== null && (!plansEnabled || deleteForId === user.id)
 
   const handleClose = () => {
     setDeleteForId(null)
@@ -282,7 +295,8 @@ export default function AdminPlanDialog({ user, onClose, onSaved }: AdminPlanDia
           <DeleteUserForm
             key={`delete-${user.id}`}
             user={user}
-            onBack={() => setDeleteForId(null)}
+            onBack={plansEnabled ? () => setDeleteForId(null) : handleClose}
+            backLabel={plansEnabled ? 'Zurück' : 'Abbrechen'}
             onSaved={() => {
               setDeleteForId(null)
               onSaved()

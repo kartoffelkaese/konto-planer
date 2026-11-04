@@ -42,7 +42,9 @@ function planDetail(user: AdminUser): string {
 
 export default function AdminPage() {
   const { isAdmin, settings, loading: settingsLoading } = useUserSettings()
-  const allowed = isAdmin && Boolean(settings?.plansEnabled)
+  const allowed = isAdmin
+  // Ohne aktive Level gilt für alle „Komplett“ – dann nur Liste und Löschen
+  const plansEnabled = Boolean(settings?.plansEnabled)
   const [search, setSearch] = useState('')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
@@ -96,7 +98,7 @@ export default function AdminPage() {
     <div className="max-w-6xl mx-auto px-4 py-6 sm:px-6 md:py-8">
       <PageContextHeader
         title="Verwaltung"
-        subtitle={`${total} Benutzer · Level zuweisen, Benutzer löschen`}
+        subtitle={`${total} Benutzer · ${plansEnabled ? 'Level zuweisen, Benutzer löschen' : 'Benutzer löschen'}`}
       />
 
       <div className="card p-4 md:p-5">
@@ -140,24 +142,41 @@ export default function AdminPage() {
                     {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'noch nicht erfasst'}
                   </p>
                 </div>
-                <div className="flex items-center justify-between gap-3 sm:justify-end">
-                  <div className="sm:text-right">
-                    <p className="text-sm font-medium text-primary">
-                      {PLAN_LABELS[user.effectivePlan]}
-                    </p>
-                    {planDetail(user) && (
-                      <p className="text-xs text-secondary">{planDetail(user)}</p>
-                    )}
+                {plansEnabled ? (
+                  <div className="flex items-center justify-between gap-3 sm:justify-end">
+                    <div className="sm:text-right">
+                      <p className="text-sm font-medium text-primary">
+                        {PLAN_LABELS[user.effectivePlan]}
+                      </p>
+                      {planDetail(user) && (
+                        <p className="text-xs text-secondary">{planDetail(user)}</p>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setSelected(user)}
+                    >
+                      Verwalten
+                    </Button>
                   </div>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setSelected(user)}
-                  >
-                    Verwalten
-                  </Button>
-                </div>
+                ) : (
+                  // Admins lassen sich nicht löschen – dann bleibt nichts zu tun
+                  !user.isAdmin && (
+                    <div className="flex sm:justify-end">
+                      <Button
+                        type="button"
+                        variant="danger-outline"
+                        size="sm"
+                        onClick={() => setSelected(user)}
+                        aria-label={`${user.email} löschen`}
+                      >
+                        Löschen
+                      </Button>
+                    </div>
+                  )
+                )}
               </li>
             ))}
           </ul>
@@ -192,6 +211,7 @@ export default function AdminPage() {
 
       <AdminPlanDialog
         user={selected}
+        plansEnabled={plansEnabled}
         onClose={() => setSelected(null)}
         onSaved={() => {
           setSelected(null)

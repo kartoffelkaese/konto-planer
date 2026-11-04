@@ -11,7 +11,7 @@ type RouteParams = { params: Promise<{ id: string }> }
 
 /** Verwaltung: Abo-Stand eines Nutzers von Hand mit Stripe abgleichen (z. B. nach verpasstem Webhook) */
 export const POST = withErrorHandling('/api/admin/users/:id/sync', async function POST(_request: NextRequest, { params }: RouteParams) {
-  const admin = await requireAdmin()
+  const admin = await requireAdmin({ plans: true })
   if (isErrorResponse(admin)) return admin
 
   if (!billingEnabled()) {

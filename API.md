@@ -267,7 +267,7 @@ Nur aktiv, wenn `PLANS_ENABLED=true` und die Stripe-Angaben vollständig gesetzt
 
 ### Verwaltung (nur Admins)
 
-Admin-Recht per `npm run set-admin <E-Mail>`. Ohne Admin-Recht oder ohne aktive Level antworten die Routen mit **404**.
+Admin-Recht per `npm run set-admin <E-Mail>`. Ohne Admin-Recht antworten die Routen mit **404**. Level-Verlauf, Level setzen (`/api/admin/users/:id/plan`) und Stripe-Abgleich (`/api/admin/users/:id/sync`) antworten zusätzlich ohne aktive Level mit **404**; Nutzerliste und Löschen gehen auch dann.
 
 | Methode | Pfad | Beschreibung |
 |---------|------|--------------|

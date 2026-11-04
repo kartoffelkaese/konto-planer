@@ -107,7 +107,7 @@ Manuell: `npm run db:cleanup-unverified`
 
 ### Benutzerlevel (optional)
 
-Mit `PLANS_ENABLED=true` gelten zwei Level; was welches Level darf, steht an einer Stelle in [`src/lib/plans.ts`](src/lib/plans.ts). Ohne den Schalter haben alle Nutzer „Komplett“, und Level, Verwaltung und Kauf sind ausgeblendet.
+Mit `PLANS_ENABLED=true` gelten zwei Level; was welches Level darf, steht an einer Stelle in [`src/lib/plans.ts`](src/lib/plans.ts). Ohne den Schalter haben alle Nutzer „Komplett“, und Level und Kauf sind ausgeblendet. Die Verwaltung bleibt für Admins erreichbar, nur ohne Level (siehe unten).
 
 | | Start (kostenlos) | Komplett |
 |---|---|---|
@@ -128,6 +128,8 @@ Mit `PLANS_ENABLED=true` gelten zwei Level; was welches Level darf, steht an ein
 #### Verwaltung
 
 Admins sehen den Menüpunkt „Verwaltung“ (`/admin`): Nutzerliste mit E-Mail-Suche, Level, Quelle (Bestand, Testphase, von Hand, Abo), Ablauf, letzter Anmeldung und Anzahl der Konten und Split-Listen – ohne Finanzdaten. Dort lässt sich ein Level von Hand setzen (optional befristet, mit Notiz und Verlauf) und ein Nutzer samt eigener Daten löschen. Konten, die er mit anderen teilt, bleiben den anderen erhalten. Admins und die eigene Anmeldung lassen sich dort nicht löschen.
+
+Ohne `PLANS_ENABLED` zeigt die Verwaltung nur Nutzerliste und Löschen; Level, Quelle, Ablauf, Level-Formular und „Mit Stripe abgleichen“ sind ausgeblendet.
 
 „Letzte Anmeldung“ ist die letzte Anmeldung mit Passwort; eine Sitzung gilt bis zu 30 Tage.
 
@@ -385,7 +387,7 @@ Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber o
 | Webhook antwortet mit 503 | `STRIPE_SECRET_KEY` oder `STRIPE_WEBHOOK_SECRET` fehlt |
 | „Abo verwalten“ schlägt fehl | Kundenportal im Stripe-Konto nicht eingerichtet: `npm run stripe:setup` ausführen und `STRIPE_PORTAL_CONFIGURATION` eintragen |
 | Kauf schlägt mit `STRIPE_TOS_CONSENT=true` fehl | AGB-Adresse im Stripe-Dashboard hinterlegen oder die Variable entfernen |
-| Verwaltung nicht erreichbar (404) | `PLANS_ENABLED=true` und Admin-Recht (`npm run set-admin`) nötig |
+| Verwaltung nicht erreichbar (404) | Admin-Recht nötig (`npm run set-admin`); Level setzen und Stripe-Abgleich zusätzlich nur mit `PLANS_ENABLED=true` |
 | Endlos-Ladebalken / Chunk-Fehler 500 | Unvollständiger Build: `rm -rf .next && npm run build && pm2 restart konto-planer` |
 | 502 vom Proxy | App läuft? `curl -I http://127.0.0.1:3001` |
 

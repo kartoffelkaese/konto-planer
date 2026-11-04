@@ -12,7 +12,7 @@ const MAX_NOTE_LENGTH = 500
 
 /** Verlauf der Level-Änderungen eines Nutzers, neueste zuerst */
 export const GET = withErrorHandling('/api/admin/users/:id/plan', async function GET(_request: NextRequest, { params }: RouteParams) {
-  const admin = await requireAdmin()
+  const admin = await requireAdmin({ plans: true })
   if (isErrorResponse(admin)) return admin
 
   const { id } = await params
@@ -39,7 +39,7 @@ export const GET = withErrorHandling('/api/admin/users/:id/plan', async function
 
 /** Level von Hand setzen – optional befristet, immer mit Protokolleintrag */
 export const PATCH = withErrorHandling('/api/admin/users/:id/plan', async function PATCH(request: NextRequest, { params }: RouteParams) {
-  const admin = await requireAdmin()
+  const admin = await requireAdmin({ plans: true })
   if (isErrorResponse(admin)) return admin
 
   const { id } = await params

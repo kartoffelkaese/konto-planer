@@ -52,7 +52,7 @@ export default function Navigation() {
   const router = useRouter()
   const { data: session } = useSession()
   const { showToast } = useToast()
-  const { isSimpleAccount, isAdmin, settings } = useUserSettings()
+  const { isSimpleAccount, isAdmin } = useUserSettings()
   const [isOpen, setIsOpen] = useState(false)
   // Desktop-Leiste: gespeicherter Zustand (Standard: ausgeklappt)
   const [isCollapsed, setIsCollapsed] = useState(readSidebarCollapsed)
@@ -208,8 +208,8 @@ export default function Navigation() {
       badge: badges.pendingInvitations,
       badgeLabel: 'offene Einladungen',
     },
-    // Verwaltung der Benutzerlevel – nur für Admins und nur, wenn Level aktiv sind
-    ...(isAdmin && settings?.plansEnabled
+    // Verwaltung – nur für Admins (Level darin nur, wenn Level aktiv sind)
+    ...(isAdmin
       ? [{ name: 'Verwaltung', href: '/admin', icon: UsersIcon, badge: 0 }]
       : []),
   ]

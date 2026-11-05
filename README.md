@@ -16,6 +16,7 @@ Webapp zur Verwaltung persönlicher Finanzen: mehrere Konten, Transaktionen, Kat
 - **Split-Budget:** gemeinsame Ausgabenlisten, Salden, Ausgleich, E-Mail-Einladungen, **öffentliche Lese-Links** (`/split/s/…`)
 - **Split-Ausgleich:** Teilzahlungen und freie Zahlungen zwischen beliebigen Teilnehmern (Betrag, Datum, Notiz); Ausgleichszahlungen in der Historie löschbar
 - **Split-Fremdwährungen:** optional bis zu 5 Währungen pro Liste (Frankfurter v2), Umrechnung in Euro, Originalbetrag unter dem Euro-Betrag; Währungen schon beim Anlegen der Liste wählbar
+- **Datenexport nach DSGVO:** in den Einstellungen alle eigenen Daten als ZIP herunterladen (lesbare Übersicht als HTML, Tabellen als CSV, `daten.json` für andere Programme), mit Passwortabfrage – Inhalt, Filter und Fallstricke in [EXPORT.md](EXPORT.md). **Vor dem Live-Gang:** Der Text „Angaben zur Verarbeitung“ in `src/lib/dataExport/render.ts` ist ein Entwurf (fest eingetragene Dienstleister, kein Abgleich mit `datenschutz.md`) und muss zur eigenen Datenschutzerklärung passen
 - Backup/Restore, Konto zurücksetzen (Buchungen, wahlweise mit wiederkehrenden Zahlungen, Kategorien und Händlern), Hell-/Dunkel-/System-Modus, Registrierung per E-Mail
 - **Als App installierbar (PWA):** aus dem Browser auf Startbildschirm oder Desktop, startet ohne Browser-Leisten; Hinweis in den Einstellungen und auf der Startseite
 - **Benutzerlevel (optional):** „Start“ (kostenlos, ein Konto) und „Komplett“ (alles), 14 Tage Testphase, Level-Vergabe in der Verwaltung, „Komplett“ als Abo über Stripe – ohne `PLANS_ENABLED` haben alle Nutzer den vollen Umfang
@@ -54,7 +55,7 @@ App: [http://localhost:3000](http://localhost:3000) (Standard-Port von `next dev
 
 `postinstall` führt `prisma generate` aus. Der Ordner `prisma/node_modules/` gehört **nicht** ins Repository (veralteter Prisma-Client).
 
-Weitere Details: [INSTALL.md](INSTALL.md) (Server, Benutzerlevel, Stripe) · [API.md](API.md) · [LOGGING.md](LOGGING.md) · [DESIGN.md](DESIGN.md) (Gestaltungsregeln)
+Weitere Details: [INSTALL.md](INSTALL.md) (Server, Benutzerlevel, Stripe) · [API.md](API.md) · [LOGGING.md](LOGGING.md) · [EXPORT.md](EXPORT.md) (Datenexport nach DSGVO) · [DESIGN.md](DESIGN.md) (Gestaltungsregeln)
 
 ## Lizenz
 

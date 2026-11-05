@@ -9,6 +9,7 @@ import DeleteUserAccount from '@/components/DeleteUserAccount'
 import { useToast } from '@/hooks/useToast'
 import ColorSchemeSwitcher from '@/components/ColorSchemeSwitcher'
 import InstallAppCard from '@/components/InstallAppCard'
+import DataExportCard from '@/components/settings/DataExportCard'
 import EmailSettingsSection from '@/components/settings/EmailSettingsSection'
 import AccountSharing from '@/components/AccountSharing'
 import LegalLinks from '@/components/LegalLinks'
@@ -464,6 +465,8 @@ export default function SettingsPage() {
                 <h3 className="text-lg font-semibold text-primary mb-1">Weitere Konten</h3>
                 <CreateAdditionalAccount />
               </div>
+
+              <DataExportCard />
 
               <div id="delete-user-account" className="card p-4 md:p-5">
                 <DeleteUserAccount />

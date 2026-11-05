@@ -227,6 +227,7 @@ Nur für Konten mit `isSimpleAccount: false` (Statistik-Seite leitet sonst um).
 | `PATCH` | `/api/users/password` | `{ "currentPassword", "newPassword" }` — Passwort ändern; beendet alle anderen Sitzungen (eigene Sitzung per `update({ refreshSessionVersion: true })` anheben) |
 | `PATCH` | `/api/users/kept-account` | `{ "accountId" }` — eigenes Konto wählen, das auf dem Level „Start“ beschreibbar bleibt. Die erste Wahl und die Wahl nach jeder Herabstufung sind frei, sonst einmal in 60 Tagen; zu früh → **409** mit `allowedAt` |
 | `DELETE` | `/api/users/delete` | Anmeldung löschen (mit Passwort) |
+| `POST` | `/api/users/export` | `{ "password" }` — Datenexport nach DSGVO als ZIP (`Uebersicht.html`, `csv/…`, `daten.json`). Eigene Konten vollständig, geteilte nur als Mitgliedschaft, Split-Listen nur mit eigener Beteiligung; keine Namen oder Adressen anderer Personen. Höchstens 5 Versuche pro Stunde, sonst **429**; falsches Passwort **400** |
 
 **`GET/PATCH /api/users/settings` – Felder**
 

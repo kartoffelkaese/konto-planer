@@ -79,6 +79,28 @@ export async function apiFetch<T>(path: string, init: ApiFetchInit = {}): Promis
   }
 }
 
+/** Wie `apiFetch`, liefert aber die Antwort als Datei (Blob) – z. B. für den Datenexport. Ohne Zeitlimit. */
+export async function apiFetchBlob(path: string, init: RequestInit = {}): Promise<Blob> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...init.headers },
+  })
+  if (!response.ok) {
+    let data: unknown = null
+    try {
+      data = (await response.json()) as unknown
+    } catch {
+      // keine JSON-Fehlermeldung
+    }
+    const serverMessage =
+      typeof data === 'object' && data !== null && typeof (data as { error?: unknown }).error === 'string'
+        ? (data as { error: string }).error
+        : null
+    throw new ApiError(response.status, data, serverMessage)
+  }
+  return response.blob()
+}
+
 export function encodeQuery(params: Record<string, string | number | boolean | undefined>) {
   const search = new URLSearchParams()
   for (const [key, value] of Object.entries(params)) {

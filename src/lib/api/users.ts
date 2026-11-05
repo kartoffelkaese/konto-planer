@@ -1,5 +1,5 @@
 import type { UserSettings } from '@/hooks/useUserSettings'
-import { apiFetch } from './client'
+import { apiFetch, apiFetchBlob } from './client'
 
 export const getUserSettings = () => apiFetch<UserSettings>('/users/settings')
 
@@ -39,6 +39,10 @@ export const deleteUserLogin = (password: string) =>
     body: JSON.stringify({ password }),
     timeoutMs: null,
   })
+
+/** Datenexport nach DSGVO als ZIP – nur mit Passwort */
+export const exportUserData = (password: string) =>
+  apiFetchBlob('/users/export', { method: 'POST', body: JSON.stringify({ password }) })
 
 // --- Abo über Stripe ----------------------------------------------------------
 

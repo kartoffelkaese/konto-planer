@@ -36,6 +36,23 @@ function roundMoney(value: number): number {
   return Math.round(value * 100) / 100
 }
 
+/**
+ * Teilt einen Betrag gleichmäßig auf `count` Anteile; Rundungsreste trägt der letzte Anteil.
+ * Reihenfolge wie die Beteiligten der Ausgabe.
+ */
+export function splitAmountEqually(amount: number, count: number): number[] {
+  if (count <= 0) return []
+  const shareAmount = roundMoney(amount / count)
+  const portions: number[] = []
+  let allocated = 0
+  for (let i = 0; i < count; i++) {
+    const portion = i === count - 1 ? roundMoney(amount - allocated) : shareAmount
+    allocated = roundMoney(allocated + portion)
+    portions.push(portion)
+  }
+  return portions
+}
+
 export function computeParticipantBalances(
   participants: ParticipantInfo[],
   expenses: SplitExpenseInput[],
@@ -66,18 +83,10 @@ export function computeParticipantBalances(
 
     if (shares.length === 0) continue
 
-    const shareAmount = roundMoney(amount / shares.length)
-    let allocated = 0
-
-    for (let i = 0; i < shares.length; i++) {
-      const participantId = shares[i]
-      const portion =
-        i === shares.length - 1
-          ? roundMoney(amount - allocated)
-          : shareAmount
-      allocated = roundMoney(allocated + portion)
-      owed.set(participantId, roundMoney((owed.get(participantId) ?? 0) + portion))
-    }
+    const portions = splitAmountEqually(amount, shares.length)
+    shares.forEach((participantId, i) => {
+      owed.set(participantId, roundMoney((owed.get(participantId) ?? 0) + portions[i]))
+    })
   }
 
   const netBalances = new Map<string, number>()

@@ -2,433 +2,253 @@
 
 import Link from 'next/link'
 import {
-  ArrowDownLeftIcon,
-  ArrowDownTrayIcon,
-  ArrowPathIcon,
   ArrowRightIcon,
-  ArrowsRightLeftIcon,
-  ArrowUpRightIcon,
-  BanknotesIcon,
-  ChartBarIcon,
-  ChartPieIcon,
+  CalendarDaysIcon,
+  CalendarIcon,
   CheckIcon,
-  DevicePhoneMobileIcon,
-  ShieldCheckIcon,
-  TagIcon,
-  UserGroupIcon,
-  UsersIcon,
+  ChevronDownIcon,
+  DocumentArrowUpIcon,
+  EyeSlashIcon,
+  QuestionMarkCircleIcon,
+  ScaleIcon,
+  SparklesIcon,
+  WalletIcon,
 } from '@heroicons/react/24/outline'
 import { getButtonClassName } from '@/components/Button'
-import { APP_VERSION } from '@/lib/version'
-import LegalLinks from '@/components/LegalLinks'
-import LogoMark from '@/components/LogoMark'
 import InstallAppHint from '@/components/InstallAppHint'
-import { formatCurrency } from '@/lib/formatters'
+import KpiCard from '@/components/KpiCard'
 import {
-  BILLING_ENABLED_PUBLIC,
-  PLAN_FEATURES,
-  PLAN_LABELS,
-  PLAN_PRICE,
-  PLANS_ENABLED_PUBLIC,
-  TRIAL_DAYS,
-} from '@/lib/plans'
+  features,
+  LandingFooter,
+  LandingHeader,
+  LandingPricing,
+  SectionIntro,
+  trustPoints,
+} from '@/components/landing/LandingParts'
+import { formatCurrency } from '@/lib/formatters'
+import { PLAN_LABELS, PLAN_PRICE, PLANS_ENABLED_PUBLIC, TRIAL_DAYS } from '@/lib/plans'
+import { AVAILABLE_LEGAL_PAGES } from '@/lib/legalPages'
 
-type Feature = {
-  icon: typeof ChartBarIcon
-  title: string
-  description: string
-  /** Breite Kachel im Bento-Raster (ab lg) */
-  wide?: boolean
-  /** Gehört zum Level „Komplett“ (nur gekennzeichnet, wenn Level aktiv sind) */
-  full?: boolean
-}
+/** Kontaktweg für Kontoexporte weiterer Banken – nur, wenn es ein Impressum gibt */
+const HAS_IMPRINT = AVAILABLE_LEGAL_PAGES.some((page) => page.slug === 'impressum')
 
-const features: Feature[] = [
+/** Startseite für Abgemeldete – rund um das Versprechen „Was bleibt bis zum nächsten Gehalt?“ */
+
+
+/** Beispiel: Kontostand und die Zahlungen bis zum nächsten Gehalt – die Werte gehen auf */
+const BALANCE = 2430
+const UPCOMING = [
+  { name: 'Miete', date: '01.12.', category: 'Wohnen', amount: 850, entered: true },
+  { name: 'Strom', date: '05.12.', category: 'Nebenkosten', amount: 74, entered: true },
+  { name: 'Kfz-Versicherung', date: '15.12.', category: 'Versicherungen', amount: 191.42, entered: false },
+  { name: 'Handy', date: '18.12.', category: 'Kommunikation', amount: 19.99, entered: false },
+  { name: 'Fitnessstudio', date: '20.12.', category: 'Freizeit', amount: 29.9, entered: false },
+  { name: 'Streaming', date: '22.12.', category: 'Abos', amount: 13.99, entered: false },
+]
+const round = (value: number) => Math.round(value * 100) / 100
+const STILL_DUE = round(UPCOMING.reduce((sum, p) => sum + p.amount, 0))
+const PENDING = round(UPCOMING.filter((p) => p.entered).reduce((sum, p) => sum + p.amount, 0))
+const NOT_ENTERED = round(STILL_DUE - PENDING)
+const REMAINING = round(BALANCE - STILL_DUE)
+/** Kennzahlen des laufenden Gehaltsmonats (Beispiel) */
+const PERIOD_LABEL = '25.11. – 24.12.'
+const MONTH_INCOME = 3240
+const MONTH_EXPENSES = 810
+
+const problems = [
   {
-    icon: ChartBarIcon,
-    title: 'Alles auf einen Blick',
-    description:
-      'Verfügbar, Einnahmen, Ausgaben und letzte Buchungen – die wichtigsten Zahlen sofort, ohne Tabellen-Chaos.',
+    icon: CalendarDaysIcon,
+    title: 'Abbuchungen kommen verteilt',
+    text: 'Miete am Ersten, Strom am Fünften, Abos irgendwann dazwischen. Den Überblick behält niemand im Kopf.',
   },
   {
-    icon: BanknotesIcon,
-    title: 'Transaktionen & Gehaltsmonat',
-    description:
-      'Buchen, filtern, bestätigen. Der Gehaltsmonat folgt deinem Einkommen – nicht dem Kalender.',
+    icon: EyeSlashIcon,
+    title: 'Seltenes wird vergessen',
+    text: 'Versicherungen, Beiträge oder Jahresabos kommen alle drei, sechs oder zwölf Monate – und dann überraschend.',
   },
   {
-    icon: ArrowDownTrayIcon,
-    title: 'CSV-Import von der Bank',
-    description:
-      'Umsätze von DKB und ING importieren – mit Vorschau, Duplikatprüfung und Händler-Zuordnung.',
-    full: true,
-  },
-  {
-    icon: UsersIcon,
-    title: 'Split-Budget für Reisen & WG',
-    description:
-      'Gemeinsame Ausgaben erfassen, fair aufteilen und mit wenigen Zahlungen ausgleichen – auch in Fremdwährung und per Lese-Link für Gäste.',
-    wide: true,
-    full: true,
-  },
-  {
-    icon: ArrowPathIcon,
-    title: 'Wiederkehrende Zahlungen',
-    description:
-      'Miete, Abos und Gehalt einmal anlegen – fällige Buchungen werden automatisch vorbereitet.',
-  },
-  {
-    icon: ChartPieIcon,
-    title: 'Statistiken',
-    description:
-      'Trends nach Kategorie, Händler und Zeitraum – vom Monat bis zum Jahresüberblick.',
-    full: true,
-  },
-  {
-    icon: TagIcon,
-    title: 'Kategorien & Händler',
-    description:
-      'Eigene Farben und Namen, Händler mit mehreren Kategorien – weniger Tipparbeit beim Buchen.',
-  },
-  {
-    icon: ArrowsRightLeftIcon,
-    title: 'Mehrere Konten & Umbuchungen',
-    description:
-      'Giro, Sparkonto oder Haushalt parallel führen und Geld zwischen Konten umbuchen.',
-    full: true,
-  },
-  {
-    icon: UserGroupIcon,
-    title: 'Gemeinsam nutzen',
-    description:
-      'Konten per Einladung teilen – mit vollem Zugriff oder Nur-Lesen für Partner und Familie.',
-    full: true,
-  },
-  {
-    icon: DevicePhoneMobileIcon,
-    title: 'Mobil, hell & dunkel',
-    description:
-      'Für das Smartphone gebaut, mit Tab-Leiste und großen Tippflächen. Hell, Dunkel oder automatisch wie das System.',
-  },
-  {
-    icon: ShieldCheckIcon,
-    title: 'Backup & Datenschutz',
-    description:
-      'JSON-Backup exportieren und wiederherstellen. Deine Daten, dein Server – keine Werbung, kein Datenverkauf.',
+    icon: ScaleIcon,
+    title: 'Der Kontostand täuscht',
+    text: 'Er zeigt, was jetzt da ist – nicht, was davon schon verplant ist. Was wirklich frei ist, bleibt unklar.',
   },
 ]
 
 const steps = [
   {
-    title: 'Registrieren',
-    description: 'In wenigen Sekunden starten und optional deine Bank zuordnen.',
+    icon: DocumentArrowUpIcon,
+    title: 'Kontoauszug hochladen',
+    text: 'Lade den Export der letzten 18 Monate von deiner Bank hoch. KontoPlaner erkennt regelmäßige Zahlungen – auch vierteljährliche und jährliche – und deinen Gehaltstag. Die Datei wird nur ausgewertet, nicht gespeichert.',
   },
   {
-    title: 'Finanzen strukturieren',
-    description:
-      'Transaktionen erfassen oder per CSV importieren, Kategorien anlegen, wiederkehrende Zahlungen definieren.',
+    icon: CheckIcon,
+    title: 'Vorschläge übernehmen',
+    text: 'Prüfe die gefundenen Zahlungen und übernimm, was passt. Fehlt etwas, legst du es in wenigen Sekunden von Hand an.',
   },
   {
-    title: 'Planen & teilen',
-    description:
-      'Übersicht und Statistiken nutzen, Konten gemeinsam führen oder Ausgaben per Split aufteilen.',
+    icon: WalletIcon,
+    title: 'Sehen, was bleibt',
+    text: '„Verfügbar“ zeigt dir jederzeit, was bis zum nächsten Gehalt übrig bleibt. Fällige Zahlungen trägt KontoPlaner automatisch ein.',
   },
 ]
 
-const trustPoints = PLANS_ENABLED_PUBLIC
-  ? ['Kostenlos starten', `${TRIAL_DAYS} Tage alles testen`, 'Ohne Zahlungsmittel', 'Ohne Werbung']
-  : ['Kostenlos', 'Ohne Werbung', 'DKB & ING Import', 'Mehrere Konten']
+/** Bereits auf der Seite erklärt – im Raster „Außerdem drin“ nicht noch einmal */
+const EXPLAINED = new Set(['Alles auf einen Blick', 'Wiederkehrende Zahlungen'])
 
-const highlights = [
+const faqs = [
   {
-    title: 'Gehaltsmonat statt Kalender',
-    description: 'Auswertungen passen sich deinem Gehaltseingang an – nicht dem 1. des Monats.',
+    question: 'Muss ich meine Bankzugangsdaten eingeben?',
+    answer:
+      'Nein. KontoPlaner verbindet sich nicht mit deiner Bank. Du lädst einen Kontoauszug als Datei hoch oder erfasst Zahlungen von Hand.',
   },
   {
-    title: 'Verfügbar auf einen Blick',
-    description: 'Kontostand minus ausstehende Ausgaben – so siehst du, was wirklich frei ist.',
+    question: 'Mit welchen Banken funktioniert das Erkennen?',
+    answer:
+      'Mit dem CSV-Export von DKB und ING. Bei anderen Banken legst du deine regelmäßigen Zahlungen von Hand an – das ist einmalige Arbeit. ' +
+      'Deine Bank fehlt? Schick mir gern einen anonymisierten Kontoexport, dann nehme ich sie auf' +
+      (HAS_IMPRINT ? ' – die Kontaktdaten stehen im Impressum.' : '.'),
   },
   {
-    title: 'Schnell startklar',
-    description: 'Registrieren, Bank wählen, erste Buchung oder CSV-Import – in unter einer Minute.',
+    question: 'Was kostet KontoPlaner?',
+    answer: PLANS_ENABLED_PUBLIC
+      ? `„${PLAN_LABELS.BASIC}“ mit einem Konto ist kostenlos, inklusive „Verfügbar“ und wiederkehrender Zahlungen. „${PLAN_LABELS.FULL}“ kostet ${formatCurrency(PLAN_PRICE.yearly)} im Jahr – die ersten ${TRIAL_DAYS} Tage kannst du alles kostenlos testen.`
+      : 'Nichts. KontoPlaner ist kostenlos und ohne Werbung.',
+  },
+  {
+    question: 'Wo liegen meine Daten?',
+    answer:
+      'Auf Servern in Deutschland (Nürnberg) – nicht bei einer Bank oder einem Finanzdienst. Keine Werbung, kein Datenverkauf. Du kannst deine Daten jederzeit herunterladen oder löschen.',
   },
 ]
 
-const previewTransactions = [
-  { merchant: 'REWE', meta: 'Heute · Lebensmittel', amount: '−42,30 €', initial: 'R', color: '#f59e0b' },
-  { merchant: 'Gehalt', meta: '01.05. · Einkommen', amount: '+3.240,00 €', income: true },
-  { merchant: 'Spotify', meta: '15.05. · Abos', amount: '−9,99 €', initial: 'S', color: '#10b981' },
-]
-
-/** Stilisierte App-Vorschau im Design der echten Übersicht */
-function LandingPreview() {
+/** Nachbau der Übersicht der App: Verfügbar, Kennzahlen und die nächsten wiederkehrenden Zahlungen */
+function MonthEndPreview() {
+  const share = Math.round((REMAINING / BALANCE) * 100)
   return (
     <div className="relative mx-auto w-full max-w-md" aria-hidden="true">
       <div className="absolute -inset-6 rounded-[2.5rem] bg-accent/20 blur-3xl" />
 
-      <div className="relative rounded-[2rem] border border-hairline bg-canvas p-3 shadow-raised">
-        <div className="space-y-3">
-          <div className="hero-card p-5">
-            <p className="eyebrow">Verfügbar</p>
-            <p className="amount-hero mt-1 text-[2.5rem] text-primary">2.840,00 €</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="chip">
-                Kontostand <span className="amount text-primary">3.120 €</span>
-              </span>
-              <span className="chip">
-                Ausstehend <span className="amount text-expense">−280 €</span>
-              </span>
+      <div className="relative space-y-3 rounded-[2rem] border border-hairline bg-canvas p-3 shadow-raised">
+        <section className="hero-card p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="eyebrow">Verfügbar</p>
+              <p className="amount-hero mt-2 text-[2.5rem] text-primary">{formatCurrency(REMAINING)}</p>
             </div>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-surface-muted">
-              <div className="h-full w-[91%] rounded-full bg-accent" />
-            </div>
+            <span className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-pill bg-surface-muted/80 px-3 text-xs font-medium text-secondary">
+              So berechnet
+              <ChevronDownIcon className="h-4 w-4" />
+            </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="card p-4">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-income-bg text-income">
-                <ArrowDownLeftIcon className="h-4 w-4" />
-              </span>
-              <p className="mt-3 text-xs text-secondary">Einnahmen</p>
-              <p className="amount text-lg text-income">3.240 €</p>
-            </div>
-            <div className="card p-4">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-expense-bg text-expense">
-                <ArrowUpRightIcon className="h-4 w-4" />
-              </span>
-              <p className="mt-3 text-xs text-secondary">Ausgaben</p>
-              <p className="amount text-lg text-expense">2.180 €</p>
-            </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="chip">
+              Kontostand <span className="amount text-primary">{formatCurrency(BALANCE)}</span>
+            </span>
+            <span className="chip">
+              Ausstehend <span className="amount text-expense">{formatCurrency(-STILL_DUE)}</span>
+            </span>
           </div>
 
-          <div className="card p-4">
-            <p className="mb-1 text-sm font-semibold text-primary">Letzte Buchungen</p>
-            <ul>
-              {previewTransactions.map((tx) => (
-                <li key={tx.merchant} className="flex items-center gap-3 py-2">
-                  {tx.income ? (
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-income-bg text-income">
-                      <ArrowDownLeftIcon className="h-4 w-4" />
+          <div className="mt-5">
+            <div className="h-2 overflow-hidden rounded-full bg-surface-muted">
+              <div className="h-full rounded-full bg-accent" style={{ width: `${share}%` }} />
+            </div>
+            <p className="mt-2 text-xs text-secondary">{share} % des Kontostands frei verfügbar</p>
+          </div>
+        </section>
+
+        <div className="grid grid-cols-2 gap-3">
+          <KpiCard label="Einnahmen" subtitle={PERIOD_LABEL} amount={MONTH_INCOME} stripe="income" />
+          <KpiCard label="Ausgaben" subtitle={PERIOD_LABEL} amount={MONTH_EXPENSES} stripe="expense" />
+        </div>
+
+        <section className="card p-4">
+          <div className="mb-2 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-base font-semibold text-primary">Wiederkehrend</p>
+              <p className="text-sm text-secondary">Nächste 30 Tage</p>
+            </div>
+            <span className="inline-flex items-center gap-1 text-sm font-medium text-accent">
+              Alle
+              <ArrowRightIcon className="h-4 w-4" />
+            </span>
+          </div>
+          <ul className="-mx-2">
+            {UPCOMING.slice(0, 4).map((payment) => (
+              <li key={payment.name} className="flex items-center gap-3 rounded-control px-2 py-2">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent">
+                  <CalendarIcon className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-primary">{payment.name}</p>
+                  <p className="truncate text-sm text-secondary">
+                    {payment.date} · {payment.category}
+                  </p>
+                </div>
+                <p className="amount shrink-0 text-primary">{formatCurrency(payment.amount)}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    </div>
+  )
+}
+
+/** Die Rechnung hinter „Verfügbar“ – wie in der Übersicht der App */
+function AvailableExplained() {
+  const parts = [
+    { label: 'Kontostand', value: formatCurrency(BALANCE), className: 'text-primary' },
+    { label: 'offene Ausgaben', value: formatCurrency(PENDING), className: 'text-expense' },
+    { label: 'noch nicht eingetragen', value: formatCurrency(NOT_ENTERED), className: 'text-expense' },
+  ]
+  return (
+    <section className="py-16 sm:py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="hero-card grid gap-8 p-6 sm:p-10 lg:grid-cols-[1fr_1.1fr] lg:items-center">
+          <div>
+            <p className="inline-flex items-center gap-2 rounded-pill bg-accent-subtle px-3 py-1 text-sm font-medium text-accent">
+              <SparklesIcon className="h-4 w-4" aria-hidden="true" />
+              Verfügbar
+            </p>
+            <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] text-primary sm:text-4xl">
+              Eine Zahl, die dir die Frage beantwortet
+            </h2>
+            <p className="mt-3 text-base leading-relaxed text-secondary sm:text-lg">
+              Vom Kontostand zieht KontoPlaner alles ab, was bis zum nächsten Gehalt noch kommt –
+              bereits eingetragene Ausgaben und wiederkehrende Zahlungen, die erst noch fällig
+              werden. Gerechnet wird im Gehaltsmonat, nicht im Kalendermonat.
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-secondary">
+              Das heißt: Dein Monat beginnt, wenn dein Gehalt kommt. Bekommst du es am 25., läuft
+              dein Gehaltsmonat vom 25. bis zum 24. des Folgemonats – und genau bis dahin muss das
+              Geld reichen. Den Gehaltstag stellst du einmal ein; KontoPlaner erkennt ihn auch aus
+              deinem Kontoauszug.
+            </p>
+          </div>
+
+          <div className="rounded-card bg-surface-muted/70 p-4 sm:p-6">
+            <ul className="space-y-3">
+              {parts.map((part, index) => (
+                <li key={part.label} className="flex items-baseline justify-between gap-3">
+                  <span className="text-sm text-secondary">
+                    <span className="mr-2 inline-block w-3 text-primary" aria-hidden="true">
+                      {index === 0 ? '' : '−'}
                     </span>
-                  ) : (
-                    <span
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
-                      style={{ backgroundColor: tx.color }}
-                    >
-                      {tx.initial}
-                    </span>
-                  )}
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-primary">
-                      {tx.merchant}
-                    </span>
-                    <span className="block truncate text-xs text-secondary">{tx.meta}</span>
+                    {part.label}
                   </span>
-                  <span
-                    className={`amount shrink-0 text-sm ${tx.income ? 'text-income' : 'text-primary'}`}
-                  >
-                    {tx.amount}
-                  </span>
+                  <span className={`amount text-base sm:text-lg ${part.className}`}>{part.value}</span>
                 </li>
               ))}
             </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Schwebende Split-Karte für Tiefe */}
-      <div className="absolute -bottom-24 -left-4 hidden w-56 rounded-card border border-hairline bg-surface-raised p-4 shadow-raised sm:block lg:-left-10">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-subtle text-accent">
-            <UsersIcon className="h-4 w-4" />
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-primary">Urlaub Lissabon</p>
-            <p className="text-xs text-secondary">3 Personen · Split</p>
-          </div>
-        </div>
-        <div className="mt-3 flex items-center justify-between rounded-control bg-surface-muted/70 px-3 py-2">
-          <span className="text-xs text-secondary">Lena → Tom</span>
-          <span className="amount text-sm text-primary">48,50 €</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function LandingHeader() {
-  return (
-    <header className="sticky top-0 z-40 border-b border-hairline bg-canvas/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link
-          href="/"
-          className="flex min-h-11 shrink-0 items-center gap-2 text-lg font-semibold tracking-tight text-primary"
-        >
-          <LogoMark />
-          KontoPlaner
-        </Link>
-
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Seitenabschnitte">
-          {[
-            ['#highlights', 'Vorteile'],
-            ['#features', 'Funktionen'],
-            ...(PLANS_ENABLED_PUBLIC ? [['#pricing', 'Preise']] : []),
-            ['#steps', 'So starten'],
-          ].map(([href, label]) => (
-            <a
-              key={href}
-              href={href}
-              className="rounded-pill px-3 py-2 text-sm font-medium text-secondary transition-colors duration-feedback hover:bg-surface-muted hover:text-primary"
-            >
-              {label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          <Link
-            href="/auth/login"
-            className="inline-flex min-h-11 items-center rounded-pill px-3 text-sm font-medium text-secondary transition-colors duration-feedback hover:bg-surface-muted hover:text-primary max-sm:hidden"
-          >
-            Anmelden
-          </Link>
-          <Link
-            href="/auth/register"
-            className={getButtonClassName({ variant: 'primary', size: 'sm', className: 'rounded-pill px-4' })}
-          >
-            Registrieren
-          </Link>
-        </div>
-      </div>
-    </header>
-  )
-}
-
-function LandingFooter() {
-  return (
-    <footer className="border-t border-hairline py-10">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 sm:flex-row sm:px-6">
-        <div className="flex items-center gap-3 text-center sm:text-left">
-          <LogoMark className="max-sm:hidden" />
-          <div>
-            <p className="font-semibold text-primary">KontoPlaner</p>
-            <p className="text-sm text-secondary">
-              Persönliche Finanzverwaltung – klar, lokal, ohne Werbung.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm">
-          <Link
-            href="/auth/login"
-            className="inline-flex min-h-11 items-center rounded-pill px-3 text-secondary hover:text-primary"
-          >
-            Anmelden
-          </Link>
-          <Link
-            href="/auth/register"
-            className="inline-flex min-h-11 items-center rounded-pill px-3 text-secondary hover:text-primary"
-          >
-            Registrieren
-          </Link>
-          <span className="px-3 text-secondary/80">Version {APP_VERSION}</span>
-        </div>
-      </div>
-      <LegalLinks className="mx-auto mt-4 max-w-6xl justify-center px-4 sm:justify-end sm:px-6" />
-    </footer>
-  )
-}
-
-function SectionIntro({ eyebrow, title, text }: { eyebrow: string; title: string; text?: string }) {
-  return (
-    <div className="mx-auto max-w-2xl text-center">
-      <p className="inline-flex rounded-pill bg-accent-subtle px-3 py-1 text-sm font-medium text-accent">
-        {eyebrow}
-      </p>
-      <h2 className="mt-4 text-3xl font-semibold tracking-[-0.03em] text-primary sm:text-4xl">
-        {title}
-      </h2>
-      {text && <p className="mt-3 text-base leading-relaxed text-secondary sm:text-lg">{text}</p>}
-    </div>
-  )
-}
-
-function PlanFeatureList({ items }: { items: string[] }) {
-  return (
-    <ul className="mt-5 space-y-2.5">
-      {items.map((item) => (
-        <li key={item} className="flex items-start gap-2.5 text-sm text-primary">
-          <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-accent" aria-hidden="true" />
-          {item}
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-/** Die beiden Level im Vergleich – Inhalte aus `@/lib/plans`, damit sie mit der App übereinstimmen */
-function LandingPricing() {
-  return (
-    <section id="pricing" className="scroll-mt-16 py-16 sm:py-24">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionIntro
-          eyebrow="Preise"
-          title="Kostenlos starten, bei Bedarf erweitern"
-          text={`Jede Registrierung beginnt mit ${TRIAL_DAYS} Tagen „${PLAN_LABELS.FULL}“ – ohne Zahlungsmittel. Danach nutzt du „${PLAN_LABELS.BASIC}“ kostenlos weiter, deine Daten bleiben erhalten.`}
-        />
-
-        <div className="mx-auto mt-12 grid max-w-4xl gap-4 md:grid-cols-2 md:gap-6">
-          <article className="card flex flex-col p-6 sm:p-8">
-            <h3 className="text-xl font-semibold text-primary">{PLAN_LABELS.BASIC}</h3>
-            <p className="mt-1 text-sm text-secondary">Für ein Konto – dauerhaft kostenlos.</p>
-            <p className="mt-5">
-              <span className="amount-lg text-primary">{formatCurrency(0)}</span>
-            </p>
-            <PlanFeatureList items={PLAN_FEATURES.BASIC} />
-            <div className="mt-auto pt-8">
-              <Link
-                href="/auth/register"
-                className={getButtonClassName({
-                  variant: 'secondary',
-                  size: 'lg',
-                  className: 'w-full rounded-pill',
-                })}
-              >
-                Kostenlos starten
-              </Link>
+            <div className="mt-4 flex items-baseline justify-between gap-3 border-t border-hairline pt-4">
+              <span className="text-sm font-semibold text-primary">
+                <span className="mr-2 inline-block w-3" aria-hidden="true">=</span>
+                verfügbar bis zum Gehalt
+              </span>
+              <span className="amount-lg text-accent">{formatCurrency(REMAINING)}</span>
             </div>
-          </article>
-
-          <article className="hero-card flex flex-col p-6 sm:p-8">
-            <h3 className="text-xl font-semibold text-primary">{PLAN_LABELS.FULL}</h3>
-            <p className="mt-1 text-sm text-secondary">
-              Alles aus „{PLAN_LABELS.BASIC}“ und zusätzlich:
-            </p>
-            <p className="mt-5">
-              <span className="amount-lg text-primary">{formatCurrency(PLAN_PRICE.yearly)}</span>
-              <span className="text-sm text-secondary"> im Jahr</span>
-            </p>
-            <p className="mt-1 text-sm text-secondary">
-              oder {formatCurrency(PLAN_PRICE.monthly)} im Monat
-            </p>
-            <PlanFeatureList items={PLAN_FEATURES.FULL} />
-            <div className="mt-auto pt-8">
-              <Link
-                href="/auth/register"
-                className={getButtonClassName({
-                  variant: 'primary',
-                  size: 'lg',
-                  className: 'w-full rounded-pill',
-                })}
-              >
-                {TRIAL_DAYS} Tage kostenlos testen
-              </Link>
-              <p className="mt-3 text-center text-xs text-secondary">
-                {BILLING_ENABLED_PUBLIC
-                  ? 'Danach als Abo buchbar, jederzeit kündbar.'
-                  : `Die Buchung von „${PLAN_LABELS.FULL}“ ist in Kürze möglich.`}
-              </p>
-            </div>
-          </article>
+          </div>
         </div>
       </div>
     </section>
@@ -448,19 +268,17 @@ export default function LandingPage() {
             <div className="text-center lg:text-left">
               <p className="landing-fade-in inline-flex items-center gap-2 rounded-pill bg-accent-subtle px-3 py-1 text-sm font-medium text-accent">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
-                Persönliche Finanzverwaltung
+                Für alle, die am Monatsende nicht raten wollen
               </p>
 
-              <h1 className="landing-fade-in landing-fade-in-delay-1 mt-5 text-[2.75rem] font-semibold leading-[1.05] tracking-[-0.04em] text-primary sm:text-6xl lg:text-[4rem]">
-                Finanzen planen,
-                <br />
-                <span className="text-accent">nicht raten.</span>
+              <h1 className="landing-fade-in landing-fade-in-delay-1 mt-5 text-[2.5rem] font-semibold leading-[1.05] tracking-[-0.04em] text-primary sm:text-6xl lg:text-[3.75rem]">
+                Was bleibt dir bis zum <span className="text-accent">nächsten Gehalt?</span>
               </h1>
 
               <p className="landing-fade-in landing-fade-in-delay-2 mx-auto mt-6 max-w-xl text-base leading-relaxed text-secondary sm:text-lg lg:mx-0">
-                KontoPlaner bündelt Einnahmen, Ausgaben und wiederkehrende Zahlungen – für ein
-                Konto oder mehrere, allein oder gemeinsam. Mit Gehaltsmonat, CSV-Import und
-                Split-Budget für geteilte Kosten.
+                KontoPlaner zeigt dir, was bis zum nächsten Gehalt noch abgebucht wird – Miete,
+                Abos, Versicherungen – und was danach übrig bleibt. Einmal eingerichtet, immer
+                eingeplant.
               </p>
 
               <div className="landing-fade-in landing-fade-in-delay-3 mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
@@ -500,79 +318,108 @@ export default function LandingPage() {
             </div>
 
             <div className="landing-fade-in landing-fade-in-delay-2 px-2 sm:px-8 lg:px-0">
-              <LandingPreview />
+              <MonthEndPreview />
             </div>
           </div>
         </div>
       </section>
 
-      <section id="highlights" className="scroll-mt-16 pb-16 sm:pb-24">
+      <section className="pb-16 sm:pb-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="card grid divide-y divide-hairline sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-            {highlights.map(({ title, description }, index) => (
-              <article key={title} className="p-6 sm:p-8">
-                <span className="amount text-sm text-accent">0{index + 1}</span>
-                <h2 className="mt-2 text-lg font-semibold text-primary">{title}</h2>
-                <p className="mt-2 text-sm leading-relaxed text-secondary">{description}</p>
+          <SectionIntro
+            eyebrow="Kennst du das?"
+            title="Der Kontostand sagt dir nicht, was übrig bleibt"
+          />
+          <div className="mt-12 grid gap-4 md:grid-cols-3">
+            {problems.map(({ icon: Icon, title, text }) => (
+              <article key={title} className="card p-6">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-pending-bg text-pending">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <h3 className="mt-4 text-lg font-semibold text-primary">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-secondary">{text}</p>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="features" className="scroll-mt-16 py-16 sm:py-24">
+      <section id="so-gehts" className="scroll-mt-16 py-16 sm:py-24">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <SectionIntro
-            eyebrow="Funktionen"
-            title="Alles für deinen Finanzüberblick"
-            text="Von der ersten Buchung bis zum gemeinsamen Haushalt – ohne unnötige Komplexität."
+            eyebrow="So geht’s"
+            title="In drei Schritten zur Antwort"
+            text="Einmal einrichten – danach weißt du jeden Tag, woran du bist."
           />
-
-          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map(({ icon: Icon, title, description, wide, full }) => (
-              <article
-                key={title}
-                className={`group card p-6 transition-[box-shadow,transform] duration-feedback hover:-translate-y-0.5 hover:shadow-raised ${
-                  wide ? 'lg:col-span-2 hero-card' : ''
-                }`}
-              >
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent-subtle text-accent transition-colors duration-feedback group-hover:bg-accent group-hover:text-accent-foreground">
-                  <Icon className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <h3 className={`mt-4 font-semibold text-primary ${wide ? 'text-xl' : 'text-lg'}`}>
-                  {title}
-                </h3>
-                {PLANS_ENABLED_PUBLIC && full && (
-                  <p className="mt-1 text-xs font-medium text-accent">Im Level „{PLAN_LABELS.FULL}“</p>
-                )}
-                <p
-                  className={`mt-2 leading-relaxed text-secondary ${wide ? 'max-w-lg text-base' : 'text-sm'}`}
-                >
-                  {description}
-                </p>
-              </article>
+          <ol className="mt-12 grid gap-4 md:grid-cols-3">
+            {steps.map(({ icon: Icon, title, text }, index) => (
+              <li key={title} className="card p-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
+                    {index + 1}
+                  </span>
+                  <Icon className="h-5 w-5 text-accent" aria-hidden="true" />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-primary">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-secondary">{text}</p>
+              </li>
             ))}
+          </ol>
+        </div>
+      </section>
+
+      <AvailableExplained />
+
+      <section id="funktionen" className="scroll-mt-16 py-16 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <SectionIntro
+            eyebrow="Außerdem drin"
+            title="Alles, was du für dein Geld brauchst"
+            text="Vom einzelnen Girokonto bis zum gemeinsamen Haushalt."
+          />
+          <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {features
+              .filter((feature) => !EXPLAINED.has(feature.title))
+              .map(({ icon: Icon, title, description, full }) => (
+                <article key={title} className="card flex gap-4 p-5">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-subtle text-accent">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-primary">{title}</h3>
+                    {PLANS_ENABLED_PUBLIC && full && (
+                      <p className="mt-0.5 text-xs font-medium text-accent">Im Level „{PLAN_LABELS.FULL}“</p>
+                    )}
+                    <p className="mt-1 text-sm leading-relaxed text-secondary">{description}</p>
+                  </div>
+                </article>
+              ))}
           </div>
         </div>
       </section>
 
       {PLANS_ENABLED_PUBLIC && <LandingPricing />}
 
-      <section id="steps" className="scroll-mt-16 py-16 sm:py-24">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <SectionIntro eyebrow="In drei Schritten" title="So startest du mit KontoPlaner" />
-
-          <ol className="mt-12 grid gap-4 md:grid-cols-3">
-            {steps.map((step, index) => (
-              <li key={step.title} className="card p-6">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
-                  {index + 1}
-                </span>
-                <h3 className="mt-4 text-lg font-semibold text-primary">{step.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-secondary">{step.description}</p>
-              </li>
+      <section id="fragen" className="scroll-mt-16 py-16 sm:py-24">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          <SectionIntro eyebrow="Fragen" title="Gut zu wissen" />
+          <div className="mt-10 space-y-3">
+            {faqs.map(({ question, answer }) => (
+              <details key={question} className="group card px-5 py-1">
+                <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 py-2 text-base font-medium text-primary [&::-webkit-details-marker]:hidden">
+                  <span className="flex items-center gap-3">
+                    <QuestionMarkCircleIcon className="h-5 w-5 shrink-0 text-accent" aria-hidden="true" />
+                    {question}
+                  </span>
+                  <ChevronDownIcon
+                    className="h-5 w-5 shrink-0 text-secondary transition-transform duration-expand group-open:rotate-180"
+                    aria-hidden="true"
+                  />
+                </summary>
+                <p className="pb-4 pl-8 text-sm leading-relaxed text-secondary">{answer}</p>
+              </details>
             ))}
-          </ol>
+          </div>
         </div>
       </section>
 
@@ -589,18 +436,18 @@ export default function LandingPage() {
             />
             <div className="relative mx-auto max-w-2xl">
               <h2 className="text-3xl font-semibold tracking-[-0.03em] text-accent-foreground sm:text-4xl">
-                Bereit für mehr Klarheit?
+                Schluss mit Raten am Monatsende
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-accent-foreground/85 sm:text-lg">
-                Konto anlegen, erste Buchung erfassen oder CSV importieren – in unter einer Minute
-                eingerichtet.
+                Konto anlegen, Kontoauszug hochladen, Zahlungen übernehmen – und ab heute wissen,
+                was bis zum nächsten Gehalt bleibt.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
                   href="/auth/register"
                   className="landing-cta-solid inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-pill px-7 text-base font-semibold transition-colors duration-feedback sm:w-auto"
                 >
-                  Jetzt registrieren
+                  Kostenlos starten
                   <ArrowRightIcon className="h-5 w-5" aria-hidden="true" />
                 </Link>
                 <Link

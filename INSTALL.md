@@ -347,17 +347,18 @@ Lokal prüfen: `npm run audit:check` (High/Critical müssen 0 sein). Geprüft wi
 |----------|-------|------------------|
 | `mariadb@^3.5.4` | SSL/Credential-CVEs im DB-Treiber | Runtime: `@prisma/adapter-mariadb` → App |
 | `mysql2@^3.24.3` | Auth-Plugin-Downgrade (Prisma-CLI) | Dev/Deploy: `prisma migrate` |
-| `nodemailer@^10.1.7` | SMTP-Client auf aktueller Major | Runtime: E-Mail-Versand |
-| `eslint@10.14.0` | Tooling-Peers auf ESLint 10 halten | Dev: Lint/CI |
+| `effect@^3.22.5` | ReDoS in `Schema.TemplateLiteral` (GHSA-7589-6fvf-x4pw, hoch). Alle Prisma-7-Versionen verlangen genau `effect@3.20.0`; `npm audit fix --force` würde auf Prisma 6 zurückgehen | Deploy: `prisma` → `@prisma/config` (liest `prisma.config.ts` bei `generate`/`migrate`) |
+| `nodemailer@^10.6.1` | SMTP-Client auf aktueller Major | Runtime: E-Mail-Versand |
+| `eslint@10.15.0` | Tooling-Peers auf ESLint 10 halten | Dev: Lint/CI |
 | `sharp@^0.35.0` | libvips-CVEs | Next.js Build / Image-Opt |
 | `deepmerge-ts@^8.0.0` | Stack-Exhaustion | Prisma-CLI |
 | `nanoid@^3.3.18` | Generator-Loop | Next.js |
 | `find-my-way`, `valibot` | Prisma-Dev-CLI | Nur Entwicklung |
 | `brace-expansion@^5.0.8` | ReDoS | ESLint-Plugins |
-| `postcss@^8.5.31`, `@hono/node-server@^1.19.13` | gemeldete Lücken in transitiven Paketen | Build bzw. Prisma-Dev-CLI |
+| `postcss@^8.5.33`, `@hono/node-server@^1.19.13` | gemeldete Lücken in transitiven Paketen | Build bzw. Prisma-Dev-CLI |
 | `@next/eslint-plugin-next` → `fast-glob` = `npm:tinyglobby@^0.2.17` | `fast-glob` zieht `micromatch` → `braces` (Stack-Exhaustion, GHSA-vfj7-8cjw-p6xm; `braces` wird nicht mehr gepflegt). Das Plugin nutzt nur `globSync(…, { onlyDirectories: true })` für `settings.next.rootDir` – `tinyglobby` bietet dieselbe Funktion ohne `braces` | Dev: Lint/CI |
 
-Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber offiziell anhebt — dann Override ggf. entfernen. Bei `eslint-config-next`-Updates prüfen, ob `@next/eslint-plugin-next` `fast-glob` noch verwendet; falls nicht, den `tinyglobby`-Override entfernen.
+Bei Prisma-Updates prüfen, ob `@prisma/config` ein `effect` ab 3.22.1 verlangt – dann den `effect`-Override entfernen. Bei `@prisma/adapter-mariadb`-Updates prüfen, ob Prisma den `mariadb`-Treiber offiziell anhebt — dann Override ggf. entfernen. Bei `eslint-config-next`-Updates prüfen, ob `@next/eslint-plugin-next` `fast-glob` noch verwendet; falls nicht, den `tinyglobby`-Override entfernen.
 
 ### DB-Sicherheit
 
